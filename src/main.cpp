@@ -2,7 +2,6 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-#include <iostream>
 
-#include "gui/MyApp.h"
-wxIMPLEMENT_APP(MyApp);
+#include "gui/app.h"
+wxIMPLEMENT_APP(app);
