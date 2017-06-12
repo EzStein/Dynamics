@@ -1,6 +1,7 @@
 #include "top_frame.h"
 #include "../app/app_traits.h"
 #include <iostream>
+#include "render_panel.h"
 
 top_frame::top_frame() : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAME) {
   wxWindowID id;
@@ -57,6 +58,14 @@ top_frame::top_frame() : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAME) {
   SetMenuBar(menuBar);
 
   Bind(wxEVT_CLOSE_WINDOW, &top_frame::on_close, this);
+
+  wxBoxSizer * sizerV = new wxBoxSizer(wxVERTICAL);
+  wxBoxSizer * sizerH = new wxBoxSizer(wxHORIZONTAL);
+  sizerV->Add(new render_panel(this), 1, wxGROW | wxALL, 10);
+  sizerV->Add(sizerH, 0, wxGROW | wxALL, 10);
+  sizerH->Add(new wxButton(this, wxID_ANY, "OK"), 0, wxLEFT | wxRIGHT, 10);
+  sizerH->Add(new wxButton(this, wxID_ANY, "CANCEL"), 1, wxLEFT | wxRIGHT, 10);
+  SetSizerAndFit(sizerV);
 }
 
 void top_frame::on_close(wxCloseEvent& event) {

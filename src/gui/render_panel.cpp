@@ -1,7 +1,8 @@
 #include "render_panel.h"
 
-render_panel::render_panel(wxWindow * parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)) {
+render_panel::render_panel(wxWindow * parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)), image(500, 500) {
   Bind(wxEVT_PAINT, &render_panel::on_paint, this);
+
 }
 
 /*Called automatically when the panel should be repainted*/
