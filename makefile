@@ -6,6 +6,8 @@ INCLUDE_DIR = include
 LIB_DIR = lib
 EXE_DIR = exe
 WX_DIR = wxWidgets/std-build
+APP_NAME = Dynamics
+MAC_DIR = mac_build
 
 #Finds all src files in all directories of any depth in src/
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
@@ -45,9 +47,9 @@ INCLUDES = -isystem $(INCLUDE_DIR) `$(WX_DIR)/wx-config --cxxflags | sed 's/-I/-
 STUPID_MAC_STUFF = -mmacosx-version-min=10.5
 DEPS = $(call rwildcard,$(SRC_DIR),*.h)
 
-all: exe/out
+all: $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app
 
-exe/out: $(OBJS)
+$(EXE_DIR)/$(APP_NAME): $(OBJS)
 	-@mkdir -p $(dir $@)
 	@$(CC) $(WARNINGS) $(DEVELOPMENT) $(OBJS) $(INCLUDES) $(STUPID_MAC_STUFF) $(LIBS) -o $@
 
@@ -55,6 +57,16 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS)
 	-@mkdir -p $(dir $@)
 	@$(CC) $(WARNINGS) $(DEVELOPMENT) $(INCLUDES) $(STUPID_MAC_STUFF) -c -o $@ $<
 
+$(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
+	SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
+	-mkdir $(EXE_DIR)/$(APP_NAME).app
+	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
+	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
+	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
+	cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
+	echo -n 'APPL????' > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
+	cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
 clean:
 	-@rm -r $(OBJ_DIR)
 	-@rm -r $(EXE_DIR)
