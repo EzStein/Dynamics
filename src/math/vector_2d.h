@@ -11,7 +11,7 @@ public:
   const NUM_TYPE y;
   vector_2d(NUM_TYPE _x, NUM_TYPE _y) : x(_x), y(_y) { };
   template <class A> vector_2d(const vector_2d<A>& vec)
-  : x(vec.x), y(vec.y) { };
+  : x(static_cast<NUM_TYPE>(vec.x)), y(static_cast<NUM_TYPE>(vec.y)) { };
   operator std::string() const;
 };
 

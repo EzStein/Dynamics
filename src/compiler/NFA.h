@@ -4,6 +4,8 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include "reg_def.h"
+
 /*
 * This class represents a non-deterministic finite state automata.
 * The NFA can be constructed from a DFA or a regular expression.
@@ -21,53 +23,54 @@
 */
 class NFA {
 public:
+
   NFA() { };
 
   /*Constructs a NFA from a c-style string representing a regular expression*/
   NFA(const char *);
 
   /*Returns the number of states in this NFA*/
-  unsigned int size() const;
+  state_type size() const;
 
   /*Returns true if this NFA accepts the string, and false otherwise*/
   bool accepts(const char *);
 
 
 private:
-  unsigned int start_state;
-  unsigned int accepting_state;
+  state_type start_state;
+  state_type accepting_state;
 
   /*Returns the set of all states reachable through epsilon transitions from the given state.
   * This function uses recursion to find all such values, and will detect an infinite loop
   * and accomodate it. The function is not guarenteed to return a set containing the input state
   * NOTE: This function is currently implemented using recursion, however we can use a graph reachability
   * algorithm to substitute the recursive "stack" for an actual stack*/
-  std::set<unsigned int> transition_epsilon(unsigned int);
+  std::set<state_type> transition_epsilon(state_type);
 
   /*
   * Returns the set of states reachable by the NFA under the c-style string provided.
   * NOTE: epsilon transitions WILL be resolved.
   */
-  std::set<unsigned int> extended_transition_function(unsigned int, const char *);
+  std::set<state_type> extended_transition_function(state_type, const char *);
 
   /*Constructs the NFA from the table by performing a deep copy of all of its data*/
-  NFA(const std::vector<std::map<char, std::set<unsigned int> > > &);
+  NFA(const std::vector<std::map<char, std::set<state_type> > > &);
 
   /*This implements the table as a vector of maps. This may not be the most efficient,
   but it is the most convenient. It may be changed later*/
-  std::vector<std::map<char, std::set<unsigned int> > > table;
+  std::vector<std::map<char, std::set<state_type> > > table;
 
   /*The following functions wrap the underlying implementation so that it may change later*/
   /*Returns the set of states which may be empty,
   * that are recheable from the given state over the given char transition
   * NOTE: this function will NOT resolve epsilon transitions*/
-  const std::set<unsigned int>& transition_function(unsigned int, char);
+  const std::set<state_type>& transition_function(state_type, char);
 
   /*Adds a state with no transitions to or from it, returns the state number*/
-  unsigned int add_state();
+  state_type add_state();
 
   /*Adds a transition from from_state to to_state over the given character*/
-  void add_transition(unsigned int from_state, char transition_char, unsigned int to_state);
+  void add_transition(state_type from_state, char transition_char, state_type to_state);
 
   /* For these operations to function, the input NFA and the current NFA must have
   * at least one state. No checking is performed.

@@ -25,18 +25,19 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -Wlong-long -Wmissing-braces \
     -Wmissing-field-initializers -Wmissing-format-attribute   \
     -Wmissing-include-dirs -Wmissing-noreturn \
-    -Wpacked  -Wpadded -Wparentheses  -Wpointer-arith \
+    -Wpacked -Wparentheses  -Wpointer-arith \
     -Wredundant-decls -Wreturn-type \
     -Wsequence-point  -Wshadow -Wsign-compare  -Wstack-protector \
     -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch  -Wswitch-default \
     -Wswitch-enum -Wtrigraphs  -Wuninitialized \
-    -Wunknown-pragmas  -Wunreachable-code -Wunused \
-    -Wunused-function  -Wunused-label  -Wunused-parameter \
+    -Wunknown-pragmas  -Wunreachable-code \
+    -Wunused-function  -Wunused-label -Wunused \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
-    -Wvolatile-register-var  -Wwrite-strings
+    -Wvolatile-register-var  -Wwrite-strings \
+		-Wno-c++11-extensions -Wno-unused-parameter
 
 DEVELOPMENT = -g -O0
-PRODUCTION = -static -O3
+PRODUCTION = -static -O3 -Wunused-parameter -Wpadded -Werror
 
 
 
@@ -58,15 +59,15 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS)
 	@$(CC) $(WARNINGS) $(DEVELOPMENT) $(INCLUDES) $(STUPID_MAC_STUFF) -c -o $@ $<
 
 $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
-	SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
-	-mkdir $(EXE_DIR)/$(APP_NAME).app
-	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
-	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
-	-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
-	cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
-	echo -n 'APPL????' > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
-	cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
-	cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
+	@SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
+	-@mkdir $(EXE_DIR)/$(APP_NAME).app
+	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
+	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
+	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
+	@cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
+	@echo -n 'APPL????' > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
+	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
+	@cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
 clean:
 	-@rm -r $(OBJ_DIR)
 	-@rm -r $(EXE_DIR)
