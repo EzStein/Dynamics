@@ -1,6 +1,7 @@
 #include "render_panel.h"
 
-render_panel::render_panel(wxWindow * parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)), image(500, 500) {
+render_panel::render_panel(wxWindow * parent, app_state * state) :
+wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)), image(500, 500), state(state) {
   Bind(wxEVT_PAINT, &render_panel::on_paint, this);
   Bind(wxEVT_MOTION, &render_panel::on_mouse_motion, this);
   Bind(wxEVT_LEFT_DOWN, &render_panel::on_mouse_left_down, this);

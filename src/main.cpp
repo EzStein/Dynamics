@@ -3,5 +3,5 @@
   #include <wx/wx.h>
 #endif
 
-#include "gui/app.h"
+#include "app/app.h"
 wxIMPLEMENT_APP(app);

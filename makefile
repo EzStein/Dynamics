@@ -65,7 +65,7 @@ $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
 	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
 	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
 	@cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
-	@echo -n 'APPL????' > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
+	@printf "APPL????" > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
 	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	@cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
 clean:

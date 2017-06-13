@@ -1,16 +1,20 @@
 #ifndef TOP_FRAME_GUARD
 #define TOP_FRAME_GUARD
 
+
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
 
+#include "../app/app_state.h"
+
 /*This class is the top level frame and contains all the children that will be drawn to the screen*/
 class top_frame : public wxFrame {
 public:
-  top_frame();
+  top_frame(app_state *);
 private:
+  app_state * state;
   void on_help_menu_click(wxCommandEvent&);
   void on_open_menu_click(wxCommandEvent&);
   void on_close_menu_click(wxCommandEvent&);
