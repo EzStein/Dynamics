@@ -42,29 +42,20 @@ public:
     return boxDragTopLeft;
   }
 
-  const vector_2d<int>& get_box_drag_bottom_right() const {
-    return boxDragBottomRight;
-  }
-
   const bool& get_draw_drag_box() const {
     return drawDragBox;
   }
 
-  int get_box_drag_width() const {
-    return boxDragBottomRight.x - boxDragTopLeft.x;
+  int get_box_drag_size() const {
+    return boxDragSize;
   }
-
-  int get_box_drag_height() const {
-    return boxDragBottomRight.y - boxDragTopLeft.y;
-  }
-
 
 private:
   vector_2d<double> boundaryTopLeftValue;
   vector_2d<double> boundaryBottomRightValue;
   wxBitmap image;
   vector_2d<int> boxDragTopLeft;
-  vector_2d<int> boxDragBottomRight;
+  int boxDragSize;
   bool drawDragBox;
 };
 

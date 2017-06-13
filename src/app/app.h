@@ -26,11 +26,13 @@ class app : public wxApp {
     app_state * state;
 
   public:
-    void render_panel_on_mouse_motion(wxMouseEvent&);
+    void render_panel_on_mouse_motion(wxMouseEvent&) const;
 
-    void render_panel_on_mouse_left_up(wxMouseEvent&);
+    void render_panel_on_mouse_left_up(wxMouseEvent&) const;
 
-    void render_panel_on_mouse_left_down(wxMouseEvent&);
+    void render_panel_on_mouse_left_down(wxMouseEvent&) const;
+
+    void compute_image() const;
 };
 
 #endif
