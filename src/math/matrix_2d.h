@@ -11,12 +11,28 @@
 template <class NUM_TYPE>
 class matrix_2d {
 public:
-  const NUM_TYPE M11, M12, M21, M22;
+  NUM_TYPE M11, M12, M21, M22;
+
+  /*
+  * Defualt constructor
+  */
+  matrix_2d() : M11(static_cast<NUM_TYPE>(0)),
+   M12(static_cast<NUM_TYPE>(0)),
+    M21(static_cast<NUM_TYPE>(0)),
+     M22(static_cast<NUM_TYPE>(0))
+     { }
+
   matrix_2d(NUM_TYPE _M11,NUM_TYPE _M12,NUM_TYPE _M21,NUM_TYPE _M22)
   : M11(_M11), M12(_M12), M21(_M21), M22(_M22) { }
 
-  template<class A> matrix_2d(const matrix_2d<A>& mat)
-  : M11(mat.M11), M12(mat.M12), M21(mat.M21), M22(mat.M22) { };
+  /*This defines a copy constructor if A == NUM_TYPE
+  * Otherwise it defines an explicit conversion using standard arithmetic conversions*/
+  template<class A> explicit matrix_2d(const matrix_2d<A>& mat)
+  : M11(static_cast<NUM_TYPE>(mat.M11)),
+   M12(static_cast<NUM_TYPE>(mat.M12)),
+    M21(static_cast<NUM_TYPE>(mat.M21)),
+     M22(static_cast<NUM_TYPE>(mat.M22))
+     { };
 
   matrix_2d<NUM_TYPE> transpose() const;
   matrix_2d<NUM_TYPE> inverse() const;
