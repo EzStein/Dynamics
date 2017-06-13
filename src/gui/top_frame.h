@@ -8,11 +8,16 @@
 #endif
 
 #include "../app/app_state.h"
+#include "render_panel.h"
 
+class app_state;
+class render_panel;
 /*This class is the top level frame and contains all the children that will be drawn to the screen*/
 class top_frame : public wxFrame {
 public:
   top_frame(app_state *);
+  render_panel * renderPanel;
+
 private:
   app_state * state;
   void on_help_menu_click(wxCommandEvent&);

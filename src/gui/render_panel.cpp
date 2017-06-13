@@ -1,7 +1,7 @@
 #include "render_panel.h"
 
 render_panel::render_panel(wxWindow * parent, app_state * state) :
-wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)), image(500, 500), state(state) {
+wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(500, 500)), state(state) {
   Bind(wxEVT_PAINT, &render_panel::on_paint, this);
   Bind(wxEVT_MOTION, &render_panel::on_mouse_motion, this);
   Bind(wxEVT_LEFT_DOWN, &render_panel::on_mouse_left_down, this);
@@ -24,25 +24,21 @@ void render_panel::render(wxDC& dc) {
   int width, height;
   GetSize(&width, &height);
   dc.DrawRectangle(0,0,width, height);
-  dc.SetBrush(*wxBLACK_BRUSH);
-  if(draw_rectangle) {
-    dc.DrawRectangle(x1, y1, x2 - x1, y2 - y1);
+  dc.DrawBitmap(state->get_image(),0,0);
+  if(state->get_draw_drag_box()) {
+    dc.SetPen(wxPen(wxColor(255,125,100),1));
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.DrawRectangle(state->get_box_drag_top_left().x, state->get_box_drag_top_left().y,
+      state->get_box_drag_width(), state->get_box_drag_height());
   }
-  //dc.DrawBitmap(image,0,0);
 }
 
 void render_panel::on_mouse_motion(wxMouseEvent& event) {
-  x2 = event.GetX();
-  y2 = event.GetY();
-  if(event.Dragging()) {
-    this->Refresh();
-  }
+  state->controller->render_panel_on_mouse_motion(event);
 }
 void render_panel::on_mouse_left_down(wxMouseEvent& event) {
-  draw_rectangle = true;
-  x1 = event.GetX();
-  y1 = event.GetY();
+  state->controller->render_panel_on_mouse_left_down(event);
 }
 void render_panel::on_mouse_left_up(wxMouseEvent& event) {
-  draw_rectangle = false;
+  state->controller->render_panel_on_mouse_left_up(event);
 }

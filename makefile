@@ -60,10 +60,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS)
 
 $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
 	@SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
-	-@mkdir $(EXE_DIR)/$(APP_NAME).app
-	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
-	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
-	-@mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
+	@-mkdir $(EXE_DIR)/$(APP_NAME).app
+	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
+	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
+	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
 	@cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
 	@printf "APPL????" > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
 	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
