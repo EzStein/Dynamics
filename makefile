@@ -75,16 +75,18 @@ clean:
 	-@rm -r $(EXE_DIR)
 
 clean-wx:
-	cd $(WX_BUILD_DIR)
-	make clean
+	-@cd $(WX_BUILD_DIR); \
+	make clean; \
 	make distclean
-	cd ../../
+
 	-@rm -r $(WX_BUILD_DIR)
 
 build-wx:
-	@mkdir $(WX_BUILD_DIR)
-	cd $(WX_DIR)
-	export CXX="g++ -mmacosx-version-min=10.7 -stdlib=libc++ -std=c++11"
-	./configure --disable-shared --enable-unicode --without-subdirs
-	cd ../$(WX_BUILD_DIR)
+	-mkdir $(WX_BUILD_DIR)
+
+	export CC="gcc -stdlib=libc++"; \
+	export CXX="g++ -stdlib=libc++ -std=c++11"; \
+	cd $(WX_BUILD_DIR); \
+	../configure --disable-shared --enable-unicode --without-subdirs --with-macosx-version-min=10.7; \
+	rm utils/wxrc/Makefile; \
 	make
