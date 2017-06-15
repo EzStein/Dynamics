@@ -19,6 +19,8 @@ class app : public wxApp {
     virtual bool OnInit() override;
     virtual int OnExit() override;
   private:
+    void thread_compute_region(const vector_2d<int>&, const vector_2d<int>&, const vector_2d<int>&);
+
     /*The top level frame*/
     top_frame * frame;
 

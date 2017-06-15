@@ -3,8 +3,16 @@
 #include <algorithm>
 #include "../math/util.h"
 #include <iostream>
+#include <thread>
+#include <climits>
+#include <vector>
+#include <wx/rawbmp.h>
 
 using std::max;
+using std::min;
+using std::vector;
+using std::thread;
+
 bool app::OnInit() {
   state = new app_state(this);
   frame = new top_frame(state);
@@ -27,6 +35,10 @@ void app::render_panel_on_mouse_motion(wxMouseEvent& event) const {
 }
 
 void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
+  if(!state->acceptInput)
+    return;
+
+
   state->drawDragBox = false;
   frame->renderPanel->Refresh();
 
@@ -45,33 +57,68 @@ void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
     compute_image();
     frame->renderPanel->Refresh();
   }
+
 }
 
 void app::render_panel_on_mouse_left_down(wxMouseEvent& event) const {
-  state->drawDragBox = true;
-  state->boxDragTopLeft = vector_2d<int>(event.GetX(), event.GetY());
+    state->drawDragBox = true;
+    state->boxDragTopLeft = vector_2d<int>(event.GetX(), event.GetY());
+    state->boxDragSize = 0;
 }
 
+
+void myFunc() {
+
+}
+
+
 void app::compute_image() const {
+
+
+  state->acceptInput = false;
   int width, height;
 
   frame->renderPanel->GetSize(&width, &height);
   vector_2d<int> size(width, height);
+  unsigned int hardwareThreads = std::thread::hardware_concurrency();
+  if(!hardwareThreads) {
+    hardwareThreads = 2;
+  }
 
-  std::cout << width << std::endl;
-  std::cout << height << std::endl;
-  unsigned char * imageData = reinterpret_cast<unsigned char *>(malloc(width * height * 3));
-  for(int i = 0; i != width; ++i) {
-    for(int j = 0; j != height; ++j) {
+  int numThreads = hardwareThreads;
+
+
+  vector<thread> threads;
+  threads.reserve(numThreads);
+  int heightInterval = (height/numThreads);
+  for(int i = 0; i != numThreads; ++i) {
+
+    vector_2d<int> topLeft(i*heightInterval, width);
+    vector_2d<int> bottomRight((i + 1)*heightInterval, width);
+    threads.push_back(thread(myFunc));
+  }
+  vector<thread>::iterator end = threads.end();
+  for(vector<thread>::iterator i = threads.begin(); i != end; ++i) {
+    i->join();
+  }
+  state->acceptInput = true;
+  frame->renderPanel->Refresh();
+}
+
+void app::thread_compute_region(const vector_2d<int>& topLeft, const vector_2d<int>& bottomRight, const vector_2d<int>& size) {
+  wxNativePixelData im(state->image);
+  wxNativePixelData::Iterator imageData(im.GetPixels());
+  for(int i = topLeft.x; i != bottomRight.x; ++i) {
+    for(int j = topLeft.y; j != bottomRight.y; ++j) {
       vector_2d<double> value =
         pixel_to_value(vector_2d<int>(i, j), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
       unsigned long val = mandelbrot(value, 1000);
       unsigned char * ptr = reinterpret_cast<unsigned char *>(&val);
-      imageData[j*height*3 + i*3] = ptr[0];
-      imageData[j*height*3 + i*3 + 1] = ptr[1];
-      imageData[j*height*3 + i*3 + 2] = ptr[2];
+      imageData.MoveTo(im, i, j);
+      imageData.Red() = ptr[0];
+      imageData.Green() = ptr[1];
+      imageData.Blue() = ptr[2];
     }
+    //frame->renderPanel->Refresh();
   }
-  wxImage tmpImage(width, height, imageData);
-  state->image = tmpImage;
 }

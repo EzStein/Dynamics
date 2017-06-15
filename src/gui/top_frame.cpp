@@ -69,13 +69,14 @@ top_frame::top_frame(app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAM
 }
 
 void top_frame::on_close(wxCloseEvent& event) {
-  wxMessageDialog dialog(NULL, "Are you sure you want to quit?", "Quit", wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION);
+  /*wxMessageDialog dialog(NULL, "Are you sure you want to quit?", "Quit", wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION);
   if(dialog.ShowModal() == wxID_YES) {
     std::cout << "YES" << std::endl;
     event.Skip();
   } else {
     std::cout << "NO" << std::endl;
-  }
+  }*/
+  event.Skip();
 }
 
 void top_frame::on_help_menu_click(wxCommandEvent&) {

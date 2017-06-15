@@ -5,14 +5,16 @@ OBJ_DIR = obj
 INCLUDE_DIR = include
 LIB_DIR = lib
 EXE_DIR = exe
-WX_DIR = wxWidgets/std-build
+WX_DIR = wxWidgets
+WX_BUILD_DIR = wxWidgets/std-build
 APP_NAME = Dynamics
 MAC_DIR = mac_build
 
 #Finds all src files in all directories of any depth in src/
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
-CC = g++
+CC = g++ -stdlib=libc++ -std=c++11
+
 WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
@@ -41,11 +43,11 @@ PRODUCTION = -static -O3 -Wunused-parameter -Wpadded -Werror
 
 
 
-LIBS = -L $(LIB_DIR) `$(WX_DIR)/wx-config --libs`
-INCLUDES = -isystem $(INCLUDE_DIR) `$(WX_DIR)/wx-config --cxxflags | sed 's/-I/-isystem /g'`
+LIBS = -L $(LIB_DIR) `$(WX_BUILD_DIR)/wx-config --libs`
+INCLUDES = -isystem $(INCLUDE_DIR) `$(WX_BUILD_DIR)/wx-config --cxxflags | sed 's/-I/-isystem /g'`
 
 
-STUPID_MAC_STUFF = -mmacosx-version-min=10.5
+STUPID_MAC_STUFF = -mmacosx-version-min=10.7
 DEPS = $(call rwildcard,$(SRC_DIR),*.h)
 
 all: $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app
@@ -71,3 +73,18 @@ $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
 clean:
 	-@rm -r $(OBJ_DIR)
 	-@rm -r $(EXE_DIR)
+
+clean-wx:
+	cd $(WX_BUILD_DIR)
+	make clean
+	make distclean
+	cd ../../
+	-@rm -r $(WX_BUILD_DIR)
+
+build-wx:
+	@mkdir $(WX_BUILD_DIR)
+	cd $(WX_DIR)
+	export CXX="g++ -mmacosx-version-min=10.7 -stdlib=libc++ -std=c++11"
+	./configure --disable-shared --enable-unicode --without-subdirs
+	cd ../$(WX_BUILD_DIR)
+	make

@@ -46,7 +46,11 @@ public:
     return drawDragBox;
   }
 
-  int get_box_drag_size() const {
+  const bool& get_accept_input() const {
+    return acceptInput;
+  }
+
+  const int& get_box_drag_size() const {
     return boxDragSize;
   }
 
@@ -57,6 +61,7 @@ private:
   vector_2d<int> boxDragTopLeft;
   int boxDragSize;
   bool drawDragBox;
+  bool acceptInput;
 };
 
 #endif
