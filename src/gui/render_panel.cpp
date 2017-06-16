@@ -17,7 +17,6 @@ wxPanel(parent, wxID_ANY, wxDefaultPosition,
 /*Schedules a refresh of the render panel. This method is scheduled by several threads
 by adding it to the event queue.*/
 void render_panel::on_custom_refresh_event(wxCommandEvent& event) {
-  std::cout << "AAAA" << std::endl;
   Refresh();
 }
 

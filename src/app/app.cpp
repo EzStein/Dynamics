@@ -10,6 +10,7 @@
 #include <mutex>
 #include <cmath>
 #include "../gui/custom_events.h"
+#include <cassert>
 
 using std::abs;
 using std::max;
@@ -127,14 +128,18 @@ void app::compute_image() const {
     hardwareThreads = 2;
   }
   unsigned char * imageData = reinterpret_cast<unsigned char *>(malloc(width * height * 3));
-  int numThreads = 1;
+  int numThreads = 4;
   int heightInterval = (height/numThreads);
 
   thread * threads = new thread[numThreads];
 
   for(int i = 0; i != numThreads; ++i) {
-    vector_2d<int> topLeft(i*heightInterval, 0);
-    vector_2d<int> bottomRight((i + 1)*heightInterval, width);
+    vector_2d<int> topLeft(0, i*heightInterval);
+    vector_2d<int> bottomRight(width, (i + 1)*heightInterval);
+    if(i == numThreads - 1) {
+      bottomRight.x = width;
+      bottomRight.y = height;
+    }
     threads[i] = thread([=](){
       thread_compute_region(topLeft, bottomRight, size, imageData);
     });
@@ -142,12 +147,12 @@ void app::compute_image() const {
 
   /*A thread that waits for the others to finish an then cleans up*/
   thread wait([=]()->void {
-    std::cout << "YAYA" << std::endl;
+    //std::cout << "YAYA" << std::endl;
     thread* end = threads + numThreads;
     for(thread* t = threads; t != end; ++t) {
       t->join();
     }
-    std::cout << "GGO" << std::endl;
+  //std::cout << "GGO" << std::endl;
     free(imageData);
     delete[] threads;
     state->acceptInputLock->lock();
@@ -161,23 +166,151 @@ void app::compute_image() const {
 
 void app::thread_compute_region(const vector_2d<int>& topLeft,
   const vector_2d<int>& bottomRight, const vector_2d<int>& size, unsigned char * imageData) const {
-  for(int y = topLeft.y; y != bottomRight.y; ++y) {
-    for(int x = topLeft.x; x != bottomRight.x; ++x) {
+  const int iterations = 500;
+  int roughness = 9;
+  int center = roughness/2;
+
+  for(int y = topLeft.y + center; y < bottomRight.y - roughness; y+=roughness) {
+    for(int x = topLeft.x + center; x < bottomRight.x - roughness; x+=roughness) {
       vector_2d<double> value =
         pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      unsigned long val = mandelbrot(value, 50);
+      unsigned long val = mandelbrot(value, iterations);
       int rgb = 0;
       if(val != 0) {
         rgb = (val % 100)*10000000;
       }
       unsigned char * ptr = reinterpret_cast<unsigned char *>(&rgb);
-      imageData[y*size.x*3 + x*3] = ptr[0];
-      imageData[y*size.x*3 + x*3 + 1] = ptr[1];
-      imageData[y*size.x*3 + x*3 + 2] = ptr[2];
+
+      int xEnd = x + center + 1;
+      int yEnd = y + center + 1;
+      if(y + roughness >= bottomRight.y - roughness) {
+        yEnd = bottomRight.y;
+      }
+
+      if(x + roughness >= bottomRight.x - roughness) {
+        xEnd = bottomRight.x;
+      }
+
+
+      for(int xToPaint = x-center; xToPaint != xEnd; ++xToPaint) {
+        for(int yToPaint = y-center; yToPaint != yEnd; ++yToPaint) {
+          imageData[yToPaint*size.x*3 + xToPaint*3] = ptr[0];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 1] = ptr[1];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 2] = ptr[2];
+
+
+
+        }
+      }
     }
+
+    wxBitmap im(wxImage(size.x, size.y, imageData, true));
+    state->imageLock->lock();
+    state->image = im;
+    state->imageLock->unlock();
+    wxCommandEvent* evt = new wxCommandEvent(CUSTOM_REFRESH_EVENT);
+    frame->renderPanel->GetEventHandler()->QueueEvent(evt);
   }
-  wxBitmap im(wxImage(size.x, size.y, imageData, true));
-  state->imageLock->lock();
-  state->image = im;
-  state->imageLock->unlock();
+
+  int previousRoughness = roughness;
+  roughness = 3;
+  center = roughness/2;
+
+
+  for(int y = topLeft.y + center; y < bottomRight.y - roughness; y+=roughness) {
+    for(int x = topLeft.x + center; x < bottomRight.x - roughness; x+=roughness) {
+      /*Skip over the pixel we already calculated*/
+      if((x - previousRoughness/2) % previousRoughness == 0 && (y - previousRoughness/2) % previousRoughness == 0) {
+
+        continue;
+      }
+      vector_2d<double> value =
+        pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      unsigned long val = mandelbrot(value, iterations);
+      int rgb = 0;
+      if(val != 0) {
+        rgb = (val % 100)*10000000;
+      }
+      unsigned char * ptr = reinterpret_cast<unsigned char *>(&rgb);
+
+      int xEnd = x + center + 1;
+      int yEnd = y + center + 1;
+      if(y + roughness >= bottomRight.y - roughness) {
+        yEnd = bottomRight.y;
+      }
+
+      if(x + roughness >= bottomRight.x - roughness) {
+        xEnd = bottomRight.x;
+      }
+
+
+      for(int xToPaint = x-center; xToPaint != xEnd; ++xToPaint) {
+        for(int yToPaint = y-center; yToPaint != yEnd; ++yToPaint) {
+          imageData[yToPaint*size.x*3 + xToPaint*3] = ptr[0];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 1] = ptr[1];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 2] = ptr[2];
+
+
+
+
+        }
+      }
+    }
+
+    wxBitmap im(wxImage(size.x, size.y, imageData, true));
+    state->imageLock->lock();
+    state->image = im;
+    state->imageLock->unlock();
+    wxCommandEvent* evt = new wxCommandEvent(CUSTOM_REFRESH_EVENT);
+    frame->renderPanel->GetEventHandler()->QueueEvent(evt);
+  }
+
+  previousRoughness = roughness;
+  roughness = 1;
+  center = 0;
+
+  for(int y = topLeft.y + center; y < bottomRight.y - roughness; y+=roughness) {
+    for(int x = topLeft.x + center; x < bottomRight.x - roughness; x+=roughness) {
+      if((x - previousRoughness/2) % previousRoughness == 0 && (y - previousRoughness/2) % previousRoughness == 0) {
+        assert((x - previousRoughness/2) % previousRoughness == 0 && (y - previousRoughness/2) % previousRoughness == 0);
+        continue;
+      }
+      vector_2d<double> value =
+        pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      unsigned long val = mandelbrot(value, iterations);
+      int rgb = 0;
+      if(val != 0) {
+        rgb = (val % 100)*10000000;
+      }
+      unsigned char * ptr = reinterpret_cast<unsigned char *>(&rgb);
+
+      int xEnd = x + center + 1;
+      int yEnd = y + center + 1;
+      if(y + roughness >= bottomRight.y - roughness) {
+        yEnd = bottomRight.y;
+      }
+
+      if(x + roughness >= bottomRight.x - roughness) {
+        xEnd = bottomRight.x;
+      }
+
+
+      for(int xToPaint = x-center; xToPaint != xEnd; ++xToPaint) {
+        for(int yToPaint = y-center; yToPaint != yEnd; ++yToPaint) {
+          imageData[yToPaint*size.x*3 + xToPaint*3] = ptr[0];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 1] = ptr[1];
+          imageData[yToPaint*size.x*3 + xToPaint*3 + 2] = ptr[2];
+
+
+        }
+      }
+    }
+
+    wxBitmap im(wxImage(size.x, size.y, imageData, true));
+    state->imageLock->lock();
+    state->image = im;
+    state->imageLock->unlock();
+    wxCommandEvent* evt = new wxCommandEvent(CUSTOM_REFRESH_EVENT);
+    frame->renderPanel->GetEventHandler()->QueueEvent(evt);
+  }
 }
