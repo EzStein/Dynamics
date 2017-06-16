@@ -28,8 +28,8 @@ void render_panel::render(wxDC& dc) {
   if(state->get_draw_drag_box()) {
     dc.SetPen(wxPen(wxColor(255,125,100),1));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(state->get_box_drag_top_left().x, state->get_box_drag_top_left().y,
-      state->get_box_drag_size(), state->get_box_drag_size());
+    dc.DrawRectangle(state->get_box_drag_start().x, state->get_box_drag_start().y,
+      state->get_box_drag_change().x, state->get_box_drag_change().y);
   }
 }
 

@@ -7,11 +7,15 @@
 #include <climits>
 #include <vector>
 #include <wx/rawbmp.h>
+#include <mutex>
+#include <cmath>
 
+using std::abs;
 using std::max;
 using std::min;
 using std::vector;
 using std::thread;
+using std::mutex;
 
 bool app::OnInit() {
   state = new app_state(this);
@@ -27,9 +31,27 @@ int app::OnExit() {
   return 0;
 }
 
+
+void app::render_panel_on_mouse_left_down(wxMouseEvent& event) const {
+    state->drawDragBox = true;
+    state->boxDragStart = vector_2d<int>(event.GetX(), event.GetY());
+    state->boxDragChange.x = 0;
+    state->boxDragChange.y = 0;
+}
+
 void app::render_panel_on_mouse_motion(wxMouseEvent& event) const {
+
+
   if(state->drawDragBox) {
-    state->boxDragSize = max(event.GetX() - state->boxDragTopLeft.x, state->boxDragTopLeft.y - event.GetY());
+    vector_2d<int> dragChange(event.GetX() - state->boxDragStart.x, event.GetY() - state->boxDragStart.y);
+
+    if(!dragChange.x || !dragChange.y)
+      return;
+
+    //This can be optimized if we know the binary representation of integers
+    vector_2d<int> dragChangeSign(abs(dragChange.x)/dragChange.x, abs(dragChange.y)/dragChange.y);
+    state->boxDragChange.x = dragChangeSign.x * max(dragChangeSign.x*dragChange.x, dragChangeSign.y*dragChange.y);
+    state->boxDragChange.y = dragChangeSign.y * dragChangeSign.x * state->boxDragChange.x;
     frame->renderPanel->Refresh();
   }
 }
@@ -42,15 +64,37 @@ void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
   state->drawDragBox = false;
   frame->renderPanel->Refresh();
 
-  if(state->boxDragSize > 5) {
-    vector_2d<int> boxDragBottomRight(state->boxDragTopLeft.x + state->boxDragSize,
-      state->boxDragTopLeft.y + state->boxDragSize);
+  if(abs(state->boxDragChange.x) > 5) {
+    vector_2d<int> boxDragBottomRight;
+    vector_2d<int> boxDragTopLeft;
+
+    if(state->boxDragChange.x > 0 && state->boxDragChange.y > 0) {
+      boxDragBottomRight.x = state->boxDragStart.x + state->boxDragChange.x;
+      boxDragBottomRight.y = state->boxDragStart.y + state->boxDragChange.y;
+      boxDragTopLeft = state->boxDragStart;
+    } else if(state->boxDragChange.x < 0 && state->boxDragChange.y > 0) {
+      boxDragBottomRight.x = state->boxDragStart.x;
+      boxDragBottomRight.y = state->boxDragStart.y + state->boxDragChange.y;
+      boxDragTopLeft.x = state->boxDragStart.x + state->boxDragChange.x;
+      boxDragTopLeft.y = state->boxDragStart.y;
+    } else if(state->boxDragChange.x > 0 && state->boxDragChange.y < 0) {
+      boxDragBottomRight.x = state->boxDragStart.x + state->boxDragChange.x;
+      boxDragBottomRight.y = state->boxDragStart.y;
+      boxDragTopLeft.x = state->boxDragStart.x;
+      boxDragTopLeft.y = state->boxDragStart.y + state->boxDragChange.y;
+    } else if(state->boxDragChange.x < 0 && state->boxDragChange.y < 0) {
+      boxDragBottomRight = state->boxDragStart;
+      boxDragTopLeft.x = state->boxDragStart.x + state->boxDragChange.x;
+      boxDragTopLeft.y = state->boxDragStart.y + state->boxDragChange.y;
+    }
+
 
     int width, height;
     frame->renderPanel->GetSize(&width, &height);
     vector_2d<int> pixelBoundary(width, height);
+
     vector_2d<double> tmpTopLeft =
-      pixel_to_value(state->boxDragTopLeft, pixelBoundary, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      pixel_to_value(boxDragTopLeft, pixelBoundary, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
     state->boundaryBottomRightValue =
       pixel_to_value(boxDragBottomRight, pixelBoundary, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
     state->boundaryTopLeftValue = tmpTopLeft;
@@ -60,24 +104,11 @@ void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
 
 }
 
-void app::render_panel_on_mouse_left_down(wxMouseEvent& event) const {
-    state->drawDragBox = true;
-    state->boxDragTopLeft = vector_2d<int>(event.GetX(), event.GetY());
-    state->boxDragSize = 0;
-}
-
-
-void myFunc() {
-
-}
 
 
 void app::compute_image() const {
-
-
   state->acceptInput = false;
   int width, height;
-
   frame->renderPanel->GetSize(&width, &height);
   vector_2d<int> size(width, height);
   unsigned int hardwareThreads = std::thread::hardware_concurrency();
@@ -85,40 +116,34 @@ void app::compute_image() const {
     hardwareThreads = 2;
   }
 
-  int numThreads = hardwareThreads;
-
-
-  vector<thread> threads;
-  threads.reserve(numThreads);
+  unsigned char * imageData = reinterpret_cast<unsigned char *>(malloc(width * height * 3));
+  int numThreads = 1;
   int heightInterval = (height/numThreads);
-  for(int i = 0; i != numThreads; ++i) {
 
-    vector_2d<int> topLeft(i*heightInterval, width);
+  for(int i = 0; i != numThreads; ++i) {
+    vector_2d<int> topLeft(i*heightInterval, 0);
     vector_2d<int> bottomRight((i + 1)*heightInterval, width);
-    threads.push_back(thread(myFunc));
+    thread t([=](){
+      thread_compute_region(topLeft, bottomRight, size, imageData);
+    });
+    t.join();
   }
-  vector<thread>::iterator end = threads.end();
-  for(vector<thread>::iterator i = threads.begin(); i != end; ++i) {
-    i->join();
-  }
-  state->acceptInput = true;
+  state->acceptInput=true;
+  state->image = wxImage(size.x, size.y, imageData, false);
   frame->renderPanel->Refresh();
 }
 
-void app::thread_compute_region(const vector_2d<int>& topLeft, const vector_2d<int>& bottomRight, const vector_2d<int>& size) {
-  wxNativePixelData im(state->image);
-  wxNativePixelData::Iterator imageData(im.GetPixels());
-  for(int i = topLeft.x; i != bottomRight.x; ++i) {
-    for(int j = topLeft.y; j != bottomRight.y; ++j) {
+void app::thread_compute_region(const vector_2d<int>& topLeft,
+  const vector_2d<int>& bottomRight, const vector_2d<int>& size, unsigned char * imageData) const {
+  for(int y = topLeft.y; y != bottomRight.y; ++y) {
+    for(int x = topLeft.x; x != bottomRight.x; ++x) {
       vector_2d<double> value =
-        pixel_to_value(vector_2d<int>(i, j), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      unsigned long val = mandelbrot(value, 1000);
+        pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      unsigned long val = mandelbrot(value, 100);
       unsigned char * ptr = reinterpret_cast<unsigned char *>(&val);
-      imageData.MoveTo(im, i, j);
-      imageData.Red() = ptr[0];
-      imageData.Green() = ptr[1];
-      imageData.Blue() = ptr[2];
+      imageData[y*size.x*3 + x*3] = ptr[0];
+      imageData[y*size.x*3 + x*3 + 1] = ptr[1];
+      imageData[y*size.x*3 + x*3 + 2] = ptr[2];
     }
-    //frame->renderPanel->Refresh();
   }
 }

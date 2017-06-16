@@ -7,6 +7,7 @@
 #endif
 #include "app_state.h"
 #include "../gui/top_frame.h"
+#include <mutex>
 
 class top_frame;
 class app_state;
@@ -19,7 +20,7 @@ class app : public wxApp {
     virtual bool OnInit() override;
     virtual int OnExit() override;
   private:
-    void thread_compute_region(const vector_2d<int>&, const vector_2d<int>&, const vector_2d<int>&);
+    void thread_compute_region(const vector_2d<int>&, const vector_2d<int>&, const vector_2d<int>&, unsigned char *) const;
 
     /*The top level frame*/
     top_frame * frame;
