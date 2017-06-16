@@ -9,6 +9,7 @@
 #include <wx/rawbmp.h>
 #include <mutex>
 #include <cmath>
+#include "../gui/custom_events.h"
 
 using std::abs;
 using std::max;
@@ -57,8 +58,14 @@ void app::render_panel_on_mouse_motion(wxMouseEvent& event) const {
 }
 
 void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
-  if(!state->acceptInput)
+  state->acceptInputLock->lock();
+  if(!state->acceptInput) {
+    state->acceptInputLock->unlock();
     return;
+  }
+  state->acceptInputLock->unlock();
+
+
 
 
   state->drawDragBox = false;
@@ -107,7 +114,11 @@ void app::render_panel_on_mouse_left_up(wxMouseEvent& event) const {
 
 
 void app::compute_image() const {
+  state->acceptInputLock->lock();
   state->acceptInput = false;
+  state->acceptInputLock->unlock();
+
+
   int width, height;
   frame->renderPanel->GetSize(&width, &height);
   vector_2d<int> size(width, height);
@@ -115,22 +126,37 @@ void app::compute_image() const {
   if(!hardwareThreads) {
     hardwareThreads = 2;
   }
-
   unsigned char * imageData = reinterpret_cast<unsigned char *>(malloc(width * height * 3));
   int numThreads = 1;
   int heightInterval = (height/numThreads);
 
+  thread * threads = new thread[numThreads];
+
   for(int i = 0; i != numThreads; ++i) {
     vector_2d<int> topLeft(i*heightInterval, 0);
     vector_2d<int> bottomRight((i + 1)*heightInterval, width);
-    thread t([=](){
+    threads[i] = thread([=](){
       thread_compute_region(topLeft, bottomRight, size, imageData);
     });
-    t.join();
   }
-  state->acceptInput=true;
-  state->image = wxImage(size.x, size.y, imageData, false);
-  frame->renderPanel->Refresh();
+
+  /*A thread that waits for the others to finish an then cleans up*/
+  thread wait([=]()->void {
+    std::cout << "YAYA" << std::endl;
+    thread* end = threads + numThreads;
+    for(thread* t = threads; t != end; ++t) {
+      t->join();
+    }
+    std::cout << "GGO" << std::endl;
+    free(imageData);
+    delete[] threads;
+    state->acceptInputLock->lock();
+    state->acceptInput = true;
+    state->acceptInputLock->unlock();
+    wxCommandEvent* evt = new wxCommandEvent(CUSTOM_REFRESH_EVENT);
+    frame->renderPanel->GetEventHandler()->QueueEvent(evt);
+  });
+  wait.detach();
 }
 
 void app::thread_compute_region(const vector_2d<int>& topLeft,
@@ -139,11 +165,19 @@ void app::thread_compute_region(const vector_2d<int>& topLeft,
     for(int x = topLeft.x; x != bottomRight.x; ++x) {
       vector_2d<double> value =
         pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      unsigned long val = mandelbrot(value, 100);
-      unsigned char * ptr = reinterpret_cast<unsigned char *>(&val);
+      unsigned long val = mandelbrot(value, 50);
+      int rgb = 0;
+      if(val != 0) {
+        rgb = (val % 100)*10000000;
+      }
+      unsigned char * ptr = reinterpret_cast<unsigned char *>(&rgb);
       imageData[y*size.x*3 + x*3] = ptr[0];
       imageData[y*size.x*3 + x*3 + 1] = ptr[1];
       imageData[y*size.x*3 + x*3 + 2] = ptr[2];
     }
   }
+  wxBitmap im(wxImage(size.x, size.y, imageData, true));
+  state->imageLock->lock();
+  state->image = im;
+  state->imageLock->unlock();
 }

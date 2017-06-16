@@ -3,7 +3,7 @@
 #include <iostream>
 #include "render_panel.h"
 
-top_frame::top_frame(app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAME), state(state) {
+top_frame::top_frame(const app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAME), state(state) {
   wxWindowID id;
 
   wxMenu  *menuFile = new wxMenu();
@@ -61,7 +61,7 @@ top_frame::top_frame(app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAM
   renderPanel = new render_panel(this, state);
   wxBoxSizer * sizerV = new wxBoxSizer(wxVERTICAL);
   wxBoxSizer * sizerH = new wxBoxSizer(wxHORIZONTAL);
-  sizerV->Add(renderPanel, 1, wxGROW | wxALL, 10);
+  sizerV->Add(renderPanel, 1, wxSHAPED | wxALL, 10);
   sizerV->Add(sizerH, 0, wxGROW | wxALL, 10);
   sizerH->Add(new wxButton(this, wxID_ANY, "OK"), 0, wxLEFT | wxRIGHT, 10);
   sizerH->Add(new wxButton(this, wxID_ANY, "CANCEL"), 1, wxLEFT | wxRIGHT, 10);
@@ -69,13 +69,6 @@ top_frame::top_frame(app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAM
 }
 
 void top_frame::on_close(wxCloseEvent& event) {
-  /*wxMessageDialog dialog(NULL, "Are you sure you want to quit?", "Quit", wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION);
-  if(dialog.ShowModal() == wxID_YES) {
-    std::cout << "YES" << std::endl;
-    event.Skip();
-  } else {
-    std::cout << "NO" << std::endl;
-  }*/
   event.Skip();
 }
 

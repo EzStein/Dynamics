@@ -21,6 +21,7 @@ class app : public wxApp {
     virtual int OnExit() override;
   private:
     void thread_compute_region(const vector_2d<int>&, const vector_2d<int>&, const vector_2d<int>&, unsigned char *) const;
+    void compute_image() const;
 
     /*The top level frame*/
     top_frame * frame;
@@ -35,7 +36,9 @@ class app : public wxApp {
 
     void render_panel_on_mouse_left_down(wxMouseEvent&) const;
 
-    void compute_image() const;
+
+
+
 };
 
 #endif

@@ -15,11 +15,11 @@ class render_panel;
 /*This class is the top level frame and contains all the children that will be drawn to the screen*/
 class top_frame : public wxFrame {
 public:
-  top_frame(app_state *);
+  top_frame(const app_state *);
   render_panel * renderPanel;
 
 private:
-  app_state * state;
+  const app_state * state;
   void on_help_menu_click(wxCommandEvent&);
   void on_open_menu_click(wxCommandEvent&);
   void on_close_menu_click(wxCommandEvent&);
