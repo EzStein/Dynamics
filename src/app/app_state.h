@@ -57,6 +57,7 @@ public:
 
   bool interruptComputationThreads;
   std::mutex* interruptComputationThreadsLock;
+  unsigned long iterations;
 
   private:
     std::mutex imageLockVal;

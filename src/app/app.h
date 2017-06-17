@@ -22,6 +22,7 @@ class app : public wxApp {
   private:
     void thread_compute_region(const vector_2d<int>&, const vector_2d<int>&, const vector_2d<int>&, unsigned char *) const;
     void compute_image() const;
+    void calculate_rough_image(const vector_2d<int>&, const vector_2d<int>&,const vector_2d<int>&, unsigned char *, int, int) const;
 
     /*The top level frame*/
     top_frame * frame;
