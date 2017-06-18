@@ -35,10 +35,7 @@ class app : public wxApp {
 
     /*Data will have a valid bit as its most significant bit. If it is 0, it is valid. If it is 1, it is invalid*/
     bool is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const;
-
-    void traverse_boundary(const vector_2d<int>& point, const vector_2d<int>& previousPointChange,
-      const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const;
-
+    
     /*The top level frame*/
     top_frame * frame;
 

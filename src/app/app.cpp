@@ -12,6 +12,7 @@
 #include "../gui/custom_events.h"
 #include <cassert>
 #include <iomanip>
+#include <stack>
 #include <chrono>
 
 
@@ -20,6 +21,7 @@ using std::max;
 using std::min;
 using std::vector;
 using std::thread;
+using std::stack;
 using std::mutex;
 
 const unsigned char visitedFlag = 0x80;
@@ -169,8 +171,8 @@ void app::compute_image() const {
 
     /*Construct and run a thread and move it into the array*/
     thread([=](){
-      thread_compute_region(topLeft, bottomRight, size, data);
-      //calculate_boundary(size, data);
+      //thread_compute_region(topLeft, bottomRight, size, data);
+      calculate_boundary(size, data);
     }).detach();
   }
 
@@ -338,6 +340,13 @@ void app::calculate_rough_image(const vector_2d<int>& topLeft, const vector_2d<i
   }
 }
 
+
+struct backtracking_data {
+  vector_2d<int> point;
+  vector_2d<int> previousPointChange;
+};
+
+
 void app::calculate_boundary(const vector_2d<int>& size, unsigned long * data) const {
 
   /*Search for a point */
@@ -383,58 +392,103 @@ void app::calculate_boundary(const vector_2d<int>& size, unsigned long * data) c
     //Adding this vector to point gives the previous point
     vector_2d<int> previousPointChange(0, -1);
 
-    traverse_boundary(point, previousPointChange, size, data, metaData);
+    stack<backtracking_data> recursiveStack;
+    backtracking_data init;
+    init.point = point;
+    init.previousPointChange = previousPointChange;
+    recursiveStack.push(init);
+
+    while(!recursiveStack.empty()) {
+      backtracking_data frame = recursiveStack.top();
+      recursiveStack.pop();
+      vector_2d<int> point = frame.point;
+      vector_2d<int> previousPointChange = frame.previousPointChange;
+
+
+
+      //Check if visited
+      if(metaData[point.y*size.x + point.x] & visitedFlag) {
+        continue;
+      }
+        //MARK AS VISITED
+      metaData[point.y * size.x + point.x] |= visitedFlag;
+
+        static int i = 0;
+        ++i;
+      bool across(false);
+      vector_2d<int> acrossPoint;
+      bool clockwise(false);
+      vector_2d<int> clockwisePoint;
+      bool counterclockwise(false);
+      vector_2d<int> counterclockwisePoint;
+
+      //Set x and y accross
+      acrossPoint = point - previousPointChange;
+      across = is_boundary_point(acrossPoint, size, data, metaData);
+
+      if(!previousPointChange.x) {
+        clockwisePoint.y = point.y;
+        clockwisePoint.x = point.x - previousPointChange.y;
+      } else {
+        clockwisePoint.y = point.y + previousPointChange.x;
+        clockwisePoint.x = point.x;
+      }
+      clockwise = is_boundary_point(clockwisePoint, size, data, metaData);
+
+      counterclockwisePoint.x = clockwisePoint.x + 2*previousPointChange.y;
+      counterclockwisePoint.y = clockwisePoint.y - 2*previousPointChange.x;
+      counterclockwise = is_boundary_point(counterclockwisePoint, size, data, metaData);
+
+
+      if(across) {
+        recursiveStack.push(backtracking_data{acrossPoint, point - acrossPoint});
+      }
+      if(counterclockwise) {
+        recursiveStack.push(backtracking_data{counterclockwisePoint, point - counterclockwisePoint});
+      }
+      if(clockwise) {
+        recursiveStack.push(backtracking_data{clockwisePoint, point - clockwisePoint});
+      }
+    }
+
+    stack<vector_2d<int>> fillStack;
+    fillStack.push(vector_2d<int>(size.x/2 + 1, size.y/2));
+    while(!fillStack.empty()) {
+      vector_2d<int> point = fillStack.top();
+      fillStack.pop();
+      if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
+      if(!data[point.y*size.x + point.x]) continue;
+      data[point.y*size.x + point.x] = 0;
+      fillStack.push(vector_2d<int>(point.x + 1, point.y));
+      fillStack.push(vector_2d<int>(point.x - 1, point.y));
+      fillStack.push(vector_2d<int>(point.x, point.y + 1));
+      fillStack.push(vector_2d<int>(point.x, point.y - 1));
+    }
+
+    fillStack.push(vector_2d<int>(0, 0));
+    while(!fillStack.empty()) {
+      vector_2d<int> point = fillStack.top();
+      fillStack.pop();
+      if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
+      if(!data[point.y*size.x + point.x]) continue;
+      if(metaData[point.y*size.x + point.x] & validFlag) continue;
+      vector_2d<double> value =
+        pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
+      metaData[point.y*size.x + point.x] |= validFlag;
+      fillStack.push(vector_2d<int>(point.x + 1, point.y));
+      fillStack.push(vector_2d<int>(point.x - 1, point.y));
+      fillStack.push(vector_2d<int>(point.x, point.y + 1));
+      fillStack.push(vector_2d<int>(point.x, point.y - 1));
+    }
     delete[] metaData;
+    state->computationThreadsRunningLock->lock();
+    state->computationThreadsRunning = 0;
+    state->computationThreadsRunningLock->unlock();
+
 }
 
-void app::traverse_boundary(const vector_2d<int>& point, const vector_2d<int>& previousPointChange,
-  const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const {
-  //Check if visited
-  if(metaData[point.y*size.x + point.x] & visitedFlag) {
-    return;
-  }
-    //MARK AS VISITED
-  metaData[point.y * size.x + point.x] |= visitedFlag;
 
-    static int i = 0;
-    ++i;
-  bool across(false);
-  vector_2d<int> acrossPoint;
-  bool clockwise(false);
-  vector_2d<int> clockwisePoint;
-  bool counterclockwise(false);
-  vector_2d<int> counterclockwisePoint;
-
-  //Set x and y accross
-  acrossPoint = point - previousPointChange;
-  across = is_boundary_point(acrossPoint, size, data, metaData);
-
-  if(!previousPointChange.x) {
-    clockwisePoint.y = point.y;
-    clockwisePoint.x = point.x - previousPointChange.y;
-  } else {
-    clockwisePoint.y = point.y + previousPointChange.x;
-    clockwisePoint.x = point.x;
-  }
-  clockwise = is_boundary_point(clockwisePoint, size, data, metaData);
-
-  counterclockwisePoint.x = clockwisePoint.x + 2*previousPointChange.y;
-  counterclockwisePoint.y = clockwisePoint.y - 2*previousPointChange.x;
-  counterclockwise = is_boundary_point(counterclockwisePoint, size, data, metaData);
-
-
-
-  if(counterclockwise) {
-    traverse_boundary(counterclockwisePoint, point - counterclockwisePoint, size, data, metaData);
-  }
-  if(clockwise) {
-    traverse_boundary(clockwisePoint, point - clockwisePoint, size, data, metaData);
-  }
-  if(across) {
-    traverse_boundary(acrossPoint, point - acrossPoint, size, data, metaData);
-  }
-  std::cout << point << std::endl;
-}
 
 /*A point is a boundary point if it is part of the set, and it is adjacent to a pixel that is not part of the set*/
 bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const {
