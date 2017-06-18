@@ -57,12 +57,17 @@ public:
 
   bool interruptComputationThreads;
   std::mutex* interruptComputationThreadsLock;
+
+  std::mutex* computationThreadsRunningLock;
+  int computationThreadsRunning;
+
   unsigned long iterations;
 
   private:
     std::mutex imageLockVal;
     std::mutex acceptInputLockVal;
     std::mutex interruptComputationThreadsLockVal;
+    std::mutex computationThreadsRunningLockVal;
 };
 
 #endif
