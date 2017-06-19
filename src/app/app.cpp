@@ -355,43 +355,36 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
     }
   }
 
-  for(int y = 0; y < size.y; ++y) {
-    for(int x = 0; x < size.x; ++x) {
-      int pixelIndex = y*size.x + x;
-      if(metaData[pixelIndex] & validFlag) continue;
-      vector_2d<double> value =
-      pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      data[pixelIndex] = mandelbrot(value, state->iterations);
-      metaData[pixelIndex] |= validFlag;
-      if(!data[pixelIndex]) {
-        if(!is_boundary_point(vector_2d<int>(x, y), size, data, metaData) &&
-              metaData[y*size.x + x] & visitedFlag) continue;
+  /*Iterate over each pixel. The only guarentee is that after each loop iteration the appropriate pixel will be calculated although
+  It is likely that many more pixels will be calculated on each iteration*/
 
-        vector_2d<int> interiorPoint = calculate_boundary(vector_2d<int>(x, y), size, data, metaData);
-        std::cout << vector_2d<int>(x, y) << std::endl;
-        std::cout << interiorPoint << std::endl;
-        if(interiorPoint.x != 0 && interiorPoint.y != 0)
-          fill_interior(interiorPoint, size, data, metaData);
+  vector_2d<int> point;
+  for(point.y = 0; point.y < size.y; ++point.y) {
+    for(point.x = 0; point.x < size.x; ++point.x) {
+      int pixelIndex = point.y*size.x + point.x;
+
+
+      unsigned long val = get_value(point, size, data, metaData);
+
+      if(is_boundary_point(point, size, data, metaData, val)) {
+        if(!(metaData[pixelIndex] & visitedFlag))
+          calculate_boundary(point, size, data, metaData, val);
+      } else {
+        fill_interior(point, size, data, metaData, val);
       }
+      //std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+
+      /*If the pixel is contained in the set*/
+      /*if(!data[pixelIndex]) {
+        if(is_boundary_point(point, size, data, metaData, 0)) {
+          if(!(metaData[pixelIndex] & visitedFlag))
+            calculate_boundary(point, size, data, metaData, 0);
+        } else {
+          fill_interior(point, size, data, metaData, 0);
+        }
+      }*/
     }
   }
-
-  /*srand(100);
-  while(1) {
-    vector_2d<int> point(rand() % size.x, rand() % size.y);
-    std::cout << point << std::endl;
-    int pixelIndex = point.y*size.x + point.x;
-    vector_2d<double> value =
-    pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-    data[pixelIndex] = mandelbrot(value, state->iterations);
-    metaData[pixelIndex] |= validFlag;
-    if(!data[pixelIndex]) {
-      calculate_boundary(point, size, data, metaData);
-      break;
-    }
-
-  }
-  fill_exterior(vector_2d<int>(0,0), size, data, metaData);*/
 
   delete[] metaData;
   state->computationThreadsRunningLock->lock();
@@ -400,17 +393,48 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
 
 }
 
-void app::fill_interior(const vector_2d<int>& initPoint, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const {
+/*Returns the value of data at the given point, calculating it if necessary*/
+unsigned long app::get_value(const vector_2d<int>& point, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData) const {
+  static int calculated = 0;
+
+  int pixelIndex = point.y*size.x + point.x;
+
+  /*If the data is already valid we return it*/
+  if(metaData[pixelIndex] & validFlag)
+    return data[pixelIndex];
+
+  /*Otherwise we calculated it and set it as valid*/
+  ++calculated;
+  std::cout << calculated << std::endl;
+  metaData[pixelIndex] |= validFlag;
+  vector_2d<double> value =
+    pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+  data[pixelIndex] = mandelbrot(value, state->iterations);
+  return data[pixelIndex];
+}
+
+/*Given an interior initPoint, this function fills in */
+void app::fill_interior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData, unsigned long value) const {
   stack<vector_2d<int>> fillStack;
   fillStack.push(initPoint);
   while(!fillStack.empty()) {
     vector_2d<int> point = fillStack.top();
     fillStack.pop();
+
+    /*If the point is out of bounds, we skip it*/
     if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
-    if(metaData[point.y*size.x + point.x] & visitedFlag) continue;
-    metaData[point.y*size.x + point.x] |= visitedFlag;
-    data[point.y*size.x + point.x] = 0;
-    metaData[point.y*size.x + point.x] |= validFlag;
+
+    int pixelIndex = point.y*size.x + point.x;
+    /*If we already visited this point, or it is a boundary point we skip it*/
+    if(metaData[pixelIndex] & visitedFlag) continue;
+    metaData[pixelIndex] |= visitedFlag;
+
+    /*We set the point and enable the valid flag*/
+    data[pixelIndex] = value;
+    metaData[pixelIndex] |= validFlag;
+
     fillStack.push(vector_2d<int>(point.x + 1, point.y));
     fillStack.push(vector_2d<int>(point.x - 1, point.y));
     fillStack.push(vector_2d<int>(point.x, point.y + 1));
@@ -418,24 +442,15 @@ void app::fill_interior(const vector_2d<int>& initPoint, const vector_2d<int>& s
   }
 }
 
-vector_2d<int> app::calculate_boundary(const vector_2d<int>& initPoint, const vector_2d<int>& size,
-  unsigned long * data, unsigned char * metaData) const {
+/*Given a boundary initPoint, this function calculates the rest of the boundary*/
+void app::calculate_boundary(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData, unsigned long value) const {
 
 
   /*Traverse until we get to a boundary point*/
   vector_2d<int> point(initPoint);
-  /*while(point.y <= size.y && data[point.y*size.x + point.x] == 0) {
-    ++point.y;
-    vector_2d<double> value =
-        pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-    data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
-    metaData[point.y*size.x + point.x] |= validFlag;
-  }
-  --point.y;*/
-
 
   stack<vector_2d<int> > recursiveStack;
-  vector_2d<int> interiorPoint;
   recursiveStack.push(point);
 
   while(!recursiveStack.empty()) {
@@ -455,23 +470,16 @@ vector_2d<int> app::calculate_boundary(const vector_2d<int>& initPoint, const ve
       for(int j = -1; j != 2; ++j) {
         if(i==0 && j == 0) continue;
         vector_2d<int> traversePoint = point + vector_2d<int>(i, j);
-        bool traverse = is_boundary_point(traversePoint, size, data, metaData);
+        bool traverse = is_boundary_point(traversePoint, size, data, metaData, value);
         if(traverse) {
           recursiveStack.push(traversePoint);
-        } else if(!data[traversePoint.y*size.x + traversePoint.x]) {
-          interiorPoint = traversePoint;
         }
       }
     }
   }
-
-
-
-  return interiorPoint;
-
 }
 
-void app::fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+/*void app::fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
   unsigned long * data, unsigned char * metaData) const {
 
   stack<vector_2d<int> > fillStack;
@@ -491,28 +499,21 @@ void app::fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& s
     fillStack.push(vector_2d<int>(point.x, point.y + 1));
     fillStack.push(vector_2d<int>(point.x, point.y - 1));
   }
-}
+}*/
 
 
 
 /*A point is a boundary point if it is part of the set, and it is adjacent to a pixel that is not part of the set*/
 bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size,
-  unsigned long * data, unsigned char * metaData) const {
+  unsigned long * data, unsigned char * metaData, unsigned long value) const {
   //If it is not in bounds, then it is not a boundary point.
   if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) {
     return false;
   }
-  unsigned long * pointData = data + (point.y*size.x + point.x);
-  if(!(metaData[point.y*size.x + point.x] & validFlag)) {
-    //data is invalid
-    metaData[point.y*size.x + point.x] |= validFlag;
-    vector_2d<double> value =
-      pixel_to_value(vector_2d<int>(point.x, point.y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-    *pointData = mandelbrot(value, state->iterations);
-  }
+  unsigned long val = get_value(point, size, data, metaData);
 
-  //In the case that the data is non-zero (not in set)
-  if(*pointData)
+  //In the case that the data is not in the prescribed region
+  if(val != value)
     return false;
 
   /*Iterate over the adjacent elements*/
@@ -523,16 +524,10 @@ bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& s
         return true;
       }
 
-      pointData = data + (y*size.x + x);
-      //Calculate the point if necessary
-      if(!(metaData[y*size.x + x] & validFlag)) {
-        //data is invalid
-        metaData[y*size.x + x] |= validFlag;
-        vector_2d<double> value =
-          pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-        *pointData = mandelbrot(value, state->iterations);
-      }
-      if(*pointData) {
+      val = get_value(vector_2d<int>(x, y), size, data, metaData);
+
+      /*If this adjacent point is not in the prescribed region*/
+      if(val != value) {
         return true;
       }
     }
