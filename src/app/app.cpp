@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <stack>
 #include <chrono>
+#include <cstdlib>
 
 
 using std::abs;
@@ -172,7 +173,7 @@ void app::compute_image() const {
     /*Construct and run a thread and move it into the array*/
     thread([=](){
       //thread_compute_region(topLeft, bottomRight, size, data);
-      calculate_boundary(size, data);
+      fast_fill(size, data);
     }).detach();
   }
 
@@ -340,158 +341,163 @@ void app::calculate_rough_image(const vector_2d<int>& topLeft, const vector_2d<i
   }
 }
 
+void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
+  /*Allocate memory for meta info*/
+  unsigned char * metaData = new unsigned char[size.x * size.y];
 
-struct backtracking_data {
-  vector_2d<int> point;
-  vector_2d<int> previousPointChange;
-};
+  /*initialize data and metadata*/
+  for(int i = 0; i < size.y; ++i) {
+    for(int j =0; j < size.x; ++j) {
+      //Initialize data and metadata
+      data[i*size.x + j] = 0xFFFFFFF;
+      //Not valid, not visited
+      metaData[i*size.x + j] = 0;
+    }
+  }
 
-
-void app::calculate_boundary(const vector_2d<int>& size, unsigned long * data) const {
-
-  /*Search for a point */
-  /*for(int y = 0; y < size.y; ++y) {
+  for(int y = 0; y < size.y; ++y) {
     for(int x = 0; x < size.x; ++x) {
       int pixelIndex = y*size.x + x;
+      if(metaData[pixelIndex] & validFlag) continue;
       vector_2d<double> value =
-        pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-        data[pixelIndex] = mandelbrot(value, state->iterations);
-        if(!data[pixelIndex]) {
-          break outer;
-        }
-    }*/
-    unsigned char * metaData = new unsigned char[size.x * size.y];
+      pixel_to_value(vector_2d<int>(x, y), size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+      data[pixelIndex] = mandelbrot(value, state->iterations);
+      metaData[pixelIndex] |= validFlag;
+      if(!data[pixelIndex]) {
+        if(!is_boundary_point(vector_2d<int>(x, y), size, data, metaData) &&
+              metaData[y*size.x + x] & visitedFlag) continue;
 
-
-
-    for(int i = 0; i < size.y; ++i) {
-      for(int j =0; j < size.x; ++j) {
-        //Initialize data and metadata
-        data[i*size.x + j] = 0xFFFFFFF;
-        //Not valid, not visited
-        metaData[i*size.x + j] = 0;
+        vector_2d<int> interiorPoint = calculate_boundary(vector_2d<int>(x, y), size, data, metaData);
+        std::cout << vector_2d<int>(x, y) << std::endl;
+        std::cout << interiorPoint << std::endl;
+        if(interiorPoint.x != 0 && interiorPoint.y != 0)
+          fill_interior(interiorPoint, size, data, metaData);
       }
     }
+  }
 
-    /*Traverse the interior until we reach the boundary*/
-    vector_2d<int> point(size.x/2, size.y/2);
+  /*srand(100);
+  while(1) {
+    vector_2d<int> point(rand() % size.x, rand() % size.y);
+    std::cout << point << std::endl;
+    int pixelIndex = point.y*size.x + point.x;
     vector_2d<double> value =
-      pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+    pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+    data[pixelIndex] = mandelbrot(value, state->iterations);
+    metaData[pixelIndex] |= validFlag;
+    if(!data[pixelIndex]) {
+      calculate_boundary(point, size, data, metaData);
+      break;
+    }
 
+  }
+  fill_exterior(vector_2d<int>(0,0), size, data, metaData);*/
+
+  delete[] metaData;
+  state->computationThreadsRunningLock->lock();
+  state->computationThreadsRunning = 0;
+  state->computationThreadsRunningLock->unlock();
+
+}
+
+void app::fill_interior(const vector_2d<int>& initPoint, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const {
+  stack<vector_2d<int>> fillStack;
+  fillStack.push(initPoint);
+  while(!fillStack.empty()) {
+    vector_2d<int> point = fillStack.top();
+    fillStack.pop();
+    if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
+    if(metaData[point.y*size.x + point.x] & visitedFlag) continue;
+    metaData[point.y*size.x + point.x] |= visitedFlag;
+    data[point.y*size.x + point.x] = 0;
+    metaData[point.y*size.x + point.x] |= validFlag;
+    fillStack.push(vector_2d<int>(point.x + 1, point.y));
+    fillStack.push(vector_2d<int>(point.x - 1, point.y));
+    fillStack.push(vector_2d<int>(point.x, point.y + 1));
+    fillStack.push(vector_2d<int>(point.x, point.y - 1));
+  }
+}
+
+vector_2d<int> app::calculate_boundary(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData) const {
+
+
+  /*Traverse until we get to a boundary point*/
+  vector_2d<int> point(initPoint);
+  /*while(point.y <= size.y && data[point.y*size.x + point.x] == 0) {
+    ++point.y;
+    vector_2d<double> value =
+        pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
     data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
     metaData[point.y*size.x + point.x] |= validFlag;
-    while(data[point.y*size.x + point.x] == 0) {
-      ++point.y;
-      value =
-          pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
-      metaData[point.y*size.x + point.x] |= validFlag;
-    }
-    --point.y;
-
-    //Adding this vector to point gives the previous point
-    vector_2d<int> previousPointChange(0, -1);
-
-    stack<backtracking_data> recursiveStack;
-    backtracking_data init;
-    init.point = point;
-    init.previousPointChange = previousPointChange;
-    recursiveStack.push(init);
-
-    while(!recursiveStack.empty()) {
-      backtracking_data frame = recursiveStack.top();
-      recursiveStack.pop();
-      vector_2d<int> point = frame.point;
-      vector_2d<int> previousPointChange = frame.previousPointChange;
+  }
+  --point.y;*/
 
 
+  stack<vector_2d<int> > recursiveStack;
+  vector_2d<int> interiorPoint;
+  recursiveStack.push(point);
 
-      //Check if visited
-      if(metaData[point.y*size.x + point.x] & visitedFlag) {
-        continue;
-      }
-        //MARK AS VISITED
-      metaData[point.y * size.x + point.x] |= visitedFlag;
+  while(!recursiveStack.empty()) {
 
-        static int i = 0;
-        ++i;
-      bool across(false);
-      vector_2d<int> acrossPoint;
-      bool clockwise(false);
-      vector_2d<int> clockwisePoint;
-      bool counterclockwise(false);
-      vector_2d<int> counterclockwisePoint;
+    vector_2d<int> point = recursiveStack.top();
+    recursiveStack.pop();
 
-      //Set x and y accross
-      acrossPoint = point - previousPointChange;
-      across = is_boundary_point(acrossPoint, size, data, metaData);
-
-      if(!previousPointChange.x) {
-        clockwisePoint.y = point.y;
-        clockwisePoint.x = point.x - previousPointChange.y;
-      } else {
-        clockwisePoint.y = point.y + previousPointChange.x;
-        clockwisePoint.x = point.x;
-      }
-      clockwise = is_boundary_point(clockwisePoint, size, data, metaData);
-
-      counterclockwisePoint.x = clockwisePoint.x + 2*previousPointChange.y;
-      counterclockwisePoint.y = clockwisePoint.y - 2*previousPointChange.x;
-      counterclockwise = is_boundary_point(counterclockwisePoint, size, data, metaData);
-
-
-      if(across) {
-        recursiveStack.push(backtracking_data{acrossPoint, point - acrossPoint});
-      }
-      if(counterclockwise) {
-        recursiveStack.push(backtracking_data{counterclockwisePoint, point - counterclockwisePoint});
-      }
-      if(clockwise) {
-        recursiveStack.push(backtracking_data{clockwisePoint, point - clockwisePoint});
-      }
+    //Check if visited, skip it
+    if(metaData[point.y*size.x + point.x] & visitedFlag) {
+      continue;
     }
 
-    stack<vector_2d<int>> fillStack;
-    fillStack.push(vector_2d<int>(size.x/2 + 1, size.y/2));
-    while(!fillStack.empty()) {
-      vector_2d<int> point = fillStack.top();
-      fillStack.pop();
-      if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
-      if(!data[point.y*size.x + point.x]) continue;
-      data[point.y*size.x + point.x] = 0;
-      fillStack.push(vector_2d<int>(point.x + 1, point.y));
-      fillStack.push(vector_2d<int>(point.x - 1, point.y));
-      fillStack.push(vector_2d<int>(point.x, point.y + 1));
-      fillStack.push(vector_2d<int>(point.x, point.y - 1));
-    }
+    //MARK AS VISITED
+    metaData[point.y * size.x + point.x] |= visitedFlag;
 
-    fillStack.push(vector_2d<int>(0, 0));
-    while(!fillStack.empty()) {
-      vector_2d<int> point = fillStack.top();
-      fillStack.pop();
-      if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
-      if(!data[point.y*size.x + point.x]) continue;
-      if(metaData[point.y*size.x + point.x] & validFlag) continue;
-      vector_2d<double> value =
-        pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-      data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
-      metaData[point.y*size.x + point.x] |= validFlag;
-      fillStack.push(vector_2d<int>(point.x + 1, point.y));
-      fillStack.push(vector_2d<int>(point.x - 1, point.y));
-      fillStack.push(vector_2d<int>(point.x, point.y + 1));
-      fillStack.push(vector_2d<int>(point.x, point.y - 1));
+    for(int i = -1; i != 2; ++i) {
+      for(int j = -1; j != 2; ++j) {
+        if(i==0 && j == 0) continue;
+        vector_2d<int> traversePoint = point + vector_2d<int>(i, j);
+        bool traverse = is_boundary_point(traversePoint, size, data, metaData);
+        if(traverse) {
+          recursiveStack.push(traversePoint);
+        } else if(!data[traversePoint.y*size.x + traversePoint.x]) {
+          interiorPoint = traversePoint;
+        }
+      }
     }
-    delete[] metaData;
-    state->computationThreadsRunningLock->lock();
-    state->computationThreadsRunning = 0;
-    state->computationThreadsRunningLock->unlock();
+  }
 
+
+
+  return interiorPoint;
+
+}
+
+void app::fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData) const {
+
+  stack<vector_2d<int> > fillStack;
+  fillStack.push(initPoint);
+  while(!fillStack.empty()) {
+    vector_2d<int> point = fillStack.top();
+    fillStack.pop();
+    if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
+    if(!data[point.y*size.x + point.x]) continue;
+    if(metaData[point.y*size.x + point.x] & validFlag) continue;
+    vector_2d<double> value =
+      pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
+    data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
+    metaData[point.y*size.x + point.x] |= validFlag;
+    fillStack.push(vector_2d<int>(point.x + 1, point.y));
+    fillStack.push(vector_2d<int>(point.x - 1, point.y));
+    fillStack.push(vector_2d<int>(point.x, point.y + 1));
+    fillStack.push(vector_2d<int>(point.x, point.y - 1));
+  }
 }
 
 
 
 /*A point is a boundary point if it is part of the set, and it is adjacent to a pixel that is not part of the set*/
-bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const {
+bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size,
+  unsigned long * data, unsigned char * metaData) const {
   //If it is not in bounds, then it is not a boundary point.
   if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) {
     return false;

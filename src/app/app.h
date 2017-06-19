@@ -31,11 +31,19 @@ class app : public wxApp {
     /*Uses the data array to render that imformation to the screen continuously*/
     void render_thread(const vector_2d<int>& size, unsigned long * data) const;
 
-    void calculate_boundary(const vector_2d<int>& size, unsigned long * data) const;
+    vector_2d<int> calculate_boundary(const vector_2d<int>& point, const vector_2d<int>& size,
+      unsigned long * data, unsigned char * metaData) const;
+
+    void fast_fill(const vector_2d<int>& size,
+      unsigned long * data) const;
 
     /*Data will have a valid bit as its most significant bit. If it is 0, it is valid. If it is 1, it is invalid*/
     bool is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const;
-    
+
+    void fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
+      unsigned long * data, unsigned char * metaData) const;
+
+    void fill_interior(const vector_2d<int>& init_point, const vector_2d<int>& size, unsigned long * data, unsigned char * metaData) const;
     /*The top level frame*/
     top_frame * frame;
 
