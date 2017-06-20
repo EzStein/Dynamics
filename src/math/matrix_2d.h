@@ -2,7 +2,7 @@
 #define MATRIX_2D_GUARD
 #include <string>
 #include <sstream>
-#include "vector_2d.h"
+#include "math/vector_2d.h"
 
 /*
 * Represents a 2x2 matrix for 2D operations.

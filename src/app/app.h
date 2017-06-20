@@ -6,7 +6,7 @@
   #include <wx/wx.h>
 #endif
 #include "app_state.h"
-#include "../gui/top_frame.h"
+#include "gui/top_frame.h"
 #include <mutex>
 #include <thread>
 

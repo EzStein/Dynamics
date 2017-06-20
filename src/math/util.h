@@ -1,6 +1,6 @@
 #ifndef UTIL_GUARD
 #define UTIL_GUARD
-#include "vector_2d.h"
+#include "math/vector_2d.h"
 
 vector_2d<int> value_to_pixel(const vector_2d<double>&, const vector_2d<int>&,
   const vector_2d<double>&, const vector_2d<double>&);

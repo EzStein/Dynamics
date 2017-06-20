@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include "reg_def.h"
+#include "compiler/reg_def.h"
 
 /*
 * This class represents a non-deterministic finite state automaton.

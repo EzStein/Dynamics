@@ -4,4 +4,4 @@
 //Provides useful definitions for regular expressions library
 typedef unsigned long state_type;
 typedef std::set<state_type> state_collection_type;
-#endif
+#endif 

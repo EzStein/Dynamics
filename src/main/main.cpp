@@ -1,7 +1,7 @@
 #include <iostream>
-#include "../compiler/NFA.h"
-#include "../compiler/DFA.h"
 #include <set>
+#include "compiler/NFA.h"
+#include "compiler/DFA.h"
 using namespace std;
 
 ostream& operator<<(ostream& out, const set<unsigned int>& myset) {

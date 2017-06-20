@@ -1,12 +1,12 @@
-#include "DFA.h"
 #include <stack>
 #include <set>
+#include "compiler/DFA.h"
 
 using std::map;
 using std::vector;
 using std::stack;
 using std::set;
-
+ 
 DFA::DFA(const char * string) {
   NFA nfa(string);
   convert_to_DFA(nfa, *this);

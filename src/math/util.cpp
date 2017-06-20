@@ -1,5 +1,5 @@
-#include "util.h"
-#include "matrix_2d.h"
+#include "math/util.h"
+#include "math/matrix_2d.h"
 
 vector_2d<double> pixel_to_value(const vector_2d<int>& pixel, const vector_2d<int>& pixelBoundary,
   const vector_2d<double>& valueBoundaryTop, const vector_2d<double>& valueBoundaryBottom) {

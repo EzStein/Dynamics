@@ -1,4 +1,3 @@
-#include "NFA.h"
 #include <iterator>
 #include <iostream>
 #include <stdexcept>
@@ -6,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <stack>
+#include "compiler/NFA.h"
 
 using std::map;
 using std::vector;

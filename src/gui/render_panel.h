@@ -5,8 +5,8 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-#include "../app/app_state.h"
-#include "../math/vector_2d.h"
+#include "app/app_state.h"
+#include "math/vector_2d.h"
 
 class app_state;
 class render_panel : public wxPanel {

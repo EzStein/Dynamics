@@ -4,3 +4,7 @@ obj
 exe
 wxWidgets
 include
+.depend
+.dirstamp
+dependencies
+tmp

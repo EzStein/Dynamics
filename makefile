@@ -10,10 +10,15 @@ WX_BUILD_DIR = wxWidgets/std-build
 APP_NAME = Dynamics
 MAC_DIR = mac_build
 
+
 #Finds all src files in all directories of any depth in src/
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
-CC = g++ -stdlib=libc++ -std=c++11
+CC = g++ -stdlib=libc++ -std=c++11 -I$(SRC_DIR)
+
+DIRS = $(EXE_DIR)/$(APP_NAME).app $(EXE_DIR)/$(APP_NAME).app/Contents \
+	$(EXE_DIR)/$(APP_NAME).app/Contents/MacOS $(EXE_DIR)/$(APP_NAME).app/Contents/Resources \
+	$(EXE_DIR) $(OBJ_DIR) $(dir $(OBJS))
 
 WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
@@ -52,20 +57,16 @@ DEPS = $(call rwildcard,$(SRC_DIR),*.h)
 
 all: $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app
 
-$(EXE_DIR)/$(APP_NAME): $(OBJS)
-	-@mkdir -p $(dir $@)
+$(EXE_DIR)/$(APP_NAME): $(OBJS) .dirstamp
+	@echo Linking...
 	@$(CC) $(WARNINGS) $(DEVELOPMENT) $(OBJS) $(INCLUDES) $(STUPID_MAC_STUFF) $(LIBS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS)
-	-@mkdir -p $(dir $@)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp .dirstamp
+	@echo Compiling $<
 	@$(CC) $(WARNINGS) $(DEVELOPMENT) $(INCLUDES) $(STUPID_MAC_STUFF) -c -o $@ $<
 
-$(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
+$(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist .dirstamp
 	@SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
-	@-mkdir $(EXE_DIR)/$(APP_NAME).app
-	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents
-	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS
-	@-mkdir $(EXE_DIR)/$(APP_NAME).app/Contents/Resources
 	@cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
 	@printf "APPL????" > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
 	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
@@ -74,12 +75,13 @@ $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
 clean:
 	-@rm -r $(OBJ_DIR)
 	-@rm -r $(EXE_DIR)
+	-@rm .depend
+	-@rm .dirstamp
 
 clean-wx:
 	-@cd $(WX_BUILD_DIR); \
 	make clean; \
 	make distclean
-
 	-@rm -r $(WX_BUILD_DIR)
 
 build-wx:
@@ -91,3 +93,20 @@ build-wx:
 	../configure --disable-shared --enable-unicode --without-subdirs --with-macosx-version-min=10.7; \
 	rm utils/wxrc/Makefile; \
 	make
+
+depend: .depend
+
+.depend: $(SRCS)
+	-rm .depend
+	$(foreach SRC,$(SRCS),$(CC) $(WARNINGS) $(DEVELOPMENT) \
+	$(INCLUDES) $(STUPID_MAC_STUFF) -MM $(SRC) -MT  $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
+
+include .depend
+
+.dirstamp:
+	mkdir -p $(DIRS)
+	touch $@
+
+
+
+.PHONY: build-wx clean-wx clean all depend

@@ -1,7 +1,7 @@
-#include "top_frame.h"
-#include "../app/app_traits.h"
 #include <iostream>
-#include "render_panel.h"
+#include "gui/top_frame.h"
+#include "app/app_traits.h"
+#include "gui/render_panel.h"
 
 top_frame::top_frame(const app_state * state) : wxFrame(NULL, wxID_ANY, APP_TRAITS_NAME), state(state) {
   wxWindowID id;

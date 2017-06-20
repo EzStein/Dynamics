@@ -1,14 +1,12 @@
 #ifndef TOP_FRAME_GUARD
 #define TOP_FRAME_GUARD
-
-
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
 
-#include "../app/app_state.h"
-#include "render_panel.h"
+#include "app/app_state.h"
+#include "gui/render_panel.h"
 
 class app_state;
 class render_panel;

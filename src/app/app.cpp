@@ -1,7 +1,7 @@
 #include "app.h"
-#include "../gui/top_frame.h"
+#include "gui/top_frame.h"
 #include <algorithm>
-#include "../math/util.h"
+#include "math/util.h"
 #include <iostream>
 #include <thread>
 #include <climits>
@@ -9,13 +9,13 @@
 #include <wx/rawbmp.h>
 #include <mutex>
 #include <cmath>
-#include "../gui/custom_events.h"
+#include "gui/custom_events.h"
 #include <cassert>
 #include <iomanip>
 #include <stack>
 #include <chrono>
 #include <cstdlib>
-#include "../concurrency/thread_pool.h"
+#include "concurrency/thread_pool.h"
 #include <list>
 
 

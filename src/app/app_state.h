@@ -8,7 +8,7 @@
 #endif
 
 
-#include "../math/vector_2d.h"
+#include "math/vector_2d.h"
 #include "app.h"
 
 
