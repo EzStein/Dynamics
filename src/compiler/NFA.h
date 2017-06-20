@@ -32,7 +32,7 @@ public:
   state_type size() const;
 
   /*Returns true if this NFA accepts the string, and false otherwise*/
-  bool accepts(const char *);
+  bool accepts(const char *) const;
 
 
 private:
@@ -41,19 +41,19 @@ private:
 
   /*Returns the set of all states reachable through epsilon transitions from the given state including this state.
   * This function uses a stack and a graph reachability algorithm to find all such values.*/
-  state_collection_type epsilon_closure(state_type);
+  state_collection_type epsilon_closure(state_type) const;
 
   /*
   * The same as the previous function except that it computes the union of the
   * epsilon closures over all elements of its input
   */
-  state_collection_type epsilon_closure(state_collection_type);
+  state_collection_type epsilon_closure(state_collection_type) const;
 
   /*
   * Returns the set of states reachable by the NFA under the c-style string provided.
   * NOTE: epsilon transitions WILL be resolved.
   */
-  state_collection_type extended_transition_function(state_type, const char *);
+  state_collection_type extended_transition_function(state_type, const char *) const;
 
   /*Constructs the NFA from the table by performing a deep copy of all of its data*/
   NFA(const std::vector<std::map<char, state_collection_type > > &);
@@ -68,7 +68,13 @@ private:
   /*Returns the set of states which may be empty,
   * that are recheable from the given state over the given char transition
   * NOTE: this function will NOT resolve epsilon transitions*/
-  const state_collection_type& transition_function(state_type, char);
+  state_collection_type transition_function(state_type, char) const;
+
+  /*
+  * Performs the same operation as the previous function except it calculates the union of the
+  * transition function applied to all states in the provided collection.
+  */
+  state_collection_type transition_function(state_collection_type states, char transition) const;
 
   /*Adds a state with no transitions to or from it, returns the state number*/
   state_type add_state();
@@ -127,7 +133,5 @@ private:
 
   friend class DFA;
 };
-
-//std::ostream& operator<<(std::ostream& out, const NFA& nfa);
 
 #endif

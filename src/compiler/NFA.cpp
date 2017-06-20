@@ -26,14 +26,13 @@ NFA::NFA(const vector<map<char, state_collection_type > > & table) {
   this->table = table;
 }
 
-bool NFA::accepts(const char * string) {
+bool NFA::accepts(const char * string) const {
   state_collection_type set = extended_transition_function(start_state, string);
   return set.find(accepting_state) != set.end();
 }
 
-state_collection_type NFA::extended_transition_function(state_type state, const char * string) {
+state_collection_type NFA::extended_transition_function(state_type state, const char * string) const {
   state_collection_type initial;
-  state_collection_type reachable;
   initial.insert(state);
 
   /*Iterate over each character*/
@@ -43,14 +42,7 @@ state_collection_type NFA::extended_transition_function(state_type state, const 
     initial = epsilon_closure(initial);
 
     /*For each state in initial, we add to reachable the reachable states through the given character*/
-    for(state_collection_type::const_iterator iter = initial.begin(); iter != initial.end(); ++iter) {
-      state_collection_type tmp = transition_function(*iter, *current_char);
-      copy(tmp.begin(), tmp.end(), inserter(reachable, reachable.begin()));
-    }
-
-    /*The reachable sets become the initial ones, and we reset the reachable set to be empty*/
-    initial = reachable;
-    reachable.clear();
+    initial = transition_function(initial, *current_char);
   }
 
   /*Expand one last time over the initial set to include equivalent states over epsilon transitions*/
@@ -59,7 +51,7 @@ state_collection_type NFA::extended_transition_function(state_type state, const 
 }
 
 
-state_collection_type NFA::epsilon_closure(state_collection_type initStates) {
+state_collection_type NFA::epsilon_closure(state_collection_type initStates) const {
   stack<state_type> processingStack;
   state_collection_type processed;
   for(state_collection_type::const_iterator elem = initStates.begin(); elem != initStates.end(); ++elem) {
@@ -84,14 +76,30 @@ state_collection_type NFA::epsilon_closure(state_collection_type initStates) {
   return processed;
 }
 
-state_collection_type NFA::epsilon_closure(state_type state) {
+state_collection_type NFA::epsilon_closure(state_type state) const {
   state_collection_type set;
   set.insert(state);
   return epsilon_closure(set);
 }
 
-const state_collection_type& NFA::transition_function(state_type state, char transition) {
-  return table[state][transition];
+state_collection_type NFA::transition_function(state_type state, char transition) const {
+  map<char, state_collection_type> map = table[state];
+  if(map.find(transition) == map.end()) {
+    //The map does not contain the transition as a key, so we return an empty set
+    return state_collection_type();
+  } else {
+    return map.at(transition);
+  }
+}
+
+
+state_collection_type NFA::transition_function(state_collection_type states, char transition) const {
+  state_collection_type ret;
+  for(state_collection_type::const_iterator state = states.begin(); state != states.end(); ++state) {
+    state_collection_type tmp = transition_function(*state, transition);
+    copy(tmp.begin(), tmp.end(), inserter(ret, ret.begin()));
+  }
+  return ret;
 }
 
 state_type NFA::size() const {

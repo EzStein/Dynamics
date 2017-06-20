@@ -27,7 +27,7 @@ public:
   state_type size() const;
 
   /*Returns true if this DFA accepts the string, and false otherwise*/
-  bool accepts(const char *);
+  bool accepts(const char *) const;
 
 private:
   std::vector<std::map<char, state_type> > table;
@@ -38,13 +38,13 @@ private:
   * from the default state return to the default state, and it is not an accepting state
   * The state will be contained in the table, but its map will be empty*/
   state_type default_state;
-  
+
   state_collection_type accepting_states;
 
   /*
   * Returns the state that the DFA would be in on the given string input.
   */
-  state_type extended_transition_function(state_type, const char *);
+  state_type extended_transition_function(state_type, const char *) const;
 
   /*Adds a state with no transitions to or from it, returns the state number*/
   state_type add_state();

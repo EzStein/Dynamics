@@ -1,9 +1,11 @@
 #include "DFA.h"
 #include <stack>
+#include <set>
 
 using std::map;
 using std::vector;
 using std::stack;
+using std::set;
 
 DFA::DFA(const char * string) {
   NFA nfa(string);
@@ -16,22 +18,57 @@ DFA::DFA(const NFA& nfa) {
 
 void DFA::convert_to_DFA(const NFA& nfa, DFA& dfa) {
   /*Create a start state*/
-  dfa.start_state = dfa.add_state();
   dfa.default_state = dfa.add_state();
-  state_type state = nfa.start_state;
-
+  dfa.start_state = dfa.add_state();
   stack<state_collection_type> processingStack;
-  //processingStack.push(nfa.epsilon_closure);
+
+  /*A mapping from NFA collections of states to dfa states*/
+  map<state_collection_type, state_type> nfaToDfaMap;
+
+  /*Initially the stack contains only the epsilon closure of the start state of the nfa*/
+  state_collection_type states = nfa.epsilon_closure(nfa.start_state);
+  processingStack.push(states);
+  nfaToDfaMap[states] = dfa.start_state;
+  while(!processingStack.empty()) {
+    states = processingStack.top();
+    processingStack.pop();
+
+    /*This set holds all the possible transitions out of the current collection of states*/
+    set<char> transitions;
+    /*Iterate over each state to find possible transitions*/
+    /*For each state in states*/
+    for(state_collection_type::const_iterator state = states.begin(); state != states.end(); ++state) {
+      /*Find all transitions out of that state and add them*/
+      for(map<char, state_collection_type>::const_iterator pair = nfa.table[*state].begin(); pair != nfa.table[*state].end(); ++pair) {
+        transitions.insert(pair->first);
+      }
+    }
+
+    /*We now iterate over all possible transitions*/
+    for(set<char>::const_iterator transition = transitions.begin(); transition != transitions.end(); ++transition) {
+      state_collection_type newStates = nfa.epsilon_closure(nfa.transition_function(states, *transition));
+      /*If the map does not contain the given key*/
+      if(nfaToDfaMap.find(newStates) == nfaToDfaMap.end()) {
+        processingStack.push(newStates);
+        state_type id = dfa.add_state();
+        nfaToDfaMap[newStates] = id;
+        //If the add states contain an accepting state
+        if(newStates.find(nfa.accepting_state) != newStates.end()) {
+          dfa.accepting_states.insert(id);
+        }
+      }
+      dfa.set_transition(nfaToDfaMap[states], *transition, nfaToDfaMap[newStates]);
+    }
+  }
 
   /*This is a list of states that need to be processed.
   * In general, it will grow as we iterate through it. Since it is a list,
   * none of its iterators will be invalidated when we insert items into it.
   * Any elements before the element currently being examined by the iterators
   * are considered marked and already processed*/
-
 }
 
-bool DFA::accepts(const char * string) {
+bool DFA::accepts(const char * string) const {
   /*True if accepting states contains the state given by extended_transition_function*/
   return accepting_states.find(extended_transition_function(start_state, string))
           != accepting_states.end();
@@ -51,7 +88,7 @@ void DFA::set_transition(state_type from_state, char transition_char, state_type
   table[from_state][transition_char] = to_state;
 }
 
-state_type DFA::extended_transition_function(state_type state, const char * current_char) {
+state_type DFA::extended_transition_function(state_type state, const char * current_char) const {
   /*Iterate over each character in the string*/
   for(; *current_char != '\x00'; ++current_char) {
 

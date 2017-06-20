@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../compiler/NFA.h"
+#include "../compiler/DFA.h"
 #include <set>
 using namespace std;
 
@@ -21,11 +22,19 @@ int main() {
   cin >> string;
 
   NFA nfa(regex.c_str());
+
   bool val = nfa.accepts(string.c_str());
   if(val) {
-    cout << "The regex matches your string!" << endl;
+    cout << "NFA: The regex matches your string!" << endl;
   } else {
-    cout << "No Match!" << endl;
+    cout << "NFA: No Match!" << endl;
+  }
+  DFA dfa(nfa);
+  val = dfa.accepts(string.c_str());
+  if(val) {
+    cout << "DFA: The regex matches your string!" << endl;
+  } else {
+    cout << "DFA: No Match!" << endl;
   }
   return 0;
 }
