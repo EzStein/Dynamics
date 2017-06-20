@@ -1,5 +1,5 @@
 #include <iostream>
-#include "NFA.h"
+#include "../compiler/NFA.h"
 #include <set>
 using namespace std;
 
@@ -12,7 +12,7 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
   return out;
 }
 
-int mains() {
+int main() {
 
   cout << "Enter a regular expression: ";
   string regex, string;

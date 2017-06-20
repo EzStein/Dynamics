@@ -2,12 +2,11 @@
 #define NFA_GUARD
 #include <vector>
 #include <map>
-#include <set>
 #include <iostream>
 #include "reg_def.h"
 
 /*
-* This class represents a non-deterministic finite state automata.
+* This class represents a non-deterministic finite state automaton.
 * The NFA can be constructed from a DFA or a regular expression.
 * Operations include applying the transition function from a set of states on
 * a character and determining whether a string is accepted.
@@ -40,31 +39,36 @@ private:
   state_type start_state;
   state_type accepting_state;
 
-  /*Returns the set of all states reachable through epsilon transitions from the given state.
-  * This function uses recursion to find all such values, and will detect an infinite loop
-  * and accomodate it. The function is not guarenteed to return a set containing the input state
-  * NOTE: This function is currently implemented using recursion, however we can use a graph reachability
-  * algorithm to substitute the recursive "stack" for an actual stack*/
-  std::set<state_type> transition_epsilon(state_type);
+  /*Returns the set of all states reachable through epsilon transitions from the given state including this state.
+  * This function uses a stack and a graph reachability algorithm to find all such values.*/
+  state_collection_type epsilon_closure(state_type);
+
+  /*
+  * The same as the previous function except that it computes the union of the
+  * epsilon closures over all elements of its input
+  */
+  state_collection_type epsilon_closure(state_collection_type);
 
   /*
   * Returns the set of states reachable by the NFA under the c-style string provided.
   * NOTE: epsilon transitions WILL be resolved.
   */
-  std::set<state_type> extended_transition_function(state_type, const char *);
+  state_collection_type extended_transition_function(state_type, const char *);
 
   /*Constructs the NFA from the table by performing a deep copy of all of its data*/
-  NFA(const std::vector<std::map<char, std::set<state_type> > > &);
+  NFA(const std::vector<std::map<char, state_collection_type > > &);
 
   /*This implements the table as a vector of maps. This may not be the most efficient,
-  but it is the most convenient. It may be changed later*/
-  std::vector<std::map<char, std::set<state_type> > > table;
+  but it is the most convenient. It may be changed later.
+  Each entry in the vector represents a state, whose out transitions for a given character
+  are the states in the set mapped to that character*/
+  std::vector<std::map<char, state_collection_type > > table;
 
   /*The following functions wrap the underlying implementation so that it may change later*/
   /*Returns the set of states which may be empty,
   * that are recheable from the given state over the given char transition
   * NOTE: this function will NOT resolve epsilon transitions*/
-  const std::set<state_type>& transition_function(state_type, char);
+  const state_collection_type& transition_function(state_type, char);
 
   /*Adds a state with no transitions to or from it, returns the state number*/
   state_type add_state();
@@ -72,7 +76,7 @@ private:
   /*Adds a transition from from_state to to_state over the given character*/
   void add_transition(state_type from_state, char transition_char, state_type to_state);
 
-  /* For these operations to function, the input NFA and the current NFA must have
+  /* For these operations to work correctly, the input NFA and the current NFA must have
   * at least one state. No checking is performed.
   */
   /*Changes this NFA to represent the concatentation of itself with the provided NFA*/
@@ -92,6 +96,16 @@ private:
 
 
   /*Parses the regular expression in the stringstream altering the provided NFA*/
+  /* It will parse the following grammer using top-down recursive descent. GRAMMER:
+  *    E -> T '|' E
+  *    T -> F T
+  *    F -> B
+  *    F -> F *
+  *    B -> character
+  *    B -> ( E )
+  *    character -> \n | \t | \\ | \'|' | \* | \( | \) | literal
+  *    literal -> a | b | c ... | A | B | C | ... | 1 | 2 | 3 | ... | ! | @ | # | ...
+  */
   static void parse_expression(std::stringstream&, NFA&);
 
   /*Parses the term in the stringstream altering the provided NFA*/

@@ -19,6 +19,8 @@ public:
 
   /*Constructs a DFA from a c-style string representing a regular expression*/
   DFA(const char *);
+
+  /*Construct a DFA from the given NFA*/
   DFA(const NFA&);
 
   /*Returns the number of states in this DFA*/
@@ -33,9 +35,11 @@ private:
 
   /*The default state is the state that all input strings end up in
   * if a transition rule for a given character is not found. All transitions
-  * from the default state return to the default state, and it is not an accepting state*/
+  * from the default state return to the default state, and it is not an accepting state
+  * The state will be contained in the table, but its map will be empty*/
   state_type default_state;
-  std::set<state_type> accepting_states;
+  
+  state_collection_type accepting_states;
 
   /*
   * Returns the state that the DFA would be in on the given string input.
@@ -45,7 +49,7 @@ private:
   /*Adds a state with no transitions to or from it, returns the state number*/
   state_type add_state();
 
-  /*Adds a transition from from_state to to_state over the given character*/
+  /*Sets a transition from from_state to to_state over the given character*/
   void set_transition(state_type from_state, char transition_char, state_type to_state);
 
   /*

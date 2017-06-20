@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-int main() {
+/*int main() {
   thread_pool pool(4);
   for(int i = 0; i != 400; i++) {
 
@@ -20,3 +20,4 @@ int main() {
   std::cout << "ABC" << std::endl;
   return 0;
 }
+*/

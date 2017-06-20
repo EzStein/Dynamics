@@ -15,6 +15,8 @@
 #include <stack>
 #include <chrono>
 #include <cstdlib>
+#include "../concurrency/thread_pool.h"
+#include <list>
 
 
 using std::abs;
@@ -24,6 +26,8 @@ using std::vector;
 using std::thread;
 using std::stack;
 using std::mutex;
+using std::list;
+using std::find;
 
 const unsigned char visitedFlag = 0x80;
 const unsigned char validFlag = 0x40;
@@ -343,6 +347,10 @@ void app::calculate_rough_image(const vector_2d<int>& topLeft, const vector_2d<i
 }
 
 void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
+
+
+
+
   pixelsCalculated = 0;
   /*Allocate memory for meta info*/
   unsigned char * metaData = new unsigned char[size.x * size.y];
@@ -359,38 +367,42 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
 
   /*Iterate over each pixel. The only guarentee is that after each loop iteration the appropriate pixel will be calculated although
   It is likely that many more pixels will be calculated on each iteration*/
+  thread_pool pool(1);
+  list<unsigned long> currentVals;
+  mutex lock;
 
-vector_2d<int> point;
+  vector_2d<int> point;
   for(point.y = 0; point.y < size.y; ++point.y) {
     for(point.x = 0; point.x < size.x; ++point.x) {
       int pixelIndex = point.y*size.x + point.x;
-
-
       unsigned long val = get_value(point, size, data, metaData);
-
-      if(is_boundary_point(point, size, data, metaData, val)) {
-        if(!(metaData[pixelIndex] & visitedFlag)) {
-          calculate_boundary(point, size, data, metaData, val);
-        }
-      } else {
-        if(!(metaData[pixelIndex] & visitedFlag)) {
-          fill_interior(point, size, data, metaData, val);
-        }
+      std::lock_guard<mutex> lk(lock);
+      if(find(currentVals.begin(), currentVals.end(), val) != currentVals.end()) {
+        continue;
       }
-      //std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-
-      /*If the pixel is contained in the set*/
-      /*if(!data[pixelIndex]) {
-        if(is_boundary_point(point, size, data, metaData, 0)) {
-          if(!(metaData[pixelIndex] & visitedFlag))
-            calculate_boundary(point, size, data, metaData, 0);
+      currentVals.push_back(val);
+      pool.execute([=, &lock, &currentVals]()->void{
+        if(is_boundary_point(point, size, data, metaData, val)) {
+          if(!(metaData[pixelIndex] & visitedFlag)) {
+            calculate_boundary(point, size, data, metaData, val);
+          }
         } else {
-          fill_interior(point, size, data, metaData, 0);
+          if(!(metaData[pixelIndex] & visitedFlag)) {
+            //fill_interior(point, size, data, metaData, val);
+          }
         }
-      }*/
+
+        {
+          std::lock_guard<mutex> lk(lock);
+          currentVals.erase(find(currentVals.begin(), currentVals.end(), val));
+        }
+      });
+
     }
   }
 
+  pool.terminate();
+  pool.join();
 
 
   double percentage = static_cast<double>(pixelsCalculated)/(size.x * size.y) * 100;
