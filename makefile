@@ -70,6 +70,7 @@ $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist
 	@printf "APPL????" > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
 	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	@cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
+
 clean:
 	-@rm -r $(OBJ_DIR)
 	-@rm -r $(EXE_DIR)

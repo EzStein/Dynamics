@@ -27,6 +27,7 @@ using std::mutex;
 
 const unsigned char visitedFlag = 0x80;
 const unsigned char validFlag = 0x40;
+unsigned long pixelsCalculated = 0;
 
 bool app::OnInit() {
   state = new app_state(this);
@@ -189,9 +190,9 @@ void app::compute_image() const {
 * Converts the given iterations into color values.
 */
 void convert_to_rgb(unsigned long iterations, unsigned char& R, unsigned char& G, unsigned char& B) {
-  R = iterations;
-  G = iterations*10;
-  B = iterations*100;
+  R = iterations * -34;
+  G = iterations * 10;
+  B = iterations * 100;
 }
 
 /*Continuosly reads the data and updates the view until all threads have been completed.*/
@@ -342,6 +343,7 @@ void app::calculate_rough_image(const vector_2d<int>& topLeft, const vector_2d<i
 }
 
 void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
+  pixelsCalculated = 0;
   /*Allocate memory for meta info*/
   unsigned char * metaData = new unsigned char[size.x * size.y];
 
@@ -358,7 +360,7 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
   /*Iterate over each pixel. The only guarentee is that after each loop iteration the appropriate pixel will be calculated although
   It is likely that many more pixels will be calculated on each iteration*/
 
-  vector_2d<int> point;
+vector_2d<int> point;
   for(point.y = 0; point.y < size.y; ++point.y) {
     for(point.x = 0; point.x < size.x; ++point.x) {
       int pixelIndex = point.y*size.x + point.x;
@@ -367,10 +369,13 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
       unsigned long val = get_value(point, size, data, metaData);
 
       if(is_boundary_point(point, size, data, metaData, val)) {
-        if(!(metaData[pixelIndex] & visitedFlag))
+        if(!(metaData[pixelIndex] & visitedFlag)) {
           calculate_boundary(point, size, data, metaData, val);
+        }
       } else {
-        fill_interior(point, size, data, metaData, val);
+        if(!(metaData[pixelIndex] & visitedFlag)) {
+          fill_interior(point, size, data, metaData, val);
+        }
       }
       //std::this_thread::sleep_for(std::chrono::nanoseconds(10));
 
@@ -386,6 +391,10 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
     }
   }
 
+
+
+  double percentage = static_cast<double>(pixelsCalculated)/(size.x * size.y) * 100;
+  std::cout << percentage << '%' << std::endl;
   delete[] metaData;
   state->computationThreadsRunningLock->lock();
   state->computationThreadsRunning = 0;
@@ -396,7 +405,7 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
 /*Returns the value of data at the given point, calculating it if necessary*/
 unsigned long app::get_value(const vector_2d<int>& point, const vector_2d<int>& size,
   unsigned long * data, unsigned char * metaData) const {
-  static int calculated = 0;
+
 
   int pixelIndex = point.y*size.x + point.x;
 
@@ -405,8 +414,7 @@ unsigned long app::get_value(const vector_2d<int>& point, const vector_2d<int>& 
     return data[pixelIndex];
 
   /*Otherwise we calculated it and set it as valid*/
-  ++calculated;
-  std::cout << calculated << std::endl;
+  ++pixelsCalculated;
   metaData[pixelIndex] |= validFlag;
   vector_2d<double> value =
     pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);

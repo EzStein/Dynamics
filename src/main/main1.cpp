@@ -3,5 +3,5 @@
   #include <wx/wx.h>
 #endif
 
-#include "app/app.h"
-wxIMPLEMENT_APP(app);
+#include "../app/app.h"
+//wxIMPLEMENT_APP(app);
