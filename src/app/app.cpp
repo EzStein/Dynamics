@@ -194,9 +194,9 @@ void app::compute_image() const {
 * Converts the given iterations into color values.
 */
 void convert_to_rgb(unsigned long iterations, unsigned char& R, unsigned char& G, unsigned char& B) {
-  R = iterations * -34;
-  G = iterations * 10;
-  B = iterations * 100;
+  R = static_cast<unsigned char>(iterations * 34);
+  G = static_cast<unsigned char>(iterations * 10);
+  B = static_cast<unsigned char>(iterations * 100);
 }
 
 /*Continuosly reads the data and updates the view until all threads have been completed.*/
@@ -367,42 +367,22 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
 
   /*Iterate over each pixel. The only guarentee is that after each loop iteration the appropriate pixel will be calculated although
   It is likely that many more pixels will be calculated on each iteration*/
-  thread_pool pool(1);
-  list<unsigned long> currentVals;
-  mutex lock;
 
   vector_2d<int> point;
   for(point.y = 0; point.y < size.y; ++point.y) {
     for(point.x = 0; point.x < size.x; ++point.x) {
       int pixelIndex = point.y*size.x + point.x;
       unsigned long val = get_value(point, size, data, metaData);
-      std::lock_guard<mutex> lk(lock);
-      if(find(currentVals.begin(), currentVals.end(), val) != currentVals.end()) {
-        continue;
-      }
-      currentVals.push_back(val);
-      pool.execute([=, &lock, &currentVals]()->void{
+
+      if(!(metaData[pixelIndex] & visitedFlag) && val == 0) {
         if(is_boundary_point(point, size, data, metaData, val)) {
-          if(!(metaData[pixelIndex] & visitedFlag)) {
-            calculate_boundary(point, size, data, metaData, val);
-          }
+          calculate_boundary(point, size, data, metaData, val);
         } else {
-          if(!(metaData[pixelIndex] & visitedFlag)) {
-            //fill_interior(point, size, data, metaData, val);
-          }
+          fill_interior(point, size, data, metaData, val);
         }
-
-        {
-          std::lock_guard<mutex> lk(lock);
-          currentVals.erase(find(currentVals.begin(), currentVals.end(), val));
-        }
-      });
-
+      }
     }
   }
-
-  pool.terminate();
-  pool.join();
 
 
   double percentage = static_cast<double>(pixelsCalculated)/(size.x * size.y) * 100;
@@ -466,12 +446,10 @@ void app::fill_interior(const vector_2d<int>& initPoint, const vector_2d<int>& s
 void app::calculate_boundary(const vector_2d<int>& initPoint, const vector_2d<int>& size,
   unsigned long * data, unsigned char * metaData, unsigned long value) const {
 
-
   /*Traverse until we get to a boundary point*/
-  vector_2d<int> point(initPoint);
 
   stack<vector_2d<int> > recursiveStack;
-  recursiveStack.push(point);
+  recursiveStack.push(initPoint);
 
   while(!recursiveStack.empty()) {
 
@@ -498,30 +476,6 @@ void app::calculate_boundary(const vector_2d<int>& initPoint, const vector_2d<in
     }
   }
 }
-
-/*void app::fill_exterior(const vector_2d<int>& initPoint, const vector_2d<int>& size,
-  unsigned long * data, unsigned char * metaData) const {
-
-  stack<vector_2d<int> > fillStack;
-  fillStack.push(initPoint);
-  while(!fillStack.empty()) {
-    vector_2d<int> point = fillStack.top();
-    fillStack.pop();
-    if(point.x < 0 || point.x >= size.x || point.y < 0 || point.y >= size.y) continue;
-    if(!data[point.y*size.x + point.x]) continue;
-    if(metaData[point.y*size.x + point.x] & validFlag) continue;
-    vector_2d<double> value =
-      pixel_to_value(point, size, state->boundaryTopLeftValue, state->boundaryBottomRightValue);
-    data[point.y*size.x + point.x] = mandelbrot(value, state->iterations);
-    metaData[point.y*size.x + point.x] |= validFlag;
-    fillStack.push(vector_2d<int>(point.x + 1, point.y));
-    fillStack.push(vector_2d<int>(point.x - 1, point.y));
-    fillStack.push(vector_2d<int>(point.x, point.y + 1));
-    fillStack.push(vector_2d<int>(point.x, point.y - 1));
-  }
-}*/
-
-
 
 /*A point is a boundary point if it is part of the set, and it is adjacent to a pixel that is not part of the set*/
 bool app::is_boundary_point(const vector_2d<int>& point, const vector_2d<int>& size,

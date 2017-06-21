@@ -34,10 +34,19 @@ public:
   /*Returns true if this NFA accepts the string, and false otherwise*/
   bool accepts(const char *) const;
 
+  /*This function simulates the NFA until termination, which occurs if the input stream
+  * is runs out of characters, or the NFA reaches a nonrecoverable empty state. The function returns the
+  * longest prefix of the input state that is accepted by the NFA as well as the set of
+  * accepting states that the NFA could be in after matching that prefix. If the nfa matches the empty string,
+  * it may return that string. If no prefix (not even the empty string) is matched by the nfa,
+  * the string containing the single null character '\x00' is returned along with an empty set of states.
+  */
+  state_collection_type run_until_termination(std::istream&, std::string&);
+
 
 private:
   state_type start_state;
-  state_type accepting_state;
+  state_collection_type accepting_states;
 
   /*Returns the set of all states reachable through epsilon transitions from the given state including this state.
   * This function uses a stack and a graph reachability algorithm to find all such values.*/
@@ -83,7 +92,8 @@ private:
   void add_transition(state_type from_state, char transition_char, state_type to_state);
 
   /* For these operations to work correctly, the input NFA and the current NFA must have
-  * at least one state. No checking is performed.
+  * at least one state. No checking is performed. Additionally, both the NFAs must have
+  * exactly one accepting state in accepting_states, namely *accepting_states.begin()
   */
   /*Changes this NFA to represent the concatentation of itself with the provided NFA*/
   void concatenation(const NFA&);

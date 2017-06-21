@@ -13,7 +13,7 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
   return out;
 }
 
-int main() {
+int main1() {
 
   cout << "Enter a regular expression: ";
   string regex, string;

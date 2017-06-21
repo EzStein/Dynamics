@@ -6,5 +6,6 @@ wxWidgets
 include
 .depend
 .dirstamp
+.removedirs
 dependencies
 tmp

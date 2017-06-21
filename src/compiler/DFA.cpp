@@ -6,7 +6,7 @@ using std::map;
 using std::vector;
 using std::stack;
 using std::set;
- 
+
 DFA::DFA(const char * string) {
   NFA nfa(string);
   convert_to_DFA(nfa, *this);
@@ -52,8 +52,9 @@ void DFA::convert_to_DFA(const NFA& nfa, DFA& dfa) {
         processingStack.push(newStates);
         state_type id = dfa.add_state();
         nfaToDfaMap[newStates] = id;
-        //If the add states contain an accepting state
-        if(newStates.find(nfa.accepting_state) != newStates.end()) {
+
+        //If the new states contain an accepting state we mark the constructed state as accepting.
+        if(intersects(newStates.begin(), newStates.end(), nfa.accepting_states.begin(), nfa.accepting_states.end())) {
           dfa.accepting_states.insert(id);
         }
       }

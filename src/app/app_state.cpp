@@ -9,10 +9,10 @@ app_state::~app_state() {
 
 }
 
-app_state::app_state(app* controller) : controller(controller),
-    image(APP_TRAITS_RENDER_PANEL_INIT_SIZE, APP_TRAITS_RENDER_PANEL_INIT_SIZE), acceptInput(false),
+app_state::app_state(app* controller) : controller(controller),acceptInput(false),
     boundaryTopLeftValue(-2.0, 2.0), boundaryBottomRightValue(2.0, -2.0),
-    drawDragBox(false), interruptComputationThreads(false), iterations(5000) {
+    drawDragBox(false), interruptComputationThreads(false), iterations(5000),
+    image(APP_TRAITS_RENDER_PANEL_INIT_SIZE, APP_TRAITS_RENDER_PANEL_INIT_SIZE) {
       imageLock = &imageLockVal;
       interruptComputationThreadsLock = &interruptComputationThreadsLockVal;
       acceptInputLock = &acceptInputLockVal;

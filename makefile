@@ -41,7 +41,8 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -Wunused-function  -Wunused-label -Wunused \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings \
-		-Wno-c++11-extensions -Wno-unused-parameter
+		-Wno-c++11-extensions -Wno-unused-parameter \
+		-Wno-reorder
 
 DEVELOPMENT = -g -O0
 PRODUCTION = -static -O3 -Wunused-parameter -Wpadded -Werror
@@ -72,11 +73,7 @@ $(EXE_DIR)/$(APP_NAME).app: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist .dirsta
 	@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
 	@cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
 
-clean:
-	-@rm -r $(OBJ_DIR)
-	-@rm -r $(EXE_DIR)
-	-@rm .depend
-	-@rm .dirstamp
+
 
 clean-wx:
 	-@cd $(WX_BUILD_DIR); \
@@ -96,17 +93,19 @@ build-wx:
 
 depend: .depend
 
-.depend: $(SRCS)
-	-rm .depend
+.depend:
 	$(foreach SRC,$(SRCS),$(CC) $(WARNINGS) $(DEVELOPMENT) \
 	$(INCLUDES) $(STUPID_MAC_STUFF) -MM $(SRC) -MT  $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
 
-include .depend
+-include .depend
 
 .dirstamp:
 	mkdir -p $(DIRS)
 	touch $@
 
+clean:
+	-@rm -r $(OBJ_DIR)
+	-@rm -r $(EXE_DIR)
+	-@rm .dirstamp
 
-
-.PHONY: build-wx clean-wx clean all depend
+.PHONY: build-wx clean-wx all clean depend

@@ -4,6 +4,7 @@
 #include <cctype>
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <stack>
 #include "compiler/NFA.h"
 
@@ -16,6 +17,8 @@ using std::char_traits;
 using std::string;
 using std::stack;
 using std::invalid_argument;
+using std::istream;
+using std::streampos;
 
 NFA::NFA(const char * string) {
   stringstream sstream(string);
@@ -28,7 +31,54 @@ NFA::NFA(const vector<map<char, state_collection_type > > & table) {
 
 bool NFA::accepts(const char * string) const {
   state_collection_type set = extended_transition_function(start_state, string);
-  return set.find(accepting_state) != set.end();
+  return intersects(set.begin(), set.end(), accepting_states.begin(), accepting_states.end());
+}
+
+state_collection_type NFA::run_until_termination(istream& stream, string& prefix) {
+  typedef istream::char_type char_type;
+  typedef istream::int_type int_type;
+  typedef istream::traits_type traits_type;
+
+  /*If nothing is matched, the the string containing the null character is returned*/
+  prefix = "\x00";
+  stringstream prefixBuilder;
+  state_collection_type prefixStates;
+  state_collection_type states;
+  streampos prefixPosition;
+  states.insert(start_state);
+  states = epsilon_closure(states);
+  /*This is true if the NFA accepts the empty string*/
+  if(intersects(accepting_states.begin(), accepting_states.end(), states.begin(), states.end())) {
+    prefix = "";
+    prefixStates = states;
+    prefixPosition = stream.tellg();
+  }
+
+
+  int_type in;
+  while((in = stream.get()) != traits_type::eof()) {
+    char_type c = traits_type::to_char_type(in);
+
+    /*Expand over transition function and epsilon closure*/
+    states = transition_function(states, c);
+    states = epsilon_closure(states);
+    prefixBuilder.put(c);
+
+    /*This prefix would be accepted*/
+
+    if(states.empty()) {
+      stream.seekg(prefixPosition);
+      return intersect(prefixStates, accepting_states);
+    }
+
+    if(intersects(accepting_states.begin(), accepting_states.end(), states.begin(), states.end())) {
+      prefix = prefixBuilder.str();
+      prefixStates = states;
+      prefixPosition = stream.tellg();
+    }
+  }
+  stream.seekg(prefixPosition);
+  return intersect(prefixStates, accepting_states);
 }
 
 state_collection_type NFA::extended_transition_function(state_type state, const char * string) const {
@@ -43,6 +93,10 @@ state_collection_type NFA::extended_transition_function(state_type state, const 
 
     /*For each state in initial, we add to reachable the reachable states through the given character*/
     initial = transition_function(initial, *current_char);
+
+    /*We reached a nonrecoverable set of states*/
+    if(initial.empty())
+      return initial;
   }
 
   /*Expand one last time over the initial set to include equivalent states over epsilon transitions*/
@@ -118,23 +172,27 @@ void NFA::add_transition(state_type from_state, char transition_char, state_type
 
 void NFA::kleene_closure() {
   /*Add epsilon transition from accepting to start state*/
-  add_transition(accepting_state, '\x00', start_state);
+  add_transition(*accepting_states.begin(), '\x00', start_state);
   state_type new_start = add_state();
   state_type new_accepting = add_state();
 
   /*Add the appropriate epsilon transitions*/
   add_transition(new_start, '\x00', start_state);
-  add_transition(accepting_state, '\x00', new_accepting);
+  add_transition(*accepting_states.begin(), '\x00', new_accepting);
   add_transition(new_start, '\x00', new_accepting);
   start_state = new_start;
-  accepting_state = new_accepting;
+
+  accepting_states.erase(accepting_states.begin());
+  accepting_states.insert(new_accepting);
 }
 
 void NFA::concatenation(const NFA& nfa) {
   state_type original_size = size();
   augment_table(nfa);
-  add_transition(accepting_state, '\x00', nfa.start_state + original_size);
-  accepting_state = nfa.accepting_state + original_size;
+  add_transition(*accepting_states.begin(), '\x00', nfa.start_state + original_size);
+
+  accepting_states.erase(accepting_states.begin());
+  accepting_states.insert(*nfa.accepting_states.begin() + original_size);
 }
 
 void NFA::alternation(const NFA& nfa) {
@@ -144,10 +202,12 @@ void NFA::alternation(const NFA& nfa) {
   state_type new_accepting = add_state();
   add_transition(new_start, '\x00', start_state);
   add_transition(new_start, '\x00', nfa.start_state + original_size);
-  add_transition(accepting_state, '\x00', new_accepting);
-  add_transition(nfa.accepting_state + original_size, '\x00', new_accepting);
+  add_transition(*accepting_states.begin(), '\x00', new_accepting);
+  add_transition(*nfa.accepting_states.begin() + original_size, '\x00', new_accepting);
   start_state = new_start;
-  accepting_state = new_accepting;
+
+  accepting_states.erase(accepting_states.begin());
+  accepting_states.insert(new_accepting);
 }
 
 void NFA::augment_table(const NFA& nfa) {
@@ -176,7 +236,12 @@ void NFA::augment_table(const NFA& nfa) {
 
 ostream& operator<<(ostream& out, const NFA& nfa) {
   out << "Start State: " << nfa.start_state << "\n";
-  out << "Accepting State: " << nfa.accepting_state << "\n";
+  out << "Accepting States: {";
+  for(state_collection_type::const_iterator iter = nfa.accepting_states.begin(); iter != nfa.accepting_states.end(); ++iter) {
+    out << *iter << ", ";
+  }
+  out << "}\n";
+
   vector<map<char, state_collection_type > >::const_iterator begin = nfa.table.begin();
   vector<map<char, state_collection_type > >::const_iterator end = nfa.table.end();
   for(vector<map<char, state_collection_type > >::const_iterator entry = begin; entry != end; ++entry) {
@@ -282,8 +347,8 @@ void NFA::parse_base(stringstream& sstream, NFA& nfa) {
     match(sstream, to_add);
   }
   nfa.start_state = nfa.add_state();
-  nfa.accepting_state = nfa.add_state();
-  nfa.add_transition(nfa.start_state, to_add, nfa.accepting_state);
+  nfa.accepting_states.insert(nfa.add_state());
+  nfa.add_transition(nfa.start_state, to_add, *(nfa.accepting_states.begin()));
 
 }
 
