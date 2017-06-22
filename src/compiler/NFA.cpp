@@ -19,6 +19,7 @@ using std::stack;
 using std::invalid_argument;
 using std::istream;
 using std::streampos;
+using std::set;
 
 NFA::NFA(const string& str) {
   stringstream sstream(str);
@@ -323,6 +324,319 @@ void NFA::parse_factor(stringstream& sstream, NFA& nfa) {
   }
 }
 
+void NFA::parse_character_class(stringstream& sstream, NFA& nfa) {
+
+  if(char_traits<char>::to_char_type(sstream.peek()) == '^') {
+    /*We match only the characters NOT containued in the following class*/
+    match(sstream, '^');
+    set<char> chars;
+    char c;
+    while((c = char_traits<char>::to_char_type(sstream.peek())) != ']') {
+      match(sstream, c);
+      chars.insert(c);
+    }
+    for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+      /*chars does not contain c*/
+      if(chars.find(c) == chars.end() && c != '\x00') {
+        if(nfa.size() == 0) {
+          match_char(nfa, c);
+        } else {
+          NFA tmp ;
+          match_char(tmp, c);
+          nfa.alternation(tmp);
+        }
+      }
+    }
+    c = CHAR_MAX;
+    if(chars.find(c) == chars.end() && c != '\x00') {
+      NFA tmp ;
+      match_char(tmp, c);
+      nfa.alternation(tmp);
+    }
+    return;
+  }
+
+  parse_character_literal(sstream, nfa);
+  while(char_traits<char>::to_char_type(sstream.peek()) != ']') {
+    NFA tmp;
+    parse_character_literal(sstream, tmp);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::parse_character_literal(stringstream& sstream, NFA& nfa) {
+  /*If we encounter a backslash, we attempt to escape the next character*/
+  if(char_traits<char>::to_char_type(sstream.peek()) == '\\'){
+    match(sstream, '\\');
+    char_traits<char>::int_type in = sstream.peek();
+    char c = char_traits<char>::to_char_type(in);
+    if((c != '|' && c != '(' && c != '*' && c != ')' && c != '\\' &&
+    c != 'n' && c != 't' && c != '[' && c != ']' && c != '^'
+    && c != 'd' && c != 'D' && c != 's' && c != 'S' && c != 'w' && c != 'W' && c != '.' && c != 'a' && c != 'A')
+            || in == char_traits<char>::eof()) {
+      string msg("Syntax Error: Cannot escape character \'");
+      msg += c;
+      msg += "\'.";
+      throw invalid_argument(msg);
+    }
+    match(sstream, c);
+    if(c == 'n') {
+      c = '\n';
+    } else if(c == 't') {
+      c = '\t';
+    } else if (c == 'd') {
+
+      match_digit(nfa);
+      return;
+    } else if (c == 'D') {
+      match_not_digit(nfa);
+      return;
+    } else if (c == 'w') {
+      match_alnum(nfa);
+      return;
+    } else if (c == 'W') {
+      match_not_alnum(nfa);
+      return;
+    } else if (c == 's') {
+      match_whitespace(nfa);
+      return;
+    } else if (c == 'S') {
+      match_not_whitespace(nfa);
+      return;
+    } else if (c == 'a') {
+      match_alpha(nfa);
+      return;
+    } else if (c == 'A') {
+      match_not_alpha(nfa);
+      return;
+    }
+    match_char(nfa, c);
+  } else {
+    char c = char_traits<char>::to_char_type(sstream.peek());
+    match(sstream, c);
+
+    if(c == '.') {
+      match_any(nfa);
+    } else {
+      match_char(nfa, c);
+    }
+  }
+}
+
+void NFA::match_char(NFA& nfa, char c) {
+  nfa.start_state = nfa.add_state();
+  nfa.accepting_states.insert(nfa.add_state());
+  nfa.add_transition(nfa.start_state, c, *(nfa.accepting_states.begin()));
+}
+
+void NFA::match_alpha(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && isalpha(c)) {
+
+      if(nfa.size() == 0) {
+
+        match_char(nfa, c);
+      } else {
+        NFA tmp;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && isalpha(c)) {
+    NFA tmp;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+
+}
+
+void NFA::match_not_alpha(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && !isalpha(c)) {
+
+      if(nfa.size() == 0) {
+
+        match_char(nfa, c);
+      } else {
+        NFA tmp;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && !isalpha(c)) {
+    NFA tmp;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+
+}
+
+void NFA::match_digit(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && isdigit(c)) {
+
+      if(nfa.size() == 0) {
+
+        match_char(nfa, c);
+      } else {
+        NFA tmp;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && isdigit(c)) {
+    NFA tmp;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+
+}
+
+void NFA::match_not_digit(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && !isdigit(c)) {
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && !isdigit(c)) {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::match_alnum(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && isalnum(c)) {
+
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && isalnum(c)) {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::match_not_alnum(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && !isalnum(c)) {
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && !isalnum(c)) {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::match_whitespace(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && isspace(c)) {
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && isspace(c)) {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::match_not_whitespace(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00' && !isspace(c)) {
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00' && !isspace(c)) {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
+void NFA::match_any(NFA& nfa) {
+  char c;
+  for(c = CHAR_MIN; c != CHAR_MAX; ++c) {
+    /*chars does not contain c*/
+    if(c != '\x00') {
+      if(nfa.size() == 0) {
+        match_char(nfa, c);
+      } else {
+        NFA tmp ;
+        match_char(tmp, c);
+        nfa.alternation(tmp);
+      }
+    }
+  }
+  c = CHAR_MAX;
+  if(c != '\x00') {
+    NFA tmp ;
+    match_char(tmp, c);
+    nfa.alternation(tmp);
+  }
+}
+
 /*Parses the base in the stringstream altering the provided NFA*/
 void NFA::parse_base(stringstream& sstream, NFA& nfa) {
   if(char_traits<char>::to_char_type(sstream.peek()) == '(') {
@@ -331,38 +645,13 @@ void NFA::parse_base(stringstream& sstream, NFA& nfa) {
     match(sstream, ')');
     return;
   }
-
-  //We parse a single character
-  char to_add;
-  /*If we encounter a backslash, we attempt to escape the next character*/
-  if(char_traits<char>::to_char_type(sstream.peek()) == '\\'){
-    match(sstream, '\\');
-    char_traits<char>::int_type in = sstream.peek();
-    char c = char_traits<char>::to_char_type(in);
-    if((c != '|' && c != '(' && c != '*' && c != ')' && c != '\\' && c != 'n' && c != 't')
-            || in == char_traits<char>::eof()) {
-      string msg("Syntax Error: Cannot escape character \'");
-      msg += c;
-      msg += "\'.";
-      throw invalid_argument(msg);
-    }
-    if(c == 'n') {
-      to_add = '\n';
-    } else if(c == 't') {
-      to_add = '\t';
-    } else {
-      to_add = c;
-    }
-    match(sstream, c);
-  } else {
-
-    to_add = char_traits<char>::to_char_type(sstream.peek());
-    match(sstream, to_add);
+  if(char_traits<char>::to_char_type(sstream.peek()) == '[') {
+    match(sstream, '[');
+    parse_character_class(sstream, nfa);
+    match(sstream, ']');
+    return;
   }
-  nfa.start_state = nfa.add_state();
-  nfa.accepting_states.insert(nfa.add_state());
-  nfa.add_transition(nfa.start_state, to_add, *(nfa.accepting_states.begin()));
-
+  parse_character_literal(sstream, nfa);
 }
 
 /*Consumes the provided character from the stream or throws an exception if the consumed

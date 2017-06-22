@@ -139,12 +139,26 @@ private:
   /*Parses the factor in the stringstream altering the provided NFA*/
   static void parse_factor(std::stringstream&, NFA&);
 
+  static void parse_character_literal(std::stringstream& sstream, NFA& nfa);
+
   /*Parses the base in the stringstream altering the provided NFA*/
   static void parse_base(std::stringstream&, NFA&);
 
   /*Consumes the provided character from the stream or throws an exception if the consumed
   * character does not match the provided one*/
   static void match(std::stringstream&, const char);
+
+  static void parse_character_class(std::stringstream& sstream, NFA& nfa);
+  static void match_any(NFA& nfa);
+  static void match_char(NFA& nfa, char);
+  static void match_digit(NFA& nfa);
+  static void match_not_digit(NFA& nfa);
+  static void match_alnum(NFA& nfa);
+  static void match_not_alnum(NFA& nfa);
+  static void match_whitespace(NFA& nfa);
+  static void match_not_whitespace(NFA& nfa);
+  static void match_alpha(NFA& nfa);
+  static void match_not_alpha(NFA& nfa);
 
 
   friend std::ostream& operator<<(std::ostream& out, const NFA& nfa);

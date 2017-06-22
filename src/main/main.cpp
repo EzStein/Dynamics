@@ -19,10 +19,11 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
 
 int main() {
   map<string, token> lexDef;
-  lexDef[string("(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*.(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*")] = token::PLUS;
-  lexDef[string("(a|b|c|d|e|f|g|h|i)(a|b|c|d|e|f|g|h|i)*")] = token::ID;
-
-  stringstream sstream("abc123.2234");
+  //lexDef[string("[0123456789][0123456789]*\\.[0123456789][0123456789]*")] = token::PLUS;
+  //lexDef[string("[abcdefghi][abcdefghi]*")] = token::ID;
+  lexDef[string("\\d\\d*")] = token::ID;
+  lexDef[string("\\a\\a*")] = token::ID;
+  stringstream sstream("123abc2234");
   lexer lex(sstream, lexDef);
   string lexeme;
   token tok;
