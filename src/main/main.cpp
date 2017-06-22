@@ -2,6 +2,10 @@
 #include <set>
 #include "compiler/NFA.h"
 #include "compiler/DFA.h"
+#include <sstream>
+#include <map>
+#include "compiler/token.h"
+#include "compiler/lexer.h"
 using namespace std;
 
 ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
@@ -13,28 +17,18 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
   return out;
 }
 
-int main1() {
+int main() {
+  map<string, token> lexDef;
+  lexDef[string("(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*.(0|1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*")] = token::PLUS;
+  lexDef[string("(a|b|c|d|e|f|g|h|i)(a|b|c|d|e|f|g|h|i)*")] = token::ID;
 
-  cout << "Enter a regular expression: ";
-  string regex, string;
-  cin >> regex;
-  cout << "Now enter a string: ";
-  cin >> string;
+  stringstream sstream("abc123.2234");
+  lexer lex(sstream, lexDef);
+  string lexeme;
+  token tok;
+  while((tok = lex.next_token(lexeme)) != token::ERROR) {
+    cout << "TOKEN: " << tok << " LEXEME: " << lexeme << endl;
 
-  NFA nfa(regex.c_str());
-
-  bool val = nfa.accepts(string.c_str());
-  if(val) {
-    cout << "NFA: The regex matches your string!" << endl;
-  } else {
-    cout << "NFA: No Match!" << endl;
-  }
-  DFA dfa(nfa);
-  val = dfa.accepts(string.c_str());
-  if(val) {
-    cout << "DFA: The regex matches your string!" << endl;
-  } else {
-    cout << "DFA: No Match!" << endl;
   }
   return 0;
 }

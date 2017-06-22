@@ -41,6 +41,8 @@ std::set<T> intersect(std::set<T> set1, std::set<T> set2) {
       continue;
     }
     set.insert(*begin1);
+    ++begin1;
+    ++begin2;
   }
   return set;
 }

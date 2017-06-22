@@ -20,8 +20,13 @@ using std::invalid_argument;
 using std::istream;
 using std::streampos;
 
-NFA::NFA(const char * string) {
-  stringstream sstream(string);
+NFA::NFA(const string& str) {
+  stringstream sstream(str);
+  parse_expression(sstream, *this);
+}
+
+NFA::NFA(const char * str) {
+  stringstream sstream(str);
   parse_expression(sstream, *this);
 }
 
@@ -29,40 +34,45 @@ NFA::NFA(const vector<map<char, state_collection_type > > & table) {
   this->table = table;
 }
 
+const state_collection_type& NFA::get_accepting_states() const {
+  return accepting_states;
+}
+
 bool NFA::accepts(const char * string) const {
   state_collection_type set = extended_transition_function(start_state, string);
   return intersects(set.begin(), set.end(), accepting_states.begin(), accepting_states.end());
 }
 
-state_collection_type NFA::run_until_termination(istream& stream, string& prefix) {
-  typedef istream::char_type char_type;
-  typedef istream::int_type int_type;
-  typedef istream::traits_type traits_type;
+state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix) const {
 
   /*If nothing is matched, the the string containing the null character is returned*/
-  prefix = "\x00";
+  prefix = string("\x00", 1);
   stringstream prefixBuilder;
   state_collection_type prefixStates;
   state_collection_type states;
   streampos prefixPosition;
   states.insert(start_state);
+
   states = epsilon_closure(states);
+
   /*This is true if the NFA accepts the empty string*/
   if(intersects(accepting_states.begin(), accepting_states.end(), states.begin(), states.end())) {
     prefix = "";
     prefixStates = states;
     prefixPosition = stream.tellg();
+
   }
 
 
-  int_type in;
-  while((in = stream.get()) != traits_type::eof()) {
-    char_type c = traits_type::to_char_type(in);
+
+  char c;
+  while(stream.get(c)) {
 
     /*Expand over transition function and epsilon closure*/
     states = transition_function(states, c);
     states = epsilon_closure(states);
     prefixBuilder.put(c);
+
 
     /*This prefix would be accepted*/
 
@@ -71,11 +81,13 @@ state_collection_type NFA::run_until_termination(istream& stream, string& prefix
       return intersect(prefixStates, accepting_states);
     }
 
+
     if(intersects(accepting_states.begin(), accepting_states.end(), states.begin(), states.end())) {
       prefix = prefixBuilder.str();
       prefixStates = states;
       prefixPosition = stream.tellg();
     }
+
   }
   stream.seekg(prefixPosition);
   return intersect(prefixStates, accepting_states);
@@ -119,6 +131,7 @@ state_collection_type NFA::epsilon_closure(state_collection_type initStates) con
     state_collection_type reachableStates = transition_function(state, '\x00');
     /*Iterate over all states reachable from the current one through epsilon transitions*/
     for(state_collection_type::const_iterator elem = reachableStates.begin(); elem != reachableStates.end(); ++elem) {
+
       // If the state is not in the processed collection
       if(processed.find(*elem) == processed.end()) {
         //Add it to the collection, and to the stack

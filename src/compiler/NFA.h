@@ -25,6 +25,8 @@ public:
 
   NFA() { };
 
+  NFA(const std::string& str);
+
   /*Constructs a NFA from a c-style string representing a regular expression*/
   NFA(const char *);
 
@@ -40,9 +42,15 @@ public:
   * accepting states that the NFA could be in after matching that prefix. If the nfa matches the empty string,
   * it may return that string. If no prefix (not even the empty string) is matched by the nfa,
   * the string containing the single null character '\x00' is returned along with an empty set of states.
+  * The function consumes the prefix in the input stream leaving it to point to the next available
+  * character after the prefix.
   */
-  state_collection_type run_until_termination(std::istream&, std::string&);
+  state_collection_type accept_longest_prefix(std::istream&, std::string&) const;
 
+  /*
+  * Returns a reference to the set of accepting states in this NFA.
+  */
+  const state_collection_type& get_accepting_states() const;
 
 private:
   state_type start_state;
@@ -107,7 +115,8 @@ private:
   /*augments this NFA's adjacency table with that of the given NFA.
   * This function adds new states to this NFA and constructs the given NFA into those states
   * NOTE: the new index of the states in the provided nfa is calculated by adding the original_size
-  * of this nfa to the index of the state in in the given NFA*/
+  * of this nfa to the index of the state in in the given NFA
+  * NOTE: this function does NOT alter accepting_states or start_state*/
   void augment_table(const NFA&);
 
 
@@ -142,6 +151,7 @@ private:
   friend int main();
 
   friend class DFA;
+  friend class lexer;
 };
 
 #endif
