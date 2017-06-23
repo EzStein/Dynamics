@@ -51,7 +51,7 @@ state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix
   stringstream prefixBuilder;
   state_collection_type prefixStates;
   state_collection_type states;
-  streampos prefixPosition;
+  streampos prefixPosition = -1;
   states.insert(start_state);
 
   states = epsilon_closure(states);
@@ -61,13 +61,11 @@ state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix
     prefix = "";
     prefixStates = states;
     prefixPosition = stream.tellg();
-
   }
 
 
-
   char c;
-  while(stream.get(c)) {
+  while(!stream.get(c).eof()) {
 
     /*Expand over transition function and epsilon closure*/
     states = transition_function(states, c);
@@ -78,6 +76,8 @@ state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix
     /*This prefix would be accepted*/
 
     if(states.empty()) {
+      /*No prefix was recovered*/
+      if(prefixPosition == -1) return state_collection_type();
       stream.seekg(prefixPosition);
       return intersect(prefixStates, accepting_states);
     }
@@ -88,9 +88,19 @@ state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix
       prefixStates = states;
       prefixPosition = stream.tellg();
     }
-
   }
-  stream.seekg(prefixPosition);
+
+
+
+  /*When an end of file occurs, the fail bit will always be set. We unset it as well as the eof bit. In c++11
+  seekg will always clear the eof bit. At this point we can check that seek g did nothing with the following expression
+  *
+  * if(stream.peek(), stream.eof())
+  * this is exactly what we do in the lexer.
+  */
+  stream.clear();
+  if(prefixPosition != -1)
+    stream.seekg(prefixPosition);
   return intersect(prefixStates, accepting_states);
 }
 

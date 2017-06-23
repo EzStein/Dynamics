@@ -10,11 +10,12 @@ class lexer {
 public:
   /*Constructs a lexer with the given input stream of characters
   * and a rule set for identifying tokens*/
-  lexer(std::istream&, std::map<std::string, token>);
+  lexer(std::istream&, const std::map<std::string, token>&);
 
   /*Attempts to read the longest matchable lexeme in the stream. If it exists, it, returns
-  that lexeme along with its corresponding token. If no such lexeme could be found, the string
-  containing the null character is returned along with the token ERROR*/
+  that lexeme along with its corresponding token. If no such lexeme could be found but there is still input left in the stream,
+  the string containing the null character is returned along with the token ERROR. If there is no input left in the stream,
+  the token ENDPOINT is returned along with the string containing the null character*/
   token next_token(std::string& lexeme);
 
 private:

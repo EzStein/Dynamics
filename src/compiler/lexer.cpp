@@ -7,7 +7,7 @@ using std::istream;
 using std::string;
 using std::invalid_argument;
 
-lexer::lexer(istream& _stream, map<string, token> lexerDef) : stream(_stream) {
+lexer::lexer(istream& _stream, const map<string, token>& lexerDef) : stream(_stream) {
 
 
   if(lexerDef.empty())
@@ -44,9 +44,13 @@ lexer::lexer(istream& _stream, map<string, token> lexerDef) : stream(_stream) {
 token lexer::next_token(std::string& lexeme) {
 
   state_collection_type states = fa.accept_longest_prefix(stream, lexeme);
-  
+
+  /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
   if(states.empty()) {
-    return token::ERROR;
+    if(stream.peek(), stream.eof())
+      return token::ENDPOINT;
+    else
+      return token::ERROR;
   }
 
   /*Gets the smallest accepting state which is also the first one added*/
