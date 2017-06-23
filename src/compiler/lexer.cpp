@@ -38,22 +38,49 @@ lexer::lexer(istream& _stream, const map<string, token>& lexerDef) : stream(_str
     /*The newly added accepting state corresponds to the token of the rule*/
     tokenMap[*tmp.accepting_states.begin() + originalSize] = iter->second;
   }
-}
 
+  /*Compute the initial nextToken and nextLexeme values*/
 
-token lexer::next_token(std::string& lexeme) {
-
-  state_collection_type states = fa.accept_longest_prefix(stream, lexeme);
+  /*Now compute the next return values*/
+  state_collection_type states = fa.accept_longest_prefix(stream, nextLexeme);
 
   /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
   if(states.empty()) {
     if(stream.peek(), stream.eof())
-      return token::ENDPOINT;
+      nextToken = token::ENDPOINT;
     else
-      return token::ERROR;
+      nextToken = token::ERROR;
+  } else {
+    /*Gets the smallest accepting state which is also the first one added*/
+    nextToken = tokenMap[*states.begin()];
+  }
+}
+
+
+token lexer::next_token(std::string& lexeme) {
+  /*Set the return values to what would be returned by a call to peek*/
+  lexeme = nextLexeme;
+  token ret = nextToken;
+
+  /*Now compute the next return values*/
+  state_collection_type states = fa.accept_longest_prefix(stream, nextLexeme);
+
+  /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
+  if(states.empty()) {
+    if(stream.peek(), stream.eof())
+      nextToken = token::ENDPOINT;
+    else
+      nextToken = token::ERROR;
+  } else {
+    /*Gets the smallest accepting state which is also the first one added*/
+    nextToken = tokenMap[*states.begin()];
   }
 
-  /*Gets the smallest accepting state which is also the first one added*/
-  return tokenMap[*states.begin()];
-  //return token::ERROR;
+
+  return ret;
+}
+
+token lexer::peek(std::string& lexeme) {
+  lexeme = nextLexeme;
+  return nextToken;
 }

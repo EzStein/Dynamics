@@ -18,10 +18,14 @@ public:
   the token ENDPOINT is returned along with the string containing the null character*/
   token next_token(std::string& lexeme);
 
+  /*Returns the next token as described above without advancing the stream*/
+  token peek(std::string& lexeme);
+
 private:
   std::istream& stream;
   NFA fa;
-
+  token nextToken;
+  std::string nextLexeme;
   /*Maps accepting states to tokens*/
   std::map<state_type, token> tokenMap;
 };
