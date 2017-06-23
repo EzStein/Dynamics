@@ -23,7 +23,7 @@ public:
   template<class NODE_TYPE>
   expression_node* make_unary_operator_node(expression_node* child);
 
-  expression_node* make_variable_leaf_node(int id);
+  expression_node* make_variable_leaf_node(unsigned int id);
   expression_node* make_number_leaf_node(double val);
 private:
   node * root;
