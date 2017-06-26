@@ -91,6 +91,12 @@ void lexer::set_next_token() {
   } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::ENDPOINT)) {
     nextToken = token::ASTERISK;
     stream->seekg(currPos);
+  } else if(nextToken == token::ID && (previousToken == token::ID || previousToken == token::NUMBER)) {
+    nextToken = token::ASTERISK;
+    stream->seekg(currPos);
+  } else if(previousToken == token::ID && nextToken == token::NUMBER) {
+    nextToken = token::ASTERISK;
+    stream->seekg(currPos);
   }
 }
 
