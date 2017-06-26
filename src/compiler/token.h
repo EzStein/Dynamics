@@ -39,7 +39,7 @@ public:
   token tok;
   expression_node* nodePtr;
 };
- 
+
 
 
 enum class precedence {
@@ -49,7 +49,7 @@ enum class precedence {
 };
 
 
-
+bool is_operator(token tok);
 std::string token_to_string(token tok);
 std::ostream& operator<<(std::ostream& out, token tok);
 

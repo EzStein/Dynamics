@@ -42,21 +42,10 @@ lexer::lexer(istream* _stream, const map<string, token>& lexerDef) : stream(_str
     tokenMap[*tmp.accepting_states.begin() + originalSize] = iter->second;
   }
 
+
+
   /*Compute the initial nextToken and nextLexeme values*/
-
-  /*Now compute the next return values*/
-  state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme);
-
-  /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
-  if(states.empty()) {
-    if(stream->peek(), stream->eof())
-      nextToken = token::ENDPOINT;
-    else
-      nextToken = token::ERROR;
-  } else {
-    /*Gets the smallest accepting state which is also the first one added*/
-    nextToken = tokenMap[*states.begin()];
-  }
+  set_next_token();
 }
 
 
@@ -65,6 +54,19 @@ token lexer::next_token(std::string& lexeme) {
   lexeme = nextLexeme;
   token ret = nextToken;
 
+  /*Set the previous values*/
+  previousToken = ret;
+  previousLexeme = lexeme;
+
+  /*Set the next token and lexeme*/
+  set_next_token();
+
+  return ret;
+}
+
+void lexer::set_next_token() {
+  currPos = stream->tellg();
+
   /*Now compute the next return values*/
   state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme);
 
@@ -78,11 +80,18 @@ token lexer::next_token(std::string& lexeme) {
     /*Gets the smallest accepting state which is also the first one added*/
     nextToken = tokenMap[*states.begin()];
   }
-
-  /*Set the previous values*/
-  previousToken = ret;
-  previousLexeme = lexeme;
-  return ret;
+  if(nextToken == token::MINUS && (::is_operator(previousToken) ||
+    previousToken == token::ERROR /*FOR START OF STREAM*/ || previousToken == token::LEFT_PAREN)) {
+      nextToken = token::UNARY_MINUS;
+  }
+  if(nextToken == token::LEFT_PAREN && (!::is_operator(previousToken) && previousToken != token::ERROR /*FOR STREAM START*/)) {
+    nextToken = token::ASTERISK;
+    stream->seekg(currPos);
+    /*Previous token remains unchanged*/
+  } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::ENDPOINT)) {
+    nextToken = token::ASTERISK;
+    stream->seekg(currPos);
+  }
 }
 
 token lexer::peek(std::string& lexeme) {

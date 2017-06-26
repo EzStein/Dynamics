@@ -37,7 +37,7 @@ public:
   bool accepts(const char *) const;
 
   /*This function simulates the NFA until termination, which occurs if the input stream
-  * is runs out of characters, or the NFA reaches a nonrecoverable empty state. The function returns the
+  * runs out of characters, or the NFA reaches a nonrecoverable empty state. The function returns the
   * longest prefix of the input state that is accepted by the NFA as well as the set of
   * accepting states that the NFA could be in after matching that prefix. If the nfa matches the empty string,
   * it may return that string. If no prefix (not even the empty string) is matched by the nfa,

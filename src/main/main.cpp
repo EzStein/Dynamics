@@ -37,11 +37,12 @@ int main() {
 
 
 
-  stringstream sstream("10");
+  stringstream sstream("(3)2(2)22(4)");
   parser parse(sstream);
   AST ast(parse.parse());
   std::cout << ast << std::endl;
   std::cout << ast.evaluate() << std::endl;
+  std::cout << 3 - 4 * -2 << std::endl;
 
   return 0;
 }

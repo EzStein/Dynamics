@@ -275,7 +275,7 @@ AST parser::parse() {
     token next = lex.peek(lexeme);
     token top = terminalStack.top();
     precedence prec = get_precedence(top, next);
-
+    std::cout << top << std::endl;
     if(top == token::ENDPOINT && next == token::ENDPOINT) {
       ast.set_root(symbolStack.top());
       return ast;
@@ -306,7 +306,6 @@ AST parser::parse() {
           symbolStack.push(nodePtr);
           break;
         case token::NUMBER:
-          std::cout << lexeme << std::endl;
           nodePtr = ast.make_number_leaf_node(string_to_double(lexeme));
           symbolStack.push(nodePtr);
           break;
@@ -416,7 +415,7 @@ double parser::string_to_double(const string& str) {
   for(++decimal; decimal != end; ++decimal) {
 
     double charVal = *decimal - '0';
-    
+
     ret += charVal * multiplier;
     multiplier /= 10.0;
   }

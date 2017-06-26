@@ -38,6 +38,46 @@ std::string token_to_string(token tok) {
   }
   return "NO_SUCH_TOKEN";
 }
+
+bool is_operator(token tok) {
+  switch(tok) {
+    case token::ID:
+    return false;
+    case token::ENDPOINT:
+    return false;
+    case token::EXCLAMATION:
+    return true;
+    case token::CARET:
+    return true;
+    case token::UNARY_MINUS:
+    return true;
+    case token::ASTERISK:
+    return true;
+    case token::FORWARD_SLASH:
+    return true;
+    case token::FUNCTION:
+    return true;
+    case token::PLUS:
+    return true;
+    case token::MINUS:
+    return true;
+    case token::ERROR:
+    return false;
+    case token::LEFT_PAREN:
+    return false;
+    case token::RIGHT_PAREN:
+    return false;
+    case token::NONTERMINAL:
+    return false;
+    case token::NUMBER:
+    return false;
+    case token::TOKEN_COUNT:
+    return false;
+  }
+  return false;
+}
+
+
 std::ostream& operator<<(std::ostream& out, token tok) {
   out << token_to_string(tok);
   return out;

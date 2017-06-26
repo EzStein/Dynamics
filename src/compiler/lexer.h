@@ -17,7 +17,15 @@ public:
   /*Attempts to read the longest matchable lexeme in the stream. If it exists, it, returns
   that lexeme along with its corresponding token. If no such lexeme could be found but there is still input left in the stream,
   the string containing the null character is returned along with the token ERROR. If there is no input left in the stream,
-  the token ENDPOINT is returned along with the string containing the null character*/
+  the token ENDPOINT is returned along with the string containing the null character
+
+  * The lexer is responsible for inserting asterisks when none are provided inbetween groupings of parenthesis.
+  * In general, if a LEFT_PAREN is preceded by a token that is not an operator the stream start, an asterisk is inserted.
+  * If a RIGHT_PAREN is folled by a token that is not an operator or endpoint, an asterisk is inserted.
+  * The lexer also distinguishes between binary and unary minus. In general, if a minus sign is PRECEDED by
+  * the start of the stream an operator or a left parenthesis it is a unary minus. If it is preceded by a NUMBER,
+  * ID, or RIGHT_PAREN, it is a binary minus.
+  */
   token next_token(std::string& lexeme);
 
   /*Returns the next token as described above without advancing the stream*/
@@ -36,5 +44,10 @@ private:
   std::string nextLexeme;
   /*Maps accepting states to tokens*/
   std::map<state_type, token> tokenMap;
+
+  /*Matains the position of the stream before a call to set_next_token*/
+  std::ios::pos_type currPos;
+
+  void set_next_token();
 };
 #endif
