@@ -33,6 +33,14 @@ expression_node* AST::make_number_leaf_node(double val) {
   return ret;
 }
 
+double AST::evaluate() const {
+  return root->evaluate();
+}
+
+void AST::set_root(expression_node* node) {
+  root = node;
+}
+
 template<class NODE_TYPE>
 expression_node* AST::make_binary_operator_node(expression_node* leftChild, expression_node* rightChild) {
   expression_node* ret = new (mem + allocatorOffset) NODE_TYPE(leftChild, rightChild);
@@ -55,3 +63,8 @@ template expression_node* AST::make_binary_operator_node<divide_operator_node>(e
 
 template expression_node* AST::make_unary_operator_node<factorial_operator_node>(expression_node*);
 template expression_node* AST::make_unary_operator_node<unary_minus_operator_node>(expression_node*);
+
+std::ostream& operator<<(std::ostream& out, const AST& ast) {
+  ast.root->print(out);
+  return out;
+}

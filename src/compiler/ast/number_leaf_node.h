@@ -7,6 +7,7 @@ public:
   explicit number_leaf_node(double val);
 private:
   virtual double evaluate() const override;
+  virtual std::ostream& print(std::ostream&) const override;
   double val;
 };
 #endif

@@ -8,5 +8,6 @@ public:
   plus_operator_node(expression_node* leftChild, expression_node* rightChild);
 private:
   virtual double evaluate() const override;
+  virtual std::ostream& print(std::ostream&) const override;
 };
 #endif

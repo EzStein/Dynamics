@@ -1,6 +1,7 @@
 #ifndef AST_GUARD
 #define AST_GUARD
 #include <cstddef>
+#include <iostream>
 #include "compiler/ast/expression_node.h"
 class AST {
 public:
@@ -25,8 +26,14 @@ public:
 
   expression_node* make_variable_leaf_node(unsigned int id);
   expression_node* make_number_leaf_node(double val);
+
+  double evaluate() const;
+
+  void set_root(expression_node*);
+
+  friend std::ostream& operator<<(std::ostream&, const AST&);
 private:
-  node * root;
+  expression_node * root;
 
   /*Memory chunk used to store all the nodes contiguously. It must be allocated with enough memory initially*/
   unsigned char * mem;
@@ -38,6 +45,7 @@ private:
   size_t memSize;
 };
 
+std::ostream& operator<<(std::ostream&, const AST&);
 
 
 #endif

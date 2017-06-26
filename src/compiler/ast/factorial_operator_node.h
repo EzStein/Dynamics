@@ -8,5 +8,6 @@ public:
   explicit factorial_operator_node(expression_node*);
 private:
   virtual double evaluate() const override;
+  virtual std::ostream& print(std::ostream&) const override;
 };
 #endif

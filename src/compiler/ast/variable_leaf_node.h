@@ -7,6 +7,7 @@ public:
   explicit variable_leaf_node(unsigned int id);
 private:
   virtual double evaluate() const override;
+  virtual std::ostream& print(std::ostream&) const override;
   unsigned int id;
 };
 

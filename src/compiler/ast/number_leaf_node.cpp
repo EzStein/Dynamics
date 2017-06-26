@@ -6,3 +6,8 @@ number_leaf_node::number_leaf_node(double _val) : val(_val) {
 double number_leaf_node::evaluate() const {
   return val;
 }
+
+std::ostream& number_leaf_node::print(std::ostream& out) const {
+  out << val;
+  return out;
+}

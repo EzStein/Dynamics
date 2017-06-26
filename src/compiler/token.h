@@ -36,7 +36,7 @@ class node;
 class grammar_symbol {
 public:
   token tok;
-  node* nodePtr;
+  expression_node* nodePtr;
 };
 
 
@@ -51,6 +51,8 @@ static const unsigned int CHUNK_SIZE = 1 + (static_cast<unsigned int>(token::TOK
 
 precedence get_precedence(const unsigned char * array, token tk1, token tk2);
 void set_precedence(unsigned char * array, token tk1, token tk2, precedence prec);
+unsigned char * new_op_array();
+void delete_op_array(unsigned char * opArr);
 
 std::string token_to_string(token tok);
 std::ostream& operator<<(std::ostream& out, token tok);

@@ -15,3 +15,9 @@ double factorial_operator_node::evaluate() const {
   }
   return static_cast<double>(val);
 }
+
+std::ostream& factorial_operator_node::print(std::ostream& out) const {
+  out << '(';
+  child->print(out) << ')' << '!';
+  return out;
+}

@@ -1,5 +1,6 @@
 #ifndef PARSER_GUARD
 #define PARSER_GUARD
+#include "compiler/ast/AST.h"
 #include "compiler/lexer.h"
 #include "compiler/token.h"
 
@@ -7,7 +8,7 @@
 class parser {
 public:
   parser(std::istream&, const std::map<std::string, token>&, unsigned char const * const opArr);
-  void parse();
+  AST parse();
 private:
   lexer lex;
   unsigned char const * const opArr;

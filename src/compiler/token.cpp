@@ -57,3 +57,11 @@ void set_precedence(unsigned char * array, token tk1, token tk2, precedence prec
   /*Set the appropriate bits*/
   array[static_cast<unsigned int>(tk1) * CHUNK_SIZE + static_cast<unsigned int>(tk2)/4] |= val;
 }
+
+unsigned char * new_op_array() {
+  return new unsigned char[static_cast<int>(token::TOKEN_COUNT)*CHUNK_SIZE];
+}
+
+void delete_op_array(unsigned char * opArr) {
+  delete[] opArr;
+}
