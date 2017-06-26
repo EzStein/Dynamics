@@ -12,6 +12,7 @@ Thus we have (array[TK1 * CHUNK_SIZE + TK2/4] & (0xC0u >> 2*(TK2%4))) >> 2*(TK2%
 is 0 we say TK1 < TK2. If 1, TK1 = TK2, and 2, TK1 > TK2*/
 enum class token {
   ID = 0,
+  NUMBER,
   LEFT_PAREN,
   RIGHT_PAREN,
   EXCLAMATION,
@@ -38,7 +39,7 @@ public:
   token tok;
   expression_node* nodePtr;
 };
-
+ 
 
 
 enum class precedence {
@@ -47,12 +48,7 @@ enum class precedence {
   GREATER_THAN = 2
 };
 
-static const unsigned int CHUNK_SIZE = 1 + (static_cast<unsigned int>(token::TOKEN_COUNT) - 1)/4;
 
-precedence get_precedence(const unsigned char * array, token tk1, token tk2);
-void set_precedence(unsigned char * array, token tk1, token tk2, precedence prec);
-unsigned char * new_op_array();
-void delete_op_array(unsigned char * opArr);
 
 std::string token_to_string(token tok);
 std::ostream& operator<<(std::ostream& out, token tok);

@@ -7,8 +7,11 @@ using std::istream;
 using std::string;
 using std::invalid_argument;
 
-lexer::lexer(istream& _stream, const map<string, token>& lexerDef) : stream(_stream) {
+lexer::lexer() {
 
+}
+
+lexer::lexer(istream* _stream, const map<string, token>& lexerDef) : stream(_stream), previousToken(token::ERROR) {
 
   if(lexerDef.empty())
     throw invalid_argument("To define a lexer, you need at least one rule!");
@@ -42,11 +45,11 @@ lexer::lexer(istream& _stream, const map<string, token>& lexerDef) : stream(_str
   /*Compute the initial nextToken and nextLexeme values*/
 
   /*Now compute the next return values*/
-  state_collection_type states = fa.accept_longest_prefix(stream, nextLexeme);
+  state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme);
 
   /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
   if(states.empty()) {
-    if(stream.peek(), stream.eof())
+    if(stream->peek(), stream->eof())
       nextToken = token::ENDPOINT;
     else
       nextToken = token::ERROR;
@@ -63,11 +66,11 @@ token lexer::next_token(std::string& lexeme) {
   token ret = nextToken;
 
   /*Now compute the next return values*/
-  state_collection_type states = fa.accept_longest_prefix(stream, nextLexeme);
+  state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme);
 
   /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
   if(states.empty()) {
-    if(stream.peek(), stream.eof())
+    if(stream->peek(), stream->eof())
       nextToken = token::ENDPOINT;
     else
       nextToken = token::ERROR;
@@ -76,11 +79,18 @@ token lexer::next_token(std::string& lexeme) {
     nextToken = tokenMap[*states.begin()];
   }
 
-
+  /*Set the previous values*/
+  previousToken = ret;
+  previousLexeme = lexeme;
   return ret;
 }
 
 token lexer::peek(std::string& lexeme) {
   lexeme = nextLexeme;
   return nextToken;
+}
+
+token lexer::previous(std::string& lexeme) {
+  lexeme = previousLexeme;
+  return previousToken;
 }

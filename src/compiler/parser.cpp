@@ -27,50 +27,234 @@ using std::stack;
 using std::invalid_argument;
 using std::deque;
 
-parser::parser(istream& _stream, const map<string, token>& lexerDef, unsigned char const * const _opArr):
-opArr(_opArr), lex(_stream, lexerDef) {
+parser::parser(istream& stream) {
+  /*Construct lexer*/
+  map<string, token> lexDef;
+  lexDef[string("\\(")] = token::LEFT_PAREN;
+  lexDef[string("\\)")] = token::RIGHT_PAREN;
+  lexDef[string("+")] = token::PLUS;
+  lexDef[string("-")] = token::MINUS;
+  lexDef[string("/")] = token::FORWARD_SLASH;
+  lexDef[string("*")] = token::ASTERISK;
+  lexDef[string("!")] = token::EXCLAMATION;
+  lexDef[string("^")] = token::CARET;
+  lexDef[string("\\d\\d*|\\d\\d*\\.\\d\\d*")] = token::NUMBER;
+  lexDef[string("\\a")] = token::ID;
+  lex = lexer(&stream, lexDef);
 
+  opArr = new unsigned char[static_cast<int>(token::TOKEN_COUNT)*CHUNK_SIZE];
+
+  set_precedence(token::NUMBER, token::ID, precedence::EQUAL_TO);
+  set_precedence(token::NUMBER, token::LEFT_PAREN, precedence::EQUAL_TO);
+  set_precedence(token::NUMBER, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::EXCLAMATION, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::CARET, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::UNARY_MINUS, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::NUMBER, token::NUMBER, precedence::EQUAL_TO);
+
+  set_precedence(token::ID, token::ID, precedence::EQUAL_TO);
+  set_precedence(token::ID, token::LEFT_PAREN, precedence::EQUAL_TO);
+  set_precedence(token::ID, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::EXCLAMATION, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::CARET, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::UNARY_MINUS, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::ID, token::NUMBER, precedence::LESS_THAN);
+
+  set_precedence(token::LEFT_PAREN, token::ID, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::RIGHT_PAREN, precedence::EQUAL_TO);
+  set_precedence(token::LEFT_PAREN, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::ASTERISK, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::FORWARD_SLASH, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::FUNCTION, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::PLUS, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::MINUS, precedence::LESS_THAN);
+  set_precedence(token::LEFT_PAREN, token::ENDPOINT, precedence::EQUAL_TO);
+  set_precedence(token::LEFT_PAREN, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::RIGHT_PAREN, token::ID, precedence::EQUAL_TO);
+  set_precedence(token::RIGHT_PAREN, token::LEFT_PAREN, precedence::EQUAL_TO);
+  set_precedence(token::RIGHT_PAREN, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::EXCLAMATION, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::CARET, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::UNARY_MINUS, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::RIGHT_PAREN, token::NUMBER, precedence::LESS_THAN);
+
+  set_precedence(token::EXCLAMATION, token::ID, precedence::LESS_THAN);
+  set_precedence(token::EXCLAMATION, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::EXCLAMATION, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::EXCLAMATION, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::CARET, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::UNARY_MINUS, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::EXCLAMATION, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::CARET, token::ID, precedence::LESS_THAN);
+  set_precedence(token::CARET, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::CARET, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::CARET, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::CARET, token::UNARY_MINUS, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::CARET, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::UNARY_MINUS, token::ID, precedence::LESS_THAN);
+  set_precedence(token::UNARY_MINUS, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::UNARY_MINUS, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::UNARY_MINUS, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::UNARY_MINUS, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::UNARY_MINUS, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::UNARY_MINUS, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::ASTERISK, token::ID, precedence::LESS_THAN);
+  set_precedence(token::ASTERISK, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::ASTERISK, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::ASTERISK, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::ASTERISK, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::ASTERISK, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::ASTERISK, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::FORWARD_SLASH, token::ID, precedence::LESS_THAN);
+  set_precedence(token::FORWARD_SLASH, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::FORWARD_SLASH, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::FORWARD_SLASH, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::FORWARD_SLASH, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::FORWARD_SLASH, token::ASTERISK, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::FORWARD_SLASH, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::FUNCTION, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::FORWARD_SLASH, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::FUNCTION, token::ID, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::FUNCTION, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::ASTERISK, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::FORWARD_SLASH, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::FUNCTION, precedence::LESS_THAN);
+  set_precedence(token::FUNCTION, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::FUNCTION, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::FUNCTION, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::FUNCTION, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::PLUS, token::ID, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::PLUS, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::ASTERISK, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::FORWARD_SLASH, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::FUNCTION, precedence::LESS_THAN);
+  set_precedence(token::PLUS, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::PLUS, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::PLUS, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::PLUS, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::MINUS, token::ID, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::RIGHT_PAREN, precedence::GREATER_THAN);
+  set_precedence(token::MINUS, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::ASTERISK, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::FORWARD_SLASH, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::FUNCTION, precedence::LESS_THAN);
+  set_precedence(token::MINUS, token::PLUS, precedence::GREATER_THAN);
+  set_precedence(token::MINUS, token::MINUS, precedence::GREATER_THAN);
+  set_precedence(token::MINUS, token::ENDPOINT, precedence::GREATER_THAN);
+  set_precedence(token::MINUS, token::NUMBER, precedence::LESS_THAN);
+
+
+  set_precedence(token::ENDPOINT, token::ID, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::LEFT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::RIGHT_PAREN, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::EXCLAMATION, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::CARET, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::UNARY_MINUS, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::ASTERISK, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::FORWARD_SLASH, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::FUNCTION, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::PLUS, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::MINUS, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::ENDPOINT, precedence::LESS_THAN);
+  set_precedence(token::ENDPOINT, token::NUMBER, precedence::LESS_THAN);
 }
 
-/*Copies stack*/
-bool verify_invariant(stack<grammar_symbol> symbolStack, stack<token> terminalStack) {
-  /*std::cout << "AaaaaaAAA" << std::endl;
-  typedef deque<grammar_symbol>::const_iterator symIter;
-  typedef deque<token>::const_iterator termIter;
-  deque<grammar_symbol> deqSymbolStack;
-  stack<grammar_symbol> symbolStackNew(deqSymbolStack);
-  std::swap(symbolStackNew, symbolStack);
+precedence parser::get_precedence(token tk1, token tk2) {
+  return static_cast<precedence>((opArr[static_cast<unsigned int>(tk1) * CHUNK_SIZE
+  + static_cast<unsigned int>(tk2)/4] & (0xC0u >> 2*(static_cast<unsigned int>(tk2)%4))) >> 2*(4-(static_cast<unsigned int>(tk2)%4 + 1)));
+}
 
-  deque<token> deqTerminalStack;
-  stack<token> terminalStackNew(deqTerminalStack);
-  std::swap(terminalStackNew, terminalStack);
+void parser::set_precedence(token tk1, token tk2, precedence prec) {
+  unsigned char msk = ~(0xC0u >> 2*(static_cast<unsigned int>(tk2)%4));
+  unsigned char val = static_cast<unsigned char>(
+    static_cast<unsigned int>(prec) << 2*(4 - (static_cast<unsigned int>(tk2)%4 + 1)));
 
-  symIter symIterA = deqSymbolStack.begin();
-  termIter termIterA = deqTerminalStack.begin();
+  /*Clear away the bits that were previously there*/
+  opArr[static_cast<unsigned int>(tk1) * CHUNK_SIZE + static_cast<unsigned int>(tk2)/4] &= msk;
 
-  for(;termIterA != deqTerminalStack.end(); ++termIterA) {
-    while(symIterA->tok == token::NONTERMINAL) {
-      ++symIterA;
-    }
-    if(symIterA->tok != *termIterA)
-      return false;
+  /*Set the appropriate bits*/
+  opArr[static_cast<unsigned int>(tk1) * CHUNK_SIZE + static_cast<unsigned int>(tk2)/4] |= val;
+}
 
-    std::cout << symIterA->tok << ", " << *termIterA << std::endl;
-    ++symIterA;
-  }
-  return true;*/
-
-
-  while(terminalStack.size() != 0) {
-
-    while(symbolStack.top().tok == token::NONTERMINAL) {
-      symbolStack.pop();
-    }
-    if(terminalStack.top() != symbolStack.top().tok) return false;
-    symbolStack.pop();
-    terminalStack.pop();
-  }
-  return true;
+parser::~parser() {
+  delete[] opArr;
 }
 
 AST parser::parse() {
@@ -91,7 +275,7 @@ AST parser::parse() {
     token next = lex.peek(lexeme);
     token top = terminalStack.top();
     precedence prec = get_precedence(top, next);
-    std::cout << top << "  "<< static_cast<int>(prec)<< std::endl;
+
     if(top == token::ENDPOINT && next == token::ENDPOINT) {
       ast.set_root(symbolStack.top());
       return ast;
@@ -99,6 +283,7 @@ AST parser::parse() {
       next = lex.next_token(lexeme);
       terminalStack.push(next);
     } else if(prec == precedence::GREATER_THAN) {
+      lex.previous(lexeme);
       next = terminalStack.top();
       while(1) {
         terminalStack.pop();
@@ -118,6 +303,11 @@ AST parser::parse() {
       switch(next) {
         case token::ID:
           nodePtr = ast.make_variable_leaf_node(1);
+          symbolStack.push(nodePtr);
+          break;
+        case token::NUMBER:
+          std::cout << lexeme << std::endl;
+          nodePtr = ast.make_number_leaf_node(string_to_double(lexeme));
           symbolStack.push(nodePtr);
           break;
         case token::EXCLAMATION:
@@ -199,6 +389,36 @@ AST parser::parse() {
   }
 }
 
-precedence parser::get_precedence(token tk1, token tk2) const {
-  return ::get_precedence(opArr, tk1, tk2);
+/*Converts the string which may contain a decimal to a double.
+This function performs no checks to make sure the string is well formed*/
+double parser::string_to_double(const string& str) {
+  double ret = 0;
+  typedef string::const_iterator iter;
+  iter currChar = str.begin();
+  iter end = str.end();
+  iter begin = str.begin();
+  for(; currChar != end; ++currChar) {
+    if(*currChar == '.') break;
+  }
+  /*Save the currChar position*/
+  iter decimal = currChar;
+  //currChar points to one past the ones digit
+  --currChar;
+  double multiplier = 1;
+  for(; currChar != begin - 1; --currChar) {
+    double charVal = *currChar - '0';
+    ret += charVal * multiplier;
+    multiplier *= 10;
+  }
+  if(decimal == end) return ret;
+
+  multiplier = 1.0/10;
+  for(++decimal; decimal != end; ++decimal) {
+
+    double charVal = *decimal - '0';
+    
+    ret += charVal * multiplier;
+    multiplier /= 10.0;
+  }
+  return ret;
 }

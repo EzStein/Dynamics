@@ -7,13 +7,21 @@
 /*This class represents an operator precedence parser that can parse expressions*/
 class parser {
 public:
-  parser(std::istream&, const std::map<std::string, token>&, unsigned char const * const opArr);
+  parser(std::istream&);
+  ~parser();
+
   AST parse();
+
 private:
   lexer lex;
-  unsigned char const * const opArr;
-
+  unsigned char * opArr;
   precedence get_precedence(token tk1, token tk2) const;
-  //void parser::set_precedence(token tk1, token tk2, precedence prec) const;
+
+  static const unsigned int CHUNK_SIZE = 1 + (static_cast<unsigned int>(token::TOKEN_COUNT) - 1)/4;
+
+  precedence get_precedence(token tk1, token tk2);
+  void set_precedence(token tk1, token tk2, precedence prec);
+
+  static double string_to_double(const std::string&);
 };
 #endif
