@@ -374,7 +374,7 @@ void app::fast_fill(const vector_2d<int>& size, unsigned long * data) const {
       int pixelIndex = point.y*size.x + point.x;
       unsigned long val = get_value(point, size, data, metaData);
 
-      if(!(metaData[pixelIndex] & visitedFlag) && val == 0) {
+      if(!(metaData[pixelIndex] & visitedFlag)) {
         if(is_boundary_point(point, size, data, metaData, val)) {
           calculate_boundary(point, size, data, metaData, val);
         } else {

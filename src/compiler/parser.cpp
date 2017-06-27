@@ -1,7 +1,6 @@
+#include "util/util.h"
 #include "parser.h"
 #include "compiler/token.h"
-
-
 #include "compiler/ast/AST.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
@@ -14,12 +13,14 @@
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/number_leaf_node.h"
 
+#include <list>
 #include <stack>
 #include <stdexcept>
 #include <iostream>
 #include <deque>
 #include <algorithm>
 #include <cassert>
+using std::list;
 using std::istream;
 using std::string;
 using std::map;
@@ -30,16 +31,16 @@ using std::deque;
 parser::parser(istream& stream) {
   /*Construct lexer*/
   map<string, token> lexDef;
-  lexDef[string("\\(")] = token::LEFT_PAREN;
-  lexDef[string("\\)")] = token::RIGHT_PAREN;
-  lexDef[string("+")] = token::PLUS;
-  lexDef[string("-")] = token::MINUS;
-  lexDef[string("/")] = token::FORWARD_SLASH;
-  lexDef[string("*")] = token::ASTERISK;
-  lexDef[string("!")] = token::EXCLAMATION;
-  lexDef[string("^")] = token::CARET;
-  lexDef[string("\\d\\d*|\\d\\d*\\.\\d\\d*")] = token::NUMBER;
-  lexDef[string("\\a")] = token::ID;
+  lexDef[string("\\s*\\(\\s*")] = token::LEFT_PAREN;
+  lexDef[string("\\s*\\)\\s*")] = token::RIGHT_PAREN;
+  lexDef[string("\\s*+\\s*")] = token::PLUS;
+  lexDef[string("\\s*-\\s*")] = token::MINUS;
+  lexDef[string("\\s*/\\s*")] = token::FORWARD_SLASH;
+  lexDef[string("\\s*\\*\\s*")] = token::ASTERISK;
+  lexDef[string("\\s*!\\s*")] = token::EXCLAMATION;
+  lexDef[string("\\s*^\\s*")] = token::CARET;
+  lexDef[string("\\s*\\d\\d*|\\d\\d*\\.\\d\\d*\\s*")] = token::NUMBER;
+  lexDef[string("\\s*\\a\\s*")] = token::ID;
   lex = lexer(&stream, lexDef);
 
   opArr = new unsigned char[static_cast<int>(token::TOKEN_COUNT)*CHUNK_SIZE];
@@ -258,6 +259,8 @@ parser::~parser() {
 }
 
 AST parser::parse() {
+  /*A list is used because its iteraters are never invalidated*/
+  list<symbol> symbolTable;
   AST ast(200000);
   /*A stack containing only nonterminals that point to a node in the AST tree*/
   stack<expression_node*> symbolStack;
@@ -275,7 +278,7 @@ AST parser::parse() {
     token next = lex.peek(lexeme);
     token top = terminalStack.top();
     precedence prec = get_precedence(top, next);
-    std::cout << top << std::endl;
+
     if(top == token::ENDPOINT && next == token::ENDPOINT) {
       ast.set_root(symbolStack.top());
       return ast;
@@ -299,14 +302,33 @@ AST parser::parse() {
       expression_node* rightChild = nullptr, *leftChild = nullptr;
 
 
+      /*We prepare the creation of a symbol by stripping whitespace from the lexeme*/
+      util::strip_white_space(lexeme);
+      /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
+      a leaf node with a pointer to that symbol.*/
+      symbol sym{lexeme};
+      /*True if the list does not contain the symbol*/
+      list<symbol>::const_iterator symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
+
       /*The terminal that was removed*/
       switch(next) {
         case token::ID:
-          nodePtr = ast.make_variable_leaf_node(1);
+
+
+
+          if(symPtr == symbolTable.end()) {
+            /*We add the symbol to the list*/
+            symbolTable.push_back(sym);
+            /*The table is now nonempty. We get a pointer/iterator to the last element
+            by decrementing end() by 1*/
+            symPtr = symbolTable.end();
+            --symPtr;
+          }
+          nodePtr = ast.make_variable_leaf_node(symPtr);
           symbolStack.push(nodePtr);
           break;
         case token::NUMBER:
-          nodePtr = ast.make_number_leaf_node(string_to_double(lexeme));
+          nodePtr = ast.make_number_leaf_node(util::string_to_double(lexeme));
           symbolStack.push(nodePtr);
           break;
         case token::EXCLAMATION:
@@ -376,48 +398,14 @@ AST parser::parse() {
             symbolStack.push(nodePtr);
           break;
         case token::RIGHT_PAREN:
-          throw invalid_argument("THIS SHOULD NEVER OCCUR");
+          throw invalid_argument("THIS SHOULD NEVER OCCUR: RIGHT_PAREN");
           break;
         case token::LEFT_PAREN:
           //We do nothing
           break;
         default:
-          std::cout << "DEFAULT: " << next << std::endl;
+          throw invalid_argument("THIS SHOULD NEVER OCCUR: DEFAULT");
       }
     }
   }
-}
-
-/*Converts the string which may contain a decimal to a double.
-This function performs no checks to make sure the string is well formed*/
-double parser::string_to_double(const string& str) {
-  double ret = 0;
-  typedef string::const_iterator iter;
-  iter currChar = str.begin();
-  iter end = str.end();
-  iter begin = str.begin();
-  for(; currChar != end; ++currChar) {
-    if(*currChar == '.') break;
-  }
-  /*Save the currChar position*/
-  iter decimal = currChar;
-  //currChar points to one past the ones digit
-  --currChar;
-  double multiplier = 1;
-  for(; currChar != begin - 1; --currChar) {
-    double charVal = *currChar - '0';
-    ret += charVal * multiplier;
-    multiplier *= 10;
-  }
-  if(decimal == end) return ret;
-
-  multiplier = 1.0/10;
-  for(++decimal; decimal != end; ++decimal) {
-
-    double charVal = *decimal - '0';
-
-    ret += charVal * multiplier;
-    multiplier /= 10.0;
-  }
-  return ret;
 }

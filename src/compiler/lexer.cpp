@@ -68,7 +68,7 @@ void lexer::set_next_token() {
   currPos = stream->tellg();
 
   /*Now compute the next return values*/
-  state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme);
+  state_collection_type states = fa.accept_longest_prefix(*stream, nextLexeme, true);
 
   /*If an empty state was returned, either we have reached the end of file, or there was no matching prefix*/
   if(states.empty()) {

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <set>
 #include "compiler/NFA.h"
 #include "compiler/DFA.h"
@@ -20,11 +21,16 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
   return out;
 }
 
-int main() {
-  stringstream sstream("ab324.3c4defg2a2");
-  parser parse(sstream);
-  AST ast(parse.parse());
-  std::cout << ast << std::endl;
-  std::cout << ast.evaluate() << std::endl;
+int mai2() {
+
+  while(1) {
+    cout << "Enter an expression to evaluate: " << flush;
+    string str;
+    getline(cin, str);
+    stringstream sstream(str);
+    parser parse(sstream);
+    AST ast(parse.parse());
+    cout << "Your expression evaluates to " << ast.evaluate() << endl;
+  }
   return 0;
 }

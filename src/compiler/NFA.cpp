@@ -44,7 +44,7 @@ bool NFA::accepts(const char * string) const {
   return intersects(set.begin(), set.end(), accepting_states.begin(), accepting_states.end());
 }
 
-state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix) const {
+state_collection_type NFA::accept_longest_prefix(istream& stream, string& prefix, bool ignoreWhitespace) const {
 
   /*If nothing is matched, the the string containing the null character is returned*/
   prefix = string("\x00", 1);

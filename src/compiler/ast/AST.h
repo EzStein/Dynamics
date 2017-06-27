@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <iostream>
 #include "compiler/ast/expression_node.h"
+#include "compiler/ast/variable_leaf_node.h"
 class AST {
 public:
   /*Constructs the AST with an estimate on how much memory it will require*/
@@ -24,7 +25,7 @@ public:
   template<class NODE_TYPE>
   expression_node* make_unary_operator_node(expression_node* child);
 
-  expression_node* make_variable_leaf_node(unsigned int id);
+  expression_node* make_variable_leaf_node(variable_leaf_node::symbol_ptr_type);
   expression_node* make_number_leaf_node(double val);
 
   double evaluate() const;

@@ -44,8 +44,10 @@ public:
   * the string containing the single null character '\x00' is returned along with an empty set of states.
   * The function consumes the prefix in the input stream leaving it to point to the next available
   * character after the prefix.
+  *
+  * If the third argument is set to true, the NFA will discard whitespace as it reads.
   */
-  state_collection_type accept_longest_prefix(std::istream&, std::string&) const;
+  state_collection_type accept_longest_prefix(std::istream&, std::string&, bool ignoreWhitespace) const;
 
   /*
   * Returns a reference to the set of accepting states in this NFA.

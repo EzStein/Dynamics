@@ -21,7 +21,5 @@ private:
 
   precedence get_precedence(token tk1, token tk2);
   void set_precedence(token tk1, token tk2, precedence prec);
-
-  static double string_to_double(const std::string&);
 };
 #endif

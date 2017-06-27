@@ -21,8 +21,8 @@ AST::~AST() {
   delete[] mem;
 }
 
-expression_node* AST::make_variable_leaf_node(unsigned int id) {
-  expression_node* ret = new (mem + allocatorOffset) variable_leaf_node(id);
+expression_node* AST::make_variable_leaf_node(variable_leaf_node::symbol_ptr_type ptr) {
+  expression_node* ret = new (mem + allocatorOffset) variable_leaf_node(ptr);
   allocatorOffset += sizeof(variable_leaf_node);
   return ret;
 }
