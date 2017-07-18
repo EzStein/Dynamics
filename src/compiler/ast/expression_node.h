@@ -5,6 +5,7 @@
 class expression_node : public node {
 public:
   virtual ~expression_node();
+  virtual std::ostream& emit_code(std::ostream&) const = 0;
   virtual double evaluate() const = 0;
   virtual std::ostream& print(std::ostream&) const = 0;
 };

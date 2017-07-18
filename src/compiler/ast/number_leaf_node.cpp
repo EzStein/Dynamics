@@ -11,3 +11,8 @@ std::ostream& number_leaf_node::print(std::ostream& out) const {
   out << val;
   return out;
 }
+
+std::ostream& number_leaf_node::emit_code(std::ostream& acc) const {
+  acc << "fldl " << &val << "\n";
+  return acc;
+}

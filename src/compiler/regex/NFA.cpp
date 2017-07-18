@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <stack>
-#include "compiler/NFA.h"
+#include "compiler/regex/NFA.h"
 
 using std::map;
 using std::vector;

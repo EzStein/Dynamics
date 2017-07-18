@@ -1,8 +1,8 @@
 #ifndef PARSER_GUARD
 #define PARSER_GUARD
 #include "compiler/ast/AST.h"
-#include "compiler/lexer.h"
-#include "compiler/token.h"
+#include "compiler/lex/lexer.h"
+#include "compiler/lex/token.h"
 
 /*This class represents an operator precedence parser that can parse expressions*/
 class parser {

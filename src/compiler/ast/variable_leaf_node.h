@@ -1,7 +1,7 @@
 #ifndef VARIABLE_LEAF_NODE_GUARD
 #define VARIABLE_LEAF_NODE_GUARD
 #include <list>
-#include "compiler/symbol.h"
+#include "compiler/ir/symbol.h"
 #include "compiler/ast/leaf_node.h"
 class variable_leaf_node : public leaf_node {
 public:
@@ -11,7 +11,7 @@ public:
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
-
+  virtual std::ostream& emit_code(std::ostream&) const override;
   symbol_ptr_type symbolPtr;
 };
 

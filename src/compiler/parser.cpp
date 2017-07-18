@@ -1,6 +1,6 @@
-#include "util/util.h"
 #include "parser.h"
-#include "compiler/token.h"
+#include "util/util.h"
+#include "compiler/lex/token.h"
 #include "compiler/ast/AST.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"

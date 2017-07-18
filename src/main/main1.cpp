@@ -5,4 +5,4 @@
 #include "app/app.h"
 
 
-wxIMPLEMENT_APP(app);
+//wxIMPLEMENT_APP(app);

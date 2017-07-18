@@ -14,3 +14,10 @@ std::ostream& multiply_operator_node::print(std::ostream& out) const {
   rightChild->print(out) << ')';
   return out;
 }
+
+std::ostream& multiply_operator_node::emit_code(std::ostream& acc) const {
+  leftChild->emit_code(acc);  //Put on %st(1)
+  rightChild->emit_code(acc); //Now on %st(0)
+  acc << "fmulp %st(0), %st(1)\n";
+  return acc;
+}

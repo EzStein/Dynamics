@@ -41,6 +41,26 @@ void AST::set_root(expression_node* node) {
   root = node;
 }
 
+std::ostream& AST::emit_code(std::ostream& acc) const {
+  acc << "pushl %ebp\n";
+  acc << "movl %esp, %ebp\n";
+  acc << "subl $6, %esp\n";
+  acc << "fstcw -2(%ebp)\n";
+  acc << "stmxcsr -6(%ebp)\n";
+  acc << "pushl %ebx\n";
+  acc << "pushl %esi\n";
+  acc << "pushl %ebi\n";
+  acc << "finit\n";
+  root->emit_code(acc);
+  acc << "popl %ebi\n";
+  acc << "popl %esi\n";
+  acc << "popl %ebx\n";
+  acc << "movl %ebp, %esp\n";
+  acc << "popl %ebp\n";
+  acc << "ret\n";
+  return acc;
+}
+
 template<class NODE_TYPE>
 expression_node* AST::make_binary_operator_node(expression_node* leftChild, expression_node* rightChild) {
   expression_node* ret = new (mem + allocatorOffset) NODE_TYPE(leftChild, rightChild);

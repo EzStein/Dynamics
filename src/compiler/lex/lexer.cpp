@@ -1,6 +1,6 @@
 #include <stdexcept>
 #include <utility>
-#include "compiler/lexer.h"
+#include "compiler/lex/lexer.h"
 
 using std::map;
 using std::istream;

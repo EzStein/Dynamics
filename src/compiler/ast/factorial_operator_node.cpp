@@ -21,3 +21,9 @@ std::ostream& factorial_operator_node::print(std::ostream& out) const {
   child->print(out) << ')' << '!';
   return out;
 }
+
+std::ostream& factorial_operator_node::emit_code(std::ostream& acc) const {
+  child->emit_code(acc);  //Put on %st(1)
+  acc << "FACTORIAL %st(0), %st(1)\n";
+  return acc;
+}

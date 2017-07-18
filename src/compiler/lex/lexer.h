@@ -2,9 +2,9 @@
 #define LEXER_GUARD
 #include <iostream>
 #include <map>
-#include "reg_def.h"
-#include "compiler/token.h"
-#include "compiler/NFA.h"
+#include "compiler/regex/NFA.h"
+#include "compiler/regex/reg_def.h"
+#include "compiler/lex/token.h"
 
 class lexer {
 public:

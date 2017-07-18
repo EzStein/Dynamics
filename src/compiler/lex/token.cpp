@@ -1,5 +1,5 @@
-#include "token.h"
 #include <iostream>
+#include "compiler/lex/token.h"
 
 std::string token_to_string(token tok) {
   switch(tok) {

@@ -13,3 +13,9 @@ std::ostream& unary_minus_operator_node::print(std::ostream& out) const {
   child->print(out) << ')';
   return out;
 }
+
+std::ostream& unary_minus_operator_node::emit_code(std::ostream& acc) const {
+  child->emit_code(acc);  //Put on %st(0)
+  acc << "fchs %st(0)\n";
+  return acc;
+}

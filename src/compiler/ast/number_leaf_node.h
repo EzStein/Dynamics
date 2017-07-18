@@ -8,6 +8,7 @@ public:
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
+  virtual std::ostream& emit_code(std::ostream&) const override;
   double val;
 };
 #endif

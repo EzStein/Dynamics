@@ -1,6 +1,6 @@
 #include <stack>
 #include <set>
-#include "compiler/DFA.h"
+#include "compiler/regex/DFA.h"
 
 using std::map;
 using std::vector;

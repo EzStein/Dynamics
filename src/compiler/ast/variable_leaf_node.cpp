@@ -11,3 +11,8 @@ std::ostream& variable_leaf_node::print(std::ostream& out) const {
   out << symbolPtr->name;
   return out;
 }
+
+std::ostream& variable_leaf_node::emit_code(std::ostream& acc) const {
+  acc << "fldl 8(%ebp)\n";
+  return acc;
+}

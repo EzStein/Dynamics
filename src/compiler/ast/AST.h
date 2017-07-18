@@ -30,6 +30,8 @@ public:
 
   double evaluate() const;
 
+  std::ostream& emit_code(std::ostream&) const;
+
   void set_root(expression_node*);
 
   friend std::ostream& operator<<(std::ostream&, const AST&);

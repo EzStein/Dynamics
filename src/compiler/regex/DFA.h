@@ -3,8 +3,8 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "compiler/NFA.h"
-#include "compiler/reg_def.h"
+#include "compiler/regex/NFA.h"
+#include "compiler/regex/reg_def.h"
 
 
 /*

@@ -2,7 +2,7 @@
 #define TOKEN_GUARD
 #include <string>
 #include <bitset>
-#include "compiler/ast/AST.h"
+
 /*These tokens are used during operator precedence parsing as indexes to an array. Only tokens that
 are actual terminals are needed to index the array. Use TOKEN_COUNT as the array size.
 The array is organized as follows. Each pair of tokens gets 2bits in an unsigned char * array
@@ -32,22 +32,11 @@ enum class token {
   ERROR
 };
 
-class node;
-
-class grammar_symbol {
-public:
-  token tok;
-  expression_node* nodePtr;
-};
-
-
-
 enum class precedence {
   LESS_THAN = 0,
   EQUAL_TO = 1,
   GREATER_THAN = 2
 };
-
 
 bool is_operator(token tok);
 std::string token_to_string(token tok);
