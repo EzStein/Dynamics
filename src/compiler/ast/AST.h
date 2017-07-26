@@ -30,7 +30,8 @@ public:
 
   double evaluate() const;
 
-  std::ostream& emit_code(std::ostream&) const;
+  std::ostream& emit_code(std::ostream&, unsigned char *) const;
+  unsigned int code_size() const;
 
   void set_root(expression_node*);
 

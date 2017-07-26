@@ -11,7 +11,8 @@ public:
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
-  virtual std::ostream& emit_code(std::ostream&) const override;
+  virtual std::ostream& emit_code(std::ostream&, unsigned char *, unsigned int &) const override;
+  virtual unsigned int code_size() const override;
   symbol_ptr_type symbolPtr;
 };
 

@@ -5,8 +5,17 @@
 class expression_node : public node {
 public:
   virtual ~expression_node();
-  virtual std::ostream& emit_code(std::ostream&) const = 0;
+  /*
+  * Emits code by writing assembly to the output stream and filling the provided buffer with bytes
+  * starting at the provided offset. The function should modify offset to reflect the bytes added.
+  */
+  virtual std::ostream& emit_code(std::ostream&, unsigned char *, unsigned int & offset) const = 0;
   virtual double evaluate() const = 0;
   virtual std::ostream& print(std::ostream&) const = 0;
+
+  /*
+  * Returns the size of the produced code.
+  */
+  virtual unsigned int code_size() const = 0;
 };
 #endif

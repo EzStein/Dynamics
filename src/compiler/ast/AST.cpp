@@ -41,24 +41,99 @@ void AST::set_root(expression_node* node) {
   root = node;
 }
 
-std::ostream& AST::emit_code(std::ostream& acc) const {
+std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
+  unsigned int offset = 0;
   acc << "pushl %ebp\n";
+  buf[offset] = '\xFF';
+  buf[++offset] = '\xF5';
+
   acc << "movl %esp, %ebp\n";
-  acc << "subl $6, %esp\n";
+  buf[++offset] = '\x89';
+  buf[++offset] = '\xE5';
+
+  acc << "subl $8, %esp\n";
+  buf[++offset] = '\x81';
+  buf[++offset] = '\xEC';
+  buf[++offset] = '\x08';
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "fstcw -2(%ebp)\n";
+  buf[++offset] = '\x9B';
+  buf[++offset] = '\xD9';
+  buf[++offset] = '\x7D';
+  buf[++offset] = '\xFE';
+
   acc << "stmxcsr -6(%ebp)\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  acc << "movw $0x0f7f, -8(%ebp)\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "pushl %ebx\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "pushl %esi\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "pushl %ebi\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "finit\n";
-  root->emit_code(acc);
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  acc << "fldcw -8(%ebp)\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  root->emit_code(acc, buf, offset);
+
+
   acc << "popl %ebi\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "popl %esi\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "popl %ebx\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  acc << "fldcw -2(%ebp)\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  acc << "fldmxcsr -6(%ebp)\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "movl %ebp, %esp\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "popl %ebp\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
   acc << "ret\n";
+  buf[++offset] = '\x00';
+  buf[++offset] = '\x00';
+
+  ++offset;
   return acc;
+}
+
+unsigned int AST::code_size() const {
+  return root->code_size() + 50;
 }
 
 template<class NODE_TYPE>

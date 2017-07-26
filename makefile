@@ -14,7 +14,7 @@ MAC_DIR = mac_build
 #Finds all src files in all directories of any depth in src/
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
-CC = g++ -stdlib=libc++ -std=c++11 -I$(SRC_DIR)
+CC = g++ -m32 -stdlib=libc++ -std=c++11 -I$(SRC_DIR)
 
 DIRS = $(EXE_DIR)/$(APP_NAME).app $(EXE_DIR)/$(APP_NAME).app/Contents \
 	$(EXE_DIR)/$(APP_NAME).app/Contents/MacOS $(EXE_DIR)/$(APP_NAME).app/Contents/Resources \
@@ -84,8 +84,8 @@ clean-wx:
 build-wx:
 	-mkdir $(WX_BUILD_DIR)
 
-	export CC="gcc -stdlib=libc++"; \
-	export CXX="g++ -stdlib=libc++ -std=c++11"; \
+	export CC="gcc -stdlib=libc++ -m32"; \
+	export CXX="g++ -stdlib=libc++ -std=c++11 -m32"; \
 	cd $(WX_BUILD_DIR); \
 	../configure --disable-shared --enable-unicode --without-subdirs --with-macosx-version-min=10.7; \
 	rm utils/wxrc/Makefile; \
