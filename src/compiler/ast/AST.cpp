@@ -66,67 +66,74 @@ std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
   buf[++offset] = '\xFE';
 
   acc << "stmxcsr -6(%ebp)\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x0F';
+  buf[++offset] = '\xAE';
+  buf[++offset] = '\x5D';
+  buf[++offset] = '\xFA';
 
   acc << "movw $0x0f7f, -8(%ebp)\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x66';
+  buf[++offset] = '\xC7';
+  buf[++offset] = '\x45';
+  buf[++offset] = '\xF8';
+  buf[++offset] = '\x7F';
+  buf[++offset] = '\x0F';
 
   acc << "pushl %ebx\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\xFF';
+  buf[++offset] = '\xF3';
 
   acc << "pushl %esi\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\xFF';
+  buf[++offset] = '\xF6';
 
-  acc << "pushl %ebi\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  acc << "pushl %edi\n";
+  buf[++offset] = '\xFF';
+  buf[++offset] = '\xF7';
 
   acc << "finit\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x9B';
+  buf[++offset] = '\xDB';
+  buf[++offset] = '\xE3';
 
   acc << "fldcw -8(%ebp)\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\xD9';
+  buf[++offset] = '\x6D';
+  buf[++offset] = '\xF8';
+  ++offset;
 
   root->emit_code(acc, buf, offset);
 
 
-  acc << "popl %ebi\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  acc << "popl %edi\n";
+  buf[offset] = '\x5F';
 
   acc << "popl %esi\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x5E';
 
   acc << "popl %ebx\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x5B';
 
   acc << "fldcw -2(%ebp)\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\xD9';
+  buf[++offset] = '\x6D';
+  buf[++offset] = '\xFE';
 
-  acc << "fldmxcsr -6(%ebp)\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  acc << "ldmxcsr -6(%ebp)\n";
+  buf[++offset] = '\x0F';
+  buf[++offset] = '\xAE';
+  buf[++offset] = '\x55';
+  buf[++offset] = '\xFA';
 
   acc << "movl %ebp, %esp\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x89';
+  buf[++offset] = '\xEC';
 
   acc << "popl %ebp\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\x5D';
 
   acc << "ret\n";
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  buf[++offset] = '\xC3';
 
   ++offset;
   return acc;
