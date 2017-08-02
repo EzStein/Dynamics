@@ -25,11 +25,16 @@ int main() {
   while(1) {
     cout << "Enter an expression to compile: " << flush;
     string str;
+
     getline(cin, str);
+    std::cout << "A"  << std::endl;
     stringstream sstream(str);
     parser parse(sstream);
+    std::cout << "B" << std::endl;
+
     AST ast(parse.parse());
-    std::cout << "Writing to file test.out\n\n";
+    std::cout << "C" << std::endl;
+    std::cout << "Writing to file test.out\n\n" << std::endl;
     unsigned int size = ast.code_size();
     unsigned char * buf = reinterpret_cast<unsigned char *>(mmap(NULL, size,
       PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
@@ -39,10 +44,10 @@ int main() {
     handle.write(reinterpret_cast<const char *>(buf), size);
     handle.close();
 
-    double (*func)() = 0;
+    double (*func)(double) = 0;
 
     *reinterpret_cast<void**>(&func) = buf;
-    std::cout << "The result is: " << func() << "\n";
+    std::cout << "The result is: " << func(3) << "\n";
     munmap(buf, size);
   }
   return 0;

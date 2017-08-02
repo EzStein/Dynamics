@@ -80,15 +80,17 @@ void lexer::set_next_token() {
     /*Gets the smallest accepting state which is also the first one added*/
     nextToken = tokenMap[*states.begin()];
   }
+
   if(nextToken == token::MINUS && (::is_operator(previousToken) ||
     previousToken == token::ERROR /*FOR START OF STREAM*/ || previousToken == token::LEFT_PAREN)) {
       nextToken = token::UNARY_MINUS;
   }
-  if(nextToken == token::LEFT_PAREN && (!::is_operator(previousToken) && previousToken != token::ERROR /*FOR STREAM START*/)) {
+
+  if(nextToken == token::LEFT_PAREN && (!::is_operator(previousToken) && previousToken != token::LEFT_PAREN && previousToken != token::ERROR /*FOR STREAM START*/)) {
     nextToken = token::ASTERISK;
     stream->seekg(currPos);
     /*Previous token remains unchanged*/
-  } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::ENDPOINT)) {
+  } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::RIGHT_PAREN && nextToken != token::ENDPOINT)) {
     nextToken = token::ASTERISK;
     stream->seekg(currPos);
   } else if(nextToken == token::ID && (previousToken == token::ID || previousToken == token::NUMBER)) {

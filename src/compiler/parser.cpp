@@ -43,6 +43,7 @@ parser::parser(istream& stream) {
   lexDef[string("\\s*\\a\\s*")] = token::ID;
   lex = lexer(&stream, lexDef);
 
+  /*Generate operator array*/
   opArr = new unsigned char[static_cast<int>(token::TOKEN_COUNT)*CHUNK_SIZE];
 
   set_precedence(token::NUMBER, token::ID, precedence::EQUAL_TO);
@@ -261,151 +262,164 @@ parser::~parser() {
 AST parser::parse() {
   /*A list is used because its iteraters are never invalidated*/
   list<symbol> symbolTable;
-  AST ast(200000);
-  /*A stack containing only nonterminals that point to a node in the AST tree*/
-  stack<expression_node*> symbolStack;
 
-  /*A stack containing only the terminals in the same order as the terminals on the symbolStack*/
+  /*Allocate an abstract syntax tree with enough memory to hold the parsed expression*/
+  AST ast(2000000);
+
+  /*A stack containing all the node pointers.
+  Each node represents a symbol (terminal or nonterminal) in the grammar*/
+  stack<expression_node*> nodeStack;
+
+  /*A stack containing only the terminals and the special token ENDPOINT*/
   stack<token> terminalStack;
   terminalStack.push(token::ENDPOINT);
-  /*
-  * INVARIANT: terminalStack contains only the terminals in the symbolStack and in the same order
-  * that the terminals appear in on the symbol stack.
-  */
-  while(1) {
 
+
+  while(1) {
+    /*Retrieve the next token without removing it*/
     string lexeme;
     token next = lex.peek(lexeme);
+
+    /*Compare the next token with the token on the top of the terminal stack*/
     token top = terminalStack.top();
     precedence prec = get_precedence(top, next);
 
+    /*We are done when we have reached the end of the stream and the terminal stack contains just the endpoint*/
     if(top == token::ENDPOINT && next == token::ENDPOINT) {
-      ast.set_root(symbolStack.top());
+      ast.set_root(nodeStack.top());
       return ast;
-    } else if(prec != precedence::GREATER_THAN) {
-      next = lex.next_token(lexeme);
-      terminalStack.push(next);
-    } else if(prec == precedence::GREATER_THAN) {
-      lex.previous(lexeme);
-      next = terminalStack.top();
-      while(1) {
-        terminalStack.pop();
-        top = terminalStack.top();
-        if(get_precedence(top, next) == precedence::LESS_THAN)
-          break;
-
-        next = top;
-      }
-
-      expression_node* nodePtr = nullptr;
-      //INITIALIZE NODE
-      expression_node* rightChild = nullptr, *leftChild = nullptr;
-
-
-      /*We prepare the creation of a symbol by stripping whitespace from the lexeme*/
-      util::strip_white_space(lexeme);
-      /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
-      a leaf node with a pointer to that symbol.*/
-      symbol sym{lexeme};
-      /*True if the list does not contain the symbol*/
-      list<symbol>::const_iterator symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
-
-      /*The terminal that was removed*/
-      switch(next) {
-        case token::ID:
-
-
-
-          if(symPtr == symbolTable.end()) {
-            /*We add the symbol to the list*/
-            symbolTable.push_back(sym);
-            /*The table is now nonempty. We get a pointer/iterator to the last element
-            by decrementing end() by 1*/
-            symPtr = symbolTable.end();
-            --symPtr;
-          }
-          nodePtr = ast.make_variable_leaf_node(symPtr);
-          symbolStack.push(nodePtr);
-          break;
-        case token::NUMBER:
-          nodePtr = ast.make_number_leaf_node(util::string_to_double(lexeme));
-          symbolStack.push(nodePtr);
-          break;
-        case token::EXCLAMATION:
-          rightChild = symbolStack.top();
-          symbolStack.pop();
-          nodePtr = ast.make_unary_operator_node<factorial_operator_node>(rightChild);
-          symbolStack.push(nodePtr);
-          break;
-        case token::CARET:
-          rightChild = symbolStack.top();
-          //POP the nonterminal
-          symbolStack.pop();
-          leftChild = symbolStack.top();
-          //POP the nonterminal
-          symbolStack.pop();
-          nodePtr = ast.make_binary_operator_node<exponentiation_operator_node>(leftChild, rightChild);
-          symbolStack.push(nodePtr);
-          break;
-        case token::UNARY_MINUS:
-            rightChild = symbolStack.top();
-            symbolStack.pop();
-            nodePtr = ast.make_unary_operator_node<unary_minus_operator_node>(rightChild);
-            symbolStack.push(nodePtr);
-          break;
-        case token::ASTERISK:
-          rightChild = symbolStack.top();
-          //POP the nonterminal
-          symbolStack.pop();
-
-          leftChild = symbolStack.top();
-          //POP the nonterminal
-          symbolStack.pop();
-            nodePtr = ast.make_binary_operator_node<multiply_operator_node>(leftChild, rightChild);
-            symbolStack.push(nodePtr);
-          break;
-        case token::FORWARD_SLASH:
-            rightChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-
-            leftChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-            nodePtr = ast.make_binary_operator_node<divide_operator_node>(leftChild, rightChild);
-            symbolStack.push(nodePtr);
-          break;
-        case token::PLUS:
-            rightChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-
-            leftChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-            nodePtr = ast.make_binary_operator_node<plus_operator_node>(leftChild, rightChild);
-            symbolStack.push(nodePtr);
-          break;
-        case token::MINUS:
-            rightChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-
-            leftChild = symbolStack.top();
-            //POP the nonterminal
-            symbolStack.pop();
-            nodePtr = ast.make_binary_operator_node<binary_minus_operator_node>(leftChild, rightChild);
-            symbolStack.push(nodePtr);
-          break;
-        case token::RIGHT_PAREN:
-          throw invalid_argument("THIS SHOULD NEVER OCCUR: RIGHT_PAREN");
-          break;
-        case token::LEFT_PAREN:
-          //We do nothing
-          break;
-        default:
-          throw invalid_argument("THIS SHOULD NEVER OCCUR: DEFAULT");
-      }
     }
+    if(prec != precedence::GREATER_THAN) {
+      /*If the precedence is not greator, we consume the token and add it to the stack*/
+      terminalStack.push(lex.next_token(lexeme));
+      continue;
+    }
+
+    /*Otherwise the precedence is greater, and things get complicated...*/
+    /*We now ignore the token we just peeked at.
+    We backtrack, removing tokens from the stack until we encounter a LESS_THAN precedence.
+    Next is set to the token on the top of the terminal stack*/
+    lex.previous(lexeme);
+    next = terminalStack.top();
+    while(1) {
+      terminalStack.pop();
+      top = terminalStack.top();
+      if(get_precedence(top, next) == precedence::LESS_THAN)
+        break;
+
+      next = top;
+    }
+    /*Next is the last removed token (terminal)*/
+
+    expression_node* nodePtr = nullptr;
+    //INITIALIZE NODE
+    expression_node* rightChild = nullptr, *leftChild = nullptr;
+
+
+    /*We prepare the creation of a symbol by stripping whitespace from the lexeme*/
+    util::strip_white_space(lexeme);
+    /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
+    a leaf node with a pointer to that symbol.*/
+    symbol sym{lexeme};
+    /*True if the list does not contain the symbol*/
+    list<symbol>::const_iterator symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
+    std::cout << next <<std::endl;
+    /*The terminal that was removed*/
+    switch(next) {
+      case token::ID:
+
+
+
+        if(symPtr == symbolTable.end()) {
+          /*We add the symbol to the list*/
+          symbolTable.push_back(sym);
+          /*The table is now nonempty. We get a pointer/iterator to the last element
+          by decrementing end() by 1*/
+          symPtr = symbolTable.end();
+          --symPtr;
+        }
+        nodePtr = ast.make_variable_leaf_node(symPtr);
+        nodeStack.push(nodePtr);
+        break;
+      case token::NUMBER:
+        nodePtr = ast.make_number_leaf_node(util::string_to_double(lexeme));
+        nodeStack.push(nodePtr);
+        break;
+      case token::EXCLAMATION:
+        rightChild = nodeStack.top();
+        nodeStack.pop();
+        nodePtr = ast.make_unary_operator_node<factorial_operator_node>(rightChild);
+        nodeStack.push(nodePtr);
+        break;
+      case token::CARET:
+        rightChild = nodeStack.top();
+        //POP the nonterminal
+        nodeStack.pop();
+        leftChild = nodeStack.top();
+        //POP the nonterminal
+        nodeStack.pop();
+        nodePtr = ast.make_binary_operator_node<exponentiation_operator_node>(leftChild, rightChild);
+        nodeStack.push(nodePtr);
+        break;
+      case token::UNARY_MINUS:
+          rightChild = nodeStack.top();
+          nodeStack.pop();
+          nodePtr = ast.make_unary_operator_node<unary_minus_operator_node>(rightChild);
+          nodeStack.push(nodePtr);
+        break;
+      case token::ASTERISK:
+        rightChild = nodeStack.top();
+        //POP the nonterminal
+        nodeStack.pop();
+
+        leftChild = nodeStack.top();
+        //POP the nonterminal
+        nodeStack.pop();
+          nodePtr = ast.make_binary_operator_node<multiply_operator_node>(leftChild, rightChild);
+          nodeStack.push(nodePtr);
+        break;
+      case token::FORWARD_SLASH:
+          rightChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+
+          leftChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+          nodePtr = ast.make_binary_operator_node<divide_operator_node>(leftChild, rightChild);
+          nodeStack.push(nodePtr);
+        break;
+      case token::PLUS:
+          rightChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+
+          leftChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+          nodePtr = ast.make_binary_operator_node<plus_operator_node>(leftChild, rightChild);
+          nodeStack.push(nodePtr);
+        break;
+      case token::MINUS:
+          rightChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+
+          leftChild = nodeStack.top();
+          //POP the nonterminal
+          nodeStack.pop();
+          nodePtr = ast.make_binary_operator_node<binary_minus_operator_node>(leftChild, rightChild);
+          nodeStack.push(nodePtr);
+        break;
+      case token::RIGHT_PAREN:
+        throw invalid_argument("THIS SHOULD NEVER OCCUR: RIGHT_PAREN");
+        break;
+      case token::LEFT_PAREN:
+        //We do nothing
+        break;
+      default:
+        throw invalid_argument("THIS SHOULD NEVER OCCUR: DEFAULT");
+    }
+
   }
 }

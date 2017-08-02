@@ -71,12 +71,12 @@ std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
   buf[++offset] = '\x5D';
   buf[++offset] = '\xFA';
 
-  acc << "movw $0x0f7f, -8(%ebp)\n";
+  acc << "movw $0x0f7e, -8(%ebp)\n";
   buf[++offset] = '\x66';
   buf[++offset] = '\xC7';
   buf[++offset] = '\x45';
   buf[++offset] = '\xF8';
-  buf[++offset] = '\x7F';
+  buf[++offset] = '\x7E';
   buf[++offset] = '\x0F';
 
   acc << "pushl %ebx\n";
