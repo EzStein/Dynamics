@@ -15,13 +15,12 @@ std::ostream& multiply_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& multiply_operator_node::emit_code(std::ostream& acc, unsigned char * buf, unsigned int & offset) const {
-  leftChild->emit_code(acc, buf, offset);  //Put on %st(1)
-  rightChild->emit_code(acc, buf, offset); //Now on %st(0)
+std::ostream& multiply_operator_node::emit_code(std::ostream& acc, compiler_data& data) const {
+  leftChild->emit_code(acc, data);  //Put on %st(1)
+  rightChild->emit_code(acc, data); //Now on %st(0)
   acc << "fmulp %st(0), %st(1)\n";
-  buf[offset] = '\xDE';
-  buf[++offset] = '\xC9';
-  ++offset;
+  data.executableBuf[++data.offset] = '\xDE';
+  data.executableBuf[++data.offset] = '\xC9';
   return acc;
 }
 

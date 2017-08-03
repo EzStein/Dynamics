@@ -3,6 +3,7 @@
 #include <list>
 #include "compiler/ir/symbol.h"
 #include "compiler/ast/leaf_node.h"
+#include "compiler/compiler_data.h"
 class variable_leaf_node : public leaf_node {
 public:
   typedef std::list<symbol>::const_iterator symbol_ptr_type;
@@ -11,7 +12,7 @@ public:
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
-  virtual std::ostream& emit_code(std::ostream&, unsigned char *, unsigned int &) const override;
+  virtual std::ostream& emit_code(std::ostream&, compiler_data&) const override;
   virtual unsigned int code_size() const override;
   symbol_ptr_type symbolPtr;
 };

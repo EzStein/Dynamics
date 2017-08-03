@@ -14,7 +14,7 @@ std::ostream& number_leaf_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& number_leaf_node::emit_code(std::ostream& acc, unsigned char * buf, unsigned int & offset) const {
+std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data) const {
   const unsigned char * ptr = reinterpret_cast<const unsigned char*>(&val);
   acc << std::hex;
   acc << "pushl $0x";
@@ -25,9 +25,9 @@ std::ostream& number_leaf_node::emit_code(std::ostream& acc, unsigned char * buf
     acc << toWrite;
   }
 
-  buf[offset] = '\x68';
+  data.executableBuf[++data.offset] = '\x68';
   for(int i = 4; i <= 7; ++i)
-    buf[++offset] = ptr[i];
+    data.executableBuf[++data.offset] = ptr[i];
 
   acc << "\n";
   acc << "pushl $0x";
@@ -39,24 +39,23 @@ std::ostream& number_leaf_node::emit_code(std::ostream& acc, unsigned char * buf
   }
   acc << "\n";
   acc << std::dec;
-  buf[++offset] = '\x68';
+  data.executableBuf[++data.offset] = '\x68';
   for(int i = 0; i <= 3; ++i)
-    buf[++offset] = ptr[i];
+    data.executableBuf[++data.offset] = ptr[i];
 
   acc << "fldl (%esp)\n";
-  buf[++offset] = '\xDD';
-  buf[++offset] = '\x04';
-  buf[++offset] = '\x24';
+  data.executableBuf[++data.offset] = '\xDD';
+  data.executableBuf[++data.offset] = '\x04';
+  data.executableBuf[++data.offset] = '\x24';
 
   acc << "addl $8, %esp\n";
-  buf[++offset] = '\x81';
-  buf[++offset] = '\xC4';
-  buf[++offset] = '\x08';
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
-  buf[++offset] = '\x00';
+  data.executableBuf[++data.offset] = '\x81';
+  data.executableBuf[++data.offset] = '\xC4';
+  data.executableBuf[++data.offset] = '\x08';
+  data.executableBuf[++data.offset] = '\x00';
+  data.executableBuf[++data.offset] = '\x00';
+  data.executableBuf[++data.offset] = '\x00';
 
-  ++offset;
   return acc;
 }
 

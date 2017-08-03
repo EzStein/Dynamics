@@ -22,8 +22,8 @@ std::ostream& factorial_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& factorial_operator_node::emit_code(std::ostream& acc, unsigned char * buf, unsigned int & offset) const {
-  child->emit_code(acc, buf, offset);  //Put on %st(0)
+std::ostream& factorial_operator_node::emit_code(std::ostream& acc, compiler_data& data) const {
+  child->emit_code(acc, data);  //Put on %st(0)
 
   /*acc << "fist %eax\n"; //Round to an integer
 

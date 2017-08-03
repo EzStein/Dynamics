@@ -14,12 +14,11 @@ std::ostream& unary_minus_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& unary_minus_operator_node::emit_code(std::ostream& acc, unsigned char * buf, unsigned int & offset) const {
-  child->emit_code(acc, buf, offset);  //Put on %st(0)
+std::ostream& unary_minus_operator_node::emit_code(std::ostream& acc, compiler_data& data) const {
+  child->emit_code(acc, data);  //Put on %st(0)
   acc << "fchs %st(0)\n";
-  buf[offset] = '\xD9';
-  buf[++offset] = '\xE0';
-  ++offset;
+  data.executableBuf[++data.offset] = '\xD9';
+  data.executableBuf[++data.offset] = '\xE0';
   return acc;
 }
 

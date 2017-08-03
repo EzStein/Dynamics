@@ -2,6 +2,7 @@
 #define EXPRESSION_NODE_GUARD
 #include <iostream>
 #include "compiler/ast/node.h"
+#include "compiler/compiler_data.h"
 class expression_node : public node {
 public:
   virtual ~expression_node();
@@ -9,7 +10,7 @@ public:
   * Emits code by writing assembly to the output stream and filling the provided buffer with bytes
   * starting at the provided offset. The function should modify offset to reflect the bytes added.
   */
-  virtual std::ostream& emit_code(std::ostream&, unsigned char *, unsigned int & offset) const = 0;
+  virtual std::ostream& emit_code(std::ostream&, compiler_data&) const = 0;
   virtual double evaluate() const = 0;
   virtual std::ostream& print(std::ostream&) const = 0;
 
