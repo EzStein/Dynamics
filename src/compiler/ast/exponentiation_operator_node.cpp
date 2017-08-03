@@ -28,6 +28,49 @@ std::ostream& exponentiation_operator_node::emit_code(std::ostream& acc, compile
   data.executableBuf[++data.offset] = '\xD9';
   data.executableBuf[++data.offset] = '\xF1';
 
+  if(data.stackSizeFPU >= 9) {
+    acc << "fldt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x2C';
+    data.executableBuf[++data.offset] = '\x24';
+
+    acc << "addl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xC4';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fincstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF7';
+  }
+  --data.stackSizeFPU;
+
+  if(data.stackSizeFPU >= 8) {
+    acc << "fdecstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF6';
+
+    /*Make room for the extended double precision data on the stack*/
+    acc << "subl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xEC';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fstpt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x3C';
+    data.executableBuf[++data.offset] = '\x24';
+  }
+
+  /*Increment the size of the stack to reflected the added value*/
+  ++data.stackSizeFPU;
+
 	acc << "fld %st(0)\n";	//Copies the value, Now it is held in %st(0) and %st(1)
   data.executableBuf[++data.offset] = '\xD9';
   data.executableBuf[++data.offset] = '\xC0';
@@ -51,6 +94,28 @@ std::ostream& exponentiation_operator_node::emit_code(std::ostream& acc, compile
   data.executableBuf[++data.offset] = '\xF0';
   //Performs 2^fracval - 1 and stores it in %st(0)
 
+  if(data.stackSizeFPU >= 8) {
+    acc << "fdecstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF6';
+
+    /*Make room for the extended double precision data on the stack*/
+    acc << "subl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xEC';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fstpt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x3C';
+    data.executableBuf[++data.offset] = '\x24';
+  }
+
+  /*Increment the size of the stack to reflected the added value*/
+  ++data.stackSizeFPU;
 	//Add 1 to %st(0)
 	acc << "fld1\n";
   data.executableBuf[++data.offset] = '\xD9';
@@ -59,6 +124,26 @@ std::ostream& exponentiation_operator_node::emit_code(std::ostream& acc, compile
 	acc << "faddp %st(0), %st(1)\n";
   data.executableBuf[++data.offset] = '\xDE';
   data.executableBuf[++data.offset] = '\xC1';
+
+  if(data.stackSizeFPU >= 9) {
+    acc << "fldt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x2C';
+    data.executableBuf[++data.offset] = '\x24';
+
+    acc << "addl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xC4';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fincstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF7';
+  }
+  --data.stackSizeFPU;
 
 	//Perform %st(0) * 2^%st(1) and stores in %st(0)
 	acc << "fscale\n";
@@ -73,10 +158,29 @@ std::ostream& exponentiation_operator_node::emit_code(std::ostream& acc, compile
   data.executableBuf[++data.offset] = '\xDD';
   data.executableBuf[++data.offset] = '\xD8';
   //Pops the fpu stack and throws away the result
+  if(data.stackSizeFPU >= 9) {
+    acc << "fldt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x2C';
+    data.executableBuf[++data.offset] = '\x24';
+
+    acc << "addl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xC4';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fincstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF7';
+  }
+  --data.stackSizeFPU;
 
   return acc;
 }
 
 unsigned int exponentiation_operator_node::code_size() const {
-  return leftChild->code_size() + rightChild->code_size() + 22;
+  return leftChild->code_size() + rightChild->code_size() + 77;
 }

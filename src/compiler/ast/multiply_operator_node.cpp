@@ -21,9 +21,29 @@ std::ostream& multiply_operator_node::emit_code(std::ostream& acc, compiler_data
   acc << "fmulp %st(0), %st(1)\n";
   data.executableBuf[++data.offset] = '\xDE';
   data.executableBuf[++data.offset] = '\xC9';
+
+  if(data.stackSizeFPU >= 9) {
+    acc << "fldt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x2C';
+    data.executableBuf[++data.offset] = '\x24';
+
+    acc << "addl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xC4';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fincstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF7';
+  }
+  --data.stackSizeFPU;
   return acc;
 }
 
 unsigned int multiply_operator_node::code_size() const {
-  return leftChild->code_size() + rightChild->code_size() + 2;
+  return leftChild->code_size() + rightChild->code_size() + 13;
 }

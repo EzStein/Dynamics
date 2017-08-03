@@ -15,6 +15,29 @@ std::ostream& number_leaf_node::print(std::ostream& out) const {
 }
 
 std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data) const {
+  if(data.stackSizeFPU >= 8) {
+    acc << "fdecstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF6';
+
+    /*Make room for the extended double precision data on the stack*/
+    acc << "subl $10, %esp\n";
+    data.executableBuf[++data.offset] = '\x81';
+    data.executableBuf[++data.offset] = '\xEC';
+    data.executableBuf[++data.offset] = '\x0A';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+    data.executableBuf[++data.offset] = '\x00';
+
+    acc << "fstpt (%esp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x3C';
+    data.executableBuf[++data.offset] = '\x24';
+  }
+
+  /*Increment the size of the stack to reflected the added value*/
+  ++data.stackSizeFPU;
+
   const unsigned char * ptr = reinterpret_cast<const unsigned char*>(&val);
   acc << std::hex;
   acc << "pushl $0x";
@@ -60,5 +83,5 @@ std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data
 }
 
 unsigned int number_leaf_node::code_size() const {
-  return 19;
+  return 30;
 }
