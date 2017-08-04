@@ -42,7 +42,7 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings \
 		-Wno-c++11-extensions -Wno-unused-parameter \
-		-Wno-reorder
+		-Wno-reorder -Wno-sign-conversion
 
 DEVELOPMENT = -g -O0
 PRODUCTION = -static -O3 -Wunused-parameter -Wpadded -Werror

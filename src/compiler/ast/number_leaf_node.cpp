@@ -14,6 +14,10 @@ std::ostream& number_leaf_node::print(std::ostream& out) const {
   return out;
 }
 
+bool number_leaf_node::evaluatable() const {
+  return true;
+}
+
 std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data) const {
   if(data.stackSizeFPU >= 8) {
     acc << "fdecstp\n";

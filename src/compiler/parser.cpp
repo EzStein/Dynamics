@@ -264,7 +264,7 @@ AST parser::parse() {
   list<symbol> symbolTable;
 
   /*Allocate an abstract syntax tree with enough memory to hold the parsed expression*/
-  AST ast(2000000);
+  AST ast;
 
   /*A stack containing all the node pointers.
   Each node represents a symbol (terminal or nonterminal) in the grammar*/
@@ -323,7 +323,7 @@ AST parser::parse() {
     symbol sym{lexeme};
     /*True if the list does not contain the symbol*/
     list<symbol>::const_iterator symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
-    std::cout << next <<std::endl;
+    
     /*The terminal that was removed*/
     switch(next) {
       case token::ID:

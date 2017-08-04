@@ -12,6 +12,7 @@ private:
   virtual std::ostream& print(std::ostream&) const override;
   virtual std::ostream& emit_code(std::ostream&, compiler_data&) const override;
   virtual unsigned int code_size() const override;
+  virtual bool evaluatable() const override;
   double val;
 };
 #endif

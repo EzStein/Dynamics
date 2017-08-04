@@ -15,6 +15,18 @@ public:
   /*Destroys the AST*/
   ~AST();
 
+  /*Copy constructor. Performs a deep copy of the tree*/
+  AST(const AST&);
+
+  /*Move constructor*/
+  AST(AST&&);
+
+  /*Assignment operator which performs a deep copy*/
+  AST& operator=(const AST&);
+
+  /*Move assignment*/
+  AST& operator=(AST&&);
+
   /*Constructs the binary operator of the appropriate type whose children are given by the provided pointers.
   * The function returns a pointer to the constructed node*/
   template<class NODE_TYPE>
@@ -35,8 +47,11 @@ public:
 
   void set_root(expression_node*);
 
+  void add_symbol(symbol);
   friend std::ostream& operator<<(std::ostream&, const AST&);
 private:
+  /*The symbol table*/
+  std::list<symbol> symbolTable;
   expression_node * root;
 
   /*Memory chunk used to store all the nodes contiguously. It must be allocated with enough memory initially*/

@@ -4,6 +4,7 @@
 class binary_operator_node : public expression_node {
 public:
   virtual ~binary_operator_node();
+
 protected:
   expression_node* leftChild;
   expression_node* rightChild;
@@ -11,5 +12,7 @@ protected:
   /*Constructs this binary operator node with pointers to its left and right children*/
   binary_operator_node(expression_node* leftChild, expression_node* rightChild);
 
+private:
+  virtual bool evaluatable() const override;
 };
 #endif

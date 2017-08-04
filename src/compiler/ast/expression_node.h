@@ -12,6 +12,7 @@ public:
   */
   virtual std::ostream& emit_code(std::ostream&, compiler_data&) const = 0;
   virtual double evaluate() const = 0;
+  virtual bool evaluatable() const = 0;
   virtual std::ostream& print(std::ostream&) const = 0;
 
   /*

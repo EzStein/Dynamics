@@ -3,6 +3,10 @@ variable_leaf_node::variable_leaf_node(symbol_ptr_type _symbolPtr):symbolPtr(_sy
 
 }
 
+bool variable_leaf_node::evaluatable() const {
+  return false;
+}
+
 double variable_leaf_node::evaluate() const {
   return static_cast<double>(0);
 }

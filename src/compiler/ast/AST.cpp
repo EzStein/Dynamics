@@ -1,4 +1,5 @@
 #include <new>
+#include <algorithm>
 #include "AST.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
@@ -14,7 +15,7 @@
 
 AST::AST() : AST(1000) { }
 
-AST::AST(size_t size) : root(nullptr), allocatorOffset(0), memSize(size) {
+AST::AST(size_t size) : root(nullptr), allocatorOffset(0), memSize(size), mem(nullptr), symbolTable() {
   mem = new unsigned char[memSize];
 }
 
@@ -22,13 +23,67 @@ AST::~AST() {
   delete[] mem;
 }
 
+AST::AST(const AST& ast) : symbolTable(ast.symbolTable),
+  memSize(ast.memSize), allocatorOffset(ast.allocatorOffset) {
+    mem = new unsigned char[memSize];
+    std::copy(ast.mem, ast.mem + ast.allocatorOffset, mem);
+    root = reinterpret_cast<expression_node*>((ast.root - reinterpret_cast<expression_node*>(ast.mem)) + mem);
+}
+
+AST& AST::operator=(const AST& ast) {
+  if(&ast == this) return *this;
+  /*Delete the old memory*/
+  delete[] mem;
+  symbolTable = ast.symbolTable;
+  memSize = ast.memSize;
+  allocatorOffset = ast.allocatorOffset;
+  mem = new unsigned char[memSize];
+  std::copy(ast.mem, ast.mem + ast.allocatorOffset, mem);
+  root = reinterpret_cast<expression_node*>((ast.root - reinterpret_cast<expression_node*>(ast.mem)) + mem);
+  return *this;
+}
+
+AST::AST(AST&& ast) : symbolTable(ast.symbolTable),
+memSize(ast.memSize), allocatorOffset(ast.allocatorOffset), root(ast.root), mem(ast.mem) {
+  ast.mem = nullptr;
+}
+
+AST& AST::operator=(AST&& ast) {
+  if(&ast == this) return *this;
+  symbolTable = ast.symbolTable;
+  memSize = ast.memSize;
+  allocatorOffset = ast.allocatorOffset;
+  root = ast.root;
+  mem = ast.mem;
+  ast.mem = nullptr;
+  return *this;
+}
+
 expression_node* AST::make_variable_leaf_node(variable_leaf_node::symbol_ptr_type ptr) {
+  if(allocatorOffset + sizeof(variable_leaf_node) > memSize) {
+    /*Double the memory size*/
+    size_t newMemSize = 2 * memSize;
+    unsigned char * newMem = new unsigned char[newMemSize];
+    std::copy(mem, mem + allocatorOffset, newMem);
+    delete[] mem;
+    mem = newMem;
+    memSize = newMemSize;
+  }
   expression_node* ret = new (mem + allocatorOffset) variable_leaf_node(ptr);
   allocatorOffset += sizeof(variable_leaf_node);
   return ret;
 }
 
 expression_node* AST::make_number_leaf_node(double val) {
+  if(allocatorOffset + sizeof(number_leaf_node) > memSize) {
+    /*Double the memory size*/
+    size_t newMemSize = 2 * memSize;
+    unsigned char * newMem = new unsigned char[newMemSize];
+    std::copy(mem, mem + allocatorOffset, newMem);
+    delete[] mem;
+    mem = newMem;
+    memSize = newMemSize;
+  }
   expression_node* ret = new (mem + allocatorOffset) number_leaf_node(val);
   allocatorOffset += sizeof(number_leaf_node);
   return ret;
@@ -143,6 +198,15 @@ unsigned int AST::code_size() const {
 
 template<class NODE_TYPE>
 expression_node* AST::make_binary_operator_node(expression_node* leftChild, expression_node* rightChild) {
+  if(allocatorOffset + sizeof(NODE_TYPE) > memSize) {
+    /*Double the memory size*/
+    size_t newMemSize = 2 * memSize;
+    unsigned char * newMem = new unsigned char[newMemSize];
+    std::copy(mem, mem + allocatorOffset, newMem);
+    delete[] mem;
+    mem = newMem;
+    memSize = newMemSize;
+  }
   expression_node* ret = new (mem + allocatorOffset) NODE_TYPE(leftChild, rightChild);
   allocatorOffset += sizeof(NODE_TYPE);
   return ret;
@@ -150,6 +214,15 @@ expression_node* AST::make_binary_operator_node(expression_node* leftChild, expr
 
 template<class NODE_TYPE>
 expression_node* AST::make_unary_operator_node(expression_node* child) {
+  if(allocatorOffset + sizeof(NODE_TYPE) > memSize) {
+    /*Double the memory size*/
+    size_t newMemSize = 2 * memSize;
+    unsigned char * newMem = new unsigned char[newMemSize];
+    std::copy(mem, mem + allocatorOffset, newMem);
+    delete[] mem;
+    mem = newMem;
+    memSize = newMemSize;
+  }
   expression_node* ret = new (mem + allocatorOffset) NODE_TYPE(child);
   allocatorOffset += sizeof(NODE_TYPE);
   return ret;
@@ -160,7 +233,6 @@ template expression_node* AST::make_binary_operator_node<plus_operator_node>(exp
 template expression_node* AST::make_binary_operator_node<binary_minus_operator_node>(expression_node*,expression_node*);
 template expression_node* AST::make_binary_operator_node<multiply_operator_node>(expression_node*,expression_node*);
 template expression_node* AST::make_binary_operator_node<divide_operator_node>(expression_node*,expression_node*);
-
 template expression_node* AST::make_unary_operator_node<factorial_operator_node>(expression_node*);
 template expression_node* AST::make_unary_operator_node<unary_minus_operator_node>(expression_node*);
 
