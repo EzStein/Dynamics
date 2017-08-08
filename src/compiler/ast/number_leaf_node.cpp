@@ -1,5 +1,6 @@
 #include <iomanip>
 #include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/AST.h"
 
 number_leaf_node::number_leaf_node(double _val) : val(_val) {
 
@@ -88,4 +89,8 @@ std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data
 
 unsigned int number_leaf_node::code_size() const {
   return 30;
+}
+
+expression_node* number_leaf_node::copy() const {
+  return AST::make_number_leaf_node(val);
 }

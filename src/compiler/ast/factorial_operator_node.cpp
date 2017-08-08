@@ -1,4 +1,5 @@
 #include "compiler/ast/factorial_operator_node.h"
+#include "compiler/ast/AST.h"
 factorial_operator_node::factorial_operator_node(expression_node* child) :
 unary_operator_node(child) {
 
@@ -42,4 +43,8 @@ std::ostream& factorial_operator_node::emit_code(std::ostream& acc, compiler_dat
 
 unsigned int factorial_operator_node::code_size() const {
   return child->code_size() + 0;
+}
+
+expression_node* factorial_operator_node::copy() const {
+  return AST::make_unary_operator_node<factorial_operator_node>(child->copy());
 }

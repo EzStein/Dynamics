@@ -1,4 +1,5 @@
 #include "compiler/ast/plus_operator_node.h"
+#include "compiler/ast/AST.h"
 #include <iostream>
 plus_operator_node::plus_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
@@ -48,4 +49,8 @@ std::ostream& plus_operator_node::emit_code(std::ostream& acc, compiler_data& da
 
 unsigned int plus_operator_node::code_size() const {
   return leftChild->code_size() + rightChild->code_size() + 13;
+}
+
+expression_node* plus_operator_node::copy() const {
+  return AST::make_binary_operator_node<plus_operator_node>(leftChild->copy(), rightChild->copy());
 }

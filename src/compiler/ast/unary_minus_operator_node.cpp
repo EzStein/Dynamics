@@ -1,4 +1,5 @@
 #include "compiler/ast/unary_minus_operator_node.h"
+#include "compiler/ast/AST.h"
 unary_minus_operator_node::unary_minus_operator_node(expression_node* child) :
 unary_operator_node(child) {
 
@@ -24,4 +25,8 @@ std::ostream& unary_minus_operator_node::emit_code(std::ostream& acc, compiler_d
 
 unsigned int unary_minus_operator_node::code_size() const {
   return child->code_size() + 2;
+}
+
+expression_node* unary_minus_operator_node::copy() const {
+  return AST::make_unary_operator_node<unary_minus_operator_node>(child->copy());
 }

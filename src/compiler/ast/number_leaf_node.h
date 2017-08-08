@@ -13,6 +13,8 @@ private:
   virtual std::ostream& emit_code(std::ostream&, compiler_data&) const override;
   virtual unsigned int code_size() const override;
   virtual bool evaluatable() const override;
+  virtual expression_node* copy() const override;
+
   double val;
 };
 #endif

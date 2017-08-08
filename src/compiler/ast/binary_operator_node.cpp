@@ -3,7 +3,10 @@ binary_operator_node::binary_operator_node(expression_node* _leftChild, expressi
 leftChild(_leftChild), rightChild(_rightChild) {
 }
 
-binary_operator_node::~binary_operator_node() { }
+binary_operator_node::~binary_operator_node() {
+  delete leftChild;
+  delete rightChild;
+}
 
 bool binary_operator_node::evaluatable() const {
   return leftChild->evaluatable() && rightChild->evaluatable();

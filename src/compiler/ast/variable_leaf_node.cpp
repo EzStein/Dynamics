@@ -1,5 +1,6 @@
 #include "compiler/ast/variable_leaf_node.h"
-variable_leaf_node::variable_leaf_node(symbol_ptr_type _symbolPtr):symbolPtr(_symbolPtr) {
+#include "compiler/ast/AST.h"
+variable_leaf_node::variable_leaf_node(symbol::ptr_type _symPtr):symPtr(_symPtr) {
 
 }
 
@@ -12,7 +13,7 @@ double variable_leaf_node::evaluate() const {
 }
 
 std::ostream& variable_leaf_node::print(std::ostream& out) const {
-  out << symbolPtr->name;
+  out << symPtr->name;
   return out;
 }
 
@@ -49,4 +50,8 @@ std::ostream& variable_leaf_node::emit_code(std::ostream& acc, compiler_data& da
 
 unsigned int variable_leaf_node::code_size() const {
   return 14;
+}
+
+expression_node* variable_leaf_node::copy() const {
+  return AST::make_variable_leaf_node(symPtr);
 }

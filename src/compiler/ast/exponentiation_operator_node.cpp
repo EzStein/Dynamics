@@ -1,5 +1,7 @@
 #include <cmath>
 #include "exponentiation_operator_node.h"
+#include "compiler/ast/AST.h"
+
 exponentiation_operator_node::exponentiation_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
 
@@ -183,4 +185,8 @@ std::ostream& exponentiation_operator_node::emit_code(std::ostream& acc, compile
 
 unsigned int exponentiation_operator_node::code_size() const {
   return leftChild->code_size() + rightChild->code_size() + 77;
+}
+
+expression_node* exponentiation_operator_node::copy() const {
+  return AST::make_binary_operator_node<exponentiation_operator_node>(leftChild->copy(), rightChild->copy());
 }

@@ -2,7 +2,7 @@
 #define NODE_GUARD
 class node {
 public:
-  virtual ~node();
+  virtual ~node() = 0;
 
 };
 #endif

@@ -260,11 +260,7 @@ parser::~parser() {
 }
 
 AST parser::parse() {
-  /*A list is used because its iteraters are never invalidated*/
   list<symbol> symbolTable;
-
-  /*Allocate an abstract syntax tree with enough memory to hold the parsed expression*/
-  AST ast;
 
   /*A stack containing all the node pointers.
   Each node represents a symbol (terminal or nonterminal) in the grammar*/
@@ -286,7 +282,7 @@ AST parser::parse() {
 
     /*We are done when we have reached the end of the stream and the terminal stack contains just the endpoint*/
     if(top == token::ENDPOINT && next == token::ENDPOINT) {
-      ast.set_root(nodeStack.top());
+      AST ast(nodeStack.top());
       return ast;
     }
     if(prec != precedence::GREATER_THAN) {
@@ -318,37 +314,42 @@ AST parser::parse() {
 
     /*We prepare the creation of a symbol by stripping whitespace from the lexeme*/
     util::strip_white_space(lexeme);
-    /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
-    a leaf node with a pointer to that symbol.*/
-    symbol sym{lexeme};
-    /*True if the list does not contain the symbol*/
-    list<symbol>::const_iterator symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
-    
+
+
     /*The terminal that was removed*/
     switch(next) {
-      case token::ID:
+      case token::ID: {
+        /*Holds the id of the next unique symbol*/
+        static int symbolId = -1;
+        /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
+        a leaf node with a pointer to that symbol.*/
+        symbol sym(lexeme);
+        /*True if the list does not contain the symbol*/
+        symbol::ptr_type symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
 
 
-
+        /*In the case that the symbol does not yet exist, we add it*/
         if(symPtr == symbolTable.end()) {
           /*We add the symbol to the list*/
+          sym.id = ++symbolId;
           symbolTable.push_back(sym);
           /*The table is now nonempty. We get a pointer/iterator to the last element
           by decrementing end() by 1*/
           symPtr = symbolTable.end();
           --symPtr;
         }
-        nodePtr = ast.make_variable_leaf_node(symPtr);
+        nodePtr = AST::make_variable_leaf_node(symPtr);
         nodeStack.push(nodePtr);
+        }
         break;
       case token::NUMBER:
-        nodePtr = ast.make_number_leaf_node(util::string_to_double(lexeme));
+        nodePtr = AST::make_number_leaf_node(util::string_to_double(lexeme));
         nodeStack.push(nodePtr);
         break;
       case token::EXCLAMATION:
         rightChild = nodeStack.top();
         nodeStack.pop();
-        nodePtr = ast.make_unary_operator_node<factorial_operator_node>(rightChild);
+        nodePtr = AST::make_unary_operator_node<factorial_operator_node>(rightChild);
         nodeStack.push(nodePtr);
         break;
       case token::CARET:
@@ -358,13 +359,13 @@ AST parser::parse() {
         leftChild = nodeStack.top();
         //POP the nonterminal
         nodeStack.pop();
-        nodePtr = ast.make_binary_operator_node<exponentiation_operator_node>(leftChild, rightChild);
+        nodePtr = AST::make_binary_operator_node<exponentiation_operator_node>(leftChild, rightChild);
         nodeStack.push(nodePtr);
         break;
       case token::UNARY_MINUS:
           rightChild = nodeStack.top();
           nodeStack.pop();
-          nodePtr = ast.make_unary_operator_node<unary_minus_operator_node>(rightChild);
+          nodePtr = AST::make_unary_operator_node<unary_minus_operator_node>(rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::ASTERISK:
@@ -375,7 +376,7 @@ AST parser::parse() {
         leftChild = nodeStack.top();
         //POP the nonterminal
         nodeStack.pop();
-          nodePtr = ast.make_binary_operator_node<multiply_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<multiply_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::FORWARD_SLASH:
@@ -386,7 +387,7 @@ AST parser::parse() {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = ast.make_binary_operator_node<divide_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<divide_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::PLUS:
@@ -397,7 +398,7 @@ AST parser::parse() {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = ast.make_binary_operator_node<plus_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<plus_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::MINUS:
@@ -408,7 +409,7 @@ AST parser::parse() {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = ast.make_binary_operator_node<binary_minus_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<binary_minus_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::RIGHT_PAREN:
