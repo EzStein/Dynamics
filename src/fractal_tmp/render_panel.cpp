@@ -1,7 +1,7 @@
 #include <iostream>
-#include "gui/render_panel.h"
-#include "app/app_traits.h"
-#include "gui/custom_events.h"
+#include "render_panel.h"
+#include "app_traits.h"
+#include "custom_events.h"
 
 
 render_panel::render_panel(wxWindow * parent, const app_state * state) :

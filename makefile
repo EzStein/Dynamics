@@ -91,9 +91,8 @@ build-wx:
 	rm utils/wxrc/Makefile; \
 	make
 
-depend: .depend
-
-.depend:
+depend:
+	rm .depend
 	$(foreach SRC,$(SRCS),$(CC) $(WARNINGS) $(DEVELOPMENT) \
 	$(INCLUDES) $(STUPID_MAC_STUFF) -MM $(SRC) -MT  $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
 

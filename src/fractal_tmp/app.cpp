@@ -1,5 +1,5 @@
 #include "app.h"
-#include "gui/top_frame.h"
+#include "top_frame.h"
 #include <algorithm>
 #include "math/util.h"
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <wx/rawbmp.h>
 #include <mutex>
 #include <cmath>
-#include "gui/custom_events.h"
+#include "custom_events.h"
 #include <cassert>
 #include <iomanip>
 #include <stack>

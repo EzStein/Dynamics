@@ -9,3 +9,8 @@ include
 .removedirs
 dependencies
 tmp
+.project
+.cproject
+.settings
+*.cbp
+nbproject
