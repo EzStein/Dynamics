@@ -2,7 +2,7 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-#include "fractal_tmp/app.h"
+#include "app/app.h"
 
 
 wxIMPLEMENT_APP(app);

@@ -14,3 +14,5 @@ tmp
 .settings
 *.cbp
 nbproject
+*.fbp
+fractal_tmp
