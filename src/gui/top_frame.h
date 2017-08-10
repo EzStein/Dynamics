@@ -6,4 +6,5 @@ public:
   top_frame(wxWindow*, wxWindowID);
 private:
   virtual void dynamical_plane_on_paint(wxPaintEvent&) override;
+  virtual void render_button_on_button_click(wxCommandEvent&) override;
 };
