@@ -10,7 +10,7 @@ public:
   parser(std::istream&);
   ~parser();
 
-  AST parse();
+  AST parse(std::list<symbol>&);
 
 private:
   lexer lex;

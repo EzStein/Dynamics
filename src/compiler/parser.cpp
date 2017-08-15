@@ -259,9 +259,7 @@ parser::~parser() {
   delete[] opArr;
 }
 
-AST parser::parse() {
-  list<symbol> symbolTable;
-
+AST parser::parse(list<symbol>& symbolTable) {
   /*A stack containing all the node pointers.
   Each node represents a symbol (terminal or nonterminal) in the grammar*/
   stack<expression_node*> nodeStack;
@@ -330,6 +328,17 @@ AST parser::parse() {
 
         /*In the case that the symbol does not yet exist, we add it*/
         if(symPtr == symbolTable.end()) {
+          if(sym.name == "t")
+            sym.parameter = 0;
+          else if(sym.name == "x")
+            sym.parameter = 1;
+          else if(sym.name == "y")
+            sym.parameter = 2;
+          else if(sym.name == "z")
+            sym.parameter = 3;
+          else
+            throw std::invalid_argument("NO SUCH VARIABLE NAMDED: " + sym.name);
+
           /*We add the symbol to the list*/
           sym.id = ++symbolId;
           symbolTable.push_back(sym);

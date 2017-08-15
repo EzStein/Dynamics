@@ -3,7 +3,7 @@
   #include <wx/wx.h>
 #endif
 #include "top_frame.h"
-#include "compiler/driver.h"
+#include "compiler/front/driver.h"
 #include <string>
 #include <iostream>
 
@@ -17,5 +17,5 @@ void top_frame::dynamical_plane_on_paint(wxPaintEvent& event) {
 
 void top_frame::render_button_on_button_click(wxCommandEvent& event) {
   std::string str(text_field->GetValue().mb_str());
-  std::cout << driver::compile_as_float_function(str)(10) << std::endl;
+  std::cout << dr.compile_as_function<driver::var4_double_func_t>(str)(1,2,3,4) << std::endl;
 }

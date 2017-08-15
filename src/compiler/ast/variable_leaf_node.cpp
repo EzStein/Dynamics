@@ -41,10 +41,15 @@ std::ostream& variable_leaf_node::emit_code(std::ostream& acc, compiler_data& da
   /*Increment the size of the stack to reflected the added value*/
   ++data.stackSizeFPU;
 
-  acc << "fldl 8(%ebp)\n";
+
+  unsigned int offset = 8 * (symPtr->parameter + 1);
+  acc << "fldl " <<  offset << "(%ebp)\n";
   data.executableBuf[++data.offset] = '\xDD';
-  data.executableBuf[++data.offset] = '\x45';
-  data.executableBuf[++data.offset] = '\x08';
+  data.executableBuf[++data.offset] = '\x85';
+  data.executableBuf[++data.offset] = (offset) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 8) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 16) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 24) & 0xFF;
   return acc;
 }
 
