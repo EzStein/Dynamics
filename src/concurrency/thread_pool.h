@@ -5,7 +5,7 @@
 #include <thread>
 #include "concurrency/concurrent_queue.h"
 
- 
+
 /*A thread pool that manages several threads by scheduling callables. The thread pool is NOT
 concurrent, meaning that any only one thread should access a given instance of this class.
 NOTE: if the user does not call join before the thread pool is destructed, the program will terminate.
@@ -53,6 +53,6 @@ template<class Function, class... Args> void thread_pool::execute(Function in, A
   if(terminateFlag) return;
   std::function<void(void)> func = std::bind(in, args...);
   queue.push(func);
-};
+}
 
 #endif

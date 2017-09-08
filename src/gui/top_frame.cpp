@@ -7,7 +7,7 @@
 #include <string>
 #include <iostream>
 
-top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, id) { };
+top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, id) { }
 
 void top_frame::dynamical_plane_on_paint(wxPaintEvent& event) {
   wxPaintDC dc(dynamicalPlane);

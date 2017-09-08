@@ -32,7 +32,7 @@ public:
    M12(static_cast<NUM_TYPE>(mat.M12)),
     M21(static_cast<NUM_TYPE>(mat.M21)),
      M22(static_cast<NUM_TYPE>(mat.M22))
-     { };
+     { }
 
   matrix_2d<NUM_TYPE> transpose() const;
   matrix_2d<NUM_TYPE> inverse() const;

@@ -18,7 +18,7 @@ public:
 
   /* Defines an explicit conversion the vector to the appropriate type using standard arithmetic conversions*/
   template <class A> explicit vector_2d(const vector_2d<A>& vec)
-  : x(static_cast<NUM_TYPE>(vec.x)), y(static_cast<NUM_TYPE>(vec.y)) { };
+  : x(static_cast<NUM_TYPE>(vec.x)), y(static_cast<NUM_TYPE>(vec.y)) { }
 
   /*Explicit copy constructor*/
   vector_2d(const vector_2d& vec) : x(vec.x), y(vec.y) { }
