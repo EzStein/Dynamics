@@ -1,20 +1,28 @@
 #include "math/util.h"
-#include "math/matrix_2d.h"
+#include "math/matrix.h"
 namespace math {
-  vector<double, 2> pixel_to_value(const vector<int, 2>& pixel, const vector<int, 2>& pixelBoundary,
-    const vector<double, 2>& valueBoundaryTop, const vector<double, 2>& valueBoundaryBottom) {
+  vector<double, 2> pixel_to_value(const vector<int, 2>& pixel, const vector<int, 2>& canvasSize,
+    const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& valueBoundaryBottomRight) {
 
-    double scaling = (valueBoundaryBottom.x - valueBoundaryTop.x)/pixelBoundary.x;
-    matrix<double, 2> mat(scaling, 0, 0, -scaling);
-    return valueBoundaryTop + mat * vector<double, 2>(pixel);
+    double scaling = (valueBoundaryBottomRight[0] - valueBoundaryTopLeft[0])/canvasSize[0];
+    matrix<double, 2, 2> mat;
+    mat[0][0] = scaling;
+    mat[0][1] = 0;
+    mat[1][0] = 0;
+    mat[1][1] = -scaling;
+    return valueBoundaryTopLeft + mat * vector<double, 2>(pixel);
   }
 
-  vector<int> value_to_pixel(const vector<double, 2>& value, const vector<int, 2>& pixelBoundary,
-    const vector<double, 2>& valueBoundaryTop, const vector<double, 2>& valueBoundaryBottom) {
+  vector<int, 2> value_to_pixel(const vector<double, 2>& value, const vector<int, 2>& canvasSize,
+    const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& valueBoundaryBottomRight) {
 
-    double scaling = (valueBoundaryBottom.x - valueBoundaryTop.x)/pixelBoundary.x;
-    matrix<double, 2> mat(1/scaling, 0, 0, -1/scaling);
-    return vector<int, 2>(mat * (value - valueBoundaryTop));
+    double scaling = (valueBoundaryBottomRight[0] - valueBoundaryTopLeft[0])/canvasSize[0];
+    matrix<double, 2, 2> mat;
+    mat[0][0] = 1.0/scaling;
+    mat[0][1] = 0;
+    mat[1][0] = 0;
+    mat[1][1] = -1.0/scaling;
+    return vector<int, 2>(mat * (value - valueBoundaryTopLeft));
   }
 
   unsigned long mandelbrot(const vector_2d<double>& point, unsigned long iterations) {

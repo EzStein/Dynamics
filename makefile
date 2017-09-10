@@ -43,7 +43,7 @@ APP_NAME = Dynamics
 MAC_DIR = mac_build
 WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/dev-build/wx-config
 
-WX_FLAGS = `$(WX_CONFIG) --cxxflags`
+WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
 #Finds all src files in all directories of any depth in src/
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 

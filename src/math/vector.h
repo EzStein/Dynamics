@@ -8,6 +8,20 @@ namespace math {
     /*Default constructor which creates a vector of value 0*/
     vector();
 
+    template<class OTHER_NUM_T>
+    vector(const vector<OTHER_NUM_T, SIZE>& vec) {
+      for(int i = 0; i != SIZE; ++i) {
+        elements[i] = static_cast<NUM_T>(vec[i]);
+      }
+    }
+
+    /*template<class... ARGS>
+    vector(ARGS... args) {
+      constructor_helper(args...);
+    }*/
+
+
+
     NUM_T& operator[](int index);
     const NUM_T& operator[](int index) const;
 
@@ -18,6 +32,12 @@ namespace math {
     vector<NUM_T, SIZE>& operator-();
   private:
     NUM_T elements[SIZE];
+
+    /*template<class... ARGS>
+    void constructor_helper(int& count, NUM_T val1, ARGS... args) {
+      elements[++count] = val1;
+      constructor_helper(count, args...);
+    }*/
   };
 
   template <class NUM_T, int SIZE>
@@ -26,6 +46,8 @@ namespace math {
       elements[i] = static_cast<NUM_T>(0);
     }
   }
+
+
 
   template<class NUM_T, int SIZE>
   NUM_T& vector<NUM_T, SIZE>::operator[](int index) {
@@ -85,6 +107,21 @@ namespace math {
   template<class NUM_T, int SIZE>
   vector<NUM_T, SIZE> operator-(vector<NUM_T, SIZE> lhs, const vector<NUM_T, SIZE>& rhs) {
     return lhs -= rhs;
+  }
+
+  template<class NUM_T, int SIZE>
+  vector<NUM_T, SIZE> operator*(NUM_T scal, vector<NUM_T, SIZE> vec) {
+    return vec *= scal;
+  }
+
+  template<class NUM_T, int SIZE>
+  vector<NUM_T, SIZE> operator*(vector<NUM_T, SIZE> vec, NUM_T scal) {
+    return vec *= scal;
+  }
+
+  template<class NUM_T, int SIZE>
+  vector<NUM_T, SIZE> operator/(vector<NUM_T, SIZE> vec, NUM_T scal) {
+    return vec /= scal;
   }
 
   template<class NUM_T, int SIZE>
