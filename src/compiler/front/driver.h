@@ -6,11 +6,12 @@
 #include <map>
 #include "compiler/front/buffer_attributes.h"
 
+
+
 class driver {
 public:
   /*NOTE: the function prototype is double func(double t, double x, double y, double z),
   as in, t is the first parameter, followed by x, then y, then z etc..*/
-
   /*The type for a function taking two variables, t and x*/
   typedef double (*var2_double_func_t)(double, double);
 
@@ -19,6 +20,7 @@ public:
 
   /*The type for a function taking two variables, t, x, y, z*/
   typedef double (*var4_double_func_t)(double, double, double, double);
+
 
   driver();
   ~driver();

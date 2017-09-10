@@ -6,6 +6,7 @@
 #include <map>
 #include <cassert>
 #include <sys/mman.h>
+#include "math/vector.h"
 
 #include "compiler/ast/AST.h"
 #include "compiler/parser.h"
@@ -21,5 +22,6 @@ ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
 }
 
 int mains() {
+  math::vector<double, 4> vec;
   return 0;
 }
