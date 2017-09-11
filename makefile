@@ -82,7 +82,7 @@ WARNINGS = -Wall -pedantic  \
 		-Wno-unused-parameter \
 		-Wno-reorder -Wno-sign-conversion
 
-DEVELOPMENT = -g -O0
+DEVELOPMENT = -ggdb -O0
 PRODUCTION = -Waggregate-return -Weffc++ -O3 -Wunused-parameter -Wpadded -Werror
 
 all: $(EXE_DIR)/$(APP_NAME) package

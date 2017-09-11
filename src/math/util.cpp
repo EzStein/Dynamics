@@ -25,6 +25,24 @@ namespace math {
     return vector<int, 2>(mat * (value - valueBoundaryTopLeft));
   }
 
+  /*Like the previous two methods except it uses the pixelToValueRatio
+  and a left corner in its calculations*/
+  vector<double, 2> pixel_to_value(const vector<int, 2>& pixel,
+    const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& pixelToValueRatio) {
+      vector<double, 2> ret;
+      ret[0] = pixel[0]/pixelToValueRatio[0] + valueBoundaryTopLeft[0];
+      ret[1] = valueBoundaryTopLeft[1] - pixel[1]/pixelToValueRatio[1];
+      return ret;
+  }
+
+  vector<int, 2> value_to_pixel(const vector<double, 2>& value,
+    const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& pixelToValueRatio) {
+    vector<int, 2> ret;
+    ret[0] = static_cast<int>((value[0] - valueBoundaryTopLeft[0])*pixelToValueRatio[0]);
+    ret[1] = static_cast<int>(-(value[1] - valueBoundaryTopLeft[1])*pixelToValueRatio[1]);
+    return ret;
+  }
+
   unsigned long mandelbrot(const vector_2d<double>& point, unsigned long iterations) {
     double cx = point.x;
     double cy = point.y;

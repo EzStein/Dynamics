@@ -68,7 +68,7 @@ class top_frame_base : public wxFrame
 		wxStaticText* m_staticText121;
 		wxTextCtrl* tMaxValField;
 		wxStaticText* m_staticText14;
-		wxChoice* m_choice3;
+		wxChoice* axesChoice;
 		wxButton* m_button2;
 		wxNotebook* m_notebook2;
 		wxPanel* dynamicalPlane;
@@ -83,11 +83,12 @@ class top_frame_base : public wxFrame
 		virtual void on_left_down_dynamical_plane( wxMouseEvent& event ) = 0;
 		virtual void on_motion_dynamical_plane( wxMouseEvent& event ) = 0;
 		virtual void on_paint_dynamical_plane( wxPaintEvent& event ) = 0;
+		virtual void on_size_dynamical_plane( wxSizeEvent& event ) = 0;
 		
 	
 	public:
 		
-		top_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1001,719 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		top_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 907,727 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		
 		~top_frame_base();
 	

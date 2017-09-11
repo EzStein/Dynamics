@@ -109,12 +109,14 @@ std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
   data.executableBuf[++data.offset] = '\x5D';
   data.executableBuf[++data.offset] = '\xFA';
 
-  acc << "movw $0x0f7e, -8(%ebp)\n";
+  /*This rounds DOWN. maybe we should round to nearest!
+  But it might have something to do with exponentiation*/
+  acc << "movw $0x0f7f, -8(%ebp)\n";
   data.executableBuf[++data.offset] = '\x66';
   data.executableBuf[++data.offset] = '\xC7';
   data.executableBuf[++data.offset] = '\x45';
   data.executableBuf[++data.offset] = '\xF8';
-  data.executableBuf[++data.offset] = '\x7E';
+  data.executableBuf[++data.offset] = '\x7F';
   data.executableBuf[++data.offset] = '\x0F';
 
   acc << "pushl %ebx\n";
