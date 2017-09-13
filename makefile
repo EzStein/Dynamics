@@ -33,7 +33,7 @@ else
     endif
 endif
 
-rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
+
 SRC_DIR = src
 OBJ_DIR = obj
 INCLUDE_DIR = include
@@ -41,19 +41,20 @@ LIB_DIR = lib
 EXE_DIR = exe
 APP_NAME = Dynamics
 MAC_DIR = mac_build
-WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/dev-build/wx-config
+WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 
 WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
+
 #Finds all src files in all directories of any depth in src/
+rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
-
-
-
-
-LIBS = `$(WX_CONFIG) --libs`
-LIBS += $(call rwildcard, $(LIB_DIR)/,*.a)
-
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+
+LIBS = `$(WX_CONFIG) --gl-libs --libs`
+LIBS += $(call rwildcard, $(LIB_DIR)/,*.a)
+LIBS += -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++
+
+
 CC = g++ -std=c++11 -static-libgcc -static-libstdc++ -I$(SRC_DIR) -isystem $(INCLUDE_DIR) $(OS_SPECIFIC) $(WX_FLAGS)
 
 DIRS = $(EXE_DIR) $(OBJ_DIR) $(dir $(OBJS))

@@ -7,16 +7,49 @@
 #include "compiler/front/driver.h"
 #include "math/vector.h"
 #include "math/util.h"
+#include <wx/glcanvas.h>
 #include <string>
 #include <list>
 #include <iostream>
 
 top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, id) {
+  glPanel = new wxGLCanvas(m_notebook2);
+  glContext = new wxGLContext(glPanel);
+  m_notebook2->AddPage( glPanel, wxT("GL Panel"), false );
+  glPanel->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, this);
+
   valueBoundaryTopLeft[0] = -5;
   valueBoundaryTopLeft[1] = 5;
   pixelToValueRatio[0] = 70;
   pixelToValueRatio[1] = 70;
   dynamicalPlane->Refresh();
+}
+
+top_frame::~top_frame() {
+  glPanel->Disconnect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, glPanel);
+}
+
+void top_frame::on_paint_gl_renderer(wxPaintEvent& evt) {
+  static int i = 0;
+  std::cout << ++i <<std::endl;
+  glPanel->SetCurrent(*glContext);
+  int x, y;
+  glPanel->GetSize(&x, &y);
+  std::cout << x << std::endl;
+  glViewport(0,0,x, y);
+	glClearColor(0.8f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+  glPanel->SwapBuffers();
+}
+
+void top_frame::update_vals() {
+  tMax = std::stod(std::string(tMaxValField->GetValue()));
+  tMin = std::stod(std::string(tMinValField->GetValue()));
+  tInc = std::stod(std::string(tIncrementField->GetValue()));
+  initVals[1] = std::stod(std::string(xInitValField->GetValue()));
+  initVals[2] = std::stod(std::string(yInitValField->GetValue()));
+  initVals[3] = std::stod(std::string(zInitValField->GetValue()));
+  initVals[0] = std::stod(std::string(tInitValField->GetValue()));
 }
 
 void top_frame::on_button_click_compile(wxCommandEvent& event) {
@@ -25,12 +58,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
   std::string zFuncString = std::string(zFuncField->GetValue().mb_str());
   if(xFuncString.empty() || yFuncString.empty() || zFuncString.empty())
     return;
-  double tMax = std::stod(std::string(tMaxValField->GetValue()));
-  double tMin = std::stod(std::string(tMinValField->GetValue()));
-  initVals[1] = std::stod(std::string(xInitValField->GetValue()));
-  initVals[2] = std::stod(std::string(yInitValField->GetValue()));
-  initVals[3] = std::stod(std::string(zInitValField->GetValue()));
-  initVals[0] = std::stod(std::string(tInitValField->GetValue()));
+  update_vals();
 
   xFunc =
     dr.compile_as_function<driver::var4_double_func_t>(xFuncString);
@@ -45,7 +73,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
 
 void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   if(!xFunc || !yFunc || !zFunc) return;
-  double inc = 0.01;
+  update_vals();
   math::vector<int, 2> mousePos;
   mousePos[0] = evt.GetPosition().x;
   mousePos[1] = evt.GetPosition().y;
@@ -66,14 +94,15 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   std::list<math::vector<double, 4> > points = std::list<math::vector<double, 4> >();
   points.push_back(vec);
   while(vec[0] < tMax) {
-    std::cout << vec << std::endl;
-    vec = math::euler(vec, xFunc, yFunc, zFunc, inc);
+
+    vec = math::euler(vec, xFunc, yFunc, zFunc, tInc);
     points.push_back(vec);
   }
   vec = *points.begin();
+  std::cout << tMin << std::endl;
   while(vec[0] > tMin) {
-    std::cout << vec << std::endl;
-    vec = math::euler(vec, xFunc, yFunc, zFunc, -inc);
+
+    vec = math::euler(vec, xFunc, yFunc, zFunc, -tInc);
     points.push_front(vec);
 
   }
@@ -136,6 +165,29 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   math::vector<int, 2> indices =
     get_axes_choice_indices(get_axes_choice_from_string(std::string(axesChoice->GetString(axesChoice->GetSelection()))));
   std::vector<std::list<math::vector<double, 4> > >::const_iterator solution;
+
+  if(solutions.empty()) return;
+  /*Plot vector field*/
+  if(indices[0] == 1 && indices[1] == 2) {
+    for(int xp = 0; xp < canvasSize[0]; xp+=50) {
+      for(int yp = 0; yp < canvasSize[1]; yp+=50) {
+        math::vector<int, 2> p;
+        p[0] = xp;
+        p[1] = yp;
+        math::vector<double, 2> v = math::pixel_to_value(p,
+        valueBoundaryTopLeft, pixelToValueRatio);
+        double xSlope = xFunc(initVals[0], v[0], v[1], initVals[3]);
+        double ySlope = yFunc(initVals[0], v[0], v[1], initVals[3]);
+        if(xSlope == 0 || ySlope == 0) continue;
+        double m = ySlope/xSlope;
+        if(m <= 1 && m >= -1)
+          dc.DrawLine(xp-10, yp + 10*ySlope/xSlope, xp+10, yp-10*ySlope/xSlope);
+        else
+          dc.DrawLine(xp-10/m, yp + 10, xp+10/m, yp-10);
+      }
+    }
+  }
+
   for(solution = solutions.begin(); solution != solutions.end(); ++solution) {
     if(solution->size() < 2) continue; //There are not enough points in the solution
 
@@ -169,6 +221,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
       vec1 = vec2;
     }
   }
+  std::cout << "DONE"<<std::endl;
 }
 
 math::vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {
@@ -249,6 +302,11 @@ axes_choice get_axes_choice_from_string(std::string str){
 void top_frame::on_size_dynamical_plane( wxSizeEvent& event ) {
 
 }
+
+void top_frame::on_size_top_frame( wxSizeEvent& event ) {
+  glPanel->Refresh();
+}
+
 
 void top_frame::on_menu_selection_vector_field(wxCommandEvent&) {
 

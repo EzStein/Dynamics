@@ -53,6 +53,7 @@ class top_frame_base : public wxFrame
 		wxTextCtrl* yFuncField;
 		wxStaticText* zEqnLabel;
 		wxTextCtrl* zFuncField;
+		wxButton* m_button2;
 		wxStaticText* m_staticText91;
 		wxStaticText* m_staticText101;
 		wxTextCtrl* tInitValField;
@@ -67,19 +68,22 @@ class top_frame_base : public wxFrame
 		wxTextCtrl* tMinValField;
 		wxStaticText* m_staticText121;
 		wxTextCtrl* tMaxValField;
+		wxStaticText* m_staticText141;
+		wxTextCtrl* tIncrementField;
 		wxStaticText* m_staticText14;
 		wxChoice* axesChoice;
-		wxButton* m_button2;
 		wxNotebook* m_notebook2;
 		wxPanel* dynamicalPlane;
 		wxPanel* parameterPlane;
+		wxPanel* glParent;
 		wxStatusBar* statusBar;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void on_size_top_frame( wxSizeEvent& event ) = 0;
 		virtual void on_menu_selection_vector_field( wxCommandEvent& event ) = 0;
 		virtual void on_choice_dimension( wxCommandEvent& event ) = 0;
-		virtual void on_choice_axes( wxCommandEvent& event ) = 0;
 		virtual void on_button_click_compile( wxCommandEvent& event ) = 0;
+		virtual void on_choice_axes( wxCommandEvent& event ) = 0;
 		virtual void on_left_down_dynamical_plane( wxMouseEvent& event ) = 0;
 		virtual void on_motion_dynamical_plane( wxMouseEvent& event ) = 0;
 		virtual void on_paint_dynamical_plane( wxPaintEvent& event ) = 0;

@@ -114,6 +114,9 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	
 	bSizer2->Add( fgSizer200, 0, wxEXPAND, 5 );
 	
+	m_button2 = new wxButton( this, wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( m_button2, 0, wxALL|wxEXPAND, 5 );
+	
 	m_staticText91 = new wxStaticText( this, wxID_ANY, wxT("Initial Values"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText91->Wrap( -1 );
 	bSizer2->Add( m_staticText91, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
@@ -167,37 +170,35 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_staticText11->Wrap( -1 );
 	fgSizer31->Add( m_staticText11, 0, wxALL, 5 );
 	
-	tMinValField = new wxTextCtrl( this, wxID_ANY, wxT("-20"), wxDefaultPosition, wxDefaultSize, 0 );
+	tMinValField = new wxTextCtrl( this, wxID_ANY, wxT("-4"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer31->Add( tMinValField, 0, wxALL, 5 );
 	
 	m_staticText121 = new wxStaticText( this, wxID_ANY, wxT("T Max"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText121->Wrap( -1 );
 	fgSizer31->Add( m_staticText121, 0, wxALL, 5 );
 	
-	tMaxValField = new wxTextCtrl( this, wxID_ANY, wxT("20"), wxDefaultPosition, wxDefaultSize, 0 );
+	tMaxValField = new wxTextCtrl( this, wxID_ANY, wxT("4"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer31->Add( tMaxValField, 0, wxALL, 5 );
 	
+	m_staticText141 = new wxStaticText( this, wxID_ANY, wxT("T Increment"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText141->Wrap( -1 );
+	fgSizer31->Add( m_staticText141, 0, wxALL, 5 );
 	
-	bSizer2->Add( fgSizer31, 0, 0, 5 );
-	
-	wxBoxSizer* bSizer5;
-	bSizer5 = new wxBoxSizer( wxHORIZONTAL );
+	tIncrementField = new wxTextCtrl( this, wxID_ANY, wxT("0.01"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer31->Add( tIncrementField, 0, wxALL, 5 );
 	
 	m_staticText14 = new wxStaticText( this, wxID_ANY, wxT("Axes:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText14->Wrap( -1 );
-	bSizer5->Add( m_staticText14, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	fgSizer31->Add( m_staticText14, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	wxString axesChoiceChoices[] = { wxT("tx"), wxT("xy"), wxT("ty"), wxT("tz"), wxT("xt"), wxT("yt"), wxT("zt"), wxT("yz"), wxT("xz"), wxT("yx"), wxT("zy"), wxT("zx") };
 	int axesChoiceNChoices = sizeof( axesChoiceChoices ) / sizeof( wxString );
 	axesChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, axesChoiceNChoices, axesChoiceChoices, 0 );
 	axesChoice->SetSelection( 0 );
-	bSizer5->Add( axesChoice, 1, wxALL, 5 );
+	fgSizer31->Add( axesChoice, 1, wxALL|wxEXPAND, 5 );
 	
 	
-	bSizer2->Add( bSizer5, 0, wxEXPAND, 5 );
-	
-	m_button2 = new wxButton( this, wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer2->Add( m_button2, 0, wxALL|wxEXPAND, 5 );
+	bSizer2->Add( fgSizer31, 0, 0, 5 );
 	
 	
 	bSizer4->Add( bSizer2, 0, 0, 5 );
@@ -207,6 +208,8 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_notebook2->AddPage( dynamicalPlane, wxT("Dynamical Plane"), true );
 	parameterPlane = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	m_notebook2->AddPage( parameterPlane, wxT("Parameter Plane"), false );
+	glParent = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_notebook2->AddPage( glParent, wxT("OpenGL"), false );
 	
 	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -218,10 +221,11 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	this->Centre( wxBOTH );
 	
 	// Connect Events
+	this->Connect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_top_frame ) );
 	this->Connect( menuItemVectorField->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( top_frame_base::on_menu_selection_vector_field ) );
 	m_choice1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
-	axesChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
 	m_button2->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
+	axesChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
 	dynamicalPlane->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( top_frame_base::on_left_down_dynamical_plane ), NULL, this );
 	dynamicalPlane->Connect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_dynamical_plane ), NULL, this );
 	dynamicalPlane->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_dynamical_plane ), NULL, this );
@@ -231,10 +235,11 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 top_frame_base::~top_frame_base()
 {
 	// Disconnect Events
+	this->Disconnect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_top_frame ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( top_frame_base::on_menu_selection_vector_field ) );
 	m_choice1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
-	axesChoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
 	m_button2->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
+	axesChoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
 	dynamicalPlane->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( top_frame_base::on_left_down_dynamical_plane ), NULL, this );
 	dynamicalPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_dynamical_plane ), NULL, this );
 	dynamicalPlane->Disconnect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_dynamical_plane ), NULL, this );
