@@ -1,8 +1,9 @@
+#include "glad/glad.h"
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-
+#include "app/app.h"
 #include "top_frame.h"
 #include "compiler/front/driver.h"
 #include "math/vector.h"
@@ -15,6 +16,7 @@
 top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, id) {
   glPanel = new wxGLCanvas(m_notebook2);
   glContext = new wxGLContext(glPanel);
+  std::cout << glContext->IsOK() << std::endl;
   m_notebook2->AddPage( glPanel, wxT("GL Panel"), false );
   glPanel->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, this);
 
@@ -23,6 +25,73 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
   pixelToValueRatio[0] = 70;
   pixelToValueRatio[1] = 70;
   dynamicalPlane->Refresh();
+
+}
+
+/*
+* Reads a file into the character buffer provided,
+* appending a null terminating character if necessary.
+* No more than size characters will be read into the buffer.
+* Returns true if the whole file was read. False if it was truncated.
+*/
+bool read_file(const char * filePath, char* buffer, size_t size) {
+  FILE* file = fopen(filePath, "rb");
+  fseek(file, 0, SEEK_END);
+  const size_t fileSize = ftell(file);
+  rewind(file);
+  size = size - 1 < fileSize?size-1:fileSize;
+  fread(buffer, sizeof(char), size, file);
+  fclose(file);
+  buffer[size] = '\x00';
+  return size == fileSize;
+}
+
+void initialize_gl() {
+  if (!gladLoadGL()) {
+      std::cout << "Failed to initialize OpenGL context" << std::endl;
+  }
+  unsigned int vertexShader;
+  vertexShader = glCreateShader(GL_VERTEX_SHADER);
+  const char * path = PROJECT_PATH"/resources/gl/vertex.vert";
+  glShaderSource(vertexShader, 1, &path, NULL);
+  glCompileShader(vertexShader);
+
+  int  success;
+  char infoLog[512];
+  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+  if(!success) {
+    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+    std::cout << "GL shader compilation error VERTEX: " << infoLog << std::endl;
+  }
+
+  unsigned int fragmentShader;
+  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  path = PROJECT_PATH"/resources/gl/fragment.frags";
+  std::cout << path << std::endl;
+  size_t bufferSize = 1024;
+  char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
+
+  //Reads the file into the buffer
+  bool good = read_file(path, buffer, bufferSize);
+  std::cout << good << std::endl;
+
+  glShaderSource(fragmentShader, 1, &buffer, NULL);
+  glCompileShader(fragmentShader);
+  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+  if(!success) {
+    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+    std::cout << "GL shader compilation error FRAGMENT: " << infoLog << std::endl;
+  }
+  unsigned int shaderProgram;
+  shaderProgram = glCreateProgram();
+  glAttachShader(shaderProgram, vertexShader);
+  glAttachShader(shaderProgram, fragmentShader);
+  glLinkProgram(shaderProgram);
+  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    std::cout << "GL shader linking error: " << infoLog << std::endl;
+  }
 }
 
 top_frame::~top_frame() {
@@ -31,13 +100,15 @@ top_frame::~top_frame() {
 
 void top_frame::on_paint_gl_renderer(wxPaintEvent& evt) {
   static int i = 0;
-  std::cout << ++i <<std::endl;
   glPanel->SetCurrent(*glContext);
+  if(i == 0) initialize_gl();
+  std::cout << ++i <<std::endl;
+
   int x, y;
   glPanel->GetSize(&x, &y);
   std::cout << x << std::endl;
   glViewport(0,0,x, y);
-	glClearColor(0.8f, 0.3f, 0.3f, 1.0f);
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
   glPanel->SwapBuffers();
 }

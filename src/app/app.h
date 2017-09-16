@@ -4,6 +4,7 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
+#define PROJECT_PATH "/home/ezra/Documents/projects/hubbard_research"
 
 /*The class from which the gui is initialized and where execution begins*/
 class app : public wxApp {
