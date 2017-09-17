@@ -17,7 +17,7 @@ std::ostream& variable_leaf_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& variable_leaf_node::emit_code(std::ostream& acc, compiler_data& data) const {
+std::ostream& variable_leaf_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
   if(data.stackSizeFPU >= 8) {
     acc << "fdecstp\n";
     data.executableBuf[++data.offset] = '\xD9';
@@ -44,6 +44,25 @@ std::ostream& variable_leaf_node::emit_code(std::ostream& acc, compiler_data& da
 
   unsigned int offset = 8 * (symPtr->parameter + 1);
   acc << "fldl " <<  offset << "(%ebp)\n";
+  data.executableBuf[++data.offset] = '\xDD';
+  data.executableBuf[++data.offset] = '\x85';
+  data.executableBuf[++data.offset] = (offset) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 8) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 16) & 0xFF;
+  data.executableBuf[++data.offset] = (offset >> 24) & 0xFF;
+  return acc;
+}
+
+std::ostream& variable_leaf_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+  AST::emit_stack_inc_amd64(acc, data);
+  unsigned int offset;
+  if(symPtr->parameter <= 7) {
+    offset = reinterpret_cast<unsigned int>(-72 + symPtr->parameter*8);
+  } else {
+    offset = 16 + 8 * (symPtr->parameter - 8);
+  }
+
+  acc << "fldl " <<  offset << "(%rbp)\n";
   data.executableBuf[++data.offset] = '\xDD';
   data.executableBuf[++data.offset] = '\x85';
   data.executableBuf[++data.offset] = (offset) & 0xFF;

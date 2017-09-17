@@ -16,9 +16,9 @@ std::ostream& divide_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& divide_operator_node::emit_code(std::ostream& acc, compiler_data& data) const {
-  leftChild->emit_code(acc, data);  //Put on %st(1)
-  rightChild->emit_code(acc, data); //Now on %st(0)
+std::ostream& divide_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
+  leftChild->emit_code_ia32(acc, data);  //Put on %st(1)
+  rightChild->emit_code_ia32(acc, data); //Now on %st(0)
   acc << "fdivp %st(0), %st(1)\n";
   data.executableBuf[++data.offset] = '\xDE';
   data.executableBuf[++data.offset] = '\xF9';
@@ -42,6 +42,17 @@ std::ostream& divide_operator_node::emit_code(std::ostream& acc, compiler_data& 
     data.executableBuf[++data.offset] = '\xF7';
   }
   --data.stackSizeFPU;
+  return acc;
+}
+
+std::ostream& divide_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+  leftChild->emit_code_amd64(acc, data);  //Put on %st(1)
+  rightChild->emit_code_amd64(acc, data); //Now on %st(0)
+  acc << "fdivp %st(0), %st(1)\n";
+  data.executableBuf[++data.offset] = '\xDE';
+  data.executableBuf[++data.offset] = '\xF9';
+
+  AST::emit_stack_dec_amd64(acc, data);
   return acc;
 }
 

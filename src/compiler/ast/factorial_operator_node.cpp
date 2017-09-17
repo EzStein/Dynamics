@@ -23,8 +23,26 @@ std::ostream& factorial_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& factorial_operator_node::emit_code(std::ostream& acc, compiler_data& data) const {
-  child->emit_code(acc, data);  //Put on %st(0)
+std::ostream& factorial_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
+  child->emit_code_ia32(acc, data);  //Put on %st(0)
+
+  /*acc << "fist %eax\n"; //Round to an integer
+
+  //TAKE ABS of %eax and store it in eax
+  acc << "movl %eax, %ebx\n"; //Copy to eax
+  acc << "sarl 31, %ebx\n"; //Arithmetic right shift
+  acc << "xorl %ebx, %eax\n"; //Take two's complement
+  acc << "subl %ebx, %eax\n"
+
+  acc << "movl %eax, %ebx\n";
+
+  acc << "mul"*/
+  acc << "FACTORIAL %st(0), %st(1)\n";
+  return acc;
+}
+
+std::ostream& factorial_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+  child->emit_code_amd64(acc, data);  //Put on %st(0)
 
   /*acc << "fist %eax\n"; //Round to an integer
 

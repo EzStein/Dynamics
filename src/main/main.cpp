@@ -10,18 +10,13 @@
 
 #include "compiler/ast/AST.h"
 #include "compiler/parser.h"
+#include "compiler/front/driver.h"
 using namespace std;
 
-ostream& operator<<(ostream& out, const set<unsigned int>& myset) {
-  out << '{';
-  for(set<unsigned int>::const_iterator i = myset.begin(); i!=myset.end(); ++i) {
-    out << *i << ", ";
-  }
-  out << '}';
-  return out;
-}
-
 int mains() {
-  math::vector<double, 4> vec;
+  driver dr;
+
+  driver::var4_double_func_t func =  dr.compile_as_function<driver::var4_double_func_t>("2.5^3.5");
+  std::cout << func(1,2,3,4) << std::endl;
   return 0;
 }

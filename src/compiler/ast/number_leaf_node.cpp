@@ -19,7 +19,7 @@ bool number_leaf_node::evaluatable() const {
   return true;
 }
 
-std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data) const {
+std::ostream& number_leaf_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
   if(data.stackSizeFPU >= 8) {
     acc << "fdecstp\n";
     data.executableBuf[++data.offset] = '\xD9';
@@ -83,6 +83,39 @@ std::ostream& number_leaf_node::emit_code(std::ostream& acc, compiler_data& data
   data.executableBuf[++data.offset] = '\x00';
   data.executableBuf[++data.offset] = '\x00';
   data.executableBuf[++data.offset] = '\x00';
+
+  return acc;
+}
+
+std::ostream& number_leaf_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+  AST::emit_stack_inc_amd64(acc, data);
+
+  const unsigned char * ptr = reinterpret_cast<const unsigned char*>(&val);
+  acc << std::hex;
+  acc << "movq $0x";
+  for(int i = 7; i >= 0; --i) {
+    const unsigned int toWrite = static_cast<const unsigned int>(ptr[i]);
+    if(toWrite <= 0x0f)
+      acc << "0";
+    acc << toWrite;
+  }
+  acc << ", %rax\n";
+
+  data.executableBuf[++data.offset] = '\x48';
+  data.executableBuf[++data.offset] = '\xb8';
+  for(int i = 0; i <= 7; ++i)
+    data.executableBuf[++data.offset] = ptr[i];
+
+  acc << "movq %rax, -0x50(%rbp)\n";
+  data.executableBuf[++data.offset] = '\x48';
+  data.executableBuf[++data.offset] = '\x89';
+  data.executableBuf[++data.offset] = '\x45';
+  data.executableBuf[++data.offset] = '\xb0';
+
+  acc << "fldl -0x50(%rbp)\n";
+  data.executableBuf[++data.offset] = '\xdd';
+  data.executableBuf[++data.offset] = '\x45';
+  data.executableBuf[++data.offset] = '\xb0';
 
   return acc;
 }

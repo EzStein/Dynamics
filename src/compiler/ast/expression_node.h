@@ -10,7 +10,8 @@ public:
   * Emits code by writing assembly to the output stream and filling the provided buffer with bytes
   * starting at the provided offset. The function should modify offset to reflect the bytes added.
   */
-  virtual std::ostream& emit_code(std::ostream&, compiler_data&) const = 0;
+  virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const = 0;
+  virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const = 0;
   virtual double evaluate() const = 0;
 
   /*True if there are no variables in the sub tree whose root is this node*/

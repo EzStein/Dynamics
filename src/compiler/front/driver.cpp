@@ -65,7 +65,7 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(string str) {
     buffer_table[reinterpret_cast<void*>(buf)] = buffer_attributes(size, false);
   }
 
-  ast.emit_code(std::cout, buf);
+  ast.emit_code_amd64(std::cout, buf);
   FUNC_TYPE func = nullptr;
   /*A hack to allow us to set the function pointer to point to the buffer*/
   *reinterpret_cast<void**>(&func) = buf;

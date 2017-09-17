@@ -79,7 +79,190 @@ double AST::evaluate() const {
   return root->evaluate();
 }
 
-std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
+std::ostream& AST::emit_code_amd64(std::ostream& acc, unsigned char * buf) const {
+  compiler_data data{-1, 0, buf};
+
+  data.executableBuf[++data.offset] = '\x55';
+  acc << "push %rbp\n";
+
+  data.executableBuf[++data.offset] = '\x48';
+  data.executableBuf[++data.offset] = '\x89';
+  data.executableBuf[++data.offset] = '\xe5';
+  acc << "mov %rsp, %rbp\n";
+
+  data.executableBuf[++data.offset] = '\x48';
+  data.executableBuf[++data.offset] = '\x83';
+  data.executableBuf[++data.offset] = '\xec';
+  data.executableBuf[++data.offset] = '\x50';
+  acc << "sub $0x50, %rsp\n";
+
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\xae';
+  data.executableBuf[++data.offset] = '\x5d';
+  data.executableBuf[++data.offset] = '\xfc';
+  acc << "stmxcsr -0x4(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\x9b';
+  data.executableBuf[++data.offset] = '\xd9';
+  data.executableBuf[++data.offset] = '\x7d';
+  data.executableBuf[++data.offset] = '\xfa';
+  acc << "fstcw -0x6(%rbp)\n";
+
+
+  data.executableBuf[++data.offset] = '\x66';
+  data.executableBuf[++data.offset] = '\xc7';
+  data.executableBuf[++data.offset] = '\x45';
+  data.executableBuf[++data.offset] = '\xf8';
+  data.executableBuf[++data.offset] = '\x7f';
+  data.executableBuf[++data.offset] = '\x0f';
+  acc << "movw $0x0f7f, -0x8(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x45';
+  data.executableBuf[++data.offset] = '\xb8';
+  acc << "movsd %xmm0, -0x48(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x4d';
+  data.executableBuf[++data.offset] = '\xc0';
+  acc << "movsd %xmm1, -0x40(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x55';
+  data.executableBuf[++data.offset] = '\xc8';
+  acc << "movsd %xmm2, -0x38(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x5d';
+  data.executableBuf[++data.offset] = '\xd0';
+  acc << "movsd %xmm3, -0x30(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x65';
+  data.executableBuf[++data.offset] = '\xd8';
+  acc << "movsd %xmm4, -0x28(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x6d';
+  data.executableBuf[++data.offset] = '\xe0';
+  acc << "movsd %xmm5, -0x20(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x75';
+  data.executableBuf[++data.offset] = '\xe8';
+  acc << "movsd %xmm6, -0x18(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x11';
+  data.executableBuf[++data.offset] = '\x7d';
+  data.executableBuf[++data.offset] = '\xf0';
+  acc << "movsd %xmm7, -0x10(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\x53';
+  acc << "push %rbx\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x54';
+  acc << "push %r12\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x55';
+  acc << "push %r13\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x56';
+  acc << "push %r14\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x57';
+  acc << "push %r15\n";
+
+  data.executableBuf[++data.offset] = '\x9b';
+  data.executableBuf[++data.offset] = '\xdb';
+  data.executableBuf[++data.offset] = '\xe3';
+  acc << "finit\n";
+
+  data.executableBuf[++data.offset] = '\xd9';
+  data.executableBuf[++data.offset] = '\x6d';
+  data.executableBuf[++data.offset] = '\xf8';
+  acc << "fldcw -0x8(%rbp)\n";
+  root->emit_code_amd64(acc, data);
+
+  data.executableBuf[++data.offset] = '\xdd';
+  data.executableBuf[++data.offset] = '\x5d';
+  data.executableBuf[++data.offset] = '\xf0';
+  acc << "fstpl -0x10(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\xf2';
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x10';
+  data.executableBuf[++data.offset] = '\x45';
+  data.executableBuf[++data.offset] = '\xf0';
+  acc << "movsd -0x10(%rbp), %xmm0\n";
+
+  /*data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\x0e';
+  acc << "femms";*/
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x5f';
+  acc << "pop %r15\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x5e';
+  acc << "pop %r14\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x5d';
+  acc << "pop %r13\n";
+
+  data.executableBuf[++data.offset] = '\x41';
+  data.executableBuf[++data.offset] = '\x5c';
+  acc << "pop %r12\n";
+
+  data.executableBuf[++data.offset] = '\x5b';
+  acc << "pop %rbx\n";
+
+  data.executableBuf[++data.offset] = '\xd9';
+  data.executableBuf[++data.offset] = '\x6d';
+  data.executableBuf[++data.offset] = '\xfa';
+  acc << "fldcw -0x6(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\x0f';
+  data.executableBuf[++data.offset] = '\xae';
+  data.executableBuf[++data.offset] = '\x55';
+  data.executableBuf[++data.offset] = '\xfc';
+  acc << "ldmxcsr -0x4(%rbp)\n";
+
+  data.executableBuf[++data.offset] = '\x48';
+  data.executableBuf[++data.offset] = '\x89';
+  data.executableBuf[++data.offset] = '\xec';
+  acc << "mov %rbp, %rsp\n";
+
+  data.executableBuf[++data.offset] = '\x5d';
+  acc << "pop %rbp\n";
+
+  data.executableBuf[++data.offset] = '\xc3';
+  acc << "retq\n";
+  return acc;
+}
+
+std::ostream& AST::emit_code_ia32(std::ostream& acc, unsigned char * buf) const {
   compiler_data data{-1, 0, buf};
   acc << "pushl %ebp\n";
   data.executableBuf[++data.offset] = '\xFF';
@@ -141,7 +324,7 @@ std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
   data.executableBuf[++data.offset] = '\x6D';
   data.executableBuf[++data.offset] = '\xF8';
 
-  root->emit_code(acc, data);
+  root->emit_code_ia32(acc, data);
 
   acc << "popl %edi\n";
   data.executableBuf[++data.offset] = '\x5F';
@@ -174,6 +357,49 @@ std::ostream& AST::emit_code(std::ostream& acc, unsigned char * buf) const {
   data.executableBuf[++data.offset] = '\xC3';
 
   return acc;
+}
+
+void AST::emit_stack_dec_amd64(std::ostream& acc,  compiler_data& data) {
+  if(data.stackSizeFPU >= 9) {
+    acc << "fldt (%rsp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x2C';
+    data.executableBuf[++data.offset] = '\x24';
+
+    acc << "addq $10, %rsp\n";
+    data.executableBuf[++data.offset] = '\x48';
+    data.executableBuf[++data.offset] = '\x83';
+    data.executableBuf[++data.offset] = '\xc4';
+    data.executableBuf[++data.offset] = '\x0a';
+
+    acc << "fincstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF7';
+  }
+  --data.stackSizeFPU;
+}
+
+void AST::emit_stack_inc_amd64(std::ostream& acc, compiler_data& data) {
+  if(data.stackSizeFPU >= 8) {
+    acc << "fdecstp\n";
+    data.executableBuf[++data.offset] = '\xD9';
+    data.executableBuf[++data.offset] = '\xF6';
+
+    /*Make room for the extended double precision data on the stack*/
+    acc << "subq $10, %rsp\n";
+    data.executableBuf[++data.offset] = '\x48';
+    data.executableBuf[++data.offset] = '\x83';
+    data.executableBuf[++data.offset] = '\xec';
+    data.executableBuf[++data.offset] = '\x0a';
+
+    acc << "fstpt (%rsp)\n";
+    data.executableBuf[++data.offset] = '\xDB';
+    data.executableBuf[++data.offset] = '\x3C';
+    data.executableBuf[++data.offset] = '\x24';
+  }
+
+  /*Increment the size of the stack to reflected the added value*/
+  ++data.stackSizeFPU;
 }
 
 unsigned int AST::code_size() const {

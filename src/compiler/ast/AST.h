@@ -38,8 +38,12 @@ public:
 
   double evaluate() const;
 
-  std::ostream& emit_code(std::ostream&, unsigned char *) const;
+  std::ostream& emit_code_ia32(std::ostream&, unsigned char *) const;
+  std::ostream& emit_code_amd64(std::ostream&, unsigned char *) const;
   unsigned int code_size() const;
+
+  static void emit_stack_dec_amd64(std::ostream&, compiler_data& data);
+  static void emit_stack_inc_amd64(std::ostream&, compiler_data& data);
 
   friend std::ostream& operator<<(std::ostream&, const AST&);
 private:
