@@ -79,3 +79,7 @@ unsigned int variable_leaf_node::code_size() const {
 expression_node* variable_leaf_node::copy() const {
   return AST::make_variable_leaf_node(symPtr);
 }
+
+bool variable_leaf_node::is_integral() const {
+  return false;
+}

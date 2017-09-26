@@ -15,5 +15,7 @@ private:
   virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const override;
   virtual unsigned int code_size() const override;
   virtual expression_node* copy() const override;
+  bool is_integral() const override;
+
 };
 #endif

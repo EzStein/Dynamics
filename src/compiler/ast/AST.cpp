@@ -3,11 +3,11 @@
 #include "AST.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
-#include "compiler/ast/plus_operator_node.h"
+#include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/unary_minus_operator_node.h"
-#include "compiler/ast/binary_minus_operator_node.h"
-#include "compiler/ast/multiply_operator_node.h"
-#include "compiler/ast/divide_operator_node.h"
+#include "compiler/ast/binary_subtraction_operator_node.h"
+#include "compiler/ast/binary_multiplication_operator_node.h"
+#include "compiler/ast/division_operator_node.h"
 #include "compiler/ast/factorial_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/number_leaf_node.h"
@@ -68,10 +68,10 @@ expression_node* AST::make_unary_operator_node(expression_node* child) {
 }
 
 template expression_node* AST::make_binary_operator_node<exponentiation_operator_node>(expression_node*,expression_node*);
-template expression_node* AST::make_binary_operator_node<plus_operator_node>(expression_node*,expression_node*);
-template expression_node* AST::make_binary_operator_node<binary_minus_operator_node>(expression_node*,expression_node*);
-template expression_node* AST::make_binary_operator_node<multiply_operator_node>(expression_node*,expression_node*);
-template expression_node* AST::make_binary_operator_node<divide_operator_node>(expression_node*,expression_node*);
+template expression_node* AST::make_binary_operator_node<binary_addition_operator_node>(expression_node*,expression_node*);
+template expression_node* AST::make_binary_operator_node<binary_subtraction_operator_node>(expression_node*,expression_node*);
+template expression_node* AST::make_binary_operator_node<binary_multiplication_operator_node>(expression_node*,expression_node*);
+template expression_node* AST::make_binary_operator_node<division_operator_node>(expression_node*,expression_node*);
 template expression_node* AST::make_unary_operator_node<factorial_operator_node>(expression_node*);
 template expression_node* AST::make_unary_operator_node<unary_minus_operator_node>(expression_node*);
 

@@ -4,11 +4,11 @@
 #include "compiler/ast/AST.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
-#include "compiler/ast/plus_operator_node.h"
+#include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/unary_minus_operator_node.h"
-#include "compiler/ast/binary_minus_operator_node.h"
-#include "compiler/ast/multiply_operator_node.h"
-#include "compiler/ast/divide_operator_node.h"
+#include "compiler/ast/binary_subtraction_operator_node.h"
+#include "compiler/ast/binary_multiplication_operator_node.h"
+#include "compiler/ast/division_operator_node.h"
 #include "compiler/ast/factorial_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/number_leaf_node.h"
@@ -385,7 +385,7 @@ AST parser::parse(list<symbol>& symbolTable) {
         leftChild = nodeStack.top();
         //POP the nonterminal
         nodeStack.pop();
-          nodePtr = AST::make_binary_operator_node<multiply_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<binary_multiplication_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::FORWARD_SLASH:
@@ -396,7 +396,7 @@ AST parser::parse(list<symbol>& symbolTable) {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = AST::make_binary_operator_node<divide_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<division_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::PLUS:
@@ -407,7 +407,7 @@ AST parser::parse(list<symbol>& symbolTable) {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = AST::make_binary_operator_node<plus_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<binary_addition_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::MINUS:
@@ -418,7 +418,7 @@ AST parser::parse(list<symbol>& symbolTable) {
           leftChild = nodeStack.top();
           //POP the nonterminal
           nodeStack.pop();
-          nodePtr = AST::make_binary_operator_node<binary_minus_operator_node>(leftChild, rightChild);
+          nodePtr = AST::make_binary_operator_node<binary_subtraction_operator_node>(leftChild, rightChild);
           nodeStack.push(nodePtr);
         break;
       case token::RIGHT_PAREN:

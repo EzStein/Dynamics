@@ -38,3 +38,7 @@ unsigned int unary_minus_operator_node::code_size() const {
 expression_node* unary_minus_operator_node::copy() const {
   return AST::make_unary_operator_node<unary_minus_operator_node>(child->copy());
 }
+
+bool unary_minus_operator_node::is_integral() const {
+  return child->is_integral();
+}

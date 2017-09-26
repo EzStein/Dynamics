@@ -259,3 +259,7 @@ unsigned int exponentiation_operator_node::code_size() const {
 expression_node* exponentiation_operator_node::copy() const {
   return AST::make_binary_operator_node<exponentiation_operator_node>(leftChild->copy(), rightChild->copy());
 }
+
+bool exponentiation_operator_node::is_integral() const {
+  return leftChild->is_integral() && rightChild->is_integral();
+}

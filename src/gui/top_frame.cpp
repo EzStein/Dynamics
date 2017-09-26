@@ -15,7 +15,9 @@
 
 top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, id) {
   glPanel = new wxGLCanvas(m_notebook2);
-  glContext = new wxGLContext(glPanel);
+  wxGLContextAttrs contextAttrs;
+  contextAttrs.CoreProfile().OGLVersion(4,5).EndList();
+  glContext = new wxGLContext(glPanel, NULL, &contextAttrs);
   std::cout << glContext->IsOK() << std::endl;
   m_notebook2->AddPage( glPanel, wxT("GL Panel"), false );
   glPanel->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, this);
@@ -25,7 +27,6 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
   pixelToValueRatio[0] = 70;
   pixelToValueRatio[1] = 70;
   dynamicalPlane->Refresh();
-
 }
 
 /*
@@ -36,6 +37,8 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
 */
 bool read_file(const char * filePath, char* buffer, size_t size) {
   FILE* file = fopen(filePath, "rb");
+  if(!file)
+    std::cout << "No such file or director: " << filePath << std::endl;
   fseek(file, 0, SEEK_END);
   const size_t fileSize = ftell(file);
   rewind(file);
@@ -53,7 +56,14 @@ void initialize_gl() {
   unsigned int vertexShader;
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
   const char * path = PROJECT_PATH"/resources/gl/vertex.vert";
-  glShaderSource(vertexShader, 1, &path, NULL);
+  /*Allocate a buffer to read the file into*/
+  size_t bufferSize = 1024;
+  char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
+  if(!read_file(path, buffer, bufferSize)) {
+    std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
+    return;
+  }
+  glShaderSource(vertexShader, 1, &buffer, NULL);
   glCompileShader(vertexShader);
 
   int  success;
@@ -66,14 +76,12 @@ void initialize_gl() {
 
   unsigned int fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  path = PROJECT_PATH"/resources/gl/fragment.frags";
-  std::cout << path << std::endl;
-  size_t bufferSize = 1024;
-  char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
+  path = PROJECT_PATH"/resources/gl/fragment.frag";
 
-  //Reads the file into the buffer
-  bool good = read_file(path, buffer, bufferSize);
-  std::cout << good << std::endl;
+  if(!read_file(path, buffer, bufferSize)) {
+    std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
+    return;
+  }
 
   glShaderSource(fragmentShader, 1, &buffer, NULL);
   glCompileShader(fragmentShader);
@@ -92,6 +100,7 @@ void initialize_gl() {
     glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
     std::cout << "GL shader linking error: " << infoLog << std::endl;
   }
+  free(buffer);
 }
 
 top_frame::~top_frame() {
@@ -268,15 +277,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     for(iter = solution->begin()++; iter != solution->end(); ++iter) {
       vec2 = *iter;
 
-      /*If the points are off screen, we skip them.
-      There are probably ways to make this more efficient*/
-      /*if(vec1[0] < valueBoundaryTopLeft[0] && vec1[0] > valueBoundaryBottomRight[0]
-      && vec1[1] > valueBoundaryTopLeft[1] && vec1[1] < valueBoundaryBottomRight[1]
-      && vec2[0] < valueBoundaryTopLeft[0] && vec2[0] > valueBoundaryBottomRight[0]
-      && vec2[1] > valueBoundaryTopLeft[1] && vec2[1] < valueBoundaryBottomRight[1]) {
-        vec1 = vec2;
-        continue;
-      }*/
       math::vector<double,2> tmp2;
       tmp2[0] = vec1[indices[0]];
       tmp2[1] = vec1[indices[1]];
@@ -287,6 +287,13 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
       tmp2[1] = vec2[indices[1]];
       math::vector<int, 2> pixel2 = math::value_to_pixel(tmp2,
         valueBoundaryTopLeft, pixelToValueRatio);
+      if(pixel1[0] < 0 || pixel1[0] > canvasSize[0] ||
+        pixel1[1] < 0 || pixel1[1] > canvasSize[1] ||
+        pixel2[0] < 0 || pixel2[0] > canvasSize[0] ||
+          pixel2[1] < 0 || pixel2[1] > canvasSize[1]) {
+            vec1 = vec2;
+            continue;
+          }
 
       dc.DrawLine(pixel1[0], pixel1[1], pixel2[0], pixel2[1]);
       vec1 = vec2;

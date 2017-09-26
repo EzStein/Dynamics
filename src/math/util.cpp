@@ -1,5 +1,6 @@
 #include "math/util.h"
 #include "math/matrix.h"
+#include <iostream>
 namespace math {
   vector<double, 2> pixel_to_value(const vector<int, 2>& pixel, const vector<int, 2>& canvasSize,
     const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& valueBoundaryBottomRight) {
@@ -66,6 +67,7 @@ namespace math {
     double xInc = inc*xFunc(start[0], start[1], start[2], start[3]);
     double yInc = inc*yFunc(start[0], start[1], start[2], start[3]);
     double zInc = inc*zFunc(start[0], start[1], start[2], start[3]);
+    std::cout << xInc << ", " << yInc << ", " << zInc << std::endl;
     start[0] += inc;
     start[1] += xInc;
     start[2] += yInc;

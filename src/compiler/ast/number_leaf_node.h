@@ -15,6 +15,7 @@ private:
   virtual unsigned int code_size() const override;
   virtual bool evaluatable() const override;
   virtual expression_node* copy() const override;
+  bool is_integral() const override;
 
   double val;
 };

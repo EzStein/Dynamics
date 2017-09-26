@@ -1,23 +1,23 @@
-#include "compiler/ast/plus_operator_node.h"
+#include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/AST.h"
 #include <iostream>
-plus_operator_node::plus_operator_node(expression_node* leftChild, expression_node* rightChild) :
+binary_addition_operator_node::binary_addition_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
 
 }
 
-double plus_operator_node::evaluate() const {
+double binary_addition_operator_node::evaluate() const {
   return leftChild->evaluate() + rightChild->evaluate();
 }
 
-std::ostream& plus_operator_node::print(std::ostream& out) const {
+std::ostream& binary_addition_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '+' << '(';
   rightChild->print(out) << ')';
   return out;
 }
 
-std::ostream& plus_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
+std::ostream& binary_addition_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
   leftChild->emit_code_ia32(acc, data);  //Put on %st(1)
   rightChild->emit_code_ia32(acc, data); //Now on %st(0)
 
@@ -47,7 +47,7 @@ std::ostream& plus_operator_node::emit_code_ia32(std::ostream& acc, compiler_dat
   return acc;
 }
 
-std::ostream& plus_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+std::ostream& binary_addition_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
   leftChild->emit_code_amd64(acc, data);  //Put on %st(1)
   rightChild->emit_code_amd64(acc, data); //Now on %st(0)
 
@@ -59,10 +59,14 @@ std::ostream& plus_operator_node::emit_code_amd64(std::ostream& acc, compiler_da
   return acc;
 }
 
-unsigned int plus_operator_node::code_size() const {
+unsigned int binary_addition_operator_node::code_size() const {
   return leftChild->code_size() + rightChild->code_size() + 13;
 }
 
-expression_node* plus_operator_node::copy() const {
-  return AST::make_binary_operator_node<plus_operator_node>(leftChild->copy(), rightChild->copy());
+expression_node* binary_addition_operator_node::copy() const {
+  return AST::make_binary_operator_node<binary_addition_operator_node>(leftChild->copy(), rightChild->copy());
+}
+
+bool binary_addition_operator_node::is_integral() const {
+  return leftChild->is_integral() && rightChild->is_integral();
 }

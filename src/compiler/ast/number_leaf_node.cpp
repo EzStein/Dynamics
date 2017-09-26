@@ -127,3 +127,7 @@ unsigned int number_leaf_node::code_size() const {
 expression_node* number_leaf_node::copy() const {
   return AST::make_number_leaf_node(val);
 }
+
+bool number_leaf_node::is_integral() const {
+  return false;
+}

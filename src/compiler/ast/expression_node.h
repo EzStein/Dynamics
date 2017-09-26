@@ -27,5 +27,11 @@ public:
   * Returns the size of the produced code.
   */
   virtual unsigned int code_size() const = 0;
+
+  /*
+  * Returns true if this node is known to be an integral type.
+  * Otherwise, returns false if it may or may not be an integral type.
+  */
+  virtual bool is_integral() const = 0;
 };
 #endif
