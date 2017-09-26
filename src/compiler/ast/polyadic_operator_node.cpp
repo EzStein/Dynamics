@@ -14,8 +14,19 @@ bool polyadic_operator_node::evaluatable() const {
   const_iterator_t end = children.end();
   bool val = true;
   for(; iter != end; ++iter) {
-    val &&= (*iter)->evaluatable();
+    val = val && (*iter)->evaluatable();
   }
   return val;
 }
 
+expression_node* polyadic_operator_node::transform_negation() {
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->transform_negation();
+    if(newChild != *iter)
+      delete *iter;
+    *iter = newChild;
+  }
+  return this;
+}

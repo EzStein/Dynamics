@@ -16,6 +16,7 @@ private:
   virtual bool evaluatable() const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;
+  void accept(visitor& v) override;
 
   double val;
 };

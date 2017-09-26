@@ -83,3 +83,7 @@ expression_node* variable_leaf_node::copy() const {
 bool variable_leaf_node::is_integral() const {
   return false;
 }
+
+void variable_leaf_node::accept(visitor& v) {
+  v.visit(this);
+}

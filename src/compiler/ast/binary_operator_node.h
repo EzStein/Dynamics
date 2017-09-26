@@ -12,7 +12,12 @@ protected:
   /*Constructs this binary operator node with pointers to its left and right children*/
   binary_operator_node(expression_node* leftChild, expression_node* rightChild);
 
-private:
   virtual bool evaluatable() const override;
+  virtual expression_node* transform_negation() override;
+  
+  /*expression_node* level_operators(unsigned int& type,
+          polyadic_operator_node::const_iterator_t& start,
+          polyadic_operator_node::const_iterator_t& end) override;*/
+
 };
 #endif

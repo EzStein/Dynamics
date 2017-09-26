@@ -10,6 +10,8 @@ protected:
 
   /*Constructs this unary operator node with a pointer to its child*/
   explicit unary_operator_node(expression_node* child);
+  expression_node* transform_negation() override;
+
 
 private:
   virtual bool evaluatable() const override;

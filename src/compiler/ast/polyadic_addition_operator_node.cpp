@@ -17,11 +17,14 @@ double polyadic_addition_operator_node::evaluate() const {
 std::ostream& polyadic_addition_operator_node::print(std::ostream& out) const {
   const_iterator_t iter = children.begin();
   const_iterator_t end = children.end();
+  out << '(';
+  (*iter)->print(out);
+  out << ')';
+  ++iter;
   for(; iter != end; ++iter) {
+    out << "+";
     out << '(';
     (*iter)->print(out) << ')';
-    if(iter != end - 1)
-     out << "+";
   }
   return out;
 }
@@ -54,7 +57,12 @@ bool polyadic_addition_operator_node::is_integral() const {
   const_iterator_t end = children.end();
   bool val = true;
   for(; iter != end; ++iter) {
-    val &&= (*iter)->is_integral();
+    val = val && (*iter)->is_integral();
   }
   return val;
 }
+
+void polyadic_addition_operator_node::accept(visitor& v) {
+  v.visit(this);
+}
+

@@ -263,3 +263,7 @@ expression_node* exponentiation_operator_node::copy() const {
 bool exponentiation_operator_node::is_integral() const {
   return leftChild->is_integral() && rightChild->is_integral();
 }
+
+void exponentiation_operator_node::accept(visitor& v) {
+  v.visit(this);
+}

@@ -8,7 +8,6 @@
 #include "compiler/ast/binary_subtraction_operator_node.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/division_operator_node.h"
-#include "compiler/ast/factorial_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/number_leaf_node.h"
 #include "compiler/compiler_data.h"
@@ -49,6 +48,14 @@ AST& AST::operator=(AST&& ast) {
   return *this;
 }
 
+void AST::simplify() {
+  expression_node* newRoot = root->transform_negation();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+}
+
+
 expression_node* AST::make_variable_leaf_node(symbol::ptr_type symPtr) {
   return new variable_leaf_node(symPtr);
 }
@@ -72,7 +79,6 @@ template expression_node* AST::make_binary_operator_node<binary_addition_operato
 template expression_node* AST::make_binary_operator_node<binary_subtraction_operator_node>(expression_node*,expression_node*);
 template expression_node* AST::make_binary_operator_node<binary_multiplication_operator_node>(expression_node*,expression_node*);
 template expression_node* AST::make_binary_operator_node<division_operator_node>(expression_node*,expression_node*);
-template expression_node* AST::make_unary_operator_node<factorial_operator_node>(expression_node*);
 template expression_node* AST::make_unary_operator_node<unary_minus_operator_node>(expression_node*);
 
 double AST::evaluate() const {

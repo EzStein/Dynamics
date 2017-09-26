@@ -3,7 +3,18 @@
 #include <cstddef>
 #include <iostream>
 #include "compiler/ast/expression_node.h"
+#include "compiler/ast/binary_addition_operator_node.h"
+#include "compiler/ast/binary_multiplication_operator_node.h"
+#include "compiler/ast/binary_subtraction_operator_node.h"
+#include "compiler/ast/division_operator_node.h"
+#include "compiler/ast/exponentiation_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/unary_minus_operator_node.h"
+#include "compiler/ast/polyadic_addition_operator_node.h"
+#include "compiler/ast/polyadic_multiplication_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
+
 class AST {
 public:
   explicit AST(expression_node*);
@@ -22,6 +33,8 @@ public:
 
   /*Move assignment*/
   AST& operator=(AST&&);
+
+  void simplify();
 
   /*Constructs the binary operator of the appropriate type whose children are given by the provided pointers.
   * The function returns a pointer to the constructed node*/

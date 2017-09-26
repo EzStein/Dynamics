@@ -9,7 +9,6 @@
 #include "compiler/ast/binary_subtraction_operator_node.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/division_operator_node.h"
-#include "compiler/ast/factorial_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/number_leaf_node.h"
 
@@ -358,7 +357,9 @@ AST parser::parse(list<symbol>& symbolTable) {
       case token::EXCLAMATION:
         rightChild = nodeStack.top();
         nodeStack.pop();
-        nodePtr = AST::make_unary_operator_node<factorial_operator_node>(rightChild);
+        /*CURRENTLY NOT IMPLEMENTED
+        THIS IS A PLACEHOLDER VALUE*/
+        nodePtr = AST::make_unary_operator_node<unary_minus_operator_node>(rightChild);//AST::make_unary_operator_node<factorial_operator_node>(rightChild);
         nodeStack.push(nodePtr);
         break;
       case token::CARET:

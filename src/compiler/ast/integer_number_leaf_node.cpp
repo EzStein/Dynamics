@@ -44,3 +44,7 @@ unsigned int integer_number_leaf_node::code_size() const {
 bool integer_number_leaf_node::is_integral() const {
   return true;
 }
+
+void integer_number_leaf_node::accept(visitor& v) {
+  v.visit(this);
+}

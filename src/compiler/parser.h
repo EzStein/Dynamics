@@ -10,6 +10,11 @@ public:
   parser(std::istream&);
   ~parser();
 
+  /*
+  * Returns an AST representing the parsed expression.
+  * It fills up the symbol table provided with imformation
+  * on the symbols and variables involved.
+  */
   AST parse(std::list<symbol>&);
 
 private:

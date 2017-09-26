@@ -16,13 +16,16 @@
 #ifndef POLYADIC_OPERATOR_NODE_H
 #define POLYADIC_OPERATOR_NODE_H
 #include <list>
+#include "compiler/ast/expression_node.h"
 
 class polyadic_operator_node : public expression_node {
 public:
   virtual ~polyadic_operator_node();
-protected:
+  expression_node* transform_negation() override;
   typedef std::list<expression_node*>::const_iterator const_iterator_t;
   typedef std::list<expression_node*>::iterator iterator_t;
+  
+protected:
   std::list<expression_node*> children;
 private:
   bool evaluatable() const override;

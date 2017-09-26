@@ -3,6 +3,8 @@
 #include <iostream>
 #include "compiler/ast/node.h"
 #include "compiler/compiler_data.h"
+#include "compiler/ast/visitor.h"
+
 class expression_node : public node {
 public:
   virtual ~expression_node() = 0;
@@ -33,5 +35,59 @@ public:
   * Otherwise, returns false if it may or may not be an integral type.
   */
   virtual bool is_integral() const = 0;
+
+  /**
+   * Used in the visitor pattern.
+   * Only the most derived classes should implement this method,
+   * and all they should do is call visit(this) on
+   * the visitor.
+   * @param
+   */
+  virtual void accept(visitor& v) = 0;
+
+  /**
+   * When this method is called on a node,
+   * the node transforms itself so that it contains
+   * no binary or unary minus operator nodes. The node
+   * itself may need to change type, so it returns
+   * a pointer to the node that should replace it as a child.
+   * If the node returns a pointer that is different from the
+   * the current child, then we assume that that the original
+   * child is no longer in use and should be deleted. Thus
+   * if this function does not return this,
+   * it will be deleted by the calling function. It is
+   * important that if the function does not return this,
+   * it sets its own children to null so that they are not deleted.
+   * @return
+   */
+  virtual expression_node* transform_negation() = 0;
+
+  /**
+   * When this method is called on a node,
+   * the node is transformed so that cascaded multiplication
+   * and addition operators are leveled into one polyadic operator.
+   * A multiplication and addition node is considered to be leveled if if none of its children
+   * are of the same type as the node. This will also turn any binary operators
+   * into polyadic ones even if there is now cascading.
+   * The function returns a pointer to a new node that will replace
+   * this as a child. If this new node is different then the old one,
+   * the old one should be deleted by the caller.
+   * If the new node is a polyadic operator of the appropriate type,
+   * then the function returns that type encoded as a int
+   * as well as iterators to the first and one past the last child.
+   * An addition or multiplication node will use this information to level the operators.
+   * The type will be encoded as follows:
+   * 0 - New node is not a polyadic type
+   * 1 - New node is a polyadic_addition_operator
+   * 2 - New node is a polyadic_multiplication_operator
+   * @return
+   */
+
+
+  /*
+  virtual expression_node* level_operators(unsigned int& type,
+          polyadic_operator_node::const_iterator_t & start,
+          polyadic_operator_node::const_iterator_t & end) = 0;*/
+
 };
 #endif

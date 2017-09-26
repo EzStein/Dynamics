@@ -70,3 +70,7 @@ expression_node* binary_addition_operator_node::copy() const {
 bool binary_addition_operator_node::is_integral() const {
   return leftChild->is_integral() && rightChild->is_integral();
 }
+
+void binary_addition_operator_node::accept(visitor& vist) {
+  vist.visit(this);
+}

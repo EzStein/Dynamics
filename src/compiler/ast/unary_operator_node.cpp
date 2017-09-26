@@ -10,3 +10,12 @@ unary_operator_node::~unary_operator_node() {
 bool unary_operator_node::evaluatable() const {
   return child->evaluatable();
 }
+
+expression_node* unary_operator_node::transform_negation() {
+  expression_node* newChild = child->transform_negation();
+  if(newChild != child)
+    delete child;
+  child = newChild;
+  return this;
+}
+

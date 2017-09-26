@@ -14,7 +14,7 @@
 
 #ifndef POLYADIC_MULTIPLICATION_OPERATOR_NODE_H
 #define POLYADIC_MULTIPLICATION_OPERATOR_NODE_H
-
+#include "compiler/ast/polyadic_operator_node.h"
 class polyadic_multiplication_operator_node : public polyadic_operator_node {
 private:
   polyadic_multiplication_operator_node(expression_node* firstChild);
@@ -25,6 +25,7 @@ private:
   virtual unsigned int code_size() const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;
+  void accept(visitor& v) override;
 
 };
 
