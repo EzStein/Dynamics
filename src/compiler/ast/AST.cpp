@@ -53,6 +53,10 @@ void AST::simplify() {
   if(newRoot != root)
     delete root;
   root = newRoot;
+  newRoot = root->level_operators();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
 }
 
 

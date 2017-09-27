@@ -14,17 +14,13 @@
 using namespace std;
 
 int main() {
-  /*std::stringstream ss("1-2+-2");
+  std::stringstream ss("1+2+3");
   parser par(ss);
   list<symbol> l;
   AST ast = par.parse(l);
-  ast.simplify();
+  //ast.simplify();
   std::cout << ast << std::endl;
   //driver::var4_double_func_t func =  dr.compile_as_function<driver::var4_double_func_t>("2.5^3.5");
   //std::cout << func(1,2,3,4) << std::endl;
-  return 0;*/
-
- // integer_number_leaf_node n(0);
- // vist.visit(&n);
   return 0;
 }

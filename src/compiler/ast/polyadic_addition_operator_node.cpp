@@ -1,5 +1,5 @@
 #include "compiler/ast/polyadic_addition_operator_node.h"
-
+#include "compiler/ast/visitor/level_addition_operator_visitor.h"
 polyadic_addition_operator_node::polyadic_addition_operator_node(expression_node* firstChild) {
   children.push_back(firstChild);
 }
@@ -66,5 +66,24 @@ bool polyadic_addition_operator_node::is_integral() const {
 
 void polyadic_addition_operator_node::accept(visitor& v) {
   v.visit(this);
+}
+
+expression_node* polyadic_addition_operator_node::level_operators() {
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->level_operators();
+    if(*iter != newChild)
+      delete *iter;
+    *iter = newChild;
+  }
+  std::list<expression_node*> newChildren;
+  level_addition_operator_visitor visit(newChildren);
+  iter = children.begin();
+  for(; iter!=end; ++iter) {
+    (*iter)->accept(visit);
+  }
+  children = newChildren;
+  return this;
 }
 
