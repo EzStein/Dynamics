@@ -22,8 +22,7 @@ class polyadic_multiplication_operator_node : public polyadic_operator_node {
  */
 public:
   polyadic_multiplication_operator_node(const std::list<expression_node*> children);
- 
-private:
+
   polyadic_multiplication_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
@@ -34,6 +33,8 @@ private:
   bool is_integral() const override;
   void accept(visitor& v) override;
   expression_node* level_operators() override;
+  expression_node* make_pre_canonical() override;
+
 
 };
 

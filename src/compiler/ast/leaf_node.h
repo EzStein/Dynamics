@@ -6,6 +6,7 @@ public:
   virtual ~leaf_node();
   expression_node* transform_negation() override;
   expression_node* level_operators() override;
+  expression_node* make_pre_canonical() override;
 
 
 };

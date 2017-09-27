@@ -18,10 +18,10 @@
 
 class level_addition_operator_visitor : public visitor {
 private:
-  std::list<expression_node*>& newChildren;
+  std::list<expression_node*>& newChildren, toDelete;
 
 public:
-  level_addition_operator_visitor(std::list<expression_node*>& _newChildren);
+  level_addition_operator_visitor(std::list<expression_node*>& _newChildren,std::list<expression_node*>& );
 
   /*
    * If we visit an addition node, we add the children

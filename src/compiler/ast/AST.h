@@ -48,6 +48,7 @@ public:
 
   static expression_node* make_variable_leaf_node(symbol::ptr_type);
   static expression_node* make_number_leaf_node(double val);
+  static expression_node* make_integer_number_leaf_node(long val);
 
   double evaluate() const;
 

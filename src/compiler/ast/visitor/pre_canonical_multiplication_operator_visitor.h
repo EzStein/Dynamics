@@ -5,20 +5,21 @@
  */
 
 /*
- * File:   level_multiplication_operator_visitor.h
+ * File:   pre_canonical_polyadic_addition_visitor.h
  * Author: ezra
  *
  * Created on September 26, 2017, 8:13 PM
  */
 
-#ifndef LEVEL_MULTIPLICATION_OPERATOR_VISITOR_H
-#define LEVEL_MULTIPLICATION_OPERATOR_VISITOR_H
+#ifndef pre_canonical_multiplication_operator_visitor_H
+#define pre_canonical_multiplication_operator_visitor_H
 #include "visitor.h"
 #include <list>
 
-class level_multiplication_operator_visitor : public visitor {
+class pre_canonical_multiplication_operator_visitor : public visitor {
 public:
-  level_multiplication_operator_visitor(std::list<expression_node*>& _newChildren,std::list<expression_node*>&);
+  pre_canonical_multiplication_operator_visitor(std::list<expression_node*>& _newChildren,
+          std::list<expression_node*>&);
   /*
    * If we visit a multiplication node, we add the children
    * of the multiplication node to the newChildren list.
@@ -51,7 +52,13 @@ public:
   void visit(variable_leaf_node* node) override;
 
 private:
-  std::list<expression_node*>& newChildren, toDelete;
+  std::list<expression_node*>& newChildren;
+  /*
+   * A list of nodes that should
+   * be deleted by the function that constructs this object
+   * after it is done using this object.
+   */
+  std::list<expression_node*>& toDelete;
 };
 
-#endif /* LEVEL_MULTIPLICATION_OPERATOR_VISITOR_H */
+#endif

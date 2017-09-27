@@ -17,6 +17,9 @@ namespace util {
   * This function performs no checks to make sure the string is well formed
   */
   double string_to_double(const std::string&);
+  
+  bool is_integer(const std::string&);
+  long string_to_long(const std::string&);
 
 }
 #endif

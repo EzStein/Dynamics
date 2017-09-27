@@ -1,5 +1,6 @@
 #include "compiler/ast/polyadic_addition_operator_node.h"
 #include "compiler/ast/visitor/level_addition_operator_visitor.h"
+#include "compiler/ast/visitor/pre_canonical_addition_operator_visitor.h"
 polyadic_addition_operator_node::polyadic_addition_operator_node(expression_node* firstChild) {
   children.push_back(firstChild);
 }
@@ -78,12 +79,37 @@ expression_node* polyadic_addition_operator_node::level_operators() {
     *iter = newChild;
   }
   std::list<expression_node*> newChildren;
-  level_addition_operator_visitor visit(newChildren);
+  std::list<expression_node*> toDelete;
+  level_addition_operator_visitor visit(newChildren, toDelete);
   iter = children.begin();
   for(; iter!=end; ++iter) {
     (*iter)->accept(visit);
   }
   children = newChildren;
+  for(expression_node* node : toDelete){
+    delete node;
+  }
   return this;
 }
 
+expression_node* polyadic_addition_operator_node::make_pre_canonical() {
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->make_pre_canonical();
+    if(*iter != newChild)
+      delete *iter;
+    *iter = newChild;
+  }
+  std::list<expression_node*> newChildren, toDelete;
+  pre_canonical_addition_operator_visitor visit(newChildren, toDelete);
+  iter = children.begin();
+  for(; iter!=end; ++iter) {
+    (*iter)->accept(visit);
+  }
+  children = newChildren;
+  for(expression_node* node : toDelete){
+    delete node;
+  }
+  return this;
+}

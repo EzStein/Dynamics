@@ -11,8 +11,9 @@
 #include "compiler/ast/polyadic_addition_operator_node.h"
 #include "compiler/ast/polyadic_multiplication_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"
- level_addition_operator_visitor::level_addition_operator_visitor(std::list<expression_node*>& _newChildren)
- : newChildren(_newChildren) { }
+ level_addition_operator_visitor::level_addition_operator_visitor(
+ std::list<expression_node*>& _newChildren, std::list<expression_node*>& _toDelete)
+ : newChildren(_newChildren), toDelete(_toDelete) { }
 
  /*
   * If we level_addition_operator_visitor::visit an addition node, we add the children
@@ -28,7 +29,7 @@
    }
    /*We are now going to delete the node, so we clear its children*/
    node->children.clear();
-   delete node;
+   toDelete.push_back(node);
  }
 
  /**
@@ -56,7 +57,7 @@
    newChildren.push_back(node->rightChild);
    node->leftChild = nullptr;
    node->rightChild = nullptr;
-   delete node;
+   toDelete.push_back(node);
  }
 
  void level_addition_operator_visitor::visit(binary_multiplication_operator_node* node) {

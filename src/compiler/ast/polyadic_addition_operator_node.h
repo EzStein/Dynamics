@@ -25,7 +25,7 @@ public:
      * @param 
      */
     polyadic_addition_operator_node(std::list<expression_node*>);
-private:
+
   polyadic_addition_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
@@ -36,6 +36,7 @@ private:
   bool is_integral() const override;
   void accept(visitor& v) override;
   expression_node* level_operators() override;
+  expression_node* make_pre_canonical() override;
 
 
 

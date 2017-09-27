@@ -40,3 +40,9 @@ expression_node* binary_operator_node::level_operators() {
   /*The operators have been leveled so we do not need to change this node*/
   return this;
 }
+
+/*Left unimplemented because binary operators are not present when this method is called*/
+expression_node* binary_operator_node::make_pre_canonical() {
+  throw "Attempt to traverse a binary operator during pre-canonical formation";
+  return nullptr;
+}

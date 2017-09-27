@@ -10,3 +10,7 @@ expression_node* leaf_node::level_operators() {
   return this;
 }
 
+expression_node* leaf_node::make_pre_canonical() {
+  return this;
+}
+

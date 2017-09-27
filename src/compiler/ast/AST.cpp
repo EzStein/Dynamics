@@ -57,6 +57,10 @@ void AST::simplify() {
   if(newRoot != root)
     delete root;
   root = newRoot;
+  newRoot = root->make_pre_canonical();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
 }
 
 
@@ -66,6 +70,10 @@ expression_node* AST::make_variable_leaf_node(symbol::ptr_type symPtr) {
 
 expression_node* AST::make_number_leaf_node(double val) {
   return new number_leaf_node(val);
+}
+
+expression_node* AST::make_integer_number_leaf_node(long val) {
+  return new integer_number_leaf_node(val);
 }
 
 template<class NODE_TYPE>

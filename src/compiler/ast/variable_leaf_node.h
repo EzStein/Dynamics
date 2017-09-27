@@ -19,6 +19,7 @@ private:
   bool is_integral() const override;
   void accept(visitor& v) override;
 
+
   symbol::ptr_type symPtr;
 };
 

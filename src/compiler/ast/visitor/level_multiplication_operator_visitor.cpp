@@ -18,8 +18,8 @@
 #include "compiler/ast/variable_leaf_node.h"
 
 level_multiplication_operator_visitor::level_multiplication_operator_visitor(
-  std::list<expression_node*>& _newChildren)
-: newChildren(_newChildren) { }
+  std::list<expression_node*>& _newChildren,std::list<expression_node*>& _toDelete)
+: newChildren(_newChildren), toDelete(_toDelete) { }
 
 /*
  * If we level_multiplication_operator_visitor::visit a multiplication node, we add the children
@@ -35,7 +35,7 @@ void level_multiplication_operator_visitor::visit(polyadic_multiplication_operat
   }
   /*We are now going to delete the node, so we clear its children*/
   node->children.clear();
-  delete node;
+  toDelete.push_back(node);
 }
 
 /**
@@ -66,7 +66,7 @@ void level_multiplication_operator_visitor::visit(binary_multiplication_operator
   newChildren.push_back(node->rightChild);
   node->leftChild = nullptr;
   node->rightChild = nullptr;
-  delete node;
+  toDelete.push_back(node);
 }
 
 void level_multiplication_operator_visitor::visit(unary_minus_operator_node* node) {

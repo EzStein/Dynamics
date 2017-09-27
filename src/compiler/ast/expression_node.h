@@ -79,6 +79,33 @@ public:
    * @return
    */
   virtual expression_node* level_operators() = 0;
-
+  
+  
+  /**
+   * This method should ONLY be called on subtrees
+   * whose nodes are one of the following:
+   * polyadic multiplication
+   * polyadic addition
+   * exponentiation
+   * integer number
+   * number
+   * variable
+   * 
+   * This method puts the subtree whose root is 'this'
+   * into pre-canonical form. A subtree is in Pre-canonical if it satisfies the following:
+   * All children of polyadic addition nodes are polyadic multiplication nodes
+   * All children of polyadic multiplication nodes are exponentiation nodes.
+   * The exponent of an exponentiation node is an expression in precanonical form.
+   * If the exponent is evaluatable and of integer value, then its 
+   * base is a leaf node. Otherwise the base may be a leaf node OR a polyadic addition node.
+   * and all its subtrees are in precanonical form.
+   * 
+   * Currently simplification to precanonical form does not
+   * support division operations or exponential operators whose exponent is not 
+   * an integer number leaf node.
+   * @return 
+   */
+  virtual expression_node* make_pre_canonical() = 0;
+  
 };
 #endif

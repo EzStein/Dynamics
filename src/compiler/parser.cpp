@@ -351,7 +351,11 @@ AST parser::parse(list<symbol>& symbolTable) {
         }
         break;
       case token::NUMBER:
-        nodePtr = AST::make_number_leaf_node(util::string_to_double(lexeme));
+        if(util::is_integer(lexeme)) {
+          nodePtr = AST::make_integer_number_leaf_node(util::string_to_long(lexeme));
+        } else {
+          nodePtr = AST::make_number_leaf_node(util::string_to_double(lexeme));
+        }
         nodeStack.push(nodePtr);
         break;
       case token::EXCLAMATION:

@@ -1,6 +1,7 @@
 #include <cmath>
 #include "exponentiation_operator_node.h"
 #include "compiler/ast/AST.h"
+#include "compiler/ast/visitor/pre_canonical_exponentiation_operator_visitor.h"
 
 exponentiation_operator_node::exponentiation_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
@@ -266,4 +267,27 @@ bool exponentiation_operator_node::is_integral() const {
 
 void exponentiation_operator_node::accept(visitor& v) {
   v.visit(this);
+}
+
+expression_node* exponentiation_operator_node::make_pre_canonical() {
+  expression_node* newLeftChild = leftChild->make_pre_canonical();
+  expression_node* newRightChild = rightChild->make_pre_canonical();
+  if(newLeftChild != leftChild)
+    delete leftChild;
+  leftChild = newLeftChild;
+  if(newRightChild != rightChild)
+    delete rightChild;
+  rightChild = newRightChild;
+  
+  expression_node* result;
+  pre_canonical_exponentiation_operator_visitor visit(result, this);
+  leftChild->accept(visit);
+  if(result != this) {
+    expression_node* newResult = result->make_pre_canonical();
+    if(newResult != result)
+      delete result;
+    result = newResult;
+  }
+ 
+  return result;
 }

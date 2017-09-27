@@ -1,4 +1,6 @@
+#include <cstdlib>
 #include "util.h"
+
 using std::string;
 void util::strip_white_space(string& str) {
   string::iterator end = str.end();
@@ -40,4 +42,17 @@ double util::string_to_double(const string& str) {
     multiplier /= 10.0;
   }
   return ret;
+}
+
+bool util::is_integer(const std::string& s) {
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
+
+   char * p;
+   std::strtol(s.c_str(), &p, 10);
+
+   return (*p == 0);
+}
+
+long util::string_to_long(const std::string& s) {
+  return std::strtol(s.c_str(),nullptr,10);
 }

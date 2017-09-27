@@ -86,12 +86,17 @@ expression_node* binary_addition_operator_node::level_operators() {
     delete rightChild;
 
   std::list<expression_node*> newChildren;
-  level_addition_operator_visitor vist(newChildren);
+  std::list<expression_node*> toDelete;
+  level_addition_operator_visitor vist(newChildren, toDelete);
   /*Fills new children with the children of the left and right child if the
    child is an addition node,
    otherwise it adds the child itself*/
   newLeftChild->accept(vist);
   newRightChild->accept(vist);
+  
+  for(expression_node* node : toDelete){
+    delete node;
+  }
 
   /*Since we are returning a different node, this node will be deleted
    We protected the children by setting them to null*/
