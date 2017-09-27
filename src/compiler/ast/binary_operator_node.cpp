@@ -25,15 +25,18 @@ expression_node* binary_operator_node::transform_negation() {
   return this;
 }
 
-/*expression_node* binary_operator_node::level_operators(unsigned int& type,
-  polyadic_operator_node::const_iterator_t& start, polyadic_operator_node::const_iterator_t& end) {
-  expression_node* newChild = leftChild->level_operators(type, start, end);
+expression_node* binary_operator_node::level_operators() {
+  expression_node* newChild = leftChild->level_operators();
+  /*If the leftChild has been replaced by a new node, we delete the left child*/
   if(newChild != leftChild)
     delete leftChild;
   leftChild = newChild;
-  newChild = rightChild->level_operators(type, start, end);
+
+  newChild = rightChild->level_operators();
   if(newChild != rightChild)
     delete rightChild;
   rightChild = newChild;
+
+  /*The operators have been leveled so we do not need to change this node*/
   return this;
-}*/
+}

@@ -18,7 +18,7 @@ private:
   bool is_integral() const override;
   expression_node* transform_negation() override;
   void accept(visitor& v) override;
-
+  
 
 };
 #endif

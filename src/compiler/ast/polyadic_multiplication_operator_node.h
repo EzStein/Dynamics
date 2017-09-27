@@ -16,6 +16,13 @@
 #define POLYADIC_MULTIPLICATION_OPERATOR_NODE_H
 #include "compiler/ast/polyadic_operator_node.h"
 class polyadic_multiplication_operator_node : public polyadic_operator_node {
+/*
+ *Constructs this node from a list of children.
+ * Note that the list MUST be non-empty.
+ */
+public:
+  polyadic_multiplication_operator_node(const std::list<expression_node*> children);
+ 
 private:
   polyadic_multiplication_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;

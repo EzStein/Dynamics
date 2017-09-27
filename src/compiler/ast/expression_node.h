@@ -3,7 +3,7 @@
 #include <iostream>
 #include "compiler/ast/node.h"
 #include "compiler/compiler_data.h"
-#include "compiler/ast/visitor.h"
+#include "compiler/ast/visitor/visitor.h"
 
 class expression_node : public node {
 public:
@@ -67,27 +67,18 @@ public:
    * the node is transformed so that cascaded multiplication
    * and addition operators are leveled into one polyadic operator.
    * A multiplication and addition node is considered to be leveled if if none of its children
-   * are of the same type as the node. This will also turn any binary operators
-   * into polyadic ones even if there is now cascading.
+   * are of the same type as the node (as in the same operator type, + or *). This will also turn any binary operators
+   * into polyadic ones even if there is no cascading.
    * The function returns a pointer to a new node that will replace
    * this as a child. If this new node is different then the old one,
    * the old one should be deleted by the caller.
    * If the new node is a polyadic operator of the appropriate type,
-   * then the function returns that type encoded as a int
-   * as well as iterators to the first and one past the last child.
-   * An addition or multiplication node will use this information to level the operators.
-   * The type will be encoded as follows:
-   * 0 - New node is not a polyadic type
-   * 1 - New node is a polyadic_addition_operator
-   * 2 - New node is a polyadic_multiplication_operator
+   * and the current node is an operator of the same type,
+   * then a visitor is used to incorporate the children of the returned
+   * node into the current one.
    * @return
    */
-
-
-  /*
-  virtual expression_node* level_operators(unsigned int& type,
-          polyadic_operator_node::const_iterator_t & start,
-          polyadic_operator_node::const_iterator_t & end) = 0;*/
+  virtual expression_node* level_operators() = 0;
 
 };
 #endif

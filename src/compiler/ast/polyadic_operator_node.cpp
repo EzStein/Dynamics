@@ -30,3 +30,15 @@ expression_node* polyadic_operator_node::transform_negation() {
   }
   return this;
 }
+
+expression_node* polyadic_operator_node::level_operators() {
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->level_operators();
+    if(newChild != *iter)
+      delete *iter;
+    *iter = newChild;
+  }
+  return this;
+}

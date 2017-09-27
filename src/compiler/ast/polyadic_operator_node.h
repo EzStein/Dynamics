@@ -20,12 +20,20 @@
 
 class polyadic_operator_node : public expression_node {
 public:
+  
+  polyadic_operator_node() {};
+  polyadic_operator_node(const std::list<expression_node*> _children) : children(_children) { };
   virtual ~polyadic_operator_node();
   expression_node* transform_negation() override;
+  expression_node* level_operators() override;
+
   typedef std::list<expression_node*>::const_iterator const_iterator_t;
   typedef std::list<expression_node*>::iterator iterator_t;
   
-protected:
+/* Currently this is set to public, but using friend classes for binary addition and multiplication
+ * It can be set to private
+ */
+public:
   std::list<expression_node*> children;
 private:
   bool evaluatable() const override;

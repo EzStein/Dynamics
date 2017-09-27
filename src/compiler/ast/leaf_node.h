@@ -5,6 +5,8 @@ class leaf_node : public expression_node {
 public:
   virtual ~leaf_node();
   expression_node* transform_negation() override;
+  expression_node* level_operators() override;
+
 
 };
 #endif

@@ -1,6 +1,8 @@
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/AST.h"
+#include "compiler/ast/visitor/level_addition_operator_visitor.h"
 #include <iostream>
+#include <list>
 binary_addition_operator_node::binary_addition_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
 
@@ -73,4 +75,27 @@ bool binary_addition_operator_node::is_integral() const {
 
 void binary_addition_operator_node::accept(visitor& vist) {
   vist.visit(this);
+}
+
+expression_node* binary_addition_operator_node::level_operators() {
+  expression_node* newLeftChild = leftChild->level_operators();
+  expression_node* newRightChild = rightChild->level_operators();
+  if(leftChild != newLeftChild)
+    delete leftChild;
+  if(rightChild != newRightChild)
+    delete rightChild;
+
+  std::list<expression_node*> newChildren;
+  level_addition_operator_visitor vist(newChildren);
+  /*Fills new children with the children of the left and right child if the
+   child is an addition node,
+   otherwise it adds the child itself*/
+  newLeftChild->accept(vist);
+  newRightChild->accept(vist);
+
+  /*Since we are returning a different node, this node will be deleted
+   We protected the children by setting them to null*/
+  leftChild = nullptr;
+  rightChild = nullptr;
+  return new polyadic_addition_operator_node(newChildren);
 }

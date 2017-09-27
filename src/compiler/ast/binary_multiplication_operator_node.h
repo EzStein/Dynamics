@@ -3,10 +3,12 @@
 #include "compiler/ast/binary_operator_node.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/compiler_data.h"
+#include "compiler/ast/visitor/level_multiplication_operator_visitor.h"
 class binary_multiplication_operator_node : public binary_operator_node {
 public:
   /*Constructs this operator node with a pointer to its left and right child nodes*/
   binary_multiplication_operator_node(expression_node* leftChild, expression_node* rightChild);
+  friend level_multiplication_operator_visitor;
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
@@ -16,6 +18,7 @@ private:
   virtual expression_node* copy() const override;
   virtual bool is_integral() const override;
   void accept(visitor& v) override;
+  expression_node* level_operators() override;
 
 };
 #endif

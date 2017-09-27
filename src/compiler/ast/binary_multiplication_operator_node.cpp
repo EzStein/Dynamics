@@ -1,7 +1,9 @@
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/AST.h"
-binary_multiplication_operator_node::binary_multiplication_operator_node(expression_node* leftChild, expression_node* rightChild) :
-binary_operator_node(leftChild, rightChild) {
+#include "compiler/ast/polyadic_operator_node.h"
+#include "compiler/ast/visitor/level_multiplication_operator_visitor.h"
+binary_multiplication_operator_node::binary_multiplication_operator_node(expression_node* _leftChild, expression_node* _rightChild) :
+binary_operator_node(_leftChild, _rightChild) {
 
 }
 
@@ -70,4 +72,28 @@ bool binary_multiplication_operator_node::is_integral() const {
 
 void binary_multiplication_operator_node::accept(visitor& v) {
   v.visit(this);
+}
+
+expression_node* binary_multiplication_operator_node::level_operators() {
+  expression_node* newLeftChild = leftChild->level_operators();
+  expression_node* newRightChild = rightChild->level_operators();
+  if(leftChild != newLeftChild)
+    delete leftChild;
+  if(rightChild != newRightChild)
+    delete rightChild;
+
+  std::list<expression_node*> newChildren;
+  level_multiplication_operator_visitor vist(newChildren);
+  /*Fills new children with the children of the left and right child if the
+   child is a multiplication node,
+   otherwise it adds the child itself*/
+  newLeftChild->accept(vist);
+  newRightChild->accept(vist);
+
+  /*Since we are returning a different node, this node will be deleted
+   We protected the children by setting them to null*/
+  leftChild = nullptr;
+  rightChild = nullptr;
+  return new polyadic_multiplication_operator_node(newChildren);
+
 }

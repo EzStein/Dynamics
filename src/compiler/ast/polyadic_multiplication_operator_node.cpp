@@ -12,6 +12,11 @@
  polyadic_multiplication_operator_node::polyadic_multiplication_operator_node(expression_node* firstChild) {
    children.push_back(firstChild);
  }
+ 
+ polyadic_multiplication_operator_node::polyadic_multiplication_operator_node(
+ const std::list<expression_node*> _children) : polyadic_operator_node(_children) {}
+ 
+ 
 
  double polyadic_multiplication_operator_node::evaluate() const {
    const_iterator_t iter = children.begin();
@@ -76,3 +81,4 @@ bool polyadic_multiplication_operator_node::is_integral() const {
 void polyadic_multiplication_operator_node::accept(visitor& v) {
   v.visit(this);
 }
+

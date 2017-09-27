@@ -11,9 +11,12 @@ protected:
   /*Constructs this unary operator node with a pointer to its child*/
   explicit unary_operator_node(expression_node* child);
   expression_node* transform_negation() override;
+  expression_node* level_operators() override;
 
+  
 
 private:
   virtual bool evaluatable() const override;
+
 };
 #endif

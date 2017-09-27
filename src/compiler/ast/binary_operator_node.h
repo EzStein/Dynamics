@@ -15,9 +15,8 @@ protected:
   virtual bool evaluatable() const override;
   virtual expression_node* transform_negation() override;
   
-  /*expression_node* level_operators(unsigned int& type,
-          polyadic_operator_node::const_iterator_t& start,
-          polyadic_operator_node::const_iterator_t& end) override;*/
+  expression_node* level_operators() override;
+
 
 };
 #endif

@@ -3,6 +3,8 @@
 polyadic_addition_operator_node::polyadic_addition_operator_node(expression_node* firstChild) {
   children.push_back(firstChild);
 }
+polyadic_addition_operator_node::polyadic_addition_operator_node(
+std::list<expression_node*> _children) : polyadic_operator_node(_children) {}
 
 double polyadic_addition_operator_node::evaluate() const {
   const_iterator_t iter = children.begin();

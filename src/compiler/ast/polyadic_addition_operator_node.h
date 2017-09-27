@@ -18,6 +18,13 @@
 #include "compiler/ast/polyadic_operator_node.h"
 
 class polyadic_addition_operator_node : public polyadic_operator_node {
+public:
+    /**
+     * Constructs this node from a list of children.
+     * NOTE: this list MUST not be empty.
+     * @param 
+     */
+    polyadic_addition_operator_node(std::list<expression_node*>);
 private:
   polyadic_addition_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;

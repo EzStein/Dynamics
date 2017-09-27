@@ -19,3 +19,10 @@ expression_node* unary_operator_node::transform_negation() {
   return this;
 }
 
+expression_node* unary_operator_node::level_operators() {
+  expression_node* newChild = child->level_operators();
+  if(newChild != child)
+    delete child;
+  child = newChild;
+  return this;
+}

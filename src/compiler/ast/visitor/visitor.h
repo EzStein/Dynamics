@@ -30,6 +30,7 @@
 #include "compiler/ast/polyadic_multiplication_operator_node.h"
 #include "compiler/ast/variable_leaf_node.h"*/
 
+class expression_node;
 class binary_addition_operator_node;
 class binary_subtraction_operator_node;
 class binary_multiplication_operator_node;
@@ -44,17 +45,17 @@ class variable_leaf_node;
 
 class visitor {
 public:
-    virtual void visit(binary_addition_operator_node*) { };
-    virtual void visit(binary_subtraction_operator_node*) { };
-    virtual void visit(binary_multiplication_operator_node*) { };
-    virtual void visit(unary_minus_operator_node*) { };
-    virtual void visit(exponentiation_operator_node*) { };
-    virtual void visit(division_operator_node*) { };
-    virtual void visit(polyadic_addition_operator_node*) { };
-    virtual void visit(polyadic_multiplication_operator_node*) { };
-    virtual void visit(integer_number_leaf_node*) { };
-    virtual void visit(number_leaf_node*) { };
-    virtual void visit(variable_leaf_node*) { };
+    virtual void visit(binary_addition_operator_node* node) = 0;
+    virtual void visit(binary_subtraction_operator_node* node) = 0;
+    virtual void visit(binary_multiplication_operator_node* node) = 0;
+    virtual void visit(unary_minus_operator_node* node) = 0;
+    virtual void visit(exponentiation_operator_node* node) = 0;
+    virtual void visit(division_operator_node* node) = 0;
+    virtual void visit(polyadic_addition_operator_node* node) = 0;
+    virtual void visit(polyadic_multiplication_operator_node* node) = 0;
+    virtual void visit(integer_number_leaf_node* node) = 0;
+    virtual void visit(number_leaf_node* node) = 0;
+    virtual void visit(variable_leaf_node* node) = 0;
 };
 
 
