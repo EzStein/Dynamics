@@ -15,7 +15,7 @@
 
 #ifndef pre_canonical_multiplication_operator_identifier_visitor_H
 #define pre_canonical_multiplication_operator_identifier_visitor_H
-#include "visitor.h"
+#include "compiler/ast/visitor/visitor.h"
 #include <list>
 
 class pre_canonical_multiplication_operator_identifier_visitor : public visitor {
@@ -51,7 +51,7 @@ public:
   void visit(number_leaf_node* node) override;
 
   void visit(variable_leaf_node* node) override;
-  
+
 private:
     polyadic_addition_operator_node*& result;
 };

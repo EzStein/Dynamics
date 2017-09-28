@@ -40,10 +40,11 @@ public:
   * Returns the size of the produced code.
   */
   virtual unsigned int code_size() const override;
- 
 
-private:
+  /*Make friend instead of public*/
   long val;
+private:
+
   virtual bool is_integral() const override;
   void accept(visitor& v) override;
 

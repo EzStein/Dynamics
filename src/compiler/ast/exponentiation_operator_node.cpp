@@ -1,7 +1,7 @@
 #include <cmath>
 #include "exponentiation_operator_node.h"
 #include "compiler/ast/AST.h"
-#include "compiler/ast/visitor/pre_canonical_exponentiation_operator_visitor.h"
+#include "compiler/ast/visitor/mutation/pre_canonical_exponentiation_operator_visitor.h"
 
 exponentiation_operator_node::exponentiation_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
@@ -278,7 +278,7 @@ expression_node* exponentiation_operator_node::make_pre_canonical() {
   if(newRightChild != rightChild)
     delete rightChild;
   rightChild = newRightChild;
-  
+
   expression_node* result;
   pre_canonical_exponentiation_operator_visitor visit(result, this);
   leftChild->accept(visit);
@@ -288,6 +288,6 @@ expression_node* exponentiation_operator_node::make_pre_canonical() {
       delete result;
     result = newResult;
   }
- 
+
   return result;
 }

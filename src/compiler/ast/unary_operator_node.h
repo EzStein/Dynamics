@@ -5,8 +5,10 @@ class unary_operator_node : public expression_node {
 public:
   virtual ~unary_operator_node();
 
-protected:
+  /*Should be made protected and use friend class instead*/
   expression_node* child;
+protected:
+
 
   /*Constructs this unary operator node with a pointer to its child*/
   explicit unary_operator_node(expression_node* child);
@@ -15,7 +17,7 @@ protected:
   expression_node* make_pre_canonical() override;
 
 
-  
+
 
 private:
   virtual bool evaluatable() const override;

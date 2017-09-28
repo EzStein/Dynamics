@@ -1,6 +1,6 @@
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/AST.h"
-#include "compiler/ast/visitor/level_addition_operator_visitor.h"
+#include "compiler/ast/visitor/mutation/level_addition_operator_visitor.h"
 #include <iostream>
 #include <list>
 binary_addition_operator_node::binary_addition_operator_node(expression_node* leftChild, expression_node* rightChild) :
@@ -93,7 +93,7 @@ expression_node* binary_addition_operator_node::level_operators() {
    otherwise it adds the child itself*/
   newLeftChild->accept(vist);
   newRightChild->accept(vist);
-  
+
   for(expression_node* node : toDelete){
     delete node;
   }

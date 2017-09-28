@@ -11,14 +11,15 @@
  * Created on September 26, 2017, 8:13 PM
  */
 
-#ifndef PRE_CANONICAL_ADDITION_OPERATOR_VISITOR_H
-#define PRE_CANONICAL_ADDITION_OPERATOR_VISITOR_H
-#include "visitor.h"
+#ifndef pre_canonical_multiplication_operator_visitor_H
+#define pre_canonical_multiplication_operator_visitor_H
+#include "compiler/ast/visitor/visitor.h"
 #include <list>
 
-class pre_canonical_addition_operator_visitor : public visitor {
+class pre_canonical_multiplication_operator_visitor : public visitor {
 public:
-  pre_canonical_addition_operator_visitor(std::list<expression_node*>& _newChildren,std::list<expression_node*>& );
+  pre_canonical_multiplication_operator_visitor(std::list<expression_node*>& _newChildren,
+          std::list<expression_node*>&);
   /*
    * If we visit a multiplication node, we add the children
    * of the multiplication node to the newChildren list.
@@ -51,7 +52,13 @@ public:
   void visit(variable_leaf_node* node) override;
 
 private:
-  std::list<expression_node*>& newChildren, toDelete;
+  std::list<expression_node*>& newChildren;
+  /*
+   * A list of nodes that should
+   * be deleted by the function that constructs this object
+   * after it is done using this object.
+   */
+  std::list<expression_node*>& toDelete;
 };
 
 #endif

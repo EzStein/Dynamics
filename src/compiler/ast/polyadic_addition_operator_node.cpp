@@ -1,6 +1,6 @@
 #include "compiler/ast/polyadic_addition_operator_node.h"
-#include "compiler/ast/visitor/level_addition_operator_visitor.h"
-#include "compiler/ast/visitor/pre_canonical_addition_operator_visitor.h"
+#include "compiler/ast/visitor/mutation/level_addition_operator_visitor.h"
+#include "compiler/ast/visitor/mutation/pre_canonical_addition_operator_visitor.h"
 polyadic_addition_operator_node::polyadic_addition_operator_node(expression_node* firstChild) {
   children.push_back(firstChild);
 }

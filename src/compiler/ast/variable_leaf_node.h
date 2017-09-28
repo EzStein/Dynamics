@@ -19,7 +19,8 @@ private:
   bool is_integral() const override;
   void accept(visitor& v) override;
 
-
+/*Make this friend*/
+public:
   symbol::ptr_type symPtr;
 };
 

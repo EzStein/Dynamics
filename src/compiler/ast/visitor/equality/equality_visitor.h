@@ -4,36 +4,31 @@
  * and open the template in the editor.
  */
 
-/*
- * File:   level_addition_operator_visitor.h
+/* 
+ * File:   equality_visitor.h
  * Author: ezra
  *
- * Created on September 26, 2017, 8:06 PM
+ * Created on September 27, 2017, 5:17 PM
+ * 
+ * This visitor is used to implement equality testing between two elements in the tree.
+ * It is constructed with an expression_node to compare to, and a reference to a bool.
+ * When it visits a node it uses a second visitor derived from
+ * cascaded_equality_base_visitor on the node to determine whether the two nodes are equal.
+ * In this way double dispatch is used to determine the type of two parameters.
  */
 
-#ifndef LEVEL_ADDITION_OPERATOR_VISITOR_H
-#define LEVEL_ADDITION_OPERATOR_VISITOR_H
-#include <list>
-#include "visitor.h"
-
-class level_addition_operator_visitor : public visitor {
+#ifndef EQUALITY_VISITOR_H
+#define EQUALITY_VISITOR_H
+#include "compiler/ast/visitor/visitor.h"
+class equality_visitor : public visitor {
 private:
-  std::list<expression_node*>& newChildren, toDelete;
-
+  expression_node* nodeToCompare;
+  bool& retVal;
 public:
-  level_addition_operator_visitor(std::list<expression_node*>& _newChildren,std::list<expression_node*>& );
-
-  /*
-   * If we visit an addition node, we add the children
-   * of the addition node to the newChildren list.
-   * We also need to safely delete the addition
-   * node since it will no longer be referenced
-   */
+  equality_visitor(expression_node*, bool&);
+  
   void visit(polyadic_addition_operator_node* node) override;
 
-  /**
-   * Otherwise we add the node itself to the list.
-   */
   void visit(polyadic_multiplication_operator_node* node) override;
 
   void visit(binary_subtraction_operator_node* node) override;
@@ -56,4 +51,6 @@ public:
 };
 
 
-#endif /* LEVEL_ADDITION_OPERATOR_VISITOR_H */
+
+#endif /* EQUALITY_VISITOR_H */
+

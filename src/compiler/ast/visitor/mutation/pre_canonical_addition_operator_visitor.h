@@ -11,14 +11,14 @@
  * Created on September 26, 2017, 8:13 PM
  */
 
-#ifndef pre_canonical_exponentiation_operator_visitor_H
-#define pre_canonical_exponentiation_operator_visitor_H
-#include "visitor.h"
+#ifndef PRE_CANONICAL_ADDITION_OPERATOR_VISITOR_H
+#define PRE_CANONICAL_ADDITION_OPERATOR_VISITOR_H
+#include "compiler/ast/visitor/visitor.h"
 #include <list>
 
-class pre_canonical_exponentiation_operator_visitor : public visitor {
+class pre_canonical_addition_operator_visitor : public visitor {
 public:
-  pre_canonical_exponentiation_operator_visitor(expression_node*&,exponentiation_operator_node*);
+  pre_canonical_addition_operator_visitor(std::list<expression_node*>& _newChildren,std::list<expression_node*>& );
   /*
    * If we visit a multiplication node, we add the children
    * of the multiplication node to the newChildren list.
@@ -51,8 +51,7 @@ public:
   void visit(variable_leaf_node* node) override;
 
 private:
-  expression_node*& result;
-  exponentiation_operator_node* parent;
+  std::list<expression_node*>& newChildren, toDelete;
 };
 
 #endif

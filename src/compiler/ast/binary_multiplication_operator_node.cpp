@@ -1,7 +1,7 @@
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/AST.h"
 #include "compiler/ast/polyadic_operator_node.h"
-#include "compiler/ast/visitor/level_multiplication_operator_visitor.h"
+#include "compiler/ast/visitor/mutation/level_multiplication_operator_visitor.h"
 binary_multiplication_operator_node::binary_multiplication_operator_node(expression_node* _leftChild, expression_node* _rightChild) :
 binary_operator_node(_leftChild, _rightChild) {
 
@@ -94,7 +94,7 @@ expression_node* binary_multiplication_operator_node::level_operators() {
   for(expression_node* node : toDelete){
     delete node;
   }
-  
+
   /*Since we are returning a different node, this node will be deleted
    We protected the children by setting them to null*/
   leftChild = nullptr;
