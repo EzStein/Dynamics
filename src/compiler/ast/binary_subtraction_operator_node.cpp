@@ -81,12 +81,12 @@ expression_node* binary_subtraction_operator_node::transform_negation() {
     delete leftChild;
   if(newRightChild != rightChild)
     delete rightChild;
-  
+
   binary_addition_operator_node* newNode =
-    new binary_addition_operator_node(newLeftChild, 
+    new binary_addition_operator_node(newLeftChild,
     new binary_multiplication_operator_node(new integer_number_leaf_node(-1),
     newRightChild));
-  
+
   /*Since we don't return this, this node
    will be deleted by the calling function.
    We do not want the destructor to delete the children, which
@@ -96,6 +96,6 @@ expression_node* binary_subtraction_operator_node::transform_negation() {
   return newNode;
 }
 
-void binary_subtraction_operator_node::accept(visitor& v) {
-  v.visit(this);
+void binary_subtraction_operator_node::accept(visitor* v) {
+  v->visit(this);
 }

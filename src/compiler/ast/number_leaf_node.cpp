@@ -132,7 +132,6 @@ bool number_leaf_node::is_integral() const {
   return false;
 }
 
-void number_leaf_node::accept(visitor& v) {
-  v.visit(this);
+void number_leaf_node::accept(visitor* v) {
+  v->visit(this);
 }
-

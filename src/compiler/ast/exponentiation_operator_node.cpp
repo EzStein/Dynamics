@@ -265,8 +265,8 @@ bool exponentiation_operator_node::is_integral() const {
   return leftChild->is_integral() && rightChild->is_integral();
 }
 
-void exponentiation_operator_node::accept(visitor& v) {
-  v.visit(this);
+void exponentiation_operator_node::accept(visitor* v) {
+  v->visit(this);
 }
 
 expression_node* exponentiation_operator_node::make_pre_canonical() {
@@ -281,7 +281,7 @@ expression_node* exponentiation_operator_node::make_pre_canonical() {
 
   expression_node* result;
   pre_canonical_exponentiation_operator_visitor visit(result, this);
-  leftChild->accept(visit);
+  leftChild->accept(&visit);
   if(result != this) {
     expression_node* newResult = result->make_pre_canonical();
     if(newResult != result)

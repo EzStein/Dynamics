@@ -45,6 +45,6 @@ bool integer_number_leaf_node::is_integral() const {
   return true;
 }
 
-void integer_number_leaf_node::accept(visitor& v) {
-  v.visit(this);
+void integer_number_leaf_node::accept(visitor* v) {
+  v->visit(this);
 }

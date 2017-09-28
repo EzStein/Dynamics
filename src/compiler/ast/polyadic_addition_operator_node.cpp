@@ -65,8 +65,8 @@ bool polyadic_addition_operator_node::is_integral() const {
   return val;
 }
 
-void polyadic_addition_operator_node::accept(visitor& v) {
-  v.visit(this);
+void polyadic_addition_operator_node::accept(visitor* v) {
+  v->visit(this);
 }
 
 expression_node* polyadic_addition_operator_node::level_operators() {
@@ -83,7 +83,7 @@ expression_node* polyadic_addition_operator_node::level_operators() {
   level_addition_operator_visitor visit(newChildren, toDelete);
   iter = children.begin();
   for(; iter!=end; ++iter) {
-    (*iter)->accept(visit);
+    (*iter)->accept(&visit);
   }
   children = newChildren;
   for(expression_node* node : toDelete){
@@ -105,7 +105,7 @@ expression_node* polyadic_addition_operator_node::make_pre_canonical() {
   pre_canonical_addition_operator_visitor visit(newChildren, toDelete);
   iter = children.begin();
   for(; iter!=end; ++iter) {
-    (*iter)->accept(visit);
+    (*iter)->accept(&visit);
   }
   children = newChildren;
   for(expression_node* node : toDelete){

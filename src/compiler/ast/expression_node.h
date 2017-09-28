@@ -44,7 +44,7 @@ public:
    * the visitor.
    * @param
    */
-  virtual void accept(visitor& v) = 0;
+  virtual void accept(visitor* v) = 0;
 
   /**
    * When this method is called on a node,

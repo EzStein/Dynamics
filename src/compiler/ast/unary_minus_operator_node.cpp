@@ -62,6 +62,6 @@ expression_node* unary_minus_operator_node::transform_negation() {
   return newNode;
 }
 
-void unary_minus_operator_node::accept(visitor& v) {
-  v.visit(this);
+void unary_minus_operator_node::accept(visitor* v) {
+  v->visit(this);
 }

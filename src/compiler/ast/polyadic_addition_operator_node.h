@@ -22,7 +22,7 @@ public:
     /**
      * Constructs this node from a list of children.
      * NOTE: this list MUST not be empty.
-     * @param 
+     * @param
      */
     polyadic_addition_operator_node(std::list<expression_node*>);
 
@@ -34,7 +34,7 @@ public:
   virtual unsigned int code_size() const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;
-  void accept(visitor& v) override;
+  void accept(visitor* v) override;
   expression_node* level_operators() override;
   expression_node* make_pre_canonical() override;
 

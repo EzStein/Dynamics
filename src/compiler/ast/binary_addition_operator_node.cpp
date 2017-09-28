@@ -73,8 +73,8 @@ bool binary_addition_operator_node::is_integral() const {
   return leftChild->is_integral() && rightChild->is_integral();
 }
 
-void binary_addition_operator_node::accept(visitor& vist) {
-  vist.visit(this);
+void binary_addition_operator_node::accept(visitor* vist) {
+  vist->visit(this);
 }
 
 expression_node* binary_addition_operator_node::level_operators() {
@@ -91,8 +91,8 @@ expression_node* binary_addition_operator_node::level_operators() {
   /*Fills new children with the children of the left and right child if the
    child is an addition node,
    otherwise it adds the child itself*/
-  newLeftChild->accept(vist);
-  newRightChild->accept(vist);
+  newLeftChild->accept(&vist);
+  newRightChild->accept(&vist);
 
   for(expression_node* node : toDelete){
     delete node;

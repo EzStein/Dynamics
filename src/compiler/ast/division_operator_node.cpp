@@ -71,6 +71,6 @@ bool division_operator_node::is_integral() const {
   return false;
 }
 
-void division_operator_node::accept(visitor& v) {
-  v.visit(this);
+void division_operator_node::accept(visitor* v) {
+  v->visit(this);
 }

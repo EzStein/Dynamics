@@ -46,7 +46,7 @@ public:
 private:
 
   virtual bool is_integral() const override;
-  void accept(visitor& v) override;
+  void accept(visitor* v) override;
 
 };
 

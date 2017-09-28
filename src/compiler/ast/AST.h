@@ -60,10 +60,12 @@ public:
   static void emit_stack_inc_amd64(std::ostream&, compiler_data& data);
 
   friend std::ostream& operator<<(std::ostream&, const AST&);
+  friend bool operator==(AST&, AST&);
 private:
   expression_node * root;
 };
 
 std::ostream& operator<<(std::ostream&, const AST&);
+bool operator==(AST&, AST&);
 
 #endif

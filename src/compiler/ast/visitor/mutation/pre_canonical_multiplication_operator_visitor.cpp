@@ -23,7 +23,7 @@ pre_canonical_multiplication_operator_visitor::pre_canonical_multiplication_oper
 : newChildren(_newChildren), toDelete(_toDelete) { }
 
 /*
- * In this case we 
+ * In this case we
  * level the operator like normal.
  */
 void pre_canonical_multiplication_operator_visitor::visit(polyadic_multiplication_operator_node* node) {
@@ -70,7 +70,7 @@ void pre_canonical_multiplication_operator_visitor::visit(exponentiation_operato
 
 /*
  * This is where things get complicated.
- * Here we essentially implement the distributive property. The result is 
+ * Here we essentially implement the distributive property. The result is
  * a polyadic addition node that is not necessarily in pre-canonical form.
  * We put it in pre_canonical form by calling the (recursive) make_pre_canonical method on it.
  * The body of this method only executes if the,
@@ -82,7 +82,7 @@ void pre_canonical_multiplication_operator_visitor::visit(polyadic_addition_oper
   if(node->children.size() == 1) {
     /*The node size is equal to one so it is effectively a wrapper for its child
      We add the child to the list by passing this visitor to it*/
-    (*node->children.begin())->accept(*this);
+    (*node->children.begin())->accept(this);
     /*We must now delete the addition operator*/
     node->children.clear();
     toDelete.push_back(node);
@@ -111,4 +111,3 @@ void pre_canonical_multiplication_operator_visitor::visit(binary_subtraction_ope
 void pre_canonical_multiplication_operator_visitor::visit(division_operator_node* node) {
   throw "Cannot visit this node";
 }
-

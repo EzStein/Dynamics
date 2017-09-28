@@ -15,8 +15,8 @@ private:
   virtual unsigned int code_size() const override;
   virtual expression_node* copy() const override;
   virtual bool is_integral() const override;
-  void accept(visitor& v) override;
+  void accept(visitor* v) override;
 
-  
+
 };
 #endif

@@ -70,8 +70,8 @@ bool binary_multiplication_operator_node::is_integral() const {
   return leftChild->is_integral() && rightChild->is_integral();
 }
 
-void binary_multiplication_operator_node::accept(visitor& v) {
-  v.visit(this);
+void binary_multiplication_operator_node::accept(visitor* v) {
+  v->visit(this);
 }
 
 expression_node* binary_multiplication_operator_node::level_operators() {
@@ -88,8 +88,8 @@ expression_node* binary_multiplication_operator_node::level_operators() {
   /*Fills new children with the children of the left and right child if the
    child is a multiplication node,
    otherwise it adds the child itself*/
-  newLeftChild->accept(vist);
-  newRightChild->accept(vist);
+  newLeftChild->accept(&vist);
+  newRightChild->accept(&vist);
 
   for(expression_node* node : toDelete){
     delete node;

@@ -428,3 +428,7 @@ std::ostream& operator<<(std::ostream& out, const AST& ast) {
   ast.root->print(out);
   return out;
 }
+
+bool operator==(AST& ast1, AST& ast2) {
+  return *ast1.root == *ast2.root;
+}
