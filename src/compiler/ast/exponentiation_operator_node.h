@@ -7,7 +7,7 @@ class exponentiation_operator_node : public binary_operator_node {
 public:
   /*Constructs this operator node with a pointer to its left and right child nodes*/
   exponentiation_operator_node(expression_node* leftChild, expression_node* rightChild);
-private:
+public:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
   virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const override;

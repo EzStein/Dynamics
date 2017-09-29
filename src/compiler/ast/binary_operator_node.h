@@ -8,7 +8,7 @@ public:
   /*Currently these are public but friend methods should be used instead*/
   expression_node* leftChild;
   expression_node* rightChild;
-protected:
+
   /*Constructs this binary operator node with pointers to its left and right children*/
   binary_operator_node(expression_node* leftChild, expression_node* rightChild);
 

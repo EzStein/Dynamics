@@ -4,7 +4,8 @@
 #include "compiler/ast/node.h"
 #include "compiler/compiler_data.h"
 #include "compiler/ast/visitor/visitor.h"
-#include "compiler/ast/visitor/node_comparator.h"
+#include "compiler/ast/visitor/comparator/std_node_comparator.h"
+#include "compiler/ast/visitor/comparator/canonical_node_comparator.h"
 
 class expression_node : public node {
 public:
@@ -107,8 +108,8 @@ public:
    * @return
    */
   virtual expression_node* make_pre_canonical() = 0;
-  
-  
+
+
   /*
    * Sorts the given node by
    * ordering its children according to the standard comparator

@@ -44,10 +44,12 @@
 #ifndef NODE_COMPARATOR_H
 #define NODE_COMPARATOR_H
 #include "compiler/ast/visitor/dual_parameter_visitor.h"
-class node_comparator : public dual_parameter_visitor {
-public:
+class std_node_comparator : public dual_parameter_visitor {
+protected:
   int& retVal;
-  node_comparator(int& _retVal) : retVal(_retVal) { }
+public:
+  
+  std_node_comparator(int& _retVal) : retVal(_retVal) { }
 
   virtual void visit(binary_addition_operator_node* node1, binary_addition_operator_node* node2) override;
   virtual void visit(binary_addition_operator_node* node1, binary_subtraction_operator_node* node2) override;
