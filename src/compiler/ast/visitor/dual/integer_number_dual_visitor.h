@@ -15,13 +15,13 @@
 #define integer_number_EQUALITY_VISITOR_H
 #include "compiler/ast/visitor/visitor.h"
 #include "compiler/ast/visitor/dual_parameter_visitor.h"
-#include "compiler/ast/integer_number_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 class integer_number_dual_visitor : public visitor {
 private:
-  integer_number_operator_node* node1;
+  integer_number_leaf_node* node1;
   dual_parameter_visitor* callBackVisitor;
 public:
-  integer_number_dual_visitor(integer_number_operator_node* _node1,
+  integer_number_dual_visitor(integer_number_leaf_node* _node1,
     dual_parameter_visitor* _callBackVisitor) : node1(_node1), callBackVisitor(_callBackVisitor) { }
   void visit(binary_addition_operator_node* node2) override;
   void visit(division_operator_node* node2) override;

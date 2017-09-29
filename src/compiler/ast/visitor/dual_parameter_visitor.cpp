@@ -6,7 +6,8 @@
 
 #include "compiler/ast/visitor/dual_parameter_visitor.h"
 #include "compiler/ast/visitor/dual/dual_visitor.h"
+#include "compiler/ast/expression_node.h"
 void dual_parameter_visitor::dispatch(expression_node* node1, expression_node* node2) {
   dual_visitor visit(node2, this);
-  visit->accept(node1);
+  node1->accept(&visit);
 }

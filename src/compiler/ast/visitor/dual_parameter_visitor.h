@@ -31,9 +31,8 @@ class number_leaf_node;
 class variable_leaf_node;
 
 class dual_parameter_visitor {
-
 public:
-  void dispatch(expression_node* node1; expression_node* node2);
+  void dispatch(expression_node* node1, expression_node* node2);
 
   virtual void visit(binary_addition_operator_node* node1, binary_addition_operator_node* node2) = 0;
   virtual void visit(binary_addition_operator_node* node1, binary_subtraction_operator_node* node2) = 0;

@@ -15,13 +15,13 @@
 #define variable_EQUALITY_VISITOR_H
 #include "compiler/ast/visitor/visitor.h"
 #include "compiler/ast/visitor/dual_parameter_visitor.h"
-#include "compiler/ast/variable_operator_node.h"
+#include "compiler/ast/variable_leaf_node.h"
 class variable_dual_visitor : public visitor {
 private:
-  variable_operator_node* node1;
+  variable_leaf_node* node1;
   dual_parameter_visitor* callBackVisitor;
 public:
-  variable_dual_visitor(variable_operator_node* _node1,
+  variable_dual_visitor(variable_leaf_node* _node1,
     dual_parameter_visitor* _callBackVisitor) : node1(_node1), callBackVisitor(_callBackVisitor) { }
   void visit(binary_addition_operator_node* node2) override;
   void visit(division_operator_node* node2) override;

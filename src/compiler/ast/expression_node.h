@@ -4,7 +4,7 @@
 #include "compiler/ast/node.h"
 #include "compiler/compiler_data.h"
 #include "compiler/ast/visitor/visitor.h"
-#include "compiler/ast/visitor/equality/equality_visitor.h"
+#include "compiler/ast/visitor/node_comparator.h"
 
 class expression_node : public node {
 public:
@@ -113,7 +113,7 @@ public:
 /*Here we add in comparators for expression nodes
 *NOte that these should be passed by CONST expression in the future*/
 bool operator==(expression_node& node1, expression_node& node2);
-
-
 bool operator!=(expression_node& node1, expression_node& node2);
+bool operator<(expression_node& node1, expression_node& node2);
+bool operator>(expression_node& node1, expression_node& node2);
 #endif

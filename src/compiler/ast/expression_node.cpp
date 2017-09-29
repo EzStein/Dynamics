@@ -2,13 +2,29 @@
 expression_node::~expression_node() { }
 
 bool operator==(expression_node& node1, expression_node& node2) {
-  bool ret;
-  equality_visitor visit(&node1, ret);
-  (&node2)->accept(&visit);
-  return ret;
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val == 0;
 }
 
-
 bool operator!=(expression_node& node1, expression_node& node2) {
-  return ! (node1 == node2);
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val != 0;
+}
+
+bool operator<(expression_node& node1, expression_node& node2) {
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val < 0;
+}
+
+bool operator>(expression_node& node1, expression_node& node2) {
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val > 0;
 }
