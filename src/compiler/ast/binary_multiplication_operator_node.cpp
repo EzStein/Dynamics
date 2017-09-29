@@ -102,3 +102,16 @@ expression_node* binary_multiplication_operator_node::level_operators() {
   return new polyadic_multiplication_operator_node(newChildren);
 
 }
+
+void binary_multiplication_operator_node::sort() {
+  leftChild->sort();
+  rightChild->sort();
+  if(*leftChild <= *rightChild)
+      return;
+  
+  /*Otherwise we swap the two*/
+  expression_node* tmp = leftChild;
+  leftChild = rightChild;
+  rightChild = tmp;
+}
+

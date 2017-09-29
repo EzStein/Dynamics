@@ -61,6 +61,7 @@ void AST::simplify() {
   if(newRoot != root)
     delete root;
   root = newRoot;
+  root->sort();
 }
 
 

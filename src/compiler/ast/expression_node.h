@@ -107,6 +107,18 @@ public:
    * @return
    */
   virtual expression_node* make_pre_canonical() = 0;
+  
+  
+  /*
+   * Sorts the given node by
+   * ordering its children according to the standard comparator
+   * operator between nodes. Note that there are no preconditions
+   * on the type of tree for this function but it is often called
+   * after make_pre_canonical to prepare for term collections.
+   * Note that only commutative nodes should have a nontrivial
+   * implementation of this method.
+   */
+  virtual void sort() = 0;
 
 };
 
@@ -116,4 +128,6 @@ bool operator==(expression_node& node1, expression_node& node2);
 bool operator!=(expression_node& node1, expression_node& node2);
 bool operator<(expression_node& node1, expression_node& node2);
 bool operator>(expression_node& node1, expression_node& node2);
+bool operator<=(expression_node& node1, expression_node& node2);
+bool operator>=(expression_node& node1, expression_node& node2);
 #endif

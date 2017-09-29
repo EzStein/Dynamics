@@ -46,3 +46,10 @@ expression_node* binary_operator_node::make_pre_canonical() {
   throw "Attempt to traverse a binary operator during pre-canonical formation";
   return nullptr;
 }
+
+void binary_operator_node::sort() {
+  /*By default this method just calls sort on its children. 
+   commutative operators will implement ordering*/
+  leftChild->sort();
+  rightChild->sort();
+}

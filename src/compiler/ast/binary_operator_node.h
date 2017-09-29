@@ -17,6 +17,7 @@ protected:
   
   expression_node* level_operators() override;
   expression_node* make_pre_canonical() override;
+  void sort() override;
 
 
 };

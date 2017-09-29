@@ -31,3 +31,7 @@ expression_node* unary_operator_node::make_pre_canonical() {
   throw "Attempt to traverse a binary operator during pre-canonical formation";
   return nullptr;
 }
+
+void unary_operator_node::sort() {
+  child->sort();
+}

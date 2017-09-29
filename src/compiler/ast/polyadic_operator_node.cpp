@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "compiler/ast/polyadic_operator_node.h"
 #include "expression_node.h"
 polyadic_operator_node::~polyadic_operator_node() {
@@ -41,4 +42,21 @@ expression_node* polyadic_operator_node::level_operators() {
     *iter = newChild;
   }
   return this;
+}
+
+static bool cmp(expression_node*& node1, expression_node*& node2) {
+  return *node1 < *node2;
+}
+
+void polyadic_operator_node::sort() {
+  /*First we call sort on all the children*/
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter!=end; ++iter){
+    (*iter)->sort();
+  }
+  
+  /*Then we reorder the children*/
+  /*Currently all polyadic nodes are commutative so they are all handled here*/
+  children.sort(cmp);
 }

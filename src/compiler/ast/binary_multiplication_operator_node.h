@@ -19,6 +19,7 @@ private:
   virtual bool is_integral() const override;
   void accept(visitor* v) override;
   expression_node* level_operators() override;
+  void sort() override;
 
 };
 #endif

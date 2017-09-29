@@ -28,3 +28,17 @@ bool operator>(expression_node& node1, expression_node& node2) {
   comp.dispatch(&node1, &node2);
   return val > 0;
 }
+
+bool operator>=(expression_node& node1, expression_node& node2) {
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val >= 0;
+}
+
+bool operator<=(expression_node& node1, expression_node& node2) {
+  int val;
+  node_comparator comp(val);
+  comp.dispatch(&node1, &node2);
+  return val <= 0;
+}
