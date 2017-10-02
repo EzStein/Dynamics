@@ -115,3 +115,30 @@ void binary_multiplication_operator_node::sort() {
   rightChild = tmp;
 }
 
+expression_node* binary_multiplication_operator_node::optimization_round() {
+  binary_operator_node::optimization_round();
+  if(leftChild->evaluatable()) {
+    if(leftChild->evaluate() == 0) {
+      return new integer_number_leaf_node(0);
+    } else if(leftChild->evaluate() == 1) {
+      expression_node* tmp = rightChild;
+      rightChild = nullptr;
+      return tmp;
+    } else {
+      return this;
+    }
+  } else if(rightChild->evaluatable()) {
+    if(rightChild->evaluate() == 0) {
+      return new integer_number_leaf_node(0);
+    } else if(rightChild->evaluate() == 1) {
+      expression_node* tmp = leftChild;
+      leftChild = nullptr;
+      return tmp;
+    } else {
+      return this;
+    }
+  } else {
+    return this;
+  }
+}
+

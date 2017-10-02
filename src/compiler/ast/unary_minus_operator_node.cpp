@@ -65,3 +65,16 @@ expression_node* unary_minus_operator_node::transform_negation() {
 void unary_minus_operator_node::accept(visitor* v) {
   v->visit(this);
 }
+
+expression_node* unary_minus_operator_node::optimization_round() {
+  unary_operator_node::optimization_round();
+  if(child->evaluatable()) {
+    if(child->is_integral()) {
+      return new integer_number_leaf_node(-1 * child->evaluate());
+    } else {
+      return new number_leaf_node(-1 * child->evaluate());
+    }
+  } else {
+    return this;
+  }
+}

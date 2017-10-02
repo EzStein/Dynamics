@@ -60,3 +60,29 @@ void polyadic_operator_node::sort() {
   /*Currently all polyadic nodes are commutative so they are all handled here*/
   children.sort(cmp);
 }
+
+expression_node* polyadic_operator_node::collect_terms() {
+  /*By default we simply call the operation on all the children*/
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->collect_terms();
+    if(newChild != *iter)
+      delete *iter;
+    *iter = newChild;
+  }
+  return this;
+}
+
+expression_node* polyadic_operator_node::optimization_round() {
+  /*By default we simply call the operation on all the children*/
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* newChild = (*iter)->optimization_round();
+    if(newChild != *iter)
+      delete *iter;
+    *iter = newChild;
+  }
+  return this;
+}

@@ -51,6 +51,11 @@ public:
   static expression_node* make_integer_number_leaf_node(long val);
 
   double evaluate() const;
+  
+  /*
+   * Calls optimization_round on root until it is unchanged.
+   */
+  void optimize();
 
   std::ostream& emit_code_ia32(std::ostream&, unsigned char *) const;
   std::ostream& emit_code_amd64(std::ostream&, unsigned char *) const;

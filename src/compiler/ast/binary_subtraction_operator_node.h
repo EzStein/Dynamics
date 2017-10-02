@@ -18,6 +18,7 @@ private:
   virtual bool is_integral() const override;
   expression_node* transform_negation() override;
   void accept(visitor* v) override;
+  expression_node* optimization_round() override;
 
 
 };

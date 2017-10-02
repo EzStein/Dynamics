@@ -37,7 +37,8 @@ public:
   std::list<expression_node*> children;
   bool evaluatable() const override;
   void sort() override;
-
+  expression_node* collect_terms() override;
+  expression_node* optimization_round() override;
 
 };
 

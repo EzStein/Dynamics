@@ -17,6 +17,8 @@ public:
   virtual bool is_integral() const override;
   void accept(visitor* v) override;
   expression_node* make_pre_canonical() override;
+  expression_node* collect_terms() override;
+  expression_node* optimization_round() override;
 
 
 };

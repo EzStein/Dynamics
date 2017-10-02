@@ -10,7 +10,10 @@
 #include "compiler/ast/visitor/mutation/level_multiplication_operator_visitor.h"
 #include "compiler/ast/visitor/mutation/pre_canonical_multiplication_operator_visitor.h"
 #include "compiler/ast/visitor/mutation/pre_canonical_multiplication_operator_identifier_visitor.h"
-#include "polyadic_addition_operator_node.h"
+#include "compiler/ast/exponentiation_operator_node.h"
+#include "compiler/ast/polyadic_addition_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/binary_operator_node.h"
 
 
  polyadic_multiplication_operator_node::polyadic_multiplication_operator_node(expression_node* firstChild) {
@@ -189,4 +192,123 @@ expression_node* polyadic_multiplication_operator_node::make_pre_canonical() {
   if(oldNode != newNode)
     delete oldNode;
   return newNode;
+}
+
+expression_node* polyadic_multiplication_operator_node::collect_terms() {
+  
+  /*We first call the super method which recursively calls collect_terms on the children*/
+  polyadic_operator_node::collect_terms();
+  /*This node
+   is in precanonical form because collect_terms is guaranteed to preserve the node type.
+   But, we may no longer be sorted*/
+  this->sort();
+  /* We don't need to combine the evaluatable terms
+   Instead we combine any nonevaluatable terms and put them in a newChildren list*/
+  std::list<expression_node*> newChildren;
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  /*We first iterate till we get to the first non evaluatable term*/
+  for(; iter != end; ++iter) {
+    if((*iter)->evaluatable())
+      newChildren.push_back(*iter);
+    else
+      break;
+  }
+  /*Iter now points to either the end of the list or to the first
+   non-evaluatable term. If it points to the end, we are done and no collection is necessary*/
+  if(iter == end)
+    return this;
+  
+  while(iter != end) {
+    /*This term is an exponentiation_operator_node. 
+     * We save the base of this term and iterate until we get to the first base that
+     does not equal this term. While doing so, we add the exponents*/
+    std::list<expression_node*> exponentChildren;
+    expression_node* base = dynamic_cast<exponentiation_operator_node*>(*iter)->leftChild->copy();
+    for(; iter != end; ++iter) {
+      exponentiation_operator_node* node = dynamic_cast<exponentiation_operator_node*>(*iter);
+      if(*base == *(node->leftChild)) {
+        exponentChildren.push_back(node->rightChild);
+        /*We now need to delete the exponentiation node that we just examined,
+         however the exponent is going to be used later, so we set the right child to nullptr
+         and then delete the operator*/
+        node->rightChild = nullptr;
+        delete node;
+      } else {
+        
+        break;
+      }
+    }
+    expression_node* newExponent = new polyadic_addition_operator_node(exponentChildren);
+    /*Note this new exponent may not be in precanonical form be sorted or have collected terms*/
+    expression_node* tmp = newExponent->make_pre_canonical();
+    if(tmp != newExponent)
+      delete newExponent;
+    newExponent = tmp;
+    newExponent->sort();
+    tmp = newExponent->collect_terms();
+    if(tmp != newExponent)
+      delete newExponent;
+    newExponent = tmp;
+    
+    newChildren.push_back(new exponentiation_operator_node(base, newExponent));
+    
+    /*Note iter now equals end or it points to a new exponentiation node with a different base*/
+  }
+ 
+  expression_node* retVal = new polyadic_multiplication_operator_node(newChildren);
+  //expression_node* tmp = retVal->make_pre_canonical();
+  
+  /*Since we are returning a new value we must set all the current children to null or clear them*/
+  children.clear();
+  /*Now when the caller deletes this, the children that are now owned by new node
+   will not be deleted*/
+  return retVal;
+}
+
+expression_node* polyadic_multiplication_operator_node::optimization_round() {
+  polyadic_operator_node::optimization_round();
+  /*We first remove all children which evaluate to one,
+   and if we encounter one that evaluates to zero, we immediatly return a zero integer node*/
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  while(iter != end) {
+    
+    if((*iter)->evaluatable()) {
+      
+      double val = (*iter)->evaluate();
+      if(val == 1) {
+        
+        /*We delete the node and then remove it from the list*/
+        delete *iter;
+        iter = children.erase(iter);
+        /*Iter points to the element after the one that was erased, so we
+         don't need to increment it. Also the end iterator is not invalidated.*/
+        std::cout << "A" <<std::endl;
+      } else if(val == 0) {
+        
+        /*We clear the children and return a zero node*/
+        children.clear();
+        return new integer_number_leaf_node(0);
+      } else {
+        
+        ++iter;
+      }
+    } else {
+      ++iter;
+    }
+  }
+  
+  
+  if(children.size() == 1) {
+    expression_node* tmp = *(children.begin());
+    /*We clear the list so that the returned child isn't deleted*/
+    children.clear();
+    return tmp;
+  } else if(children.size() == 0) {
+    /*If there are no children we default to returning one*/
+    return new integer_number_leaf_node(1);
+  } else {
+    return this;
+  }
 }

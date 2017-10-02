@@ -74,3 +74,19 @@ bool division_operator_node::is_integral() const {
 void division_operator_node::accept(visitor* v) {
   v->visit(this);
 }
+
+expression_node* division_operator_node::optimization_round() {
+  binary_operator_node::optimization_round();
+  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
+    if(rightChild->evaluatable() && rightChild->evaluate() == 0)
+      return this;
+    else
+      return new integer_number_leaf_node(0);
+  } else if(rightChild->evaluatable() && rightChild->evaluate() == 1) {
+    expression_node* tmp = leftChild;
+    leftChild = nullptr;
+    return tmp;
+  } else {
+    return this;
+  }
+}

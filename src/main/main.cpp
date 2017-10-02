@@ -14,7 +14,7 @@
 using namespace std;
 
 int main() {
-  std::stringstream ss("(x*3*y*2*x^2*(4+1)^0.3+2)");
+  std::stringstream ss("x+y+y^2 + 3y^2 + x^2 + 2x^2 + x");
   parser par(ss);
   list<symbol> l;
   AST ast = par.parse(l);

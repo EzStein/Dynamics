@@ -99,3 +99,18 @@ expression_node* binary_subtraction_operator_node::transform_negation() {
 void binary_subtraction_operator_node::accept(visitor* v) {
   v->visit(this);
 }
+
+expression_node* binary_subtraction_operator_node::optimization_round() {
+  binary_operator_node::optimization_round();
+  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
+    expression_node* tmp = rightChild;
+    rightChild = nullptr;
+    return new unary_minus_operator_node(tmp);
+  } else if(rightChild->evaluatable() && rightChild->evaluate() == 0) {
+    expression_node* tmp = leftChild;
+    leftChild = nullptr;
+    return tmp;
+  } else {
+    return this;
+  }
+}

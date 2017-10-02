@@ -117,3 +117,20 @@ void binary_addition_operator_node::sort() {
   rightChild = tmp;
 }
 
+expression_node* binary_addition_operator_node::optimization_round() {
+  binary_operator_node::optimization_round();
+  expression_node* retVal;
+  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
+    retVal = rightChild;
+    /*This node will be deleted but we don't want the rightchild to be deleted*/
+    rightChild = nullptr;
+  } else if(rightChild->evaluatable() && rightChild->evaluate() == 0) {
+    retVal = leftChild;
+    leftChild = nullptr;
+  } else {
+    retVal = this;
+  }
+  return retVal;
+}
+
+

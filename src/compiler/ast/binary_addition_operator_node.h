@@ -20,6 +20,8 @@ private:
   void accept(visitor*) override;
   expression_node* level_operators() override;
   void sort() override;
+  expression_node* optimization_round() override;
+
 
 
 };

@@ -8,6 +8,10 @@ public:
   expression_node* level_operators() override;
   expression_node* make_pre_canonical() override;
   void sort() override;
+  expression_node* collect_terms() override;
+  expression_node* optimization_round() override;
+
+
 
 
 };

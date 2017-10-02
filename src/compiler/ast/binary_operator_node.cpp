@@ -53,3 +53,20 @@ void binary_operator_node::sort() {
   leftChild->sort();
   rightChild->sort();
 }
+
+expression_node* binary_operator_node::collect_terms() {
+  throw "NON EXPONENTIATION BINARY OPERATORS ARE NOT REQUIRED TO IMPLEMENT COLLECT_TERMS";
+}
+
+expression_node* binary_operator_node::optimization_round() {
+  expression_node* tmp = leftChild->optimization_round();
+  if(tmp != leftChild)
+    delete leftChild;
+  leftChild = tmp;
+  tmp = rightChild->optimization_round();
+  if(tmp != rightChild)
+    delete rightChild;
+  rightChild = tmp;
+  
+  return this;
+}

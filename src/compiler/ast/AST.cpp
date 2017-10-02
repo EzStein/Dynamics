@@ -62,7 +62,33 @@ void AST::simplify() {
     delete root;
   root = newRoot;
   root->sort();
+  newRoot = root->collect_terms();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  
+  optimize();
 }
+
+void AST::optimize() {
+ 
+  expression_node* rootCopy = root->copy();
+  expression_node* tmp = rootCopy->optimization_round();
+  if(tmp != rootCopy)
+    delete rootCopy;
+  rootCopy = tmp;
+  while(*rootCopy != *root) {
+    delete root;
+    root = rootCopy;
+    rootCopy = root->copy();
+    expression_node* tmp = rootCopy->optimization_round();
+    if(tmp != rootCopy)
+      delete rootCopy;
+    rootCopy = tmp;
+  } 
+  delete rootCopy;
+}
+
 
 
 expression_node* AST::make_variable_leaf_node(symbol::ptr_type symPtr) {

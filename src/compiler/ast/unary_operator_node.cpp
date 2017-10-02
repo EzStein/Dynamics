@@ -35,3 +35,16 @@ expression_node* unary_operator_node::make_pre_canonical() {
 void unary_operator_node::sort() {
   child->sort();
 }
+
+expression_node* unary_operator_node::collect_terms() {
+  throw "UNARY OPERATOR NOT REQUIRED TO IMPLEMENT COLLECT_TERMS";
+}
+
+expression_node* unary_operator_node::optimization_round() {
+  expression_node* tmp = child->optimization_round();
+  if(tmp != child)
+    delete child;
+  child = tmp;
+  
+  return this;
+}

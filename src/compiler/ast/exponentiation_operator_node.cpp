@@ -291,3 +291,39 @@ expression_node* exponentiation_operator_node::make_pre_canonical() {
 
   return result;
 }
+
+expression_node* exponentiation_operator_node::collect_terms() {
+  expression_node* tmp = leftChild->collect_terms();
+  if(tmp != leftChild)
+    delete leftChild;
+  leftChild = tmp;
+  
+  tmp = rightChild->collect_terms();
+  if(tmp != rightChild)
+    delete rightChild;
+  rightChild = tmp;
+  
+  return this;
+}
+
+expression_node* exponentiation_operator_node::optimization_round() {
+  binary_operator_node::optimization_round();
+  if(leftChild->evaluatable() && leftChild->evaluate() == 1) {
+    return new integer_number_leaf_node(1);
+  } else if(rightChild->evaluatable()) {
+    if(rightChild->evaluate() == 1) {
+      expression_node* tmp = leftChild;
+      leftChild = nullptr;
+      return tmp;
+    } else if(rightChild->evaluate() == 0) {
+      if(leftChild->evaluatable() && leftChild->evaluate() == 0)
+        return this;
+      else
+        return new integer_number_leaf_node(1);
+    } else {
+      return this;
+    }
+  } else {
+    return this;
+  }
+}
