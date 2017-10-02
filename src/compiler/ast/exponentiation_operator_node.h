@@ -19,7 +19,6 @@ public:
   expression_node* make_pre_canonical() override;
   expression_node* collect_terms() override;
   expression_node* optimization_round() override;
-
-
+  expression_node* differentiate(const std::string&) override;
 };
 #endif

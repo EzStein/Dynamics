@@ -127,7 +127,7 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
    We are still in precanonical form because we guarantee that a call to collect_terms
    will not change a polyadic type. We may not be sorted however!, so we must resort ourselves*/
   this->sort();
-  
+
   /*Evaluatable nodes are at the front. We create
    a new list to hold the new children*/
   std::list<expression_node*> newChildren;
@@ -141,7 +141,7 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
   /*If we reached the end then all nodes are evaluatable so we have already collected terms*/
   if(iter == end)
     return this;
-  
+
   /*Otherwise iter points to the first nonevaluatable node.
    This node is a sorted, precanonical, collected terms polyadic multiplication operator node*/
   /*We first construct a new polyadic multiplication operator node that contains
@@ -174,7 +174,7 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
           evaluatable_children.push_back(*termIter);
         }
       }
-      polyadic_multiplication_operator_node* non_evaluatable_part 
+      polyadic_multiplication_operator_node* non_evaluatable_part
         = new polyadic_multiplication_operator_node(non_evaluatable_children);
       non_evaluatable_children.clear();
       /*If the terms have the same nonevaluatable part*/
@@ -182,9 +182,9 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
         coefficient_sum.push_back(new polyadic_multiplication_operator_node(evaluatable_children));
       } else
         break;
-      
+
       /*Now we delete the node which will no longer be used. However,
-       we don't want to delete the evaluatable part because it has been added 
+       we don't want to delete the evaluatable part because it has been added
        to a coefficient_sum, we just delete the non-evaluatable part*/
       delete non_evaluatable_part;
       /*We also delete the node but not necesarily its children*/
@@ -200,7 +200,7 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
       coefficient = new number_leaf_node(tmp->evaluate());
     /*We now no longer need tmp or the coefficient sum, so we delete it*/
     delete tmp;
-    
+
     /*Finally, we add the product of the coefficient and the non_coefficient to the list of new children*/
     non_coefficient->children.push_front(
     new exponentiation_operator_node(coefficient, new integer_number_leaf_node(1)));
@@ -212,11 +212,18 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
   /*Now observe that this node is necesarily in canonical for because it is a sum,
    of products of nodes which are exponentiation nodes in canonical form*/
   return new polyadic_addition_operator_node(newChildren);
-  
+
 }
 
 expression_node* polyadic_addition_operator_node::optimization_round() {
   polyadic_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   /*We first remove all children which evaluate to zero*/
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
@@ -231,7 +238,7 @@ expression_node* polyadic_addition_operator_node::optimization_round() {
       ++iter;
     }
   }
-  
+
   if(children.size() == 1) {
     expression_node* tmp = *(children.begin());
     /*We clear the list so that the returned child isn't deleted*/
@@ -245,4 +252,15 @@ expression_node* polyadic_addition_operator_node::optimization_round() {
   }
 }
 
-
+expression_node* polyadic_addition_operator_node::differentiate(const std::string& var) {
+  /*We simply take the derivative of each child*/
+  iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  for(; iter != end; ++iter) {
+    expression_node* tmp = (*iter)->differentiate(var);
+    if(tmp != *iter)
+      delete *iter;
+    (*iter) = tmp;
+  }
+  return this;
+}

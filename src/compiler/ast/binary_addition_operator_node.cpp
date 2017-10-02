@@ -110,7 +110,7 @@ void binary_addition_operator_node::sort() {
   rightChild->sort();
   if(*leftChild <= *rightChild)
     return;
-  
+
   /*Otherwise we swap the two*/
   expression_node* tmp = leftChild;
   leftChild = rightChild;
@@ -119,6 +119,14 @@ void binary_addition_operator_node::sort() {
 
 expression_node* binary_addition_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
+
   expression_node* retVal;
   if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
     retVal = rightChild;
@@ -133,4 +141,6 @@ expression_node* binary_addition_operator_node::optimization_round() {
   return retVal;
 }
 
-
+expression_node* binary_addition_operator_node::differentiate(const std::string&) {
+  throw "BINARY ADDITION NODE IS NOT REQUIRED TO SUPPORT DIFFERENTIATION";
+}

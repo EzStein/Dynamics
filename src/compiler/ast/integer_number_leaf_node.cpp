@@ -48,3 +48,7 @@ bool integer_number_leaf_node::is_integral() const {
 void integer_number_leaf_node::accept(visitor* v) {
   v->visit(this);
 }
+
+expression_node* integer_number_leaf_node::differentiate(const std::string& var) {
+  return new integer_number_leaf_node(0);
+}

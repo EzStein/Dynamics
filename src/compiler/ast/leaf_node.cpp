@@ -2,7 +2,7 @@
 leaf_node::~leaf_node() {
 }
 
-expression_node* leaf_node::transform_negation() {
+expression_node* leaf_node::transform_operators() {
   return this;
 }
 

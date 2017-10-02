@@ -49,7 +49,7 @@ AST& AST::operator=(AST&& ast) {
 }
 
 void AST::simplify() {
-  expression_node* newRoot = root->transform_negation();
+  expression_node* newRoot = root->transform_operators();
   if(newRoot != root)
     delete root;
   root = newRoot;
@@ -69,6 +69,42 @@ void AST::simplify() {
   
   optimize();
 }
+
+void AST::differentiate(const std::string& var) {
+  /*We first perform enough tree manipulations to get only the appropriate operators*/
+  expression_node* newRoot = root->transform_operators();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  newRoot = root->level_operators();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  
+  /*Then we perform the differentiation*/
+  newRoot = root->differentiate(var);
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  
+  /*We now need to level operators again, but no transformation*/
+  newRoot = root->level_operators();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  newRoot = root->make_pre_canonical();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  root->sort();
+  newRoot = root->collect_terms();
+  if(newRoot != root)
+    delete root;
+  root = newRoot;
+  
+  optimize();
+}
+
 
 void AST::optimize() {
  

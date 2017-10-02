@@ -21,6 +21,7 @@ private:
   expression_node* level_operators() override;
   void sort() override;
   expression_node* optimization_round() override;
+  expression_node* differentiate(const std::string&) override;
 
 
 

@@ -74,9 +74,9 @@ bool binary_subtraction_operator_node::is_integral() const {
 /*
  * Transforms a - b into a + -1*b
  */
-expression_node* binary_subtraction_operator_node::transform_negation() {
-  expression_node* newLeftChild = leftChild->transform_negation();
-  expression_node* newRightChild = rightChild->transform_negation();
+expression_node* binary_subtraction_operator_node::transform_operators() {
+  expression_node* newLeftChild = leftChild->transform_operators();
+  expression_node* newRightChild = rightChild->transform_operators();
   if(newLeftChild != leftChild)
     delete leftChild;
   if(newRightChild != rightChild)
@@ -102,6 +102,13 @@ void binary_subtraction_operator_node::accept(visitor* v) {
 
 expression_node* binary_subtraction_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
     expression_node* tmp = rightChild;
     rightChild = nullptr;
@@ -113,4 +120,8 @@ expression_node* binary_subtraction_operator_node::optimization_round() {
   } else {
     return this;
   }
+}
+
+expression_node* binary_subtraction_operator_node::differentiate(const std::string&) {
+  throw "BINARY SUBTRACTION NODE IS NOT REQUIRED TO SUPPORT DIFFERENTIATION";
 }

@@ -17,6 +17,8 @@ private:
   virtual bool is_integral() const override;
   void accept(visitor* v) override;
   expression_node* optimization_round() override;
+  expression_node* transform_operators() override;
+  expression_node* differentiate(const std::string&) override;
 
 
 };

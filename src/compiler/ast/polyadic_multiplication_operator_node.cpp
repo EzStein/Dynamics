@@ -13,7 +13,9 @@
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "compiler/ast/polyadic_addition_operator_node.h"
 #include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
 #include "compiler/ast/binary_operator_node.h"
+
 
 
  polyadic_multiplication_operator_node::polyadic_multiplication_operator_node(expression_node* firstChild) {
@@ -195,7 +197,7 @@ expression_node* polyadic_multiplication_operator_node::make_pre_canonical() {
 }
 
 expression_node* polyadic_multiplication_operator_node::collect_terms() {
-  
+
   /*We first call the super method which recursively calls collect_terms on the children*/
   polyadic_operator_node::collect_terms();
   /*This node
@@ -218,9 +220,9 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
    non-evaluatable term. If it points to the end, we are done and no collection is necessary*/
   if(iter == end)
     return this;
-  
+
   while(iter != end) {
-    /*This term is an exponentiation_operator_node. 
+    /*This term is an exponentiation_operator_node.
      * We save the base of this term and iterate until we get to the first base that
      does not equal this term. While doing so, we add the exponents*/
     std::list<expression_node*> exponentChildren;
@@ -235,7 +237,7 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
         node->rightChild = nullptr;
         delete node;
       } else {
-        
+
         break;
       }
     }
@@ -250,15 +252,15 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
     if(tmp != newExponent)
       delete newExponent;
     newExponent = tmp;
-    
+
     newChildren.push_back(new exponentiation_operator_node(base, newExponent));
-    
+
     /*Note iter now equals end or it points to a new exponentiation node with a different base*/
   }
- 
+
   expression_node* retVal = new polyadic_multiplication_operator_node(newChildren);
   //expression_node* tmp = retVal->make_pre_canonical();
-  
+
   /*Since we are returning a new value we must set all the current children to null or clear them*/
   children.clear();
   /*Now when the caller deletes this, the children that are now owned by new node
@@ -268,17 +270,24 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
 
 expression_node* polyadic_multiplication_operator_node::optimization_round() {
   polyadic_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   /*We first remove all children which evaluate to one,
    and if we encounter one that evaluates to zero, we immediatly return a zero integer node*/
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
   while(iter != end) {
-    
+
     if((*iter)->evaluatable()) {
-      
+
       double val = (*iter)->evaluate();
       if(val == 1) {
-        
+
         /*We delete the node and then remove it from the list*/
         delete *iter;
         iter = children.erase(iter);
@@ -286,20 +295,20 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
          don't need to increment it. Also the end iterator is not invalidated.*/
         std::cout << "A" <<std::endl;
       } else if(val == 0) {
-        
+
         /*We clear the children and return a zero node*/
         children.clear();
         return new integer_number_leaf_node(0);
       } else {
-        
+
         ++iter;
       }
     } else {
       ++iter;
     }
   }
-  
-  
+
+
   if(children.size() == 1) {
     expression_node* tmp = *(children.begin());
     /*We clear the list so that the returned child isn't deleted*/
@@ -311,4 +320,29 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
   } else {
     return this;
   }
+}
+
+expression_node* polyadic_multiplication_operator_node::differentiate(const std::string& var) {
+  /*We use the product rule to construct the derivative*/
+  const_iterator_t iter1 = children.begin();
+  const_iterator_t end = children.end();
+  std::list<expression_node*> sum;
+  for(; iter1!=end; ++iter1) {
+    std::list<expression_node*> terms;
+    iterator_t iter2 = children.begin();
+    for(; iter2 != end; ++iter2) {
+      if(iter2 == iter1){
+        expression_node* tmp = (*iter2)->copy();
+        expression_node* tmp2 = tmp->differentiate(var);
+        if(tmp2 != tmp)
+          delete tmp;
+        tmp = tmp2;
+        terms.push_back(tmp);
+      } else {
+        terms.push_back((*iter2)->copy());
+      }
+    }
+    sum.push_back(new polyadic_multiplication_operator_node(terms));
+  }
+  return new polyadic_addition_operator_node(sum);
 }

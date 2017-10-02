@@ -297,17 +297,24 @@ expression_node* exponentiation_operator_node::collect_terms() {
   if(tmp != leftChild)
     delete leftChild;
   leftChild = tmp;
-  
+
   tmp = rightChild->collect_terms();
   if(tmp != rightChild)
     delete rightChild;
   rightChild = tmp;
-  
+
   return this;
 }
 
 expression_node* exponentiation_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   if(leftChild->evaluatable() && leftChild->evaluate() == 1) {
     return new integer_number_leaf_node(1);
   } else if(rightChild->evaluatable()) {
@@ -326,4 +333,28 @@ expression_node* exponentiation_operator_node::optimization_round() {
   } else {
     return this;
   }
+}
+
+expression_node* exponentiation_operator_node::differentiate(const std::string& var) {
+  expression_node* leftDerivative = leftChild->copy();
+  expression_node* tmp = leftDerivative->differentiate(var);
+  if(tmp != leftDerivative)
+    delete leftDerivative;
+  leftDerivative = tmp;
+  expression_node* rightDerivative = rightChild->copy();
+  tmp = rightDerivative->differentiate(var);
+  if(tmp != rightDerivative)
+    delete rightDerivative;
+  rightDerivative = tmp;
+
+  expression_node* retVal =
+    new polyadic_multiplication_operator_node(
+    new exponentiation_operator_node(leftChild->copy(), rightChild->copy()),
+    new polyadic_addition_operator_node(
+    new polyadic_multiplication_operator_node(
+    rightChild->copy(), new exponentiation_operator_node(leftChild->copy(),
+    new integer_number_leaf_node(-1)), leftDerivative), new polyadic_multiplication_operator_node(
+    rightDerivative, /*THIS OUGHT TO BE NATURAL LOGARITHM*/leftChild->copy()
+    )));
+  return retVal;
 }

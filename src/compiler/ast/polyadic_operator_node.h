@@ -24,7 +24,7 @@ public:
   polyadic_operator_node() {};
   polyadic_operator_node(const std::list<expression_node*> _children) : children(_children) { };
   virtual ~polyadic_operator_node();
-  expression_node* transform_negation() override;
+  expression_node* transform_operators() override;
   expression_node* level_operators() override;
 
   typedef std::list<expression_node*>::const_iterator const_iterator_t;

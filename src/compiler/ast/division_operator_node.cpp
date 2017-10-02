@@ -1,4 +1,7 @@
 #include "compiler/ast/division_operator_node.h"
+#include "compiler/ast/binary_multiplication_operator_node.h"
+#include "compiler/ast/exponentiation_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 #include "compiler/ast/AST.h"
 division_operator_node::division_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
@@ -75,8 +78,25 @@ void division_operator_node::accept(visitor* v) {
   v->visit(this);
 }
 
+expression_node* division_operator_node::transform_operators() {
+  binary_operator_node::transform_operators();
+  expression_node* retVal = new binary_multiplication_operator_node(leftChild,
+    new exponentiation_operator_node(rightChild, new integer_number_leaf_node(-1)));
+  leftChild = nullptr;
+  rightChild = nullptr;
+  return retVal;
+}
+
+
 expression_node* division_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
     if(rightChild->evaluatable() && rightChild->evaluate() == 0)
       return this;
@@ -89,4 +109,8 @@ expression_node* division_operator_node::optimization_round() {
   } else {
     return this;
   }
+}
+
+expression_node* division_operator_node::differentiate(const std::string&) {
+  throw "DIVISION NODE IS NOT REQUIRED TO SUPPORT DIFFERENTIATION";
 }

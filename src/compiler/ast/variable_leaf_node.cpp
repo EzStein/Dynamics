@@ -87,3 +87,10 @@ bool variable_leaf_node::is_integral() const {
 void variable_leaf_node::accept(visitor* v) {
   v->visit(this);
 }
+
+expression_node* variable_leaf_node::differentiate(const std::string& var) {
+  if(symPtr->name == var)
+    return new integer_number_leaf_node(1);
+  else
+    return new integer_number_leaf_node(0);
+}

@@ -48,8 +48,8 @@ bool unary_minus_operator_node::is_integral() const {
 /*
  * Transforms -a into -1 * a
  */
-expression_node* unary_minus_operator_node::transform_negation() {
-  expression_node* newChild = child->transform_negation();
+expression_node* unary_minus_operator_node::transform_operators() {
+  expression_node* newChild = child->transform_operators();
   /*The method decided that itself was needed to change so we delete it*/
   if(newChild != child)
     delete child;
@@ -68,6 +68,13 @@ void unary_minus_operator_node::accept(visitor* v) {
 
 expression_node* unary_minus_operator_node::optimization_round() {
   unary_operator_node::optimization_round();
+  if(evaluatable()) {
+    if(is_integral()) {
+      return new integer_number_leaf_node(evaluate());
+    } else {
+      return new number_leaf_node(evaluate());
+    }
+  }
   if(child->evaluatable()) {
     if(child->is_integral()) {
       return new integer_number_leaf_node(-1 * child->evaluate());
@@ -77,4 +84,8 @@ expression_node* unary_minus_operator_node::optimization_round() {
   } else {
     return this;
   }
+}
+
+expression_node* unary_minus_operator_node::differentiate(const std::string&) {
+  throw "UNARY MINUS OPERATOR NOT REQUIRED TO IMPLEMENT DIFFERENTIATION";
 }

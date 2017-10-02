@@ -18,6 +18,8 @@ private:
   virtual expression_node* copy() const override;
   bool is_integral() const override;
   void accept(visitor* v) override;
+  expression_node* differentiate(const std::string& var) override;
+
 
 /*Make this friend*/
 public:

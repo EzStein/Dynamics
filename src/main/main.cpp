@@ -14,7 +14,7 @@
 using namespace std;
 
 int main() {
-  std::stringstream ss("x+y+y^2 + 3y^2 + x^2 + 2x^2 + x");
+  std::stringstream ss("x^(-1+2*2)*x^3");
   parser par(ss);
   list<symbol> l;
   AST ast = par.parse(l);

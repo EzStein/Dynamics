@@ -42,3 +42,4 @@ bool operator<=(expression_node& node1, expression_node& node2) {
   comp.dispatch(&node1, &node2);
   return val <= 0;
 }
+

@@ -16,9 +16,10 @@ private:
   virtual unsigned int code_size() const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;
-  expression_node* transform_negation() override;
+  expression_node* transform_operators() override;
   void accept(visitor* v) override;
   expression_node* optimization_round() override;
+  expression_node* differentiate(const std::string&) override;
 
 };
 #endif

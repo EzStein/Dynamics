@@ -1,5 +1,8 @@
 #include "compiler/ast/binary_operator_node.h"
 #include "compiler/ast/expression_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
+
 binary_operator_node::binary_operator_node(expression_node* _leftChild, expression_node* _rightChild) :
 leftChild(_leftChild), rightChild(_rightChild) {
 }
@@ -13,12 +16,12 @@ bool binary_operator_node::evaluatable() const {
   return leftChild->evaluatable() && rightChild->evaluatable();
 }
 
-expression_node* binary_operator_node::transform_negation() {
-  expression_node* newChild = leftChild->transform_negation();
+expression_node* binary_operator_node::transform_operators() {
+  expression_node* newChild = leftChild->transform_operators();
   if(newChild != leftChild)
     delete leftChild;
   leftChild = newChild;
-  newChild = rightChild->transform_negation();
+  newChild = rightChild->transform_operators();
   if(newChild != rightChild)
     delete rightChild;
   rightChild = newChild;
@@ -48,7 +51,7 @@ expression_node* binary_operator_node::make_pre_canonical() {
 }
 
 void binary_operator_node::sort() {
-  /*By default this method just calls sort on its children. 
+  /*By default this method just calls sort on its children.
    commutative operators will implement ordering*/
   leftChild->sort();
   rightChild->sort();
@@ -67,6 +70,6 @@ expression_node* binary_operator_node::optimization_round() {
   if(tmp != rightChild)
     delete rightChild;
   rightChild = tmp;
-  
+
   return this;
 }

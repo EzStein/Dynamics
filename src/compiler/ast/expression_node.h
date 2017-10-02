@@ -50,7 +50,7 @@ public:
   /**
    * When this method is called on a node,
    * the node transforms itself so that it contains
-   * no binary or unary minus operator nodes. The node
+   * no binary or unary minus operator nodes or division operators. The node
    * itself may need to change type, so it returns
    * a pointer to the node that should replace it as a child.
    * If the node returns a pointer that is different from the
@@ -62,7 +62,7 @@ public:
    * it sets its own children to null so that they are not deleted.
    * @return
    */
-  virtual expression_node* transform_negation() = 0;
+  virtual expression_node* transform_operators() = 0;
 
   /**
    * When this method is called on a node,
@@ -146,6 +146,7 @@ public:
    * In general, this function should recursively call optimization_round()
    * on each of its children, and then perform EXACTLY one of the following optimizations:
    * 
+   * If the node is evaluatable it is replaced with its evaluation.
    * If a polyadic node has one child, the polyadic node is replaced by that child.
    * Note that this must happen before any other optimization checks for otherwise
    * it would be possible for a polyadic child to have no children.
@@ -181,16 +182,57 @@ public:
    * 
    * If the child of a unary minus operator is evaluatable,
    * it should be replaced with the appropriate value which
-   * may or may not be integeral.
+   * may or may not be integral.
    * 
    * In general this method is called on the root of the AST until
    * the AST does not change. At that point, the AST is considered optimized.
    * 
    * As with the previous methods, if the callee does not return this,
    * then the caller will delete the node that it called.
+   * 
+   * Note that optimization_round will not introduce non-precanonical nodes
+   * if the original tree is does not have those nodes.
+   * 
+   * 
    * @return 
    */
   virtual expression_node* optimization_round() = 0;
+  
+  /*
+   * Differentiates the expression
+   * with respect to the variable given in the string.
+   * We assume that only the following nodes are present as in canonical form:
+   * 
+   * polyadic multiplication
+   * polyadic addition
+   * exponentiation
+   * integer number
+   * number
+   * variable
+   * 
+   * When a number node is differentiated it returns a zero integer number node.
+   * When a variable is differentiated it returns 1 if it is the number we are differentiating
+   * and zero otherwise.
+   * Polyadic addition simply returns the sum of the derivatives of each term.
+   * polyadic multiplication uses the product rule to return the result.
+   * 
+   * Left F be the base and G be the exponent. Then
+   * the derivative is 
+   * F^G(GF^(-1)F' + G'LN(F))
+   * This is derived using implicit differentiation.
+   * 
+   * 
+   * THUS: precondition for this method
+   * is that only these operators are used. This
+   * is guarenteed if transform_operators followed by
+   * level_operators is called. Note that
+   * the result of this function is a tree
+   * that contains only the proper nodes,
+   * but the operators themselves may not be leveled.
+   * So simplification should then be performed as
+   * usual.
+   */
+  virtual expression_node* differentiate(const std::string&) = 0;
 };
 
 /*Here we add in comparators for expression nodes

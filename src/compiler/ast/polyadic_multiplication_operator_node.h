@@ -22,6 +22,17 @@ class polyadic_multiplication_operator_node : public polyadic_operator_node {
  */
 public:
   polyadic_multiplication_operator_node(const std::list<expression_node*> children);
+  
+  /*Variable parameter ctor using variadic templates*/
+  template<class T>
+  polyadic_multiplication_operator_node(T child) {
+    children.push_front(child);
+  }
+  
+  template<class T, class...T2>
+  polyadic_multiplication_operator_node(T child, T2... rest) : polyadic_multiplication_operator_node(rest...) {
+    children.push_front(child);
+  }
 
   polyadic_multiplication_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;
@@ -36,6 +47,7 @@ public:
   expression_node* make_pre_canonical() override;
   expression_node* collect_terms() override;
   expression_node* optimization_round() override;
+  expression_node* differentiate(const std::string& var) override;
 
 
 

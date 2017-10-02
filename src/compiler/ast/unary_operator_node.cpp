@@ -1,4 +1,6 @@
 #include "compiler/ast/unary_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
 unary_operator_node::unary_operator_node(expression_node* _child) : child(_child) {
 
 }
@@ -11,8 +13,8 @@ bool unary_operator_node::evaluatable() const {
   return child->evaluatable();
 }
 
-expression_node* unary_operator_node::transform_negation() {
-  expression_node* newChild = child->transform_negation();
+expression_node* unary_operator_node::transform_operators() {
+  expression_node* newChild = child->transform_operators();
   if(newChild != child)
     delete child;
   child = newChild;
@@ -45,6 +47,6 @@ expression_node* unary_operator_node::optimization_round() {
   if(tmp != child)
     delete child;
   child = tmp;
-  
+
   return this;
 }

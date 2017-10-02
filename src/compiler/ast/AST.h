@@ -36,6 +36,7 @@ public:
 
   void simplify();
 
+  void differentiate(const std::string&);
   /*Constructs the binary operator of the appropriate type whose children are given by the provided pointers.
   * The function returns a pointer to the constructed node*/
   template<class NODE_TYPE>

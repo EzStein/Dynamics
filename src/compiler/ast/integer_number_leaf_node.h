@@ -35,6 +35,9 @@ public:
   * Copies the tree whose root is this node and returns a pointer to this copy
   */
   virtual expression_node* copy() const override;
+  
+  expression_node* differentiate(const std::string& var) override;
+
 
   /*
   * Returns the size of the produced code.

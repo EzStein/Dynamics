@@ -1,6 +1,8 @@
 #include <algorithm>
 #include "compiler/ast/polyadic_operator_node.h"
 #include "expression_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
 polyadic_operator_node::~polyadic_operator_node() {
   /*We destroy each of the children*/
   const_iterator_t iter = children.begin();
@@ -20,11 +22,11 @@ bool polyadic_operator_node::evaluatable() const {
   return val;
 }
 
-expression_node* polyadic_operator_node::transform_negation() {
+expression_node* polyadic_operator_node::transform_operators() {
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
   for(; iter != end; ++iter) {
-    expression_node* newChild = (*iter)->transform_negation();
+    expression_node* newChild = (*iter)->transform_operators();
     if(newChild != *iter)
       delete *iter;
     *iter = newChild;
@@ -55,7 +57,7 @@ void polyadic_operator_node::sort() {
   for(; iter!=end; ++iter){
     (*iter)->sort();
   }
-  
+
   /*Then we reorder the children*/
   /*Currently all polyadic nodes are commutative so they are all handled here*/
   children.sort(cmp);
