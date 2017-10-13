@@ -293,7 +293,7 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
         iter = children.erase(iter);
         /*Iter points to the element after the one that was erased, so we
          don't need to increment it. Also the end iterator is not invalidated.*/
-        std::cout << "A" <<std::endl;
+        
       } else if(val == 0) {
 
         /*We clear the children and return a zero node*/

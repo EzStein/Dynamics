@@ -64,14 +64,16 @@ namespace math {
 
   vector<double, 4>& euler(vector<double, 4>& start,
     driver::var4_double_func_t xFunc, driver::var4_double_func_t yFunc, driver::var4_double_func_t zFunc, double inc) {
+    std::cout << start << std::endl;
     double xInc = inc*xFunc(start[0], start[1], start[2], start[3]);
     double yInc = inc*yFunc(start[0], start[1], start[2], start[3]);
     double zInc = inc*zFunc(start[0], start[1], start[2], start[3]);
-    std::cout << xInc << ", " << yInc << ", " << zInc << std::endl;
+
     start[0] += inc;
     start[1] += xInc;
     start[2] += yInc;
     start[3] += zInc;
+    std::cout << "NEW: " << start << std::endl;
     return start;
   }
 }

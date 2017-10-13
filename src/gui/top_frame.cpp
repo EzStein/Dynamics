@@ -171,7 +171,9 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
     else
       vec[i] = initVals[i];
   }
+
   std::list<math::vector<double, 4> > points = std::list<math::vector<double, 4> >();
+  std::cout << vec << std::endl;
   points.push_back(vec);
   while(vec[0] < tMax) {
 
@@ -223,6 +225,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   dc.SetBrush(*wxWHITE_BRUSH);
   dc.DrawRectangle(0,0,canvasSize[0], canvasSize[1]);
   dc.SetBrush(*wxRED_BRUSH);
+
 
   /*Paint the axes*/
   math::vector<int, 2> tmp;

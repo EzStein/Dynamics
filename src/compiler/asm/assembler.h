@@ -1,15 +1,24 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
-
-namespace asm {
+#include "compiler/asm/asm.h"
+class assembler {
   /*Assemblers the instruction described by the appropriate imformation.
-  * Note that when the addressing mode is REG, immOffset is ignored and if
-  the addressing mode is IMM, reg is ignored. If the addressing mode is memory,
-  immOffset is added to the value stored in reg to get the address*/
-  void append_amd64(amd64_instruction inst, amd64_operand_size opSize,
-    amd64_addressing_mode modeSrc, amd64_register regSrc, long immOffsetSrc,
-    amd64_addressing_mode modeDest, amd64_register regDest, long immOffsetDest,
-    vector<unsigned char>& buf);
+  * Note that when the addressing mode is REG, rmDisp is ignored. If the addressing mode is memory,
+  offset is added to the value stored in rmReg to get the address. Currently
+  SIB is not supported although it is used to address displacement of ESP/RSP.
+   If isImm is true then rReg, rmIsDest are ignored. Otherwise imm is ignored.
+   * 
+   * If rmIsDest is true then the modrm addressing mode is the destination, otherwise
+   * it is the source. The uniformReg bool indicates whether we are using 
+   * a uniform byte register BPL SPL DIL SIL instead of AH BH CH DH.
+   * If so, we ensure that there if this register is actually used, 
+   * then we encode an REX byte and do not encode one otherwise.
+   */
+  void append(instruction inst, size operandSize, size addressSize,
+  addressing_mode addrMode, reg rmReg, long rmDisp, 
+  reg rReg, bool isImm, long imm, bool rmIsDest, bool uniformReg,
+  std::vector<unsigned char>& buf);
+  std::vector<unsigned char> assemble(std::string str);
 };
 
 #endif

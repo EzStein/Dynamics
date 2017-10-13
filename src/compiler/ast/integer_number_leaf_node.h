@@ -22,6 +22,9 @@
 class integer_number_leaf_node : public leaf_node {
 public:
   integer_number_leaf_node(long);
+  integer_number_leaf_node(int);
+  /*Rounds the double to the nearest long*/
+  integer_number_leaf_node(double);
 
   virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const override;
   virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const override;
@@ -35,7 +38,7 @@ public:
   * Copies the tree whose root is this node and returns a pointer to this copy
   */
   virtual expression_node* copy() const override;
-  
+
   expression_node* differentiate(const std::string& var) override;
 
 

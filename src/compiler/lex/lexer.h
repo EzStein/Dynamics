@@ -8,20 +8,21 @@
 
 class lexer {
 public:
-  lexer();
 
   /*Constructs a lexer with the given input stream of characters
-  * and a rule set for identifying tokens*/
-  lexer(std::istream*, const std::map<std::string, token>&);
+  * and a rule set for identifying tokens.
+   If format operators is set to true, the lexer will  insert asterisks and minus signs
+   in appropriate places, otherwise it performs no preformatting*/
+  lexer(std::istream*, const std::map<std::string, token>&, bool formatOperators = true);
 
   /*Attempts to read the longest matchable lexeme in the stream. If it exists, it, returns
   that lexeme along with its corresponding token. If no such lexeme could be found but there is still input left in the stream,
   the string containing the null character is returned along with the token ERROR. If there is no input left in the stream,
   the token ENDPOINT is returned along with the string containing the null character
 
-  * The lexer is responsible for inserting asterisks when none are provided inbetween groupings of parenthesis.
+  * If formatOperators is true, the lexer is responsible for inserting asterisks when none are provided inbetween groupings of parenthesis.
   * In general, if a LEFT_PAREN is preceded by a token that is not an operator the stream start, an asterisk is inserted.
-  * If a RIGHT_PAREN is folled by a token that is not an operator or endpoint, an asterisk is inserted.
+  * If a RIGHT_PAREN is followed by a token that is not an operator or endpoint, an asterisk is inserted.
   * The lexer also distinguishes between binary and unary minus. In general, if a minus sign is PRECEDED by
   * the start of the stream an operator or a left parenthesis it is a unary minus. If it is preceded by a NUMBER,
   * ID, or RIGHT_PAREN, it is a binary minus.
@@ -36,6 +37,7 @@ public:
   This function does not alter the stream*/
   token previous(std::string& lexeme);
 private:
+  bool formatOperators;
   std::istream* stream;
   NFA fa;
   token previousToken;
@@ -45,7 +47,7 @@ private:
   /*Maps accepting states to tokens*/
   std::map<state_type, token> tokenMap;
 
-  /*Matains the position of the stream before a call to set_next_token*/
+  /*Maintains the position of the stream before a call to set_next_token*/
   std::ios::pos_type currPos;
 
   void set_next_token();

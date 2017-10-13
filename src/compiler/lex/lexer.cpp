@@ -6,12 +6,7 @@ using std::map;
 using std::istream;
 using std::string;
 using std::invalid_argument;
-
-lexer::lexer() {
-
-}
-
-lexer::lexer(istream* _stream, const map<string, token>& lexerDef) : stream(_stream), previousToken(token::ERROR) {
+lexer::lexer(istream* _stream, const map<string, token>& lexerDef, bool _formatOperators = true) : stream(_stream), previousToken(token::ERROR), formatOperators(_formatOperators) {
 
   if(lexerDef.empty())
     throw invalid_argument("To define a lexer, you need at least one rule!");
@@ -80,26 +75,29 @@ void lexer::set_next_token() {
     /*Gets the smallest accepting state which is also the first one added*/
     nextToken = tokenMap[*states.begin()];
   }
+  
+  if(formatOperators) {
+    if(nextToken == token::MINUS && (::is_operator(previousToken) ||
+      previousToken == token::ERROR /*FOR START OF STREAM*/ || previousToken == token::LEFT_PAREN)) {
+        nextToken = token::UNARY_MINUS;
+    }
 
-  if(nextToken == token::MINUS && (::is_operator(previousToken) ||
-    previousToken == token::ERROR /*FOR START OF STREAM*/ || previousToken == token::LEFT_PAREN)) {
-      nextToken = token::UNARY_MINUS;
+    if(nextToken == token::LEFT_PAREN && (!::is_operator(previousToken) && previousToken != token::LEFT_PAREN && previousToken != token::ERROR /*FOR STREAM START*/)) {
+      nextToken = token::ASTERISK;
+      stream->seekg(currPos);
+      /*Previous token remains unchanged*/
+    } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::RIGHT_PAREN && nextToken != token::ENDPOINT)) {
+      nextToken = token::ASTERISK;
+      stream->seekg(currPos);
+    } else if(nextToken == token::ID && (previousToken == token::ID || previousToken == token::NUMBER)) {
+      nextToken = token::ASTERISK;
+      stream->seekg(currPos);
+    } else if(previousToken == token::ID && nextToken == token::NUMBER) {
+      nextToken = token::ASTERISK;
+      stream->seekg(currPos);
+    }
   }
-
-  if(nextToken == token::LEFT_PAREN && (!::is_operator(previousToken) && previousToken != token::LEFT_PAREN && previousToken != token::ERROR /*FOR STREAM START*/)) {
-    nextToken = token::ASTERISK;
-    stream->seekg(currPos);
-    /*Previous token remains unchanged*/
-  } else if(previousToken == token::RIGHT_PAREN && (!::is_operator(nextToken) && nextToken != token::RIGHT_PAREN && nextToken != token::ENDPOINT)) {
-    nextToken = token::ASTERISK;
-    stream->seekg(currPos);
-  } else if(nextToken == token::ID && (previousToken == token::ID || previousToken == token::NUMBER)) {
-    nextToken = token::ASTERISK;
-    stream->seekg(currPos);
-  } else if(previousToken == token::ID && nextToken == token::NUMBER) {
-    nextToken = token::ASTERISK;
-    stream->seekg(currPos);
-  }
+  
 }
 
 token lexer::peek(std::string& lexeme) {

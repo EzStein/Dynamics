@@ -29,7 +29,18 @@ enum class token {
   /*Symbols for precedence parsing but are not used to index the array*/
   TOKEN_COUNT,
   NONTERMINAL,
-  ERROR
+  ERROR,
+  
+  /*Symbols for assembly parsing*/
+  INSTRUCTION,
+  REG,
+  HEX_INT, DEC_INT,
+  COMMA,
+  QUANTIFIER,
+  NEW_LINE,
+  DOLLAR_SIGN
+  
+  
 };
 
 enum class precedence {
