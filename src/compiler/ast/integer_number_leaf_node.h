@@ -26,8 +26,7 @@ public:
   /*Rounds the double to the nearest long*/
   integer_number_leaf_node(double);
 
-  virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const override;
-  virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const override;
+  virtual void emit_code_amd64(std::string&, compiler_data&) const override;
   virtual double evaluate() const override;
 
   /*True if there are no variables in the sub tree whose root is this node*/
@@ -40,12 +39,6 @@ public:
   virtual expression_node* copy() const override;
 
   expression_node* differentiate(const std::string& var) override;
-
-
-  /*
-  * Returns the size of the produced code.
-  */
-  virtual unsigned int code_size() const override;
 
   /*Make friend instead of public*/
   long val;

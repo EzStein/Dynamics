@@ -18,48 +18,11 @@ std::ostream& binary_multiplication_operator_node::print(std::ostream& out) cons
   return out;
 }
 
-std::ostream& binary_multiplication_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
-  leftChild->emit_code_ia32(acc, data);  //Put on %st(1)
-  rightChild->emit_code_ia32(acc, data); //Now on %st(0)
-  acc << "fmulp %st(0), %st(1)\n";
-  data.executableBuf[++data.offset] = '\xDE';
-  data.executableBuf[++data.offset] = '\xC9';
-
-  if(data.stackSizeFPU >= 9) {
-    acc << "fldt (%esp)\n";
-    data.executableBuf[++data.offset] = '\xDB';
-    data.executableBuf[++data.offset] = '\x2C';
-    data.executableBuf[++data.offset] = '\x24';
-
-    acc << "addl $10, %esp\n";
-    data.executableBuf[++data.offset] = '\x81';
-    data.executableBuf[++data.offset] = '\xC4';
-    data.executableBuf[++data.offset] = '\x0A';
-    data.executableBuf[++data.offset] = '\x00';
-    data.executableBuf[++data.offset] = '\x00';
-    data.executableBuf[++data.offset] = '\x00';
-
-    acc << "fincstp\n";
-    data.executableBuf[++data.offset] = '\xD9';
-    data.executableBuf[++data.offset] = '\xF7';
-  }
-  --data.stackSizeFPU;
-  return acc;
-}
-
-std::ostream& binary_multiplication_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+void binary_multiplication_operator_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
   leftChild->emit_code_amd64(acc, data);  //Put on %st(1)
   rightChild->emit_code_amd64(acc, data); //Now on %st(0)
-  acc << "fmulp %st(0), %st(1)\n";
-  data.executableBuf[++data.offset] = '\xDE';
-  data.executableBuf[++data.offset] = '\xC9';
-
+  acc += "fmulp %st(0), %st(1)\n";
   AST::emit_stack_dec_amd64(acc, data);
-  return acc;
-}
-
-unsigned int binary_multiplication_operator_node::code_size() const {
-  return leftChild->code_size() + rightChild->code_size() + 13;
 }
 
 expression_node* binary_multiplication_operator_node::copy() const {

@@ -10,9 +10,7 @@ public:
 private:
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
-  virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const override;
-  virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const override;
-  virtual unsigned int code_size() const override;
+  virtual void emit_code_amd64(std::string&, compiler_data&) const override;
   virtual bool evaluatable() const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;

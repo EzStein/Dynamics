@@ -25,13 +25,13 @@ public:
      * @param
      */
     polyadic_addition_operator_node(std::list<expression_node*>);
-    
+
   /*Variable parameter ctor using variadic templates*/
   template<class T>
   polyadic_addition_operator_node(T child) {
     children.push_front(child);
   }
-  
+
   template<class T, class...T2>
   polyadic_addition_operator_node(T child, T2... rest) : polyadic_addition_operator_node(rest...) {
     children.push_front(child);
@@ -40,9 +40,7 @@ public:
   polyadic_addition_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;
   virtual std::ostream& print(std::ostream&) const override;
-  virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const override;
-  virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const override;
-  virtual unsigned int code_size() const override;
+  virtual void emit_code_amd64(std::string&, compiler_data&) const override;
   virtual expression_node* copy() const override;
   bool is_integral() const override;
   void accept(visitor* v) override;

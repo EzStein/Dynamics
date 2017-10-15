@@ -52,14 +52,9 @@
    return out;
  }
 
- std::ostream& polyadic_multiplication_operator_node::emit_code_ia32(std::ostream& out, compiler_data&) const {
-   return out;
- }
- std::ostream& polyadic_multiplication_operator_node::emit_code_amd64(std::ostream& out, compiler_data&) const {
-   return out;
- }
- unsigned int polyadic_multiplication_operator_node::code_size() const {
-   return 100;
+
+ void polyadic_multiplication_operator_node::emit_code_amd64(std::string& out, compiler_data&) const {
+   //return out;
  }
 
  expression_node* polyadic_multiplication_operator_node::copy() const {
@@ -293,7 +288,7 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
         iter = children.erase(iter);
         /*Iter points to the element after the one that was erased, so we
          don't need to increment it. Also the end iterator is not invalidated.*/
-        
+
       } else if(val == 0) {
 
         /*We clear the children and return a zero node*/

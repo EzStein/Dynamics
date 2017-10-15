@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <list>
+#include "compiler/asm/assembler.h"
 
 using std::stringstream;
 using std::string;
@@ -43,12 +44,13 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(string str) {
   list<symbol> symbolTable;
   /*Compile the function*/
   AST ast(parse.parse(symbolTable));
-
+  std::string code = ast.emit_code_amd64();
+  assembler assem;
+  std::vector<unsigned char> vec = assem.assemble(code);
 
   unsigned char * buf = nullptr;
-  size_t size = ast.code_size();
+  size_t size = vec.size();
   iter_t end = buffer_table.end();
-
 
   for(iter_t it = buffer_table.begin(); it != end; ++it) {
     if(it->second.available && it->second.size >= size) {
@@ -65,7 +67,7 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(string str) {
     buffer_table[reinterpret_cast<void*>(buf)] = buffer_attributes(size, false);
   }
 
-  ast.emit_code_amd64(std::cout, buf);
+  std::copy(vec.begin(), vec.end(), buf);
   FUNC_TYPE func = nullptr;
   /*A hack to allow us to set the function pointer to point to the buffer*/
   *reinterpret_cast<void**>(&func) = buf;

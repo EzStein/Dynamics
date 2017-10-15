@@ -52,18 +52,16 @@ public:
   static expression_node* make_integer_number_leaf_node(long val);
 
   double evaluate() const;
-  
+
   /*
    * Calls optimization_round on root until it is unchanged.
    */
   void optimize();
 
-  std::ostream& emit_code_ia32(std::ostream&, unsigned char *) const;
-  std::ostream& emit_code_amd64(std::ostream&, unsigned char *) const;
-  unsigned int code_size() const;
+  std::string emit_code_amd64() const;
 
-  static void emit_stack_dec_amd64(std::ostream&, compiler_data& data);
-  static void emit_stack_inc_amd64(std::ostream&, compiler_data& data);
+  static void emit_stack_dec_amd64(std::string&, compiler_data& data);
+  static void emit_stack_inc_amd64(std::string&, compiler_data& data);
 
   friend std::ostream& operator<<(std::ostream&, const AST&);
   friend bool operator==(AST&, AST&);

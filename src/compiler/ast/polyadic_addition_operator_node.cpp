@@ -37,14 +37,8 @@ std::ostream& polyadic_addition_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& polyadic_addition_operator_node::emit_code_ia32(std::ostream& out, compiler_data&) const {
-  return out;
-}
-std::ostream& polyadic_addition_operator_node::emit_code_amd64(std::ostream& out, compiler_data&) const {
-  return out;
-}
-unsigned int polyadic_addition_operator_node::code_size() const {
-  return 100;
+void polyadic_addition_operator_node::emit_code_amd64(std::string& acc, compiler_data&) const {
+
 }
 
 expression_node* polyadic_addition_operator_node::copy() const {

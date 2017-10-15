@@ -17,24 +17,9 @@ std::ostream& unary_minus_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-std::ostream& unary_minus_operator_node::emit_code_ia32(std::ostream& acc, compiler_data& data) const {
-  child->emit_code_ia32(acc, data);  //Put on %st(0)
-  acc << "fchs %st(0)\n";
-  data.executableBuf[++data.offset] = '\xD9';
-  data.executableBuf[++data.offset] = '\xE0';
-  return acc;
-}
-
-std::ostream& unary_minus_operator_node::emit_code_amd64(std::ostream& acc, compiler_data& data) const {
+void unary_minus_operator_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
   child->emit_code_amd64(acc, data);  //Put on %st(0)
-  acc << "fchs %st(0)\n";
-  data.executableBuf[++data.offset] = '\xD9';
-  data.executableBuf[++data.offset] = '\xE0';
-  return acc;
-}
-
-unsigned int unary_minus_operator_node::code_size() const {
-  return child->code_size() + 2;
+  acc += "fchs %st(0)\n";
 }
 
 expression_node* unary_minus_operator_node::copy() const {

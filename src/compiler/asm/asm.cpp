@@ -139,6 +139,18 @@ instruction str_to_instruction(std::string str) {
     return instruction::PUSH;
   else if(str == "POP")
     return instruction::POP;
+  else if(str == "STMXCSR")
+    return instruction::STMXCSR;
+  else if(str == "FSTCW")
+    return instruction::FSTCW;
+  else if(str == "FLDCW")
+    return instruction::FLDCW;
+  else if(str == "RETN" || str == "RET")
+    return instruction::RETN;
+  else if(str == "RETF")
+    return instruction::RETF;
+  else if(str == "LDMXCSR")
+    return instruction::LDMXCSR;
   else
     return instruction::NO_SUCH_INSTRUCTION;
 }

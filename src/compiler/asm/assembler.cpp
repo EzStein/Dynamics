@@ -484,15 +484,6 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
         opcode = 0xD9;
         modrmByte = 0xF5;
         break;
-
-      case instruction::FDECSTP:
-        opcode = 0xD9;
-        modrmByte = 0xF6;
-        break;
-      case instruction::FINCSTP:
-        opcode = 0xD9;
-        modrmByte = 0xF7;
-        break;
       case instruction::FPREM:
         opcode = 0xD9;
         modrmByte = 0xF8;
@@ -541,6 +532,16 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       case instruction::FNSTSW:
         opcode = 0xDF;
         modrmByte = 0xE0;
+        break;
+      case instruction::FINCSTP:
+        buf.push_back(0xD9);
+        opcode =0xF7;
+        modrmByte = 0x06;
+        break;
+      case instruction::FDECSTP:
+        buf.push_back(0xD9);
+        opcode = 0xF6;
+        modrmByte = 0x06;
         break;
       default: throw "THIS SHOULD NOT OCCUR";
     }
@@ -768,6 +769,32 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       insertOpExt = true;
     }
     
+  } else if(inst == instruction::STMXCSR) {
+    buf.push_back(0x0F);
+    buf.push_back(0xAE);
+    opExt = 0x03;
+    insertOpExt = true;
+  } else if(inst == instruction::FLDCW) {
+    buf.push_back(0xD9);
+    opExt = 0x05;
+    insertOpExt = true;
+  } else if(inst == instruction::FSTCW) {
+    buf.push_back(0x9B);
+    buf.push_back(0xD9);
+    opExt = 0x07;
+    insertOpExt = true;
+  } else if(inst == instruction::LDMXCSR) {
+    buf.push_back(0x0F);
+    buf.push_back(0xAE);
+    opExt = 0x02;
+    insertOpExt = true;
+  } else if(inst == instruction::RETN) {
+    /*Near return*/
+    buf.push_back(0xC3);
+    modrmBytePreCalculated = true;
+  } else if(inst == instruction::RETF) {
+    buf.push_back(0xCB);
+    modrmBytePreCalculated = true;
   }
 
   /*We now construct the mod/rm byte. Note that addressing the EBP/RBP requires a mod of 01 or 10 that is a

@@ -10,12 +10,11 @@
 class expression_node : public node {
 public:
   virtual ~expression_node() = 0;
+
   /*
-  * Emits code by writing assembly to the output stream and filling the provided buffer with bytes
-  * starting at the provided offset. The function should modify offset to reflect the bytes added.
+  * Appends assembly language to the end of the provided string.
   */
-  virtual std::ostream& emit_code_ia32(std::ostream&, compiler_data&) const = 0;
-  virtual std::ostream& emit_code_amd64(std::ostream&, compiler_data&) const = 0;
+  virtual void emit_code_amd64(std::string&, compiler_data&) const = 0;
   virtual double evaluate() const = 0;
 
   /*True if there are no variables in the sub tree whose root is this node*/
@@ -26,11 +25,6 @@ public:
   * Copies the tree whose root is this node and returns a pointer to this copy
   */
   virtual expression_node* copy() const = 0;
-
-  /*
-  * Returns the size of the produced code.
-  */
-  virtual unsigned int code_size() const = 0;
 
   /*
   * Returns true if this node is known to be an integral type.
@@ -121,107 +115,107 @@ public:
    */
   virtual void sort() = 0;
 
-  
+
   /**
    * This method collects like terms together.
    * It will return an expression_node representing the node
-   * that should replace the one it was called. Sometimes it 
+   * that should replace the one it was called. Sometimes it
    * returns the same expression_node* as the node that it
    * was called on in which case the old node should not be deleted.
    * If a different node was returned the old node should be deleted by the caller.
-   * 
+   *
    * Precondition:
-   * The node should be in pre-canonical form and 
+   * The node should be in pre-canonical form and
    * should be sorted according to canonical ordering.
-   * 
+   *
    * The node that is returned by this method will still be in
    * pre-canonical form and will still be ordered according to
    * canonical ordering. Additionally, polyadic types will be maintained.
-   * @return 
+   * @return
    */
   virtual expression_node* collect_terms() = 0;
-  
+
   /**
    * Performs one round of optimization on the node and its subtrees.
    * In general, this function should recursively call optimization_round()
    * on each of its children, and then perform EXACTLY one of the following optimizations:
-   * 
+   *
    * If the node is evaluatable it is replaced with its evaluation.
    * If a polyadic node has one child, the polyadic node is replaced by that child.
    * Note that this must happen before any other optimization checks for otherwise
    * it would be possible for a polyadic child to have no children.
-   * 
+   *
    * In a multiplication node, any children that evaluate to 1 exactly
    * will be removed. Note that in this evaluation children whose type is
    * of integer type should be evaluated and then ROUNDED to an integer before comparing it to 1.
    * If any children that evaluate to zero the function returns an integer_number_leaf
-   * whose value is zero. 
-   * 
+   * whose value is zero.
+   *
    * In an addition node, any children that evaluate to zero as above will be removed
    * in a similar fashion as above.
-   * 
+   *
    * In a subtraction node, if the left child evaluates to zero,
    * node is replaced by the unary minus of the left child.
    * If the right child is zero the node is replaced by the right child.
-   * 
+   *
    * In a division node, if the rightChild is 1 it is replaced
    * by a the leftChild. If the leftChild is zero, it is replaced by zero
    * if the right child is not also zero.
-   * 
+   *
    * If a binary multiplication node has only one child as a result
    * of the above, it's child replaces it.
-   * 
+   *
    * In an exponentiation node, an exponent that evaluates to 1 will be replaced by its base.
    * An exponent that evaluates to zero will be replaced by a node representing 1
    * If its base does not also evaluate to zero.
-   * If its base evaluates to zero the node will be replaced by 
+   * If its base evaluates to zero the node will be replaced by
    * a zero if the exponent does not also evaluate to zero.
    * If the base evaluates to 1, it will be replaced by 1.
-   * 
+   *
    * Leaf nodes are already optimized and should return this.
-   * 
+   *
    * If the child of a unary minus operator is evaluatable,
    * it should be replaced with the appropriate value which
    * may or may not be integral.
-   * 
+   *
    * In general this method is called on the root of the AST until
    * the AST does not change. At that point, the AST is considered optimized.
-   * 
+   *
    * As with the previous methods, if the callee does not return this,
    * then the caller will delete the node that it called.
-   * 
+   *
    * Note that optimization_round will not introduce non-precanonical nodes
    * if the original tree is does not have those nodes.
-   * 
-   * 
-   * @return 
+   *
+   *
+   * @return
    */
   virtual expression_node* optimization_round() = 0;
-  
+
   /*
    * Differentiates the expression
    * with respect to the variable given in the string.
    * We assume that only the following nodes are present as in canonical form:
-   * 
+   *
    * polyadic multiplication
    * polyadic addition
    * exponentiation
    * integer number
    * number
    * variable
-   * 
+   *
    * When a number node is differentiated it returns a zero integer number node.
    * When a variable is differentiated it returns 1 if it is the number we are differentiating
    * and zero otherwise.
    * Polyadic addition simply returns the sum of the derivatives of each term.
    * polyadic multiplication uses the product rule to return the result.
-   * 
+   *
    * Left F be the base and G be the exponent. Then
-   * the derivative is 
+   * the derivative is
    * F^G(GF^(-1)F' + G'LN(F))
    * This is derived using implicit differentiation.
-   * 
-   * 
+   *
+   *
    * THUS: precondition for this method
    * is that only these operators are used. This
    * is guarenteed if transform_operators followed by
