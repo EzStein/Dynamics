@@ -133,6 +133,12 @@ instruction str_to_instruction(std::string str) {
     return instruction::FLD;
   else if(str == "FILD")
     return instruction::FILD;
+  else if(str == "MOV")
+    return instruction::MOV;
+  else if(str == "PUSH")
+    return instruction::PUSH;
+  else if(str == "POP")
+    return instruction::POP;
   else
     return instruction::NO_SUCH_INSTRUCTION;
 }
@@ -355,6 +361,8 @@ size char_to_size(char quant, bool fpu, bool fpuInt) {
   } else if(quant == 's') {
     if(fpu && !fpuInt) return size::DOUBLE_WORD;
     return size::WORD;
+  } else if(quant == 'd') {
+    return size::DOUBLE_WORD;
   } else if(quant == 'l') {
     if(fpu && !fpuInt) return size::QUAD_WORD;
     return size::DOUBLE_WORD;

@@ -16,7 +16,7 @@ public:
    * If so, we ensure that there if this register is actually used, 
    * then we encode an REX byte and do not encode one otherwise.
    */
-  void append(instruction inst, size operandSize, size addressSize,
+  void append(instruction inst, size operandSize, size addressSize, reg_type regType,
   addressing_mode addrMode, reg rmReg, long rmDisp, 
   reg rReg, bool isImm, long imm, bool rmIsDest, bool uniformReg,
   std::vector<unsigned char>& buf);

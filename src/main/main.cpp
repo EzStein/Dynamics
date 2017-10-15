@@ -20,8 +20,8 @@ int main() {
   assembler assem;
   std::vector<unsigned char> buf;
   std::string code =
-  "addq $0x122, 8(%r8d)\n"
-  "fldpi";
+  "fsubl -3(%eax), %st(0)\n"
+  "popq %rax";
   try {
     buf = assem.assemble(code);
   } catch(char * err) {

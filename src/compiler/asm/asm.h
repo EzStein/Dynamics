@@ -16,6 +16,8 @@
 * so there is a NONE entry if none are needed.
 */
 enum class instruction {
+  MOV,
+  PUSH, POP,
   STD_ARITH_INSTRUCTION_START,
   ADD, OR, ADC, SBB, AND, SUB, XOR, CMP,
   STD_ARITH_INTSRUCTION_END,
