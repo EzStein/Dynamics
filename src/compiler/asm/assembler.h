@@ -1,7 +1,9 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 #include "compiler/asm/asm.h"
+#include <vector>
 class assembler {
+public:
   /*Assemblers the instruction described by the appropriate imformation.
   * Note that when the addressing mode is REG, rmDisp is ignored. If the addressing mode is memory,
   offset is added to the value stored in rmReg to get the address. Currently

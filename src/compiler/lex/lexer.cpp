@@ -6,7 +6,7 @@ using std::map;
 using std::istream;
 using std::string;
 using std::invalid_argument;
-lexer::lexer(istream* _stream, const map<string, token>& lexerDef, bool _formatOperators = true) : stream(_stream), previousToken(token::ERROR), formatOperators(_formatOperators) {
+lexer::lexer(istream* _stream, const map<string, token>& lexerDef, bool _formatOperators) : stream(_stream), previousToken(token::ERROR), formatOperators(_formatOperators) {
 
   if(lexerDef.empty())
     throw invalid_argument("To define a lexer, you need at least one rule!");

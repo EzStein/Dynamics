@@ -8,7 +8,8 @@
 
 class lexer {
 public:
-
+  
+  lexer() { }
   /*Constructs a lexer with the given input stream of characters
   * and a rule set for identifying tokens.
    If format operators is set to true, the lexer will  insert asterisks and minus signs

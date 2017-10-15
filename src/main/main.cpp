@@ -6,33 +6,36 @@
 #include <map>
 #include <cassert>
 #include <sys/mman.h>
+#include <string>
 #include "math/vector.h"
 
 #include "compiler/ast/AST.h"
 #include "compiler/parser.h"
 #include "compiler/front/driver.h"
+#include "compiler/asm/assembler.h"
 using namespace std;
 
-int mains() {
-  while(1) {
-    std::cout << "Derivative Calculator!"<<std::endl;
-    std::cout << "Enter an expression: " << std::endl;
-    std::string str;
-    std::cin >> str;
-    std::cout << "Enter a variable name (x, y, z, etc...): " << std::endl;
-    std::string var;
-    std::cin >> var;
+int main() {
 
-
-    std::stringstream ss(str);
-    parser par(ss);
-    list<symbol> l;
-    AST ast = par.parse(l);
-    ast.differentiate(var);
-    std::cout << "The derivative is:" << std::endl;
-    std::cout << ast << std::endl;
-
+  assembler assem;
+  std::vector<unsigned char> buf;
+  std::string code =
+  "addq $0x122, 8(%r8d)\n"
+  "fldpi";
+  try {
+    buf = assem.assemble(code);
+  } catch(char * err) {
+    std::cout << err << std::endl;
+  } catch(const char * err) {
+    std::cout << err << std::endl;
+  } catch(std::string err) {
+    std::cout << err << std::endl;
   }
+  ofstream file;
+
+  file.open("asm.S", ios::binary | ios::out);
+  file.write(reinterpret_cast<char*>(buf.data()), buf.size());
+  file.close();
 
   return 0;
 }

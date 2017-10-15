@@ -9,31 +9,254 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <sstream>
+#include <map>
 
 std::vector<unsigned char> assembler::assemble(std::string str) {
-  map<string, token> lexDef;
-  lexDef[string("\\s*\\(")] = token::LEFT_PAREN;
-  lexDef[string("\\s*\\)")] = token::RIGHT_PAREN;
-  lexDef[string("\\s*\\n")] = token::NEW_LINE;
-  lexDef[string("\\s*$")] = token::DOLLAR_SIGN;
-  lexDef[string("\\s*0x[ABCDEFabcdef\\d][ABCDEFabcdef\\d]*")] = token::HEX_INT;
-  lexDef[string("\\s*(-\\d|\\d)\\d*")] = token::DEC_INT;
-  lexDef[string("\\s*%[\\a\\A\\d][\\a\\A\\d]*")] = token::REG;
-  lexDef[string("\\s*[\\a\\A\\d][\\a\\A\\d]*")] = token::INSTRUCTION;
-  
+  std::map<std::string, token> lexDef;
+  lexDef[std::string(" *,")] = token::COMMA;
+  lexDef[std::string(" *\\(")] = token::LEFT_PAREN;
+  lexDef[std::string(" *\\)")] = token::RIGHT_PAREN;
+  lexDef[std::string(" *\\n")] = token::NEW_LINE;
+  lexDef[std::string(" *$")] = token::DOLLAR_SIGN;
+  lexDef[std::string(" *0x[ABCDEFabcdef\\d][ABCDEFabcdef\\d]*")] = token::HEX_INT;
+  lexDef[std::string(" *(-\\d|\\d)\\d*")] = token::DEC_INT;
+  lexDef[std::string(" *%[\\w][\\w]*")] = token::REG;
+  lexDef[std::string(" *%st\\(\\d\\)")] = token::REG;
+  lexDef[std::string(" *[\\a][\\a]*")] = token::INSTRUCTION;
+
   std::stringstream stream(str);
   lexer lex = lexer(&stream, lexDef, false);
-  std::string lexeme;
-  token tok;
-  tok = lex.next_token(lexeme);
-  /*Remove the whitespace from the string*/
-  lexeme.erase(std::remove_if(lexeme.begin(), lexeme.end(), std::isspace), lexeme.end());
-  
-  if(tok != token::INSTRUCTION)
-    throw "Unexpected token: " + token_to_string(tok) + ", " + lexeme + " Expected Instruction";
-  /*Make upper case*/
-  std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::toupper);
-  
+  std::vector<unsigned char> vec;
+  while(1) {
+    std::string lexeme;
+    token tok;
+    tok = lex.next_token(lexeme);
+    
+
+    if(tok != token::INSTRUCTION)
+      throw "Unexpected token: " + token_to_string(tok) + ", " + lexeme + " Expected Instruction";
+    /*Remove the whitespace from the string*/
+    lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+    /*Make upper case*/
+    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+    instruction inst = str_to_instruction(lexeme);
+    size operandSize = size::NONE;
+    /*If the instruction does not exist, then we assume
+     that there is a quantifier specifying the operand size after it*/
+    if(inst == instruction::NO_SUCH_INSTRUCTION) {
+
+      /*Note that the string is nonempty, so we can do:*/
+      char quantifier = *(lexeme.end() - 1);
+      /*We remove the last letter of the instruction*/
+      lexeme.pop_back();
+      inst = str_to_instruction(lexeme);
+      if(inst == instruction::NO_SUCH_INSTRUCTION)
+        throw "No such instruction: " + lexeme + quantifier;
+      operandSize = char_to_size(quantifier, is_fpu_instruction(inst), is_fpu_integer_instruction(inst));
+      
+      
+      if(operandSize == size::NO_SUCH_SIZE)
+        throw "No such size specifier: " + quantifier;
+      if(operandSize == size::INVALID)
+        throw "Quantifier '" + std::string(1, quantifier) + "' is not valid in this context.";
+    }
+    /*We now have an instruction and operand size which may be NONE.
+     If it is NONE, we will construct it from the operands*/
+    tok = lex.next_token(lexeme);
+    /*Remove the whitespace from the string*/
+    lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+    /*Make upper case*/
+    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+    reg rReg = reg::NONE, rmReg = reg::NONE;
+    addressing_mode addrMode = addressing_mode::NONE;
+    size addressSize = size::QUAD_WORD;
+    long rmDisp;
+    bool isImm = false;
+    long imm;
+    bool rmIsDest;
+    bool uniformReg;
+    if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
+      append(inst, operandSize, addressSize, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
+    
+      if(tok == token::ENDPOINT) break;
+      if(tok != token::NEW_LINE) continue;
+    }
+    /*If there are two operands, the second one (destination) will be
+     assigned rmReg field if possible, and rmIsDest will be true.
+     * The only instance when this does not
+     occur is when source is a memory operand or when both
+     * are FPU registers. In that case, the one which is NOT
+     * the zero register will be put in the rmReg field.*/
+    /*If there is only one operand that operand is kept in the rmReg field*/
+
+    if(tok == token::REG) {
+      /*We have encountered a REG, We convert it to a register
+       and verify that it's size is appropriate. If no quantifier was given,
+       we set the quantifier. Initially we set this reg to the rReg field. If the
+       next operand is memory we set it to rmReg. If this is an FPU register,
+       which is not ST0, then we set it to rmReg, and rmIsDest is true*/
+      reg_type type;
+      size size = size::NONE;
+      str_to_reg(lexeme, rReg, type, size, uniformReg);
+      if(rReg == reg::NONE) throw "No such register " + lexeme;
+      if(operandSize == size::NONE) operandSize = size;
+      else if(type == reg_type::GPR && operandSize != size) {
+        throw "Operand size mismatch!";
+      }
+      if(type == reg_type::FPU && rReg != reg::R0) {
+        //std::cout << "AAA" << std::endl;
+        rmReg = rReg;
+        rmIsDest = false;
+        addrMode = addressing_mode::REG;
+        rReg = reg::NONE;
+      }
+    } else if(tok == token::DOLLAR_SIGN) {
+      tok = lex.next_token(lexeme);
+      /*Remove the whitespace from the string*/
+      lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+      /*Make upper case*/
+      std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+      isImm = true;
+      
+      if(tok == token::HEX_INT) {
+        imm = std::stoul(lexeme, nullptr, 16);
+      } else if(tok == token::DEC_INT) {
+        imm = std::stol(lexeme);
+      } else {
+        throw "Unexpected token '" + lexeme + "' Expected integer literal.";
+      }
+    } else {
+      /*We have encountered a memory operand*/
+      if(tok == token::HEX_INT) {
+        rmDisp = std::stoul(lexeme, nullptr, 16);
+        /*Consume the left Paren*/
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+      } else if(tok == token::DEC_INT) {
+        rmDisp = std::stol(lexeme);
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+      } else if(tok == token::LEFT_PAREN) {
+        rmDisp = 0;
+      } else {
+        throw "Unexpected token '" + lexeme + "' Expected register or memory operand";
+      }
+      tok = lex.next_token(lexeme);
+      /*Remove the whitespace from the string*/
+      lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+      /*Make upper case*/
+      std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+      reg_type type;
+      size size = size::NONE;
+      bool dummy;
+      str_to_reg(lexeme, rmReg, type, size, dummy);
+      if(type != reg_type::GPR) {
+        throw "Only general purpose registers may be used for addressing";
+      }
+      if(size == size::BYTE || size == size::WORD) {
+        throw "8 bit and 16 bit addressing are not supported in long mode!";
+      }
+      addressSize = size;
+      addrMode = addressing_mode::MEM;
+      rmIsDest = false;
+      lex.next_token(lexeme); //Consume the right Paren
+      std::cout << lexeme<<std::endl;
+    }
+
+    tok = lex.next_token(lexeme);
+    /*Remove the whitespace from the string*/
+    lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+    /*Make upper case*/
+    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+    if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
+      append(inst, operandSize, addressSize, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
+    
+      if(tok == token::ENDPOINT) break;
+      if(tok != token::NEW_LINE) continue;
+    }
+    if(tok != token::COMMA) throw "Unexpected token '" + lexeme + "' Expected ','";
+
+    tok = lex.next_token(lexeme);
+    /*Remove the whitespace from the string*/
+    lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+    /*Make upper case*/
+    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+
+    if(tok == token::REG) {
+      /*We have encountered a REG, We convert it to a register
+       and verify that it's size is appropriate. If no quantifier was given,
+       we set the quantifier.*/
+      reg_type type;
+      size size = size::NONE;
+      reg tmpReg;
+      str_to_reg(lexeme, tmpReg, type, size, uniformReg);
+      //if(uniformReg != tmpUniformReg) throw "Uniform byte registers must be used with other uniform registers";
+      if(tmpReg == reg::NONE) throw "No such register " + lexeme;
+      if(operandSize == size::NONE) operandSize = size;
+      else if(type == reg_type::GPR && operandSize != size) {
+        throw "Operand size mismatch!";
+      }
+     
+      /*If rReg is not already taken, we use it*/
+      if(rReg == reg::NONE) {
+        rReg = tmpReg;
+      } else {
+        rmReg = tmpReg;
+        addrMode = addressing_mode::REG;
+        rmIsDest = true;
+      }
+    } else if(tok == token::DOLLAR_SIGN) {
+      throw "An immediate operand can not be a destination";
+    } else {
+      /*We have encountered a memory operand*/
+      /*If we already have a memory operand we throw an exception*/
+      if(rmReg != reg::NONE) {
+        throw "Only one memory operand may be used per instruction";
+      }
+      if(tok == token::HEX_INT) {
+        rmDisp = std::stoul(lexeme, nullptr, 16);
+        /*Consume the left Paren*/
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+      } else if(tok == token::DEC_INT) {
+        rmDisp = std::stol(lexeme);
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+      } else if(tok == token::LEFT_PAREN) {
+        rmDisp = 0;
+      } else {
+        throw "Unexpected token '" + lexeme + "' Expected register or memory operand";
+      }
+      tok = lex.next_token(lexeme);
+      /*Remove the whitespace from the string*/
+      lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+      /*Make upper case*/
+      std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+      reg_type type;
+      size size = size::NONE;
+      bool dummy;
+      str_to_reg(lexeme, rmReg, type, size, dummy);
+      if(type != reg_type::GPR) {
+        throw "Only general purpose registers may be used for addressing";
+      }
+      if(size == size::BYTE || size == size::WORD) {
+        throw "8 bit and 16 bit addressing are not supported in long mode!";
+      }
+      addressSize = size;
+      addrMode = addressing_mode::MEM;
+      rmIsDest = true;
+      lex.next_token(lexeme); //Consume the right Paren
+    }
+
+    tok = lex.next_token(lexeme);
+    /*Remove the whitespace from the string*/
+    lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
+    /*Make upper case*/
+    std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
+    
+    append(inst, operandSize, addressSize, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
+    
+    if(tok == token::ENDPOINT) break;
+    if(tok != token::NEW_LINE) throw "Unexpected token '" + lexeme + "' Expected '\\n'";
+  }
+  return vec;
 }
 
 void assembler::append(instruction inst, size operandSize, size addressSize,
@@ -41,27 +264,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
   reg rReg, bool isImm, long imm, bool rmIsDest, bool uniformReg,
   std::vector<unsigned char>& buf) {
 
-  /*We assume we are in 64 bit long mode. The default operand size is 32 bits while the default address size is
-   64 bits. We first construct the REX prefix. We need it under three circumstances.
-   If we are using a 64 bit operand size if
-   rmReg or rReg is R8 - R15, or if we are using SPL BPL DIL SIL uniform byte reg's*/
-
-  unsigned char rexPrefix = 0x40;
-  if(operandSize == size::QUAD_WORD) {
-    rexPrefix |= 0x08;
-  }
-  if(rReg >= 8) {
-    rexPrefix |= 0x04;
-  }
-  if(rmReg >= 8) {
-    rexPrefix |= 0x01;
-  }
-  if(operandSize == size::QUAD_WORD || rReg >= 8 || rmReg >= 8
-    || (operandSize == size::BYTE && uniformReg && (rReg >= 4 && rReg <= 7 || rmReg >= 4 && rmReg <= 7 ))) {
-    buf.push_back(rexPrefix);
-  }
-
-  /*If the operand size is 16 bits, we use an override prefix*/
+   /*If the operand size is 16 bits, we use an override prefix*/
   if(operandSize == size::WORD) {
     buf.push_back(0x66);
   }
@@ -70,6 +273,31 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
   if(addressSize == size::DOUBLE_WORD) {
     buf.push_back(0x67);
   }
+  
+  /*We assume we are in 64 bit long mode. The default operand size is 32 bits while the default address size is
+   64 bits. We first construct the REX prefix. We need it under three circumstances.
+   If we are using a 64 bit operand size (not a FPU operation), if
+   rmReg or rReg is R8 - R15, or if we are using SPL BPL DIL SIL uniform byte reg's*/
+
+  int rRegIntVal = static_cast<int>(rReg);
+  int rmRegIntVal = static_cast<int>(rmReg);
+  unsigned char rexPrefix = 0x40;
+  if(operandSize == size::QUAD_WORD && !is_fpu_instruction(inst)) {
+    rexPrefix |= 0x08;
+  }
+  if(rRegIntVal >= 8 && rReg != reg::NONE) {
+    rexPrefix |= 0x04;
+  }
+  if(rmRegIntVal >= 8 && rmReg != reg::NONE) {
+    rexPrefix |= 0x01;
+  }
+  if((operandSize == size::QUAD_WORD && !is_fpu_instruction(inst)) ||
+    (rRegIntVal >= 8 && rReg != reg::NONE) || (rmRegIntVal >= 8 && rmReg != reg::NONE)
+    || (operandSize == size::BYTE && uniformReg && (rRegIntVal >= 4 && rRegIntVal <= 7 || rmRegIntVal >= 4 && rmRegIntVal <= 7 ))) {
+    buf.push_back(rexPrefix);
+  }
+
+  
 
   /*We now construct the primary opcode and opcode extension. The
    opcode extension is inserted into the modrmbyte if the insertOpExt bool is set to true.
@@ -115,6 +343,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
     if(is_fpu_integer_instruction(inst) && addrMode != addressing_mode::MEM) {
       throw "FPU integer instructions must access memory";
     }
+    std::cout << (operandSize == size::QUAD_WORD)<<std::endl;
     if(addrMode == addressing_mode::MEM) {
       switch(operandSize) {
         case size::WORD:
@@ -127,6 +356,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
         case size::QUAD_WORD:
           if(is_fpu_integer_instruction(inst)) throw "FPU QUAD_WORD size only supported for floating vals!";
           opcode |=0x04;
+          break;
         default: throw "Byte size not supported in FPU instructions!";
       }
     } else {
@@ -175,14 +405,14 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
      * the modrmbyte has already been calculated and should not be recalculated
      * later on. We do not need to set the insertOpExt bool because that step will be skipped.
      */
-    
+
     modrmBytePreCalculated = true;
     unsigned char modrmByte = 0x00;
     switch(inst) {
 
       case instruction::FNOP:
         opcode = 0xD9;
-        modrmByte = 0b11010000;
+        modrmByte = 0xD0;
         break;
       case instruction::FCHS:
         opcode = 0xD9;
@@ -328,7 +558,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
      * stores the addressing mode may be REG ONLY when the opcode is 0xDD.
      * opExt 111 is used to indicate a store pop instruction
      * whose width is 64 bits if bit 2 is 1 for integer operations and 80 bits if bit 2 is 0.
-     * 
+     *
      */
     insertOpExt = true;
     opcode = 0xD9;
@@ -336,7 +566,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
     if(is_fpu_integer_instruction(inst)) {
       opcode |= 0x02;
     }
-    
+
     /*Now we set the opExt*/
     if(is_fpu_load_instruction(inst)) {
       opExt = 0x00;
@@ -345,9 +575,10 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
     } else {
       opExt = 0x02;
     }
-    
-    
+
+
     /*Now we calculate bit 2 and possibly override opExt*/
+    
     if(operandSize == size::DOUBLE_WORD) {
       /*32 bits are always set to 0*/
       opcode |= 0x00;
@@ -388,15 +619,15 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
       The opExt is also set here. The following switch case
       should only assign zero to bits 0, 1, and 7 as these will be determined later*/
      switch(inst) {
-       case instruction::ADD: 
+       case instruction::ADD:
          opcode = 0x00;
          opExt = 0x00;
          break;
-       case instruction::OR: 
+       case instruction::OR:
          opcode = 0x08;
          opExt = 0x01;
          break;
-       case instruction::ADC: 
+       case instruction::ADC:
          opcode = 0x10;
          opExt = 0x02;
          break;
@@ -499,27 +730,27 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
   if(insertOpExt) {
     modrmByte |= opExt << 3;
   } else {
-    modrmByte |= ((rReg & 0x07) << 3);
+    modrmByte |= ((static_cast<unsigned int>(rReg) & 0x07) << 3);
   }
-  modrmByte |= rmReg & 0x07;
+  modrmByte |= static_cast<unsigned int>(rmReg) & 0x07;
   /*We add the modrmByte if it was not already added*/
   if(!modrmBytePreCalculated)
     buf.push_back(modrmByte);
 
-  /*Now if rmReg is sp or r12, we need to specify a SIB byte that
+  /*Now if rmReg is sp or r12 and the addressing mode is mem, we need to specify a SIB byte that
    evaluates as sp or r12*/
-  if(rmReg == reg::R4 || rmReg == reg::R12) {
-    unsigned char sib = 0b00100000;
+  if(addrMode == addressing_mode::MEM && (rmReg == reg::R4 || rmReg == reg::R12)) {
+    unsigned char sib = 0x20;
     /*The first two bits (00) indicate a scale of 1.
      The next 3 (100) indicate that there is no index
      and the next 3 indicate the base register*/
-    sib |= rmReg & 0x07;
+    sib |= static_cast<unsigned int>(rmReg) & 0x07;
     buf.push_back(sib);
   }
 
   /*Now we encode the displacement bytes. If rmReg is r5 or r13 then we always
    encode a byte even when disp is zero*/
-  if(rmDisp != 0 || rmReg == reg::R5 || rmReg == reg::R13) {
+  if(addrMode == addressing_mode::MEM && (rmDisp != 0 || rmReg == reg::R5 || rmReg == reg::R13)) {
     if(rmDisp >= -128 && rmDisp <= 127) {
       buf.push_back(rmDisp);
     } else {
@@ -529,6 +760,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize,
       buf.push_back(rmDisp >> 24);
     }
   }
+  
 
   /*IMM. If the operand size is 8 bits we set the sign extend bit to 0 and we require that
    the immediate fit into 8 bits. If the operand size is not 8 bits we do the following:

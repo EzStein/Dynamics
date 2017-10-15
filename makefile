@@ -59,7 +59,7 @@ CC = g++ -std=c++11 -static-libgcc -static-libstdc++ -I$(SRC_DIR) -isystem $(INC
 
 DIRS = $(EXE_DIR) $(OBJ_DIR) $(dir $(OBJS))
 
-WARNINGS = -Wall -pedantic  \
+PRODUCTION = -Wall -pedantic  \
     -pedantic-errors -Wextra -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
@@ -84,7 +84,7 @@ WARNINGS = -Wall -pedantic  \
 		-Wno-reorder -Wno-sign-conversion
 
 DEVELOPMENT = -ggdb -O0
-PRODUCTION = -Waggregate-return -Weffc++ -O3 -Wunused-parameter -Wpadded -Werror
+PRODUCTION += -Waggregate-return -Weffc++ -O3 -Wunused-parameter -Wpadded -Werror
 
 all: $(EXE_DIR)/$(APP_NAME) package
 
