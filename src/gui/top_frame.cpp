@@ -111,11 +111,10 @@ void top_frame::on_paint_gl_renderer(wxPaintEvent& evt) {
   static int i = 0;
   glPanel->SetCurrent(*glContext);
   if(i == 0) initialize_gl();
-  std::cout << ++i <<std::endl;
+
 
   int x, y;
   glPanel->GetSize(&x, &y);
-  std::cout << x << std::endl;
   glViewport(0,0,x, y);
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -173,7 +172,7 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   }
 
   std::list<math::vector<double, 4> > points = std::list<math::vector<double, 4> >();
-  std::cout << vec << std::endl;
+
   points.push_back(vec);
   while(vec[0] < tMax) {
 
@@ -181,7 +180,7 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
     points.push_back(vec);
   }
   vec = *points.begin();
-  std::cout << tMin << std::endl;
+
   while(vec[0] > tMin) {
 
     vec = math::euler(vec, xFunc, yFunc, zFunc, -tInc);
@@ -302,7 +301,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
       vec1 = vec2;
     }
   }
-  std::cout << "DONE"<<std::endl;
 }
 
 math::vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {

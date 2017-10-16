@@ -16,3 +16,4 @@ tmp
 nbproject
 fractal_tmp
 core
+callgrind.*

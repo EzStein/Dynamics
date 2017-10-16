@@ -60,7 +60,15 @@ public:
 
   std::string emit_code_amd64() const;
 
+  /*
+  * This should be called immediatly after on operation is performed that decrements the FPU stack.
+  * The function will emmit code to push a stored register value onto the bottom of the stack.
+  */
   static void emit_stack_dec_amd64(std::string&, compiler_data& data);
+  /*
+  * This should be called immediatly before an operation that increments the stack.
+  * It will potentially store the bottom of the stack in memory.
+  */
   static void emit_stack_inc_amd64(std::string&, compiler_data& data);
 
   friend std::ostream& operator<<(std::ostream&, const AST&);

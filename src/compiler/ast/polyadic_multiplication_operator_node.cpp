@@ -5,6 +5,7 @@
  */
 
 #include <list>
+#include "compiler/ast/AST.h"
 #include "compiler/ast/polyadic_multiplication_operator_node.h"
 #include "expression_node.h"
 #include "compiler/ast/visitor/mutation/level_multiplication_operator_visitor.h"
@@ -36,7 +37,7 @@
    }
    return acc;
   }
- 
+
   long polyadic_multiplication_operator_node::evaluate_as_integer() const {
     const_iterator_t iter = children.begin();
      const_iterator_t end = children.end();
@@ -46,8 +47,8 @@
      }
      return acc;
   }
- 
- 
+
+
  std::ostream& polyadic_multiplication_operator_node::print(std::ostream& out) const {
    const_iterator_t iter = children.begin();
    const_iterator_t end = children.end();
@@ -64,8 +65,27 @@
  }
 
 
- void polyadic_multiplication_operator_node::emit_code_amd64(std::string& out, compiler_data&) const {
-   //return out;
+ void polyadic_multiplication_operator_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
+   if(children.size() == 1) {
+     /*There is only one child so its value is emitted onto the stack*/
+     (*children.begin())->emit_code_amd64(acc, data);
+     return;
+   }
+
+   const_iterator_t iter = children.begin();
+   const_iterator_t end = children.end();
+   /*We first emit the first child onto the stack.*/
+   (*iter)->emit_code_amd64(acc, data);
+   ++iter;
+
+   for(; iter != end; ++iter) {
+     /*Guarenteed to execute at least once*/
+     /*We put the next child onto the stack*/
+     (*iter)->emit_code_amd64(acc, data);
+     acc += "fmulp %st(0), %st(1)\n";
+     AST::emit_stack_dec_amd64(acc, data);
+   }
+   /*At the end, %st0 contains the product so we don't need to do anything*/
  }
 
  expression_node* polyadic_multiplication_operator_node::copy() const {

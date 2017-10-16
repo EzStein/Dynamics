@@ -42,42 +42,122 @@ std::ostream& exponentiation_operator_node::print(std::ostream& out) const {
 }
 
 void exponentiation_operator_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
-  rightChild->emit_code_amd64(acc, data); //Now on %st(1) EXPONENT
-  leftChild->emit_code_amd64(acc, data);  //Put on %st(0) BASE
-  acc += "fyl2x\n";
-  //Performs exponent * log2 (base) stores in %st(0)
-  //We must now perform 2^%st(0)
-	//We do this by performing 2^((int)%st0 + (frac)%st0)
-	//Or 2^intval * 2^fracval
-  AST::emit_stack_dec_amd64(acc, data);
+  if(rightChild->is_integral()) {
+    if(rightChild->evaluatable()) {
+      long exponent = rightChild->evaluate_as_integer();
+      if(exponent == 0) {
+        /*we simply load one onto the stack*/
+        AST::emit_stack_inc_amd64(acc, data);
+        acc +=
+        "fld1\n";
+      } else if(exponent == 1) {
+        /*The result is simply the left child*/
+        leftChild->emit_code_amd64(acc, data);
+      } else if(exponent == -1) {
+        /*The result is 1 over the left child*/
+        leftChild->emit_code_amd64(acc, data);
+        AST::emit_stack_inc_amd64(acc, data);
+        acc += "fld1\n";
+        /*ST0 is 1 and ST1 is base*/
+        acc += "fdivrp %st(0), %st(1)\n";
+        AST::emit_stack_dec_amd64(acc, data);
+      } else if(exponent > 1) {
+        leftChild->emit_code_amd64(acc, data); /*Put base into %st(0)*/
+        AST::emit_stack_inc_amd64(acc, data);
+        acc +=
+        "fld %st(0)\n"; /*Copy base to %st(1)*/
+        /*ST0 and ST1 now both contain the base and exponent*/
+        for(; exponent != 2; --exponent)
+          acc += "fmul %st(0), %st(1)\n";
+        acc += "fmulp %st(0), %st(1)\n";
+        AST::emit_stack_dec_amd64(acc, data);
+      } else {
+        exponent = -1*exponent;
+        leftChild->emit_code_amd64(acc, data); /*Put base into %st(0)*/
+        AST::emit_stack_inc_amd64(acc, data);
+        acc +=
+        "fld %st(0)\n"; /*Copy base to %st(1)*/
+        /*ST0 and ST1 now both contain the base and exponent*/
+        for(; exponent != 2; --exponent)
+          acc += "fmul %st(0), %st(1)\n";
+        acc += "fmulp %st(0), %st(1)\n";
+        AST::emit_stack_dec_amd64(acc, data);
+        /*Now we must form 1/st(0)*/
+        AST::emit_stack_inc_amd64(acc, data);
+        acc += "fld1\n";
+        /*ST0 is 1 and ST1 is base*/
+        acc += "fdivrp %st(0), %st(1)\n";
+        AST::emit_stack_dec_amd64(acc, data);
+      }
+    } else {
+      throw "Non evauluatble expressions with integral exponent are not yet compilable!";
+    }
 
-  AST::emit_stack_inc_amd64(acc, data);
+    /*
+    * We first store the exponent value in a GPR (%rax)
+    */
+    /*rightChild->emit_code_amd64(acc, data);
+    acc +=
+    "fistpq -0x50(%rbp)\n"; /*Store and pop the value as an integer*/
+    /*AST::emit_stack_dec_amd64(acc, data);
+    acc +=
+    "movq -0x50(%rbp), %rax\n"
+    "subq $1, %rax\n";
 
-	acc +=
-  "fld %st(0)\n"	//Copies the value, Now it is held in %st(0) and %st(1)
-  "frndint\n"		//%st(0) now holds the rounded value and %st(1) the original
-	"fsub %st(0), %st(1)\n"
-  "fxch %st(1)\n"
-	//st(1) holds integer part, st(0) fractional part
+    /*Put the base into ST(0)*/
+    /*leftChild->emit_code_amd64(acc, data);
+    /*Copy the base from ST(0) to ST(1)*/
+    /*AST::emit_stack_inc_amd64(acc, data);
+    acc += "fld %st(0)\n";
 
-  "f2xm1\n";
-  //Performs 2^fracval - 1 and stores it in %st(0)
+    /*Multiply the two together and store it in %st(0), %st(1) is unchanged*/
+    /*acc += "LABEL:\n"
+    acc += "fmul %st(1), %st(0)\n";
+    /*Subtract 1 from rax*/
+    /*acc += "subq $1, %rax\n";
+    acc += "cmp %rax\n";
+    acc += "jne LABEL\n";*/
 
 
-  AST::emit_stack_inc_amd64(acc, data);
+  } else {
+    rightChild->emit_code_amd64(acc, data); //Now on %st(1) EXPONENT
+    leftChild->emit_code_amd64(acc, data);  //Put on %st(0) BASE
 
-	//Add 1 to %st(0)
-	acc +=
-  "fld1\n"
-	"faddp %st(0), %st(1)\n";
-  AST::emit_stack_dec_amd64(acc, data);
-	//Perform %st(0) * 2^%st(1) and stores in %st(0)
-	acc +=
-  "fscale\n"
-  "fxch %st(1)\n"
-  "fstpl %st(0)\n";
-  //Stores st0 into itself then pops the stack
-  AST::emit_stack_dec_amd64(acc, data);
+    acc += "fyl2x\n";
+    //Performs exponent * log2 (base) stores in %st(0)
+    //We must now perform 2^%st(0)
+  	//We do this by performing 2^((int)%st0 + (frac)%st0)
+  	//Or 2^intval * 2^fracval
+    AST::emit_stack_dec_amd64(acc, data);
+
+    AST::emit_stack_inc_amd64(acc, data);
+
+  	acc +=
+    "fld %st(0)\n"	//Copies the value, Now it is held in %st(0) and %st(1)
+    "frndint\n"		//%st(0) now holds the rounded value and %st(1) the original
+  	"fsub %st(0), %st(1)\n"
+    "fxch %st(1)\n"
+  	//st(1) holds integer part, st(0) fractional part
+
+    "f2xm1\n";
+    //Performs 2^fracval - 1 and stores it in %st(0)
+
+
+    AST::emit_stack_inc_amd64(acc, data);
+
+  	//Add 1 to %st(0)
+  	acc +=
+    "fld1\n"
+  	"faddp %st(0), %st(1)\n";
+    AST::emit_stack_dec_amd64(acc, data);
+  	//Perform %st(0) * 2^%st(1) and stores in %st(0)
+  	acc +=
+    "fscale\n"
+    "fxch %st(1)\n"
+    "fstpl %st(0)\n";
+    //Stores st0 into itself then pops the stack
+    AST::emit_stack_dec_amd64(acc, data);
+  }
 }
 
 expression_node* exponentiation_operator_node::copy() const {

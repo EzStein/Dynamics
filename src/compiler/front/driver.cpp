@@ -47,17 +47,16 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(string str) {
   std::string code = ast.emit_code_amd64();
   assembler assem;
   std::vector<unsigned char> vec;
-  
-  std::cout << "!!!!" << std::endl;
+
+
   try {
     vec = assem.assemble(code);
-    
+
   } catch (char * err) {
     std::cout << err << std::endl;
   } catch (std::string& err) {
     std::cout << err << std::endl;
   }
-  std::cout << "?????" << std::endl;
 
   unsigned char * buf = nullptr;
   size_t size = vec.size();

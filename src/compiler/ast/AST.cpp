@@ -165,7 +165,7 @@ std::string AST::emit_code_amd64() const {
   std::string retVal =
   "pushq %rbp\n"
   "movq %rsp, %rbp\n"
-  "subq $0x50, %rsp\n"
+  "subq $0x50, %rsp\n" /*The 8 bytes of memory -0x50(%rbp) are used for scratch space*/
   "stmxcsr -0x4(%rbp)\n"
   "fstcw -0x6(%rbp)\n"
   "movw $0x0f7f, -0x8(%rbp)\n"

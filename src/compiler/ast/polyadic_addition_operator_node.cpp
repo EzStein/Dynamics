@@ -3,6 +3,7 @@
 #include "compiler/ast/visitor/mutation/pre_canonical_addition_operator_visitor.h"
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "polyadic_multiplication_operator_node.h"
+#include "compiler/ast/AST.h"
 #include "compiler/ast/integer_number_leaf_node.h"
 
 #include "number_leaf_node.h"
@@ -48,8 +49,27 @@ std::ostream& polyadic_addition_operator_node::print(std::ostream& out) const {
   return out;
 }
 
-void polyadic_addition_operator_node::emit_code_amd64(std::string& acc, compiler_data&) const {
+void polyadic_addition_operator_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
+  if(children.size() == 1) {
+    /*There is only one child so its value is emitted onto the stack*/
+    (*children.begin())->emit_code_amd64(acc, data);
+    return;
+  }
 
+  const_iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  /*We first emit the first child onto the stack.*/
+  (*iter)->emit_code_amd64(acc, data);
+  ++iter;
+
+  for(; iter != end; ++iter) {
+    /*Guarenteed to execute at least once*/
+    /*We put the next child onto the stack*/
+    (*iter)->emit_code_amd64(acc, data);
+    acc += "faddp %st(0), %st(1)\n";
+    AST::emit_stack_dec_amd64(acc, data);
+  }
+  /*At the end, %st0 contains the sum so we don't need to do anything*/
 }
 
 expression_node* polyadic_addition_operator_node::copy() const {
