@@ -13,17 +13,22 @@ integer_number_leaf_node::integer_number_leaf_node(double _val) {
 }
 
 void integer_number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
-  acc += "movl " + std::to_string((static_cast<unsigned long>(val) >> 32)) + ", %eax";
-  acc += "movl %eax, -0x4c(%rbp)";
-  acc += "movl " + std::to_string((static_cast<unsigned long>(val) << 32) >> 32) + ", %eax";
-  acc += "movl %eax, -0x50(%rbp)";
+  acc += "movl $" + std::to_string((static_cast<unsigned long>(val) >> 32)) + ", %eax\n";
+  acc += "movl %eax, -0x4c(%rbp)\n";
+  acc += "movl $" + std::to_string((static_cast<unsigned long>(val) << 32) >> 32) + ", %eax\n";
+  acc += "movl %eax, -0x50(%rbp)\n";
   AST::emit_stack_inc_amd64(acc, data);
-  "fldl -0x50(%rbp)\n";
+  acc += "fildq -0x50(%rbp)\n";
 }
 
 double integer_number_leaf_node::evaluate() const {
   return static_cast<double>(val);
 }
+
+long integer_number_leaf_node::evaluate_as_integer() const {
+  return val;
+}
+
 
 /*True if there are no variables in the sub tree whose root is this node*/
 bool integer_number_leaf_node::evaluatable() const {

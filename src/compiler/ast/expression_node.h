@@ -16,6 +16,7 @@ public:
   */
   virtual void emit_code_amd64(std::string&, compiler_data&) const = 0;
   virtual double evaluate() const = 0;
+  virtual long evaluate_as_integer() const = 0;
 
   /*True if there are no variables in the sub tree whose root is this node*/
   virtual bool evaluatable() const = 0;

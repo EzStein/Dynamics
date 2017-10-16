@@ -12,6 +12,11 @@ double number_leaf_node::evaluate() const {
   return val;
 }
 
+long number_leaf_node::evaluate_as_integer() const {
+  return static_cast<long>(val);
+}
+
+
 std::ostream& number_leaf_node::print(std::ostream& out) const {
   out << val;
   return out;
@@ -36,7 +41,7 @@ void number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) co
   }
   sstream << ", %eax\n";
   acc += sstream.str();
-  acc += "movl %eax, -0x4c(%rbp)";
+  acc += "movl %eax, -0x4c(%rbp)\n";
 
   sstream = std::stringstream();
   sstream << std::hex;
@@ -49,7 +54,7 @@ void number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) co
   }
   sstream << ", %eax\n";
   acc += sstream.str();
-  acc += "movl %eax, -0x50(%rbp)";
+  acc += "movl %eax, -0x50(%rbp)\n";
 
   acc += "fldl -0x50(%rbp)\n";
 }

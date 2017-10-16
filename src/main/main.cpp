@@ -15,15 +15,16 @@
 #include "compiler/asm/assembler.h"
 using namespace std;
 
-int main() {
+int mains() {
 
+  driver d;
+  driver::var4_double_func_t func = d.compile_as_function<driver::var4_double_func_t>(
+    std::string("x"));
+  std::cout << func(3,-4,0,0) << std::endl;
   assembler assem;
   std::vector<unsigned char> buf;
-  std::string code =
-  "fsubl -3(%eax), %st(0)\n"
-  "popq %rax";
   try {
-    buf = assem.assemble(code);
+    buf = assem.assemble("fyl2x");
   } catch(char * err) {
     std::cout << err << std::endl;
   } catch(const char * err) {

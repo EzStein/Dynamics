@@ -11,6 +11,11 @@ double unary_minus_operator_node::evaluate() const {
   return -child->evaluate();
 }
 
+long unary_minus_operator_node::evaluate_as_integer() const {
+  return -child->evaluate_as_integer();
+}
+
+
 std::ostream& unary_minus_operator_node::print(std::ostream& out) const {
   out << '-' << '(';
   child->print(out) << ')';
@@ -55,14 +60,14 @@ expression_node* unary_minus_operator_node::optimization_round() {
   unary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
   if(child->evaluatable()) {
     if(child->is_integral()) {
-      return new integer_number_leaf_node(-1 * child->evaluate());
+      return new integer_number_leaf_node(-1 * child->evaluate_as_integer());
     } else {
       return new number_leaf_node(-1 * child->evaluate());
     }

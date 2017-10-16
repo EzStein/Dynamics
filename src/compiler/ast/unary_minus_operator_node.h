@@ -18,6 +18,7 @@ private:
   void accept(visitor* v) override;
   expression_node* optimization_round() override;
   expression_node* differentiate(const std::string&) override;
+  long evaluate_as_integer() const override;
 
 };
 #endif

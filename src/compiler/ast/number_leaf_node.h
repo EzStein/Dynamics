@@ -16,6 +16,8 @@ private:
   bool is_integral() const override;
   void accept(visitor* v) override;
   expression_node* differentiate(const std::string& var) override;
+  long evaluate_as_integer() const override;
+
 
 public:
   double val;

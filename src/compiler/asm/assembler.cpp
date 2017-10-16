@@ -23,19 +23,22 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
   lexDef[std::string(" *(-\\d|\\d)\\d*")] = token::DEC_INT;
   lexDef[std::string(" *%[\\w][\\w]*")] = token::REG;
   lexDef[std::string(" *%st\\(\\d\\)")] = token::REG;
-  lexDef[std::string(" *[\\a][\\a]*")] = token::INSTRUCTION;
+  lexDef[std::string(" *[\\w][\\w]*")] = token::INSTRUCTION;
 
   std::stringstream stream(str);
   lexer lex = lexer(&stream, lexDef, false);
   std::vector<unsigned char> vec;
+  int lineNo = 0;
   while(1) {
+    ++lineNo;
     std::string lexeme;
     token tok;
     tok = lex.next_token(lexeme);
-    
+
 
     if(tok != token::INSTRUCTION)
-      throw "Unexpected token: " + token_to_string(tok) + ", " + lexeme + " Expected Instruction";
+      throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token: "
+        + token_to_string(tok) + ", " + lexeme + " Expected Instruction";
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -52,14 +55,14 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       lexeme.pop_back();
       inst = str_to_instruction(lexeme);
       if(inst == instruction::NO_SUCH_INSTRUCTION)
-        throw "No such instruction: " + lexeme + quantifier;
+        throw "On line, "+ std::to_string(lineNo) + ": " + "No such instruction: " + lexeme + quantifier;
       operandSize = char_to_size(quantifier, is_fpu_instruction(inst), is_fpu_integer_instruction(inst));
-      
-      
+
+
       if(operandSize == size::NO_SUCH_SIZE)
-        throw "No such size specifier: " + quantifier;
+        throw "On line, "+ std::to_string(lineNo) + ": " + "No such size specifier: " + quantifier;
       if(operandSize == size::INVALID)
-        throw "Quantifier '" + std::string(1, quantifier) + "' is not valid in this context.";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Quantifier '" + std::string(1, quantifier) + "' is not valid in this context.";
     }
     /*We now have an instruction and operand size which may be NONE.
      If it is NONE, we will construct it from the operands*/
@@ -79,9 +82,9 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     bool uniformReg;
     if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
       append(inst, operandSize, addressSize, regType, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
-    
+
       if(tok == token::ENDPOINT) break;
-      if(tok != token::NEW_LINE) continue;
+      if(tok == token::NEW_LINE) continue;
     }
     /*If there are two operands, the second one (destination) will be
      assigned rmReg field if possible, and rmIsDest will be true.
@@ -95,12 +98,12 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       /*We have encountered a REG, We convert it to a register
        and verify that it's size is appropriate. If no quantifier was given,
        we set the quantifier.*/
-      
+
       /*
        * This reg will always be assigned to rmReg.
        * If it turns out that the next operand is a memory operand,
        * we will move this reg to rReg and use the rmReg appropriately.
-       * 
+       *
        * If the next operand is just a reg, it is put into rReg,
        * unless it is an FPU st register that is not ST0, or we are using an imm.
        */
@@ -109,7 +112,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       if(rmReg == reg::NONE) throw "No such register " + lexeme;
       if(operandSize == size::NONE) operandSize = size;
       else if(regType == reg_type::GPR && operandSize != size) {
-        throw "Operand size mismatch!";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Operand size mismatch!";
       }
       rmIsDest = false;
       addrMode = addressing_mode::REG;
@@ -120,27 +123,27 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       /*Make upper case*/
       std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
       isImm = true;
-      
+
       if(tok == token::HEX_INT) {
         imm = std::stoul(lexeme, nullptr, 16);
       } else if(tok == token::DEC_INT) {
         imm = std::stol(lexeme);
       } else {
-        throw "Unexpected token '" + lexeme + "' Expected integer literal.";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected integer literal.";
       }
     } else {
       /*We have encountered a memory operand*/
       if(tok == token::HEX_INT) {
         rmDisp = std::stoul(lexeme, nullptr, 16);
         /*Consume the left Paren*/
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " +  "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
         rmDisp = std::stol(lexeme);
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
       } else {
-        throw "Unexpected token '" + lexeme + "' Expected register or memory operand";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected register or memory operand";
       }
       tok = lex.next_token(lexeme);
       /*Remove the whitespace from the string*/
@@ -151,16 +154,16 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       bool dummy;
       str_to_reg(lexeme, rmReg, regType, size, dummy);
       if(regType != reg_type::GPR) {
-        throw "Only general purpose registers may be used for addressing";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Only general purpose registers may be used for addressing";
       }
       if(size == size::BYTE || size == size::WORD) {
-        throw "8 bit and 16 bit addressing are not supported in long mode!";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "8 bit and 16 bit addressing are not supported in long mode!";
       }
       addressSize = size;
       addrMode = addressing_mode::MEM;
       rmIsDest = false;
       lex.next_token(lexeme); //Consume the right Paren
-      std::cout << lexeme<<std::endl;
+
     }
 
     tok = lex.next_token(lexeme);
@@ -170,11 +173,11 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
     if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
       append(inst, operandSize, addressSize, regType, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
-    
+
       if(tok == token::ENDPOINT) break;
-      if(tok != token::NEW_LINE) continue;
+      if(tok == token::NEW_LINE) continue;
     }
-    if(tok != token::COMMA) throw "Unexpected token '" + lexeme + "' Expected ','";
+    if(tok != token::COMMA) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' (" + token_to_string(tok) + ") Expected ','";
 
     tok = lex.next_token(lexeme);
     /*Remove the whitespace from the string*/
@@ -182,61 +185,59 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     /*Make upper case*/
     std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
 
+    reg_type tmpRegType;
     if(tok == token::REG) {
       /*We have encountered a REG, We convert it to a register
        and verify that it's size is appropriate. If no quantifier was given,
        we set the quantifier.*/
-      
+
       size size = size::NONE;
-      str_to_reg(lexeme, rReg, regType, size, uniformReg);
+
+      str_to_reg(lexeme, rReg, tmpRegType, size, uniformReg);
       //if(uniformReg != tmpUniformReg) throw "Uniform byte registers must be used with other uniform registers";
-      if(rReg == reg::NONE) throw "No such register " + lexeme;
+      if(rReg == reg::NONE) throw "On line, "+ std::to_string(lineNo) + ": " + "No such register " + lexeme;
       if(operandSize == size::NONE) operandSize = size;
-      else if(regType == reg_type::GPR && operandSize != size) {
-        throw "Operand size mismatch!";
+      else if(tmpRegType == reg_type::GPR && operandSize != size) {
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Operand size mismatch!";
       }
       /*If we are using an immediate, we must use the modrm byte*/
-      if(isImm || (regType == reg_type::FPU && rReg != reg::R0)) {
+      if(isImm || (tmpRegType == reg_type::FPU && rReg != reg::R0)) {
         rmReg = rReg;
         addrMode = addressing_mode::REG;
         rmIsDest = true;
       }
     } else if(tok == token::DOLLAR_SIGN) {
-      throw "An immediate operand can not be a destination";
+      throw "On line, "+ std::to_string(lineNo) + ": " + "An immediate operand can not be a destination";
     } else {
       /*We have encountered a memory operand*/
-      /*If we already have a memory operand we throw an exception*/
-      if(rmReg != reg::NONE) {
-        throw "Only one memory operand may be used per instruction";
-      }
       if(tok == token::HEX_INT) {
         rmDisp = std::stoul(lexeme, nullptr, 16);
         /*Consume the left Paren*/
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
         rmDisp = std::stol(lexeme);
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
       } else {
-        throw "Unexpected token '" + lexeme + "' Expected register or memory operand";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected register or memory operand";
       }
       tok = lex.next_token(lexeme);
       /*Remove the whitespace from the string*/
       lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
       /*Make upper case*/
       std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
-     
+
       size size = size::NONE;
       bool dummy;
       /*We move whatever was in rmReg to rReg. There cannot be two memory operands, so this is ok*/
       rReg = rmReg;
-      str_to_reg(lexeme, rmReg, regType, size, dummy);
-      if(regType != reg_type::GPR) {
-        throw "Only general purpose registers may be used for addressing";
+      str_to_reg(lexeme, rmReg, tmpRegType, size, dummy);
+      if(tmpRegType != reg_type::GPR) {
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Only general purpose registers may be used for addressing";
       }
       if(size == size::BYTE || size == size::WORD) {
-        throw "8 bit and 16 bit addressing are not supported in long mode!";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "8 bit and 16 bit addressing are not supported in long mode!";
       }
       addressSize = size;
       addrMode = addressing_mode::MEM;
@@ -249,12 +250,18 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
     std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
-    
-    std::cout << "ADDR MODE: " << (addrMode == addressing_mode::REG)<< std::endl;
+
+    if(tmpRegType == reg_type::MMX)
+      regType = reg_type::MMX;
+    else if(tmpRegType == reg_type::XMM)
+      regType = reg_type::XMM;
+    else if(tmpRegType == reg_type::FPU)
+      regType = reg_type::FPU;
+
     append(inst, operandSize, addressSize, regType, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
-    
+
     if(tok == token::ENDPOINT) break;
-    if(tok != token::NEW_LINE) throw "Unexpected token '" + lexeme + "' Expected '\\n'";
+    if(tok != token::NEW_LINE) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '\\n'";
   }
   return vec;
 }
@@ -273,7 +280,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
   if(addressSize == size::DOUBLE_WORD) {
     buf.push_back(0x67);
   }
-  
+
   /*We assume we are in 64 bit long mode. The default operand size is 32 bits while the default address size is
    64 bits. We first construct the REX prefix. We need it under three circumstances.
    If we are using a 64 bit operand size (not a FPU operation), if
@@ -282,7 +289,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
   int rRegIntVal = static_cast<int>(rReg);
   int rmRegIntVal = static_cast<int>(rmReg);
   unsigned char rexPrefix = 0x40;
-  if(operandSize == size::QUAD_WORD && !is_fpu_instruction(inst)) {
+  if(operandSize == size::QUAD_WORD && inst != instruction::RETN && !is_fpu_instruction(inst) && inst != instruction::POP && inst != instruction::PUSH) {
     rexPrefix |= 0x08;
   }
   if(rRegIntVal >= 8 && rReg != reg::NONE) {
@@ -291,14 +298,14 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
   if(rmRegIntVal >= 8 && rmReg != reg::NONE) {
     rexPrefix |= 0x01;
   }
-  if((operandSize == size::QUAD_WORD && !is_fpu_instruction(inst) && regType == reg_type::GPR) ||
+  if((operandSize == size::QUAD_WORD && inst != instruction::RETN && inst != instruction::POP && inst != instruction::PUSH && !is_fpu_instruction(inst) && regType == reg_type::GPR) ||
     (rRegIntVal >= 8 && rReg != reg::NONE) || (rmRegIntVal >= 8 && rmReg != reg::NONE)
     || (operandSize == size::BYTE && uniformReg && (rRegIntVal >= 4 && rRegIntVal <= 7 || rmRegIntVal >= 4 && rmRegIntVal <= 7 ))) {
-    if(inst != instruction::POP && inst != instruction::PUSH)
+
       buf.push_back(rexPrefix);
   }
 
-  
+
 
   /*We now construct the primary opcode and opcode extension. The
    opcode extension is inserted into the modrmbyte if the insertOpExt bool is set to true.
@@ -344,7 +351,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
     if(is_fpu_integer_instruction(inst) && addrMode != addressing_mode::MEM) {
       throw "FPU integer instructions must access memory";
     }
-  
+
     if(addrMode == addressing_mode::MEM) {
       switch(operandSize) {
         case size::WORD:
@@ -381,19 +388,35 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       case instruction::FSUB:
       case instruction::FSUBP:
       case instruction::FISUB:
-        opExt = 0x04; break;
+        if(addrMode == addressing_mode::REG)
+          opExt = 0x05;
+        else
+          opExt = 0x04;
+        break;
       case instruction::FSUBR:
       case instruction::FSUBRP:
       case instruction::FISUBR:
-        opExt = 0x05; break;
+       if(addrMode == addressing_mode::REG)
+          opExt = 0x04;
+        else
+          opExt = 0x05;
+        break;
       case instruction::FDIV:
       case instruction::FDIVP:
       case instruction::FIDIV:
-        opExt = 0x06; break;
+        if(addrMode == addressing_mode::REG)
+          opExt = 0x07;
+        else
+          opExt = 0x06;
+        break;
       case instruction::FDIVR:
       case instruction::FDIVRP:
       case instruction::FIDIVR:
-        opExt = 0x07; break;
+        if(addrMode == addressing_mode::REG)
+          opExt = 0x06;
+        else
+          opExt = 0x07;
+        break;
       default: throw "THIS SHOULD NOT OCCUR";
     }
     buf.push_back(opcode);
@@ -464,7 +487,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
         opcode = 0xD9;
         modrmByte = 0xF0;
         break;
-      case instruction::FY2LX:
+      case instruction::FYL2X:
         opcode = 0xD9;
         modrmByte = 0xF1;
         break;
@@ -488,7 +511,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
         opcode = 0xD9;
         modrmByte = 0xF8;
         break;
-      case instruction::FY2LXP1:
+      case instruction::FYL2XP1:
         opcode = 0xD9;
         modrmByte = 0xF9;
         break;
@@ -504,7 +527,6 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
         opcode = 0xD9;
         modrmByte = 0xFC;
         break;
-
       case instruction::FSCALE:
         opcode = 0xD9;
         modrmByte = 0xFD;
@@ -534,14 +556,17 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
         modrmByte = 0xE0;
         break;
       case instruction::FINCSTP:
-        buf.push_back(0xD9);
-        opcode =0xF7;
-        modrmByte = 0x06;
+        opcode =0xD9;
+        modrmByte = 0xF7;
         break;
       case instruction::FDECSTP:
-        buf.push_back(0xD9);
-        opcode = 0xF6;
-        modrmByte = 0x06;
+        opcode = 0xD9;
+        modrmByte = 0xF6;
+        break;
+      case instruction::FINIT:
+        buf.push_back(0x9B);
+        opcode = 0xDB;
+        modrmByte = 0xE3;
         break;
       default: throw "THIS SHOULD NOT OCCUR";
     }
@@ -580,7 +605,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
 
 
     /*Now we calculate bit 2 and possibly override opExt*/
-    
+
     if(operandSize == size::DOUBLE_WORD) {
       /*32 bits are always set to 0*/
       opcode |= 0x00;
@@ -607,10 +632,13 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       }
       /*We DO NOT set bit 2 to 1, but we do override the opEXT*/
       opcode |= 0x00;
-      if(is_fpu_load_instruction(inst))
+      if(is_fpu_load_instruction(inst)) {
+        opcode = 0xDB;
         opExt = 0x05;
-      else
+      } else {
+        opcode = 0xDB;
         opExt = 0x07;
+      }
     }
     buf.push_back(opcode);
   } else if(inst > instruction::STD_ARITH_INSTRUCTION_START && inst < instruction::STD_ARITH_INTSRUCTION_END) {
@@ -722,10 +750,10 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
           buf.push_back(0x6E);
         }
       }
-      
-      
+
+
     } else {
-      
+
       /*We have a GPR*/
       unsigned char opcode;
       if(isImm) {
@@ -745,10 +773,10 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       } else {
         opcode |= 0x01;
       }
-      
+
       buf.push_back(opcode);
     }
-    
+
   } else if(inst == instruction::POP) {
 
     buf.push_back(0x8F);
@@ -768,7 +796,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       opExt = 0x06;
       insertOpExt = true;
     }
-    
+
   } else if(inst == instruction::STMXCSR) {
     buf.push_back(0x0F);
     buf.push_back(0xAE);
@@ -782,6 +810,10 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
     buf.push_back(0x9B);
     buf.push_back(0xD9);
     opExt = 0x07;
+    insertOpExt = true;
+  } else if(inst == instruction::FXCH) {
+    buf.push_back(0xD9);
+    opExt = 0x01;
     insertOpExt = true;
   } else if(inst == instruction::LDMXCSR) {
     buf.push_back(0x0F);
@@ -864,7 +896,7 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
       buf.push_back(rmDisp >> 24);
     }
   }
-  
+
 
   /*IMM. If the operand size is 8 bits we set the sign extend bit to 0 and we require that
    the immediate fit into 8 bits. If the operand size is not 8 bits we do the following:

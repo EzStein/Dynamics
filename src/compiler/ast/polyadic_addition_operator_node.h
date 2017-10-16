@@ -49,6 +49,7 @@ public:
   expression_node* collect_terms() override;
   expression_node* optimization_round() override;
   expression_node* differentiate(const std::string& var) override;
+  long evaluate_as_integer() const override;
 
 
 

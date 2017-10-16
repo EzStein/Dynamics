@@ -12,6 +12,10 @@ double variable_leaf_node::evaluate() const {
   return static_cast<double>(0);
 }
 
+long variable_leaf_node::evaluate_as_integer() const {
+  return 0;
+}
+
 std::ostream& variable_leaf_node::print(std::ostream& out) const {
   out << symPtr->name;
   return out;

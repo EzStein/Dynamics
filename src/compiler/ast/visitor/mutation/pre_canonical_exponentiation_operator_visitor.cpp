@@ -76,8 +76,8 @@ void pre_canonical_exponentiation_operator_visitor::visit(polyadic_addition_oper
   /*If the exponent is evaluatable and integer type then we expand the
    expression using the Binomial expansion.
    Otherwise we do essentially nothing*/
-  std::cout << parent->rightChild->evaluatable()<< " " << parent->rightChild->is_integral()<<std::endl;
-  long exp = static_cast<long>(parent->rightChild->evaluate());
+  
+  long exp = parent->rightChild->evaluate_as_integer();
   if(parent->rightChild->evaluatable() && parent->rightChild->is_integral() && exp > 0) {
     
     std::list<expression_node*> newTerms;

@@ -36,6 +36,8 @@ public:
 
   polyadic_multiplication_operator_node(expression_node* firstChild);
   virtual double evaluate() const override;
+  long evaluate_as_integer() const override;
+
   virtual std::ostream& print(std::ostream&) const override;
 
   virtual void emit_code_amd64(std::string&, compiler_data&) const override;

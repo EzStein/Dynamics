@@ -83,8 +83,8 @@ instruction str_to_instruction(std::string str) {
     return instruction::FLDZ;
   else if(str == "F2XM1")
     return instruction::F2XM1;
-  else if(str == "FY2LX")
-    return instruction::FY2LX;
+  else if(str == "FYL2X")
+    return instruction::FYL2X;
   else if(str == "FPTAN")
     return instruction::FPTAN;
   else if(str == "FPATAN")
@@ -99,8 +99,8 @@ instruction str_to_instruction(std::string str) {
     return instruction::FINCSTP;
   else if(str == "FPREM")
     return instruction::FPREM;
-  else if(str == "FY2LXP1")
-    return instruction::FY2LXP1;
+  else if(str == "FYL2XP1")
+    return instruction::FYL2XP1;
   else if(str == "FSQRT")
     return instruction::FSQRT;
   else if(str == "FSINCOS")
@@ -151,6 +151,10 @@ instruction str_to_instruction(std::string str) {
     return instruction::RETF;
   else if(str == "LDMXCSR")
     return instruction::LDMXCSR;
+  else if(str == "FINIT")
+    return instruction::FINIT;
+  else if(str == "FXCH")
+    return instruction::FXCH;
   else
     return instruction::NO_SUCH_INSTRUCTION;
 }
@@ -218,7 +222,7 @@ void str_to_reg(std::string str, reg& regRet, reg_type& regTypeRet, size& sizeRe
     } else {
       reg_num = std::stoi(std::string(1,str[2]));
     }
-    std::cout << "!!!: " << reg_num <<std::endl;
+    
     regRet = static_cast<reg>(reg_num);
     char q = *(str.end()-1);
     if(q == 'L') {
@@ -259,7 +263,7 @@ void str_to_reg(std::string str, reg& regRet, reg_type& regTypeRet, size& sizeRe
     /*We have a GPR*/
     regTypeRet = reg_type::GPR;
     if(str[1] == 'R' || str[1] == 'E') {
-      std::cout << str <<std::endl;
+      
       uniform = false;
       std::string val = std::string(1,str[2]) + std::string(1,str[3]);
       if(val == "AX") {

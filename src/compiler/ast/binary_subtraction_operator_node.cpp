@@ -12,6 +12,11 @@ double binary_subtraction_operator_node::evaluate() const {
   return leftChild->evaluate() - rightChild->evaluate();
 }
 
+long binary_subtraction_operator_node::evaluate_as_integer() const {
+  return leftChild->evaluate_as_integer() - rightChild->evaluate_as_integer();
+}
+
+
 std::ostream& binary_subtraction_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '-' << '(';
@@ -67,16 +72,16 @@ expression_node* binary_subtraction_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
-  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
+  if(leftChild->evaluatable() && leftChild->is_integral() && leftChild->evaluate_as_integer() == 0) {
     expression_node* tmp = rightChild;
     rightChild = nullptr;
     return new unary_minus_operator_node(tmp);
-  } else if(rightChild->evaluatable() && rightChild->evaluate() == 0) {
+  } else if(rightChild->evaluatable() && rightChild->is_integral() && rightChild->evaluate_as_integer() == 0) {
     expression_node* tmp = leftChild;
     leftChild = nullptr;
     return tmp;

@@ -28,6 +28,8 @@ public:
 
   virtual void emit_code_amd64(std::string&, compiler_data&) const override;
   virtual double evaluate() const override;
+  long evaluate_as_integer() const override;
+
 
   /*True if there are no variables in the sub tree whose root is this node*/
   virtual bool evaluatable() const override;

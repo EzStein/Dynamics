@@ -22,6 +22,17 @@ double polyadic_addition_operator_node::evaluate() const {
   return acc;
 }
 
+long polyadic_addition_operator_node::evaluate_as_integer() const {
+  const_iterator_t iter = children.begin();
+  const_iterator_t end = children.end();
+  long acc = 0;
+  for(; iter != end; ++iter) {
+    acc += (*iter)->evaluate_as_integer();
+  }
+  return acc;
+}
+
+
 std::ostream& polyadic_addition_operator_node::print(std::ostream& out) const {
   const_iterator_t iter = children.begin();
   const_iterator_t end = children.end();
@@ -189,7 +200,7 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
     expression_node* coefficient;
     if(!tmp->evaluatable()) throw "THIS SHOULD NOT OCCUR";
     if(tmp->is_integral())
-      coefficient = new integer_number_leaf_node(static_cast<long>(tmp->evaluate()));
+      coefficient = new integer_number_leaf_node(tmp->evaluate_as_integer());
     else
       coefficient = new number_leaf_node(tmp->evaluate());
     /*We now no longer need tmp or the coefficient sum, so we delete it*/
@@ -213,7 +224,7 @@ expression_node* polyadic_addition_operator_node::optimization_round() {
   polyadic_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
@@ -222,7 +233,7 @@ expression_node* polyadic_addition_operator_node::optimization_round() {
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
   while(iter != end) {
-    if((*iter)->evaluatable() && (*iter)->evaluate() == 0) {
+    if((*iter)->evaluatable() && (*iter)->is_integral() && (*iter)->evaluate_as_integer() == 0) {
       /*We delete the node and then remove it from the list*/
       delete *iter;
       iter = children.erase(iter);

@@ -12,6 +12,28 @@ double exponentiation_operator_node::evaluate() const {
   return pow(leftChild->evaluate(), rightChild->evaluate());
 }
 
+long exponentiation_operator_node::evaluate_as_integer() const {
+  long base = leftChild->evaluate_as_integer();
+  long exponent = rightChild->evaluate_as_integer();
+  long acc = 1;
+  if(exponent == 0 && base != 0)
+    return 1;
+  else if(exponent > 0) {
+    for(; exponent != 0; exponent--) {
+      acc *= base;
+    }
+    return acc;
+  } else if(exponent < 0) {
+    for(; exponent != 0; exponent--) {
+      acc *= base;
+    }
+    return 1/acc;
+  } else {
+    throw "0^0 is not defined!";
+  }
+}
+
+
 std::ostream& exponentiation_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '^' << '(';
@@ -111,20 +133,20 @@ expression_node* exponentiation_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
-  if(leftChild->evaluatable() && leftChild->evaluate() == 1) {
+  if(leftChild->evaluatable() && leftChild->is_integral() && leftChild->evaluate_as_integer() == 1) {
     return new integer_number_leaf_node(1);
-  } else if(rightChild->evaluatable()) {
-    if(rightChild->evaluate() == 1) {
+  } else if(rightChild->evaluatable() && rightChild->is_integral()) {
+    if(rightChild->evaluate_as_integer() == 1) {
       expression_node* tmp = leftChild;
       leftChild = nullptr;
       return tmp;
-    } else if(rightChild->evaluate() == 0) {
-      if(leftChild->evaluatable() && leftChild->evaluate() == 0)
+    } else if(rightChild->evaluate_as_integer() == 0) {
+      if(leftChild->evaluatable() && leftChild->is_integral() && leftChild->evaluate_as_integer() == 0)
         return this;
       else
         return new integer_number_leaf_node(1);

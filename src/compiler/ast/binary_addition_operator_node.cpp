@@ -12,6 +12,11 @@ double binary_addition_operator_node::evaluate() const {
   return leftChild->evaluate() + rightChild->evaluate();
 }
 
+long binary_addition_operator_node::evaluate_as_integer() const {
+  return leftChild->evaluate_as_integer() + rightChild->evaluate_as_integer();
+}
+
+
 std::ostream& binary_addition_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '+' << '(';
@@ -84,18 +89,18 @@ expression_node* binary_addition_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
 
   expression_node* retVal;
-  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
+  if(leftChild->evaluatable() && leftChild->is_integral() && leftChild->evaluate_as_integer() == 0) {
     retVal = rightChild;
     /*This node will be deleted but we don't want the rightchild to be deleted*/
     rightChild = nullptr;
-  } else if(rightChild->evaluatable() && rightChild->evaluate() == 0) {
+  } else if(rightChild->evaluatable() && rightChild->is_integral() && rightChild->evaluate_as_integer() == 0) {
     retVal = leftChild;
     leftChild = nullptr;
   } else {

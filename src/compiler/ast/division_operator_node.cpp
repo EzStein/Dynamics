@@ -12,6 +12,11 @@ double division_operator_node::evaluate() const {
   return leftChild->evaluate() / rightChild->evaluate();
 }
 
+long division_operator_node::evaluate_as_integer() const {
+  return leftChild->evaluate_as_integer()/rightChild->evaluate_as_integer();
+}
+
+
 std::ostream& division_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '/' << '(';
@@ -55,17 +60,17 @@ expression_node* division_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
-  if(leftChild->evaluatable() && leftChild->evaluate() == 0) {
-    if(rightChild->evaluatable() && rightChild->evaluate() == 0)
+  if(leftChild->evaluatable() && leftChild->is_integral() && leftChild->evaluate_as_integer() == 0) {
+    if(rightChild->evaluatable() && rightChild->is_integral() && rightChild->evaluate_as_integer() == 0)
       return this;
     else
       return new integer_number_leaf_node(0);
-  } else if(rightChild->evaluatable() && rightChild->evaluate() == 1) {
+  } else if(rightChild->evaluatable() && rightChild->is_integral() && rightChild->evaluate_as_integer() == 1) {
     expression_node* tmp = leftChild;
     leftChild = nullptr;
     return tmp;

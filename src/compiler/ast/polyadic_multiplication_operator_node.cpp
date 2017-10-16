@@ -35,8 +35,19 @@
      acc *= (*iter)->evaluate();
    }
    return acc;
- }
-
+  }
+ 
+  long polyadic_multiplication_operator_node::evaluate_as_integer() const {
+    const_iterator_t iter = children.begin();
+     const_iterator_t end = children.end();
+     long acc = 1;
+     for(; iter != end; ++iter) {
+       acc *= (*iter)->evaluate_as_integer();
+     }
+     return acc;
+  }
+ 
+ 
  std::ostream& polyadic_multiplication_operator_node::print(std::ostream& out) const {
    const_iterator_t iter = children.begin();
    const_iterator_t end = children.end();
@@ -267,7 +278,7 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
   polyadic_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
@@ -278,9 +289,9 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
   const_iterator_t end = children.end();
   while(iter != end) {
 
-    if((*iter)->evaluatable()) {
+    if((*iter)->evaluatable() && (*iter)->is_integral()) {
 
-      double val = (*iter)->evaluate();
+      long val = (*iter)->evaluate_as_integer();
       if(val == 1) {
 
         /*We delete the node and then remove it from the list*/

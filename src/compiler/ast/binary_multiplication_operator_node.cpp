@@ -11,6 +11,11 @@ double binary_multiplication_operator_node::evaluate() const {
   return leftChild->evaluate() * rightChild->evaluate();
 }
 
+long binary_multiplication_operator_node::evaluate_as_integer() const {
+  return leftChild->evaluate_as_integer() * rightChild->evaluate_as_integer();
+}
+
+
 std::ostream& binary_multiplication_operator_node::print(std::ostream& out) const {
   out << '(';
   leftChild->print(out) << ')' << '*' << '(';
@@ -82,25 +87,25 @@ expression_node* binary_multiplication_operator_node::optimization_round() {
   binary_operator_node::optimization_round();
   if(evaluatable()) {
     if(is_integral()) {
-      return new integer_number_leaf_node(evaluate());
+      return new integer_number_leaf_node(evaluate_as_integer());
     } else {
       return new number_leaf_node(evaluate());
     }
   }
-  if(leftChild->evaluatable()) {
-    if(leftChild->evaluate() == 0) {
+  if(leftChild->evaluatable() && leftChild->is_integral()) {
+    if(leftChild->evaluate_as_integer() == 0) {
       return new integer_number_leaf_node(0);
-    } else if(leftChild->evaluate() == 1) {
+    } else if(leftChild->evaluate_as_integer() == 1) {
       expression_node* tmp = rightChild;
       rightChild = nullptr;
       return tmp;
     } else {
       return this;
     }
-  } else if(rightChild->evaluatable()) {
-    if(rightChild->evaluate() == 0) {
+  } else if(rightChild->evaluatable() && rightChild->is_integral()) {
+    if(rightChild->evaluate_as_integer() == 0) {
       return new integer_number_leaf_node(0);
-    } else if(rightChild->evaluate() == 1) {
+    } else if(rightChild->evaluate_as_integer() == 1) {
       expression_node* tmp = leftChild;
       leftChild = nullptr;
       return tmp;
