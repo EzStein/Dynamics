@@ -5,6 +5,7 @@
 #include <list>
 #include <algorithm>
 #include <string>
+#include <set>
 
 /*The top level frame that inherets from the generated class top_frame_base*/
 class top_frame : public top_frame_base {
@@ -17,6 +18,7 @@ private:
   driver dr;
   typedef std::list<math::vector<double, 4> > solution_t;
   std::vector<solution_t> solutions;
+  std::vector<std::vector<math::vector<double, 4> > > isoclines;
   math::vector<double, 2> valueBoundaryTopLeft;
   /*Measures the number of pixels per unit
   in the x and y directions*/
@@ -26,6 +28,7 @@ private:
   double tInc = 0.01;
   driver::var4_double_func_t xFunc = nullptr, yFunc = nullptr, zFunc = nullptr;
 
+  void set_nullclines();
   virtual void on_paint_dynamical_plane(wxPaintEvent&) override;
 
   virtual void on_button_click_compile(wxCommandEvent&) override;

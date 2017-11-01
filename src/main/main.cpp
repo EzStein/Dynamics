@@ -1,12 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <set>
 #include <sstream>
 #include <map>
 #include <cassert>
 #include <sys/mman.h>
 #include <string>
+#include "math/matrix.h"
 
 #include "math/vector.h"
 
@@ -16,14 +18,14 @@
 #include "compiler/asm/assembler.h"
 using namespace std;
 
-int mains() {
-  std::string str("z+1*x+y");
+int main() {
+  /*std::string str("z+1*x+y");
   stringstream sstream(str);
   parser parse(sstream);
 
   list<symbol> symbolTable;
   /*Compile the function*/
-  AST ast(parse.parse(symbolTable));
+  /*AST ast(parse.parse(symbolTable));
   ast.simplify();
   std::cout << ast << std::endl;
   assembler assem;
@@ -77,5 +79,16 @@ int mains() {
   file.write(reinterpret_cast<char*>(buf.data()), buf.size());
   file.close();
 
+  return 0;*/
+
+  //math::matrix<double, 3, 3> mat(0,1,2,3,4,5,6,7,8);
+
+  math::matrix<double,2,6> mat(0,1,2,3,4,5,6,7,8,9,10,11);
+
+
+
+  std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+  std::cout << mat << "\n\n" << mat.rref()<<std::endl;
+  //std::cout << 0.010101010101e-35 << std::endl;
   return 0;
 }

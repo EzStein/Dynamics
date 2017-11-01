@@ -22,10 +22,10 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
   m_notebook2->AddPage( glPanel, wxT("GL Panel"), false );
   glPanel->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, this);
 
-  valueBoundaryTopLeft[0] = -5;
-  valueBoundaryTopLeft[1] = 5;
-  pixelToValueRatio[0] = 70;
-  pixelToValueRatio[1] = 70;
+  valueBoundaryTopLeft[0] = -1;
+  valueBoundaryTopLeft[1] = 1;
+  pixelToValueRatio[0] = 200;
+  pixelToValueRatio[1] = 200;
   dynamicalPlane->Refresh();
 }
 
@@ -50,57 +50,7 @@ bool read_file(const char * filePath, char* buffer, size_t size) {
 }
 
 void initialize_gl() {
-  if (!gladLoadGL()) {
-      std::cout << "Failed to initialize OpenGL context" << std::endl;
-  }
-  unsigned int vertexShader;
-  vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  const char * path = PROJECT_PATH"/resources/gl/vertex.vert";
-  /*Allocate a buffer to read the file into*/
-  size_t bufferSize = 1024;
-  char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
-  if(!read_file(path, buffer, bufferSize)) {
-    std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
-    return;
-  }
-  glShaderSource(vertexShader, 1, &buffer, NULL);
-  glCompileShader(vertexShader);
 
-  int  success;
-  char infoLog[512];
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-  if(!success) {
-    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    std::cout << "GL shader compilation error VERTEX: " << infoLog << std::endl;
-  }
-
-  unsigned int fragmentShader;
-  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  path = PROJECT_PATH"/resources/gl/fragment.frag";
-
-  if(!read_file(path, buffer, bufferSize)) {
-    std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
-    return;
-  }
-
-  glShaderSource(fragmentShader, 1, &buffer, NULL);
-  glCompileShader(fragmentShader);
-  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-  if(!success) {
-    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    std::cout << "GL shader compilation error FRAGMENT: " << infoLog << std::endl;
-  }
-  unsigned int shaderProgram;
-  shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-  if(!success) {
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    std::cout << "GL shader linking error: " << infoLog << std::endl;
-  }
-  free(buffer);
 }
 
 top_frame::~top_frame() {
@@ -110,14 +60,112 @@ top_frame::~top_frame() {
 void top_frame::on_paint_gl_renderer(wxPaintEvent& evt) {
   static int i = 0;
   glPanel->SetCurrent(*glContext);
-  if(i == 0) initialize_gl();
+  unsigned int VAO, shaderProgram;
+
+  static float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    -0.5f, 0.5f, 0.0f,
+    0.5f, 0.5f, 0.0f
+  };
+  static unsigned int indices[] = {
+    0,1,2,0,3,1
+  };
+  if(i == 0) {
+
+    /*Loads function pointers to gl functions*/
+    if (!gladLoadGL()) {
+        std::cout << "Failed to load gl function pointers!" << std::endl;
+    }
+
+    /*Load and compile shaders*/
+    unsigned int vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    const char * path = PROJECT_PATH"/resources/gl/vertex.vert";
+    /*Allocate a buffer to read the file into*/
+    size_t bufferSize = 1024;
+    char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
+    /*READ the file into the buffer*/
+    if(!read_file(path, buffer, bufferSize)) {
+      std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
+      return;
+    }
+
+    glShaderSource(vertexShader, 1, &buffer, NULL);
+    glCompileShader(vertexShader);
+
+    int  success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if(!success) {
+      glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+      std::cout << "GL shader compilation error VERTEX: " << infoLog << std::endl;
+    }
+
+    unsigned int fragmentShader;
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    path = PROJECT_PATH"/resources/gl/fragment.frag";
+
+    if(!read_file(path, buffer, bufferSize)) {
+      std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
+      return;
+    }
+
+    glShaderSource(fragmentShader, 1, &buffer, NULL);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if(!success) {
+      glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+      std::cout << "GL shader compilation error FRAGMENT: " << infoLog << std::endl;
+    }
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success) {
+      glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+      std::cout << "GL shader linking error: " << infoLog << std::endl;
+    }
+    free(buffer);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 
 
-  int x, y;
+    glClearColor(1.0f, 0.2f, 0.4f, 1.0f);
+  	glClear(GL_COLOR_BUFFER_BIT);
+
+
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    unsigned int vboId;
+    glGenBuffers(1, &vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    unsigned int eboId;
+    glGenBuffers(1, &eboId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+
+
+  }
+
+  /*int x, y;
   glPanel->GetSize(&x, &y);
-  glViewport(0,0,x, y);
-	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+  glViewport(0,0,x, y);*/
+
+  glUseProgram(shaderProgram);
+  int colorUniformLocation = glGetUniformLocation(shaderProgram, "baseColor");
+  glUniform4f(colorUniformLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+  glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+
+
   glPanel->SwapBuffers();
 }
 
@@ -147,6 +195,8 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
     dr.compile_as_function<driver::var4_double_func_t>(zFuncString);
 
   solutions = std::vector<solution_t>();
+
+  set_nullclines();
   dynamicalPlane->Refresh();
 }
 
@@ -189,7 +239,91 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   }
 
   solutions.push_back(points);
+
+
+
   dynamicalPlane->Refresh();
+}
+
+void top_frame::set_nullclines() {
+  isoclines.clear();
+  /*Calculuate the nullclines*/
+  math::vector<int, 2> canvasSize;
+  dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+
+  std::vector<math::vector<double, 4> > nullPoints;
+  math::vector<int, 2> indices =
+    get_axes_choice_indices(get_axes_choice_from_string(
+      std::string(axesChoice->GetString(axesChoice->GetSelection()))));
+
+  /*Set to 0 when invalid. 1 if positive or zero, -1 if negative*/
+  std::vector<driver::var4_double_func_t> functions;
+  functions.push_back(xFunc);
+  functions.push_back(yFunc);
+  functions.push_back(zFunc);
+
+  for(driver::var4_double_func_t func : functions) {
+    int sign = 0;
+    for(int x = 0; x != canvasSize[0]; ++x) {
+      for(int y = 0; y != canvasSize[1]; ++y) {
+        math::vector<double,2> tmp;
+        tmp[0] = x;
+        tmp[1] = y;
+        math::vector<double, 2> pts =
+        math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
+        math::vector<double, 4> vec;
+        for(int i = 0; i != 4; ++i) {
+          if(i == indices[0])
+            vec[i] = pts[0];
+          else if(i == indices[1])
+            vec[i] = pts[1];
+          else
+            vec[i] = initVals[i];
+        }
+
+        double val = func(vec[0], vec[1], vec[2], vec[3]);
+        int nextSign;
+        if(val <= 0) nextSign = -1;
+        else if(val > 0) nextSign = 1;
+        if((sign < 0 && nextSign > 0) || (sign > 0 && nextSign < 0) && sign != 0) {
+          /*There was a change in sign.*/
+          nullPoints.push_back(vec);
+        }
+        sign = nextSign;
+      }
+    }
+
+    sign = 0;
+    for(int y = 0; y != canvasSize[0]; ++y) {
+      for(int x = 0; x != canvasSize[1]; ++x) {
+        math::vector<double,2> tmp;
+        tmp[0] = x;
+        tmp[1] = y;
+        math::vector<double, 2> pts =
+        math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
+        math::vector<double, 4> vec;
+        for(int i = 0; i != 4; ++i) {
+          if(i == indices[0])
+            vec[i] = pts[0];
+          else if(i == indices[1])
+            vec[i] = pts[1];
+          else
+            vec[i] = initVals[i];
+        }
+
+        double val = func(vec[0], vec[1], vec[2], vec[3]);
+        int nextSign;
+        if(val <= 0) nextSign = -1;
+        else if(val > 0) nextSign = 1;
+        if((sign < 0 && nextSign > 0) || (sign > 0 && nextSign < 0) && sign != 0) {
+          /*There was a change in sign.*/
+          nullPoints.push_back(vec);
+        }
+        sign = nextSign;
+      }
+    }
+    isoclines.push_back(nullPoints);
+  }
 }
 
 void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
@@ -214,6 +348,7 @@ void top_frame::on_choice_dimension(wxCommandEvent& evt) {
 }
 
 void top_frame::on_choice_axes(wxCommandEvent& evt) {
+  set_nullclines();
   dynamicalPlane->Refresh();
 }
 
@@ -223,7 +358,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
   dc.SetBrush(*wxWHITE_BRUSH);
   dc.DrawRectangle(0,0,canvasSize[0], canvasSize[1]);
-  dc.SetBrush(*wxRED_BRUSH);
+  dc.SetPen(*wxBLACK_PEN);
 
 
   /*Paint the axes*/
@@ -299,6 +434,22 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
 
       dc.DrawLine(pixel1[0], pixel1[1], pixel2[0], pixel2[1]);
       vec1 = vec2;
+    }
+  }
+
+  /*Paint isoclines*/
+  dc.SetPen(*wxRED_PEN);
+  for(int i = 0; i != isoclines.size(); ++i) {
+    std::vector<math::vector<double, 4> > nullcline = isoclines[i];
+    std::vector<math::vector<double, 4> >::const_iterator iter = nullcline.begin();
+    std::vector<math::vector<double, 4> >::const_iterator end = nullcline.end();
+    for(; iter != end; ++iter) {
+      math::vector<double,2> tmp;
+      tmp[0] = (*iter)[indices[0]];
+      tmp[1] = (*iter)[indices[1]];
+      math::vector<int, 2> pixel1 = math::value_to_pixel(tmp,
+        valueBoundaryTopLeft, pixelToValueRatio);
+      dc.DrawLine(pixel1[0], pixel1[1], pixel1[0]+1, pixel1[1]+1);
     }
   }
 }
