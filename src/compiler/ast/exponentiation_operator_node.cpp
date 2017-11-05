@@ -165,7 +165,8 @@ expression_node* exponentiation_operator_node::copy() const {
 }
 
 bool exponentiation_operator_node::is_integral() const {
-  return leftChild->is_integral() && rightChild->is_integral();
+  return leftChild->is_integral() && rightChild->is_integral() &&
+  (rightChild->evaluate_as_integer() >= 0);
 }
 
 void exponentiation_operator_node::accept(visitor* v) {

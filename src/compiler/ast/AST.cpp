@@ -68,14 +68,17 @@ AST& AST::simplify() {
   if(newRoot != root)
     delete root;
   root = newRoot;
+
   newRoot = root->level_operators();
   if(newRoot != root)
     delete root;
   root = newRoot;
+
   newRoot = root->make_pre_canonical();
   if(newRoot != root)
     delete root;
   root = newRoot;
+
   root->sort();
   newRoot = root->collect_terms();
   if(newRoot != root)
@@ -126,13 +129,17 @@ AST& AST::differentiate(const std::string& var) {
 AST& AST::optimize() {
 
   expression_node* rootCopy = root->copy();
+
   expression_node* tmp = rootCopy->optimization_round();
+
+
   if(tmp != rootCopy)
     delete rootCopy;
   rootCopy = tmp;
   while(*rootCopy != *root) {
     delete root;
     root = rootCopy;
+
     rootCopy = root->copy();
     expression_node* tmp = rootCopy->optimization_round();
     if(tmp != rootCopy)
@@ -261,6 +268,7 @@ AST& AST::operator*=(const AST& ast) {
 
 AST& AST::operator/=(const AST& ast) {
   root = new division_operator_node(root, ast.root->copy());
+
   return *this;
 }
 
@@ -281,16 +289,16 @@ AST operator*(AST lhs, const AST& rhs) {
   return lhs*=rhs;
 }
 
+AST operator/(AST lhs, const AST& rhs) {
+  return lhs /= rhs;
+}
+
 /*
 * Called ONLY when neither input can mutate.
 */
-AST operator*(const AST& lhs, const AST& rhs) {
+/*AST operator*(const AST& lhs, const AST& rhs) {
   return AST(new binary_multiplication_operator_node(lhs.root->copy(), rhs.root->copy()));
-}
-
-AST operator/(AST lhs, const AST& rhs) {
-  return lhs/=rhs;
-}
+}*/
 
 
 std::ostream& operator<<(std::ostream& out, const AST& ast) {

@@ -34,7 +34,7 @@ namespace math {
     The first index indicates the row, and the second index indicates the column*/
     NUM_T arr[ROWS][COLS];
 
-    const double tolerance = 1.0e-10;
+    static constexpr double tolerance = 1.0e-10;
 
     /*The type representing one row*/
     typedef NUM_T ROW_ARR_T[COLS];
@@ -43,10 +43,18 @@ namespace math {
     there is no need to override them*/
 
     /*Used to initialize all elements of the matrix to a given value*/
-    matrix(NUM_T val = 0) {
+    matrix(NUM_T val) {
       for(int r = 0; r!=ROWS; ++r) {
         for(int c = 0; c != COLS; ++c) {
           arr[r][c] = val;
+        }
+      }
+    }
+
+    matrix(int val = 0) {
+      for(int r = 0; r!=ROWS; ++r) {
+        for(int c = 0; c != COLS; ++c) {
+          arr[r][c] = static_cast<NUM_T>(val);
         }
       }
     }
@@ -252,12 +260,14 @@ public:
           NUM_T tmp = arr[rowStart][i];
           arr[rowStart][i] = arr[largestPivotIndex][i]/largestPivotValue;
           arr[largestPivotIndex][i] = tmp;
+
         }
       } else {
         /*In this case, we don't need to perform the
         swap, just the division*/
         for(int i = pivotColumn; i != COLS; ++i) {
-          arr[rowStart][i] = arr[largestPivotIndex][i]/largestPivotValue;
+          arr[rowStart][i] = arr[largestPivotIndex][i] / largestPivotValue;
+
         }
       }
 
@@ -267,7 +277,7 @@ public:
       for(int examinedRow = rowStart + 1; examinedRow != ROWS; ++examinedRow) {
         NUM_T multiplier = arr[examinedRow][pivotColumn];
         /*This value is known to be zero*/
-        arr[examinedRow][pivotColumn] = 0;
+        arr[examinedRow][pivotColumn] = static_cast<NUM_T>(0);
         for(int examinedColumn = pivotColumn + 1; examinedColumn != COLS; ++examinedColumn) {
           arr[examinedRow][examinedColumn] -= multiplier*arr[rowStart][examinedColumn];
         }
@@ -387,7 +397,7 @@ public:
     matrix<NUM_T, SIZE, SIZE> retMat;
     for(int r = 0; r != SIZE; ++r) {
       for(int c = 0; c != SIZE; ++c) {
-        retMat[r][c] = (r == c)?1:0;
+        retMat[r][c] = (r == c)?static_cast<NUM_T>(1):static_cast<NUM_T>(0);
       }
     }
     return retMat;
@@ -504,7 +514,9 @@ public:
   template<class NUM_T, int SIZE>
   matrix<NUM_T, SIZE, SIZE> invert(const matrix<NUM_T, SIZE, SIZE>& mat) {
     matrix<NUM_T, SIZE, 2*SIZE> augmented = adjoin_by_row(mat, gen_identity<NUM_T, SIZE>());
+    //std::cout << augmented << std::endl;
     augmented.rref();
+    //std::cout << augmented << std::endl;
     matrix<NUM_T, SIZE, SIZE> retMat;
 
     for(int row = 0; row != SIZE; ++row) {

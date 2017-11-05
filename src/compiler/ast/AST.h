@@ -24,6 +24,8 @@ public:
 
   AST() : root(nullptr) { };
 
+  explicit AST(const std::string& str);
+
   /*Copy constructor. Performs a deep copy of the tree*/
   AST(const AST&);
 
@@ -47,14 +49,19 @@ public:
   friend bool operator<=(const AST&, const AST&);
   friend bool operator>(const AST&, const AST&);
   friend bool operator>=(const AST&, const AST&);
-  friend AST operator*(const AST& lhs, const AST& rhs);
+  //friend AST operator*(const AST& lhs, const AST& rhs);
+  friend AST operator*(AST lhs, const AST& rhs);
+  friend AST operator+(AST lhs, const AST& rhs);
+  friend AST operator-(AST lhs, const AST& rhs);
+  friend AST operator/(AST lhs, const AST& rhs);
+
 
   /*Conversion to double,
   used for matrix use*/
-  operator double();
+  explicit operator double();
 
   /*Conversion from int, used for matrix*/
-  AST(int);
+  explicit AST(int);
 
   /*
   * Returns a reference to itself

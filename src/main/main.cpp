@@ -18,6 +18,15 @@
 #include "compiler/asm/assembler.h"
 using namespace std;
 
+AST compile_as_tree(const std::string& str) {
+  stringstream sstream(str);
+  parser parse(sstream);
+
+  list<symbol> symbolTable;
+  /*Compile the function*/
+  return AST(parse.parse(symbolTable));
+}
+
 int main() {
   /*std::string str("z+1*x+y");
   stringstream sstream(str);
@@ -99,7 +108,16 @@ int main() {
   std::cout << mat2.determinant() << std::endl;
   //std::cout << 0.010101010101e-35 << std::endl;*/
 
-  math::matrix<AST, 2, 2> mat(AST(0),AST(1),AST(2),AST(3));
-  std::cout << mat.determinant().simplify() << std::endl;
+  math::matrix<AST, 2, 2> mat(compile_as_tree("1-x"),AST(1),AST(2),AST(3));
+  std::cout << mat << std::endl;
+  //mat = invert(mat)*mat;
+  //std::cout << mat << std::endl;
+  mat = math::matrix<AST,2,2>(mat[0][0].simplify(),
+          mat[0][1].simplify(),
+        mat[1][0].simplify(),
+        mat[1][1].simplify());
+
+  std::cout << mat << std::endl;
+
   return 0;
 }
