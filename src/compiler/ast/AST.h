@@ -22,6 +22,8 @@ public:
   /*Destroys the AST*/
   ~AST();
 
+  AST() : root(nullptr) { };
+
   /*Copy constructor. Performs a deep copy of the tree*/
   AST(const AST&);
 
@@ -34,9 +36,32 @@ public:
   /*Move assignment*/
   AST& operator=(AST&&);
 
-  void simplify();
+  AST& operator+=(const AST&);
+  AST& operator-=(const AST&);
+  AST& operator*=(const AST&);
+  AST& operator/=(const AST&);
+  AST& operator-();
+  friend bool operator==(const AST&, const AST&);
+  friend bool operator!=(const AST&, const AST&);
+  friend bool operator<(const AST&, const AST&);
+  friend bool operator<=(const AST&, const AST&);
+  friend bool operator>(const AST&, const AST&);
+  friend bool operator>=(const AST&, const AST&);
+  friend AST operator*(const AST& lhs, const AST& rhs);
 
-  void differentiate(const std::string&);
+  /*Conversion to double,
+  used for matrix use*/
+  operator double();
+
+  /*Conversion from int, used for matrix*/
+  AST(int);
+
+  /*
+  * Returns a reference to itself
+  */
+  AST& simplify();
+
+  AST& differentiate(const std::string&);
   /*Constructs the binary operator of the appropriate type whose children are given by the provided pointers.
   * The function returns a pointer to the constructed node*/
   template<class NODE_TYPE>
@@ -56,7 +81,7 @@ public:
   /*
    * Calls optimization_round on root until it is unchanged.
    */
-  void optimize();
+  AST& optimize();
 
   std::string emit_code_amd64() const;
 

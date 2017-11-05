@@ -83,12 +83,23 @@ int main() {
 
   //math::matrix<double, 3, 3> mat(0,1,2,3,4,5,6,7,8);
 
-  math::matrix<double,2,6> mat(0,1,2,3,4,5,6,7,8,9,10,11);
+  /*constexpr int size = 4;
+  math::matrix<double,size,size> mat;
+  for(int i = 0; i != size; ++i) {
+    for(int j = 0; j != size; ++j) {
+      mat[i][j] = (i << 2)/(j+i+1);
+    }
+  }
 
+  math::matrix<double,4,4> mat2(0,1,2,23,4,5,6,7,8,9,10,11,12,13,34,2);
 
+  //std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+  std::cout << std::setprecision(20);
+  std::cout << mat2 << "\n\n" << std::endl;
+  std::cout << mat2.determinant() << std::endl;
+  //std::cout << 0.010101010101e-35 << std::endl;*/
 
-  std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1);
-  std::cout << mat << "\n\n" << mat.rref()<<std::endl;
-  //std::cout << 0.010101010101e-35 << std::endl;
+  math::matrix<AST, 2, 2> mat(AST(0),AST(1),AST(2),AST(3));
+  std::cout << mat.determinant().simplify() << std::endl;
   return 0;
 }

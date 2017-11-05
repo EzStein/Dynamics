@@ -2,12 +2,27 @@
 #define MATRIX_GUARD
 #include <iostream>
 #include <cassert>
+#include <cmath>
 #include "math/vector.h"
 
 /*
 * A generic class that represents a matrix. It is parameterized,
 * number of rows, cols, and the type of number it stores (usually a double).
 * These matrices are mutable for efficiency.
+*/
+
+/*
+* NUM_T must have the following operations defined as NUM_T X NUM_T -> NUM_T
+* + - * / *= += -= /=
+*
+* Additionally the following operators from NUM_T X NUM_T -> bool
+* < <= > >= == !=
+* and
+* static_cast of integers to NUM_T must also be defined
+* as well as static cast from NUM_T to double
+*
+* the << operator must be available for istream insertion
+* NUM_T must have a default constructor if it is a class.
 */
 namespace math {
   template<class NUM_T, int ROWS, int COLS>
@@ -18,6 +33,8 @@ namespace math {
     thus always faster to traverse the matrix row by row.
     The first index indicates the row, and the second index indicates the column*/
     NUM_T arr[ROWS][COLS];
+
+    const double tolerance = 1.0e-10;
 
     /*The type representing one row*/
     typedef NUM_T ROW_ARR_T[COLS];
@@ -42,6 +59,8 @@ namespace math {
         }
       }
     }
+
+
 
 
 /*The following 3 constructors are used so that we can have a convenient variable argument list
@@ -71,6 +90,15 @@ public:
       arr[0][0] = elem;
     }
 
+    /*Constructs this matrix from a column vector
+    This constructor should only be used */
+    matrix(const vector<NUM_T, ROWS>& vec) {
+      assert(COLS = 1);
+      for(int r = 0; r != ROWS; ++r) {
+        arr[r][0] = vec[r];
+      }
+    }
+
 
 
     /*Returns a reference to the row array that may be edited freely*/
@@ -86,6 +114,8 @@ public:
     matrix<NUM_T, ROWS, COLS>& operator/=(NUM_T);
     matrix<NUM_T, ROWS, COLS>& operator-();
 
+
+
     /*Here we implement some useful operations on matrices.
     Some operations are only defined on square matrices. NO CHECKING
     is done to ensure that this is the case, and the behaviour
@@ -97,55 +127,146 @@ public:
     * No performance optimizations are made yet. Returns a reference to itself.
     */
     matrix<NUM_T, ROWS, COLS>& rref();
-    //NUM_T determinant() const;
+
+    /*
+    * Computes the determinant of this matrix without altering it.
+    */
+    NUM_T determinant() const;
+    /*
+    * Iterates over the matrix, replacing every element within tolerance
+    * of zero with the value +0.0. Sometimes it may be
+    * useful to call this after various methods which do not guarentee that
+    * values treated as zeros will be set to zero. Note that this function
+    * mutates the matrix and returns a reference to itself.
+    */
+    matrix<NUM_T, ROWS, COLS>& set_zeros();
+
+    /*
+    * Iterates over the matrix, replacing every element within tolerance
+    * of one with the value 1.
+    */
+    matrix<NUM_T, ROWS, COLS>& set_ones();
+
+  private:
+    matrix<NUM_T, ROWS, COLS>& rref(NUM_T& determinant);
   };
+
+
+  template<class NUM_T, int ROWS, int COLS>
+  matrix<NUM_T, ROWS, COLS>& matrix<NUM_T, ROWS, COLS>::set_zeros() {
+    for(int row = 0; row != ROWS; ++row) {
+      for(int col = 0; col != COLS; ++col) {
+        if(std::abs(static_cast<double>(arr[row][col])) < tolerance) {
+          arr[row][col] = static_cast<NUM_T>(0);
+        }
+      }
+    }
+    return *this;
+  }
+
+  template<class NUM_T, int ROWS, int COLS>
+  matrix<NUM_T, ROWS, COLS>& matrix<NUM_T, ROWS, COLS>::set_ones() {
+    for(int row = 0; row != ROWS; ++row) {
+      for(int col = 0; col != COLS; ++col) {
+        if(std::abs(static_cast<double>(arr[row][col]) - 1.0) < tolerance)
+          arr[row][col] = static_cast<NUM_T>(1);
+      }
+    }
+    return *this;
+  }
 
   template<class NUM_T, int ROWS, int COLS>
   matrix<NUM_T, ROWS, COLS>& matrix<NUM_T, ROWS, COLS>::rref() {
+    NUM_T det;
+    rref(det);
+    return *this;
+  }
+
+  template<class NUM_T, int ROWS, int COLS>
+  NUM_T matrix<NUM_T, ROWS, COLS>::determinant() const {
+    NUM_T det;
+    matrix<NUM_T, ROWS, COLS> mat(*this);
+    mat.rref(det);
+    return det;
+  }
+
+  /*
+  * This implementation treats zeros as follows:
+  * Any number that is within tolerance of zero will be
+  * treated as though it were a zero. However, for optimization
+  * reasons, it will not be replaced with zero, but will be treated
+  * as being equal to all values also within that tolerance.
+  * Thus it may be useful to call, set_zeros() after calling
+  * this method. The method will also calculate the determinant
+  */
+  template<class NUM_T, int ROWS, int COLS>
+  matrix<NUM_T, ROWS, COLS>& matrix<NUM_T, ROWS, COLS>::rref(NUM_T& determinant) {
+    determinant = static_cast<NUM_T>(1);
+
     /*The first step in RREF is to choose a (nonzero) pivot in the first column if one exists
-    We will choose the largest pivot in absolute value in order to minimize instability*/
+    We will choose the largest pivot in std::absolute value in order to minimize instability*/
 
     /*The rowStart indicates where we should start searching for a pivot.
-    That is, we ignore all rows below rowStart*/
+    That is, we ignore all rows before rowStart (above it in the matrix)*/
     int rowStart = 0;
 
+    /*
+    * We apply this process of finding a pivot to each row,
+    * although the rowStart may not increment each time (for instance
+      if we don't find a pivot)
+    */
     for(int pivotColumn = 0; pivotColumn != COLS; ++pivotColumn) {
-      /*Holds the index (not the value) of the largest pivot in absolute value in the column.
+      /*Holds the row index (not the value) of the largest pivot in std::absolute value in the column.
       It is initially set to rowStart*/
       int largestPivotIndex = rowStart;
 
       /*We traverse the column. We start at rowStart + 1 since the largestPivotIndex is already set to rowStart*/
       for(int pivotChoice = rowStart + 1; pivotChoice != ROWS; ++pivotChoice) {
-        if(abs(arr[largestPivotIndex][pivotColumn]) < abs(arr[pivotChoice][pivotColumn]))
+        if(std::abs(static_cast<double>(arr[largestPivotIndex][pivotColumn]))
+         < std::abs(static_cast<double>(arr[pivotChoice][pivotColumn])))
           largestPivotIndex = pivotChoice;
       }
       /*If after the traversal, largestPivotIndex points to a zero element, then the whole column is zero,
-      so we may skip it*/
-      if(arr[largestPivotIndex][pivotColumn] == 0) continue;
-
+      so we may skip it and move on to the next column without incrementing rowStart.
+      Since we are doing a comparison by zero,
+      we will use the tolerance*/
+      if(std::abs(static_cast<double>(arr[largestPivotIndex][pivotColumn])) < tolerance) continue;
 
 
       /*Otherwise, We interchange it with the rowStart row. This is a potentially
       expensive operation (since we are using a 2d array and not an array of points) thus an adjacency
       list might be more efficient than a 2d array in this case*/
-      /*
-      * At the same time, we can divide the moved row through by the pivot,
-      * this will allow us to do only one traversal.
-      */
-      int largestPivotValue = arr[largestPivotIndex][pivotColumn];
+      NUM_T largestPivotValue = arr[largestPivotIndex][pivotColumn];
+      /*In this case, we are multiplying the row by 1/largestPivotValue,
+      so we multiply by the inverse (largestPivotValue) for the determinant*/
+      determinant *= largestPivotValue;
 
-      /*We can start with the pivot column because all values to the left should already be zero*/
-      for(int i = pivotColumn; i != COLS; ++i) {
-        /*Performs the swap and division*/
-        NUM_T tmp = arr[rowStart][i];
-        arr[rowStart][i] = arr[largestPivotIndex][i]/largestPivotValue;
-        arr[largestPivotIndex][i] = tmp;
+      if(largestPivotIndex != rowStart) {
+        /*If the largestPivotIndex is not already in the start row then:*/
+        /*We can start with the pivot column because all values to the left should already be
+        effectively zero*/
+        /*We multiply the determinant by -1 for the swap*/
+        determinant *= static_cast<NUM_T>(-1);
+        for(int i = pivotColumn; i != COLS; ++i) {
+          /*Performs the swap and division*/
+          NUM_T tmp = arr[rowStart][i];
+          arr[rowStart][i] = arr[largestPivotIndex][i]/largestPivotValue;
+          arr[largestPivotIndex][i] = tmp;
+        }
+      } else {
+        /*In this case, we don't need to perform the
+        swap, just the division*/
+        for(int i = pivotColumn; i != COLS; ++i) {
+          arr[rowStart][i] = arr[largestPivotIndex][i]/largestPivotValue;
+        }
       }
+
 
       /*Now for all rows below rowStart, we subtract the pivot
        row multiplied by the first element in the examined row*/
       for(int examinedRow = rowStart + 1; examinedRow != ROWS; ++examinedRow) {
         NUM_T multiplier = arr[examinedRow][pivotColumn];
+        /*This value is known to be zero*/
         arr[examinedRow][pivotColumn] = 0;
         for(int examinedColumn = pivotColumn + 1; examinedColumn != COLS; ++examinedColumn) {
           arr[examinedRow][examinedColumn] -= multiplier*arr[rowStart][examinedColumn];
@@ -154,8 +275,16 @@ public:
 
       /*Now, we can increment the rowStart*/
       ++rowStart;
+
       /*We are done with the first phase*/
       if(rowStart == ROWS) break;
+    }
+    if(rowStart != ROWS) {
+      /*rowStart counts the number of pivots. If the matrix
+      is square, and rowStart != ROWS, then it does not reduce to the identity,
+      so the determinant is 0.
+      */
+      determinant = static_cast<NUM_T>(0);
     }
 
     /*In the second phase, we start with the last non zero row.
@@ -163,14 +292,14 @@ public:
 
     for(rowStart = ROWS - 1; rowStart != -1; --rowStart) {
       for(int pivotColumn = 0; pivotColumn != COLS; ++pivotColumn) {
-        if(arr[rowStart][pivotColumn] != 0) {
+        if(std::abs(static_cast<double>(arr[rowStart][pivotColumn])) >= tolerance) {
           /*We have found the first nonzero entry in the row*/
           /*We now subtract this row times a multiplier from all the above rows*/
           for(int examinedRow = 0; examinedRow != rowStart; ++examinedRow) {
             /*We can ignore previous values since they are zero*/
             NUM_T multiplier = arr[examinedRow][pivotColumn];
             /*We know that the examined element will become zero*/
-            arr[examinedRow][pivotColumn] = 0;
+            arr[examinedRow][pivotColumn] = static_cast<NUM_T>(0);
             for(int examinedColumn = pivotColumn+1; examinedColumn != COLS; ++examinedColumn) {
               arr[examinedRow][examinedColumn] -= multiplier*arr[rowStart][examinedColumn];
             }
@@ -246,17 +375,77 @@ public:
 
 /*
 * These are not member methods of the matrix class
+* These are useful functions which perform operations on matrices
+* and related classes but do not make sense as member functions
 */
+
+  /*
+  * Generates the appropriately sized square identity matrix
+  */
+  template<class NUM_T, int SIZE>
+  matrix<NUM_T, SIZE, SIZE> gen_identity() {
+    matrix<NUM_T, SIZE, SIZE> retMat;
+    for(int r = 0; r != SIZE; ++r) {
+      for(int c = 0; c != SIZE; ++c) {
+        retMat[r][c] = (r == c)?1:0;
+      }
+    }
+    return retMat;
+  }
+
+
+  /*
+  * Adjoins the matrices by row. That is,
+  * it the nth row of the returned matrix is the nth row of
+  * the first matrix then the nth row of the second matrix.
+  */
+  template<class NUM_T, int ROWS, int COLS1, int COLS2>
+  matrix<NUM_T, ROWS, COLS1 + COLS2>
+  adjoin_by_row(const matrix<NUM_T, ROWS, COLS1>& mat1, const matrix<NUM_T, ROWS, COLS2>& mat2) {
+    matrix<NUM_T, ROWS, COLS1 + COLS2> retMat;
+    for(int row = 0; row != ROWS; ++row) {
+      for(int col = 0; col != COLS1 + COLS2; ++col) {
+        if(col < COLS1)
+          retMat[row][col] = mat1[row][col];
+        else
+          retMat[row][col] = mat2[row][col-COLS1];
+      }
+    }
+    return retMat;
+  }
+
+  /*
+  * Adjoins the matrices by column. That is,
+  * it the nth col of the returned matrix is the nth col of
+  * the first matrix then the nth col of the second matrix.
+  */
+  template<class NUM_T, int ROWS1, int ROWS2, int COLS>
+  matrix<NUM_T, ROWS1 + ROWS2, COLS>
+  adjoin_by_column(const matrix<NUM_T, ROWS1, COLS>& mat1, const matrix<NUM_T, ROWS2, COLS>& mat2) {
+    matrix<NUM_T, ROWS1+ROWS2, COLS> retMat;
+    for(int row = 0; row != ROWS1 + ROWS2; ++row) {
+      for(int col = 0; col != COLS; ++col) {
+        if(row < ROWS1)
+          retMat[row][col] = mat1[row][col];
+        else
+          retMat[row][col] = mat2[row - ROWS1][col];
+      }
+    }
+    return retMat;
+  }
+
+
+
   template<class NUM_T, int ROWS, int COLS>
   matrix<NUM_T, ROWS, COLS>
-  operator+(matrix<NUM_T, ROWS, COLS> rhs, const matrix<NUM_T, ROWS, COLS>& lhs) {
-    return rhs += lhs;
+  operator+(matrix<NUM_T, ROWS, COLS> lhs, const matrix<NUM_T, ROWS, COLS>& rhs) {
+    return lhs += rhs;
   }
 
   template<class NUM_T, int ROWS, int COLS>
   matrix<NUM_T, ROWS, COLS>
-  operator-(matrix<NUM_T, ROWS, COLS> rhs, const matrix<NUM_T, ROWS, COLS>& lhs) {
-    return rhs -= lhs;
+  operator-(matrix<NUM_T, ROWS, COLS> lhs, const matrix<NUM_T, ROWS, COLS>& rhs) {
+    return lhs -= rhs;
   }
 
   template<class NUM_T, int ROWS, int COLS>
@@ -272,6 +461,19 @@ public:
   template<class NUM_T, int ROWS, int COLS>
   matrix<NUM_T, ROWS, COLS> operator/(matrix<NUM_T, ROWS, COLS> mat, NUM_T scal) {
     return mat /= scal;
+  }
+
+  template<class NUM_T, int ROWS1, int COLS1, int COLS2>
+  matrix<NUM_T, ROWS1, COLS2>
+  operator*(const matrix<NUM_T, ROWS1, COLS1>& mat1, const matrix<NUM_T, COLS1, COLS2>& mat2) {
+    matrix<NUM_T, ROWS1, COLS2> retMat(0);
+    for(int row = 0; row != ROWS1; ++row) {
+      for(int col = 0; col != COLS2; ++col) {
+        for(int i = 0; i != COLS1; ++i)
+          retMat[row][col] += mat1[row][i]*mat2[i][col];
+      }
+    }
+    return retMat;
   }
 
   template<class NUM_T, int ROWS, int COLS>
@@ -298,7 +500,23 @@ public:
     }
     return out;
   }
+
+  template<class NUM_T, int SIZE>
+  matrix<NUM_T, SIZE, SIZE> invert(const matrix<NUM_T, SIZE, SIZE>& mat) {
+    matrix<NUM_T, SIZE, 2*SIZE> augmented = adjoin_by_row(mat, gen_identity<NUM_T, SIZE>());
+    augmented.rref();
+    matrix<NUM_T, SIZE, SIZE> retMat;
+
+    for(int row = 0; row != SIZE; ++row) {
+      for(int col = 0; col != SIZE; ++col) {
+        retMat[row][col] = augmented[row][col+SIZE];
+      }
+    }
+
+    return retMat;
+  }
 }
+
 
 
 

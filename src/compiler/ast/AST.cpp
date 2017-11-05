@@ -48,7 +48,22 @@ AST& AST::operator=(AST&& ast) {
   return *this;
 }
 
-void AST::simplify() {
+/*Conversion to double,
+used for matrix use*/
+AST::operator double() {
+  if(root->evaluatable()) {
+    return root->evaluate();
+  } else {
+    return 1;
+  }
+}
+
+/*Conversion from int, used for matrix*/
+AST::AST(int val) : root(new integer_number_leaf_node(val)) {
+}
+
+
+AST& AST::simplify() {
   expression_node* newRoot = root->transform_operators();
   if(newRoot != root)
     delete root;
@@ -68,9 +83,10 @@ void AST::simplify() {
   root = newRoot;
 
   optimize();
+  return *this;
 }
 
-void AST::differentiate(const std::string& var) {
+AST& AST::differentiate(const std::string& var) {
   /*We first perform enough tree manipulations to get only the appropriate operators*/
   expression_node* newRoot = root->transform_operators();
   if(newRoot != root)
@@ -103,10 +119,11 @@ void AST::differentiate(const std::string& var) {
   root = newRoot;
 
   optimize();
+  return *this;
 }
 
 
-void AST::optimize() {
+AST& AST::optimize() {
 
   expression_node* rootCopy = root->copy();
   expression_node* tmp = rootCopy->optimization_round();
@@ -123,6 +140,7 @@ void AST::optimize() {
     rootCopy = tmp;
   }
   delete rootCopy;
+  return *this;
 }
 
 
@@ -226,11 +244,80 @@ void AST::emit_stack_inc_amd64(std::string& str, compiler_data& data) {
   ++data.stackSizeFPU;
 }
 
+AST& AST::operator+=(const AST& ast) {
+  root = new binary_addition_operator_node(root, ast.root->copy());
+  return *this;
+}
+
+AST& AST::operator-=(const AST& ast) {
+  root = new binary_subtraction_operator_node(root, ast.root->copy());
+  return *this;
+}
+
+AST& AST::operator*=(const AST& ast) {
+  root = new binary_multiplication_operator_node(root, ast.root->copy());
+  return *this;
+}
+
+AST& AST::operator/=(const AST& ast) {
+  root = new division_operator_node(root, ast.root->copy());
+  return *this;
+}
+
+AST& AST::operator-() {
+  root = new unary_minus_operator_node(root);
+  return *this;
+}
+
+AST operator+(AST lhs, const AST& rhs) {
+  return lhs+=rhs;
+}
+
+AST operator-(AST lhs, const AST& rhs) {
+  return lhs-=rhs;
+}
+
+AST operator*(AST lhs, const AST& rhs) {
+  return lhs*=rhs;
+}
+
+/*
+* Called ONLY when neither input can mutate.
+*/
+AST operator*(const AST& lhs, const AST& rhs) {
+  return AST(new binary_multiplication_operator_node(lhs.root->copy(), rhs.root->copy()));
+}
+
+AST operator/(AST lhs, const AST& rhs) {
+  return lhs/=rhs;
+}
+
+
 std::ostream& operator<<(std::ostream& out, const AST& ast) {
   ast.root->print(out);
   return out;
 }
 
-bool operator==(AST& ast1, AST& ast2) {
+bool operator==(const AST& ast1, const AST& ast2) {
   return *ast1.root == *ast2.root;
+}
+
+bool operator!=(const AST& ast1, const AST& ast2) {
+  return *ast1.root != *ast2.root;
+}
+
+bool operator<(const AST& ast1, const AST& ast2) {
+  return *ast1.root < *ast2.root;
+}
+
+bool operator<=(const AST& ast1, const AST& ast2) {
+  return *ast1.root <= *ast2.root;
+}
+
+bool operator>(const AST& ast1, const AST& ast2) {
+  return *ast1.root > *ast2.root;
+}
+
+bool operator>=(const AST& ast1, const AST& ast2) {
+  return *ast1.root >= *ast2.root;
 }
