@@ -1,6 +1,7 @@
 #ifndef EXPRESSION_NODE_GUARD
 #define EXPRESSION_NODE_GUARD
 #include <iostream>
+#include <iomanip>
 #include "compiler/ast/node.h"
 #include "compiler/compiler_data.h"
 #include "compiler/ast/visitor/visitor.h"

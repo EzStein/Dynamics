@@ -230,12 +230,12 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
    is in precanonical form because collect_terms is guaranteed to preserve the node type.
    But, we may no longer be sorted*/
   this->sort();
-  /* We don't need to combine the evaluatable terms
-   Instead we combine any nonevaluatable terms and put them in a newChildren list*/
+
   std::list<expression_node*> newChildren;
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
-  /*We first iterate till we get to the first non evaluatable term*/
+  /*We first iterate till we get to the first non evaluatable term
+  adding all the evaluatable ones to the list*/
   for(; iter != end; ++iter) {
     if((*iter)->evaluatable())
       newChildren.push_back(*iter);
@@ -243,9 +243,20 @@ expression_node* polyadic_multiplication_operator_node::collect_terms() {
       break;
   }
   /*Iter now points to either the end of the list or to the first
-   non-evaluatable term. If it points to the end, we are done and no collection is necessary*/
+   non-evaluatable term. If it points to the end, we are done
+   since an optimization will be able to collect the evaluatable terms*/
   if(iter == end)
     return this;
+
+  /*Now we must combine the evaluatable terms*/
+  expression_node* evaluatablePart = new polyadic_multiplication_operator_node(newChildren);
+  expression_node* tmp = evaluatablePart->optimization_round();
+  if(tmp != evaluatablePart)
+    delete evaluatablePart;
+  evaluatablePart = tmp;
+  newChildren.clear();
+  newChildren.push_back(new exponentiation_operator_node(evaluatablePart, new integer_number_leaf_node(1)));
+
 
   while(iter != end) {
     /*This term is an exponentiation_operator_node.
@@ -308,7 +319,6 @@ expression_node* polyadic_multiplication_operator_node::optimization_round() {
   iterator_t iter = children.begin();
   const_iterator_t end = children.end();
   while(iter != end) {
-
     if((*iter)->evaluatable() && (*iter)->is_integral()) {
 
       long val = (*iter)->evaluate_as_integer();

@@ -167,6 +167,16 @@ expression_node* polyadic_addition_operator_node::collect_terms() {
   if(iter == end)
     return this;
 
+  /*Now we must combine the evaluatable terms*/
+  expression_node* evaluatablePart = new polyadic_addition_operator_node(newChildren);
+  expression_node* tmp = evaluatablePart->optimization_round();
+  if(tmp != evaluatablePart)
+    delete evaluatablePart;
+  evaluatablePart = tmp;
+  newChildren.clear();
+  newChildren.push_back(new polyadic_multiplication_operator_node(
+    new exponentiation_operator_node(evaluatablePart, new integer_number_leaf_node(1))));
+
   /*Otherwise iter points to the first nonevaluatable node.
    This node is a sorted, precanonical, collected terms polyadic multiplication operator node*/
   /*We first construct a new polyadic multiplication operator node that contains

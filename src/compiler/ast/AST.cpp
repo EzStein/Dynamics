@@ -69,23 +69,32 @@ AST& AST::simplify() {
     delete root;
   root = newRoot;
 
-  newRoot = root->level_operators();
-  if(newRoot != root)
-    delete root;
-  root = newRoot;
+  expression_node* oldRoot = nullptr;
+  do {
+    delete oldRoot;
 
-  newRoot = root->make_pre_canonical();
-  if(newRoot != root)
-    delete root;
-  root = newRoot;
+    oldRoot = root->copy();
 
-  root->sort();
-  newRoot = root->collect_terms();
-  if(newRoot != root)
-    delete root;
-  root = newRoot;
+    newRoot = root->level_operators();
+    if(newRoot != root)
+      delete root;
+    root = newRoot;
 
-  optimize();
+    newRoot = root->make_pre_canonical();
+    if(newRoot != root)
+      delete root;
+    root = newRoot;
+
+    root->sort();
+
+    newRoot = root->collect_terms();
+    if(newRoot != root)
+      delete root;
+    root = newRoot;
+
+    optimize();
+  } while(*oldRoot != *root);
+  delete oldRoot;
   return *this;
 }
 
@@ -136,6 +145,7 @@ AST& AST::optimize() {
   if(tmp != rootCopy)
     delete rootCopy;
   rootCopy = tmp;
+
   while(*rootCopy != *root) {
     delete root;
     root = rootCopy;

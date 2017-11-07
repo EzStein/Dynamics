@@ -22,9 +22,9 @@ AST compile_as_tree(const std::string& str) {
   stringstream sstream(str);
   parser parse(sstream);
 
-  list<symbol> symbolTable;
+  list<symbol>* symbolTable = new list<symbol>();
   /*Compile the function*/
-  return AST(parse.parse(symbolTable));
+  return AST(parse.parse(*symbolTable));
 }
 
 int main() {
@@ -108,16 +108,17 @@ int main() {
   std::cout << mat2.determinant() << std::endl;
   //std::cout << 0.010101010101e-35 << std::endl;*/
 
-  math::matrix<AST, 2, 2> mat(compile_as_tree("1-x"),AST(1),AST(2),AST(3));
+  math::matrix<double> mat(3,3,0,1,2,3,4,123,22,23,-12);
   std::cout << mat << std::endl;
   //mat = invert(mat)*mat;
   //std::cout << mat << std::endl;
-  mat = math::matrix<AST,2,2>(mat[0][0].simplify(),
-          mat[0][1].simplify(),
-        mat[1][0].simplify(),
-        mat[1][1].simplify());
 
-  std::cout << mat << std::endl;
+  std::cout << mat.determinant()  << "\n\n"<< std::endl;
+  //std::cout << mat.rref()  << "\n\n"<< std::endl;
+  std::cout << math::invert_matrix(mat) << "\n\n" << std::endl;
+  std::cout << (mat*math::invert_matrix(mat)).set_zeros().set_ones() << "\n\n" << std::endl;
+  std::cout << (math::invert_matrix(mat)*mat).set_zeros().set_ones() << "\n\n" << std::endl;
+  //std::cout << compile_as_tree("3+1+x+x-x^2*(0+1-2x+2x-1)").simplify() <<std::endl;
 
   return 0;
 }

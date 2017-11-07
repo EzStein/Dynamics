@@ -1,12 +1,12 @@
 #include "math/util.h"
-#include "math/matrix.h"
+#include "math/static_matrix.h"
 #include <iostream>
 namespace math {
   vector<double, 2> pixel_to_value(const vector<int, 2>& pixel, const vector<int, 2>& canvasSize,
     const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& valueBoundaryBottomRight) {
 
     double scaling = (valueBoundaryBottomRight[0] - valueBoundaryTopLeft[0])/canvasSize[0];
-    matrix<double, 2, 2> mat;
+    static_matrix<double, 2, 2> mat;
     mat[0][0] = scaling;
     mat[0][1] = 0;
     mat[1][0] = 0;
@@ -18,7 +18,7 @@ namespace math {
     const vector<double, 2>& valueBoundaryTopLeft, const vector<double, 2>& valueBoundaryBottomRight) {
 
     double scaling = (valueBoundaryBottomRight[0] - valueBoundaryTopLeft[0])/canvasSize[0];
-    matrix<double, 2, 2> mat;
+    static_matrix<double, 2, 2> mat;
     mat[0][0] = 1.0/scaling;
     mat[0][1] = 0;
     mat[1][0] = 0;
@@ -64,7 +64,7 @@ namespace math {
 
   vector<double, 4>& euler(vector<double, 4>& start,
     driver::var4_double_func_t xFunc, driver::var4_double_func_t yFunc, driver::var4_double_func_t zFunc, double inc) {
-    
+
     double xInc = inc*xFunc(start[0], start[1], start[2], start[3]);
     double yInc = inc*yFunc(start[0], start[1], start[2], start[3]);
     double zInc = inc*zFunc(start[0], start[1], start[2], start[3]);
