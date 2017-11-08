@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include "math/vector.h"
 
 /*
 * A generic class that represents a matrix. It is parameterized,
@@ -30,7 +29,7 @@
 namespace math {
   template<class NUM_T>
   class matrix {
-  private:
+  protected:
     /*A ponter to an array which stores elements in ROW MAJOR order.
     That is, elements of the same row are contiguous in memory. It is
     thus always faster to traverse the matrix row by row.
@@ -92,13 +91,8 @@ namespace math {
       }
     }
 
-    matrix(int rows, int cols, int val = 0) : ROWS(rows), COLS(cols) {
-      arr = new NUM_T[ROWS*COLS];
-      for(int r = 0; r!=ROWS; ++r) {
-        for(int c = 0; c != COLS; ++c) {
-          (*this)[r][c] = static_cast<NUM_T>(val);
-        }
-      }
+    matrix(int rows, int cols) : ROWS(rows), COLS(cols) {
+      arr = new NUM_T[rows*cols];
     }
 
 
@@ -143,6 +137,10 @@ public:
 
     int get_cols() const {
       return COLS;
+    }
+
+    const NUM_T* data() const {
+      return arr;
     }
 
     /*Returns a reference to the row array that may be edited freely*/

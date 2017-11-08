@@ -6,7 +6,7 @@
 #include "app/app.h"
 #include "top_frame.h"
 #include "compiler/front/driver.h"
-#include "math/vector.h"
+#include "math/static_vector.h"
 #include "math/util.h"
 #include <wx/glcanvas.h>
 #include <string>
@@ -21,6 +21,10 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
   std::cout << glContext->IsOK() << std::endl;
   m_notebook2->AddPage( glPanel, wxT("GL Panel"), false );
   glPanel->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame::on_paint_gl_renderer ), NULL, this);
+
+  /*Preallocate the info*/
+  initVals = std::vector<double>(4);
+  functions = std::vector<driver::double_func_t>(3);
 
   valueBoundaryTopLeft[0] = -1;
   valueBoundaryTopLeft[1] = 1;
@@ -187,12 +191,18 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
     return;
   update_vals();
 
-  xFunc =
-    dr.compile_as_function<driver::var4_double_func_t>(xFuncString);
-  yFunc =
-    dr.compile_as_function<driver::var4_double_func_t>(yFuncString);
-  zFunc =
-    dr.compile_as_function<driver::var4_double_func_t>(zFuncString);
+  for(driver::double_func_t func : functions) {
+    dr.mark_available(func);
+  }
+  functions.clear();
+
+  functions.push_back(
+    dr.compile_as_function<driver::double_func_t>(xFuncString));
+  functions.push_back(
+    dr.compile_as_function<driver::double_func_t>(yFuncString));
+  functions.push_back(
+    dr.compile_as_function<driver::double_func_t>(zFuncString));
+
 
   solutions = std::vector<solution_t>();
 
@@ -201,17 +211,18 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
 }
 
 void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
-  if(!xFunc || !yFunc || !zFunc) return;
+  if(!functions[0] || !functions[1] || !functions[2]) return;
   update_vals();
-  math::vector<int, 2> mousePos;
+  math::static_vector<int, 2> mousePos;
   mousePos[0] = evt.GetPosition().x;
   mousePos[1] = evt.GetPosition().y;
-  math::vector<double, 2> mouseValPos =
+  math::static_vector<double, 2> mouseValPos =
   math::pixel_to_value(mousePos, valueBoundaryTopLeft, pixelToValueRatio);
-  math::vector<double, 4> vec;
-  math::vector<int, 2> indices =
+
+  math::static_vector<int, 2> indices =
     get_axes_choice_indices(get_axes_choice_from_string(
       std::string(axesChoice->GetString(axesChoice->GetSelection()))));
+  std::vector<double> vec(4);
   for(int i = 0; i != 4; ++i) {
     if(i == indices[0])
       vec[i] = mouseValPos[0];
@@ -221,21 +232,20 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
       vec[i] = initVals[i];
   }
 
-  std::list<math::vector<double, 4> > points = std::list<math::vector<double, 4> >();
+  std::list<std::vector<double> > points = std::list<std::vector<double> >();
 
   points.push_back(vec);
   while(vec[0] < tMax) {
 
-    vec = math::euler(vec, xFunc, yFunc, zFunc, tInc);
+    math::euler(vec, functions, tInc);
     points.push_back(vec);
   }
   vec = *points.begin();
 
   while(vec[0] > tMin) {
 
-    vec = math::euler(vec, xFunc, yFunc, zFunc, -tInc);
+    math::euler(vec, functions, -tInc);
     points.push_front(vec);
-
   }
 
   solutions.push_back(points);
@@ -248,30 +258,25 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
 void top_frame::set_nullclines() {
   isoclines.clear();
   /*Calculuate the nullclines*/
-  math::vector<int, 2> canvasSize;
+  math::static_vector<int, 2> canvasSize;
   dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
 
-  std::vector<math::vector<double, 4> > nullPoints;
-  math::vector<int, 2> indices =
+  solution_t nullPoints;
+  math::static_vector<int, 2> indices =
     get_axes_choice_indices(get_axes_choice_from_string(
       std::string(axesChoice->GetString(axesChoice->GetSelection()))));
 
   /*Set to 0 when invalid. 1 if positive or zero, -1 if negative*/
-  std::vector<driver::var4_double_func_t> functions;
-  functions.push_back(xFunc);
-  functions.push_back(yFunc);
-  functions.push_back(zFunc);
-
-  for(driver::var4_double_func_t func : functions) {
+  for(driver::double_func_t func : functions) {
     int sign = 0;
     for(int x = 0; x != canvasSize[0]; ++x) {
       for(int y = 0; y != canvasSize[1]; ++y) {
-        math::vector<double,2> tmp;
+        math::static_vector<double,2> tmp;
         tmp[0] = x;
         tmp[1] = y;
-        math::vector<double, 2> pts =
+        math::static_vector<double, 2> pts =
         math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
-        math::vector<double, 4> vec;
+        std::vector<double> vec(4);
         for(int i = 0; i != 4; ++i) {
           if(i == indices[0])
             vec[i] = pts[0];
@@ -281,7 +286,7 @@ void top_frame::set_nullclines() {
             vec[i] = initVals[i];
         }
 
-        double val = func(vec[0], vec[1], vec[2], vec[3]);
+        double val = func(vec.data());
         int nextSign;
         if(val <= 0) nextSign = -1;
         else if(val > 0) nextSign = 1;
@@ -296,12 +301,12 @@ void top_frame::set_nullclines() {
     sign = 0;
     for(int y = 0; y != canvasSize[0]; ++y) {
       for(int x = 0; x != canvasSize[1]; ++x) {
-        math::vector<double,2> tmp;
+        math::static_vector<double,2> tmp;
         tmp[0] = x;
         tmp[1] = y;
-        math::vector<double, 2> pts =
+        math::static_vector<double, 2> pts =
         math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
-        math::vector<double, 4> vec;
+        std::vector<double> vec(4);
         for(int i = 0; i != 4; ++i) {
           if(i == indices[0])
             vec[i] = pts[0];
@@ -311,7 +316,7 @@ void top_frame::set_nullclines() {
             vec[i] = initVals[i];
         }
 
-        double val = func(vec[0], vec[1], vec[2], vec[3]);
+        double val = func(vec.data());
         int nextSign;
         if(val <= 0) nextSign = -1;
         else if(val > 0) nextSign = 1;
@@ -327,11 +332,11 @@ void top_frame::set_nullclines() {
 }
 
 void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
-  math::vector<int, 2> mousePos;
+  math::static_vector<int, 2> mousePos;
   mousePos[0] = evt.GetPosition().x;
   mousePos[1] = evt.GetPosition().y;
 
-  math::vector<double, 2> mouseValPos =
+  math::static_vector<double, 2> mouseValPos =
   math::pixel_to_value(mousePos, valueBoundaryTopLeft, pixelToValueRatio);
   statusBar->SetStatusText("t = " + std::to_string(mouseValPos[0]) + "\tx = " + std::to_string(mouseValPos[1]));
 }
@@ -354,7 +359,7 @@ void top_frame::on_choice_axes(wxCommandEvent& evt) {
 
 void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   wxPaintDC dc(dynamicalPlane);
-  math::vector<int, 2> canvasSize;
+  math::static_vector<int, 2> canvasSize;
   dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
   dc.SetBrush(*wxWHITE_BRUSH);
   dc.DrawRectangle(0,0,canvasSize[0], canvasSize[1]);
@@ -362,39 +367,40 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
 
 
   /*Paint the axes*/
-  math::vector<int, 2> tmp;
+  math::static_vector<int, 2> tmp;
   for(int xInc = 40; xInc < canvasSize[0]; xInc+=80) {
     tmp[0] = xInc;
     tmp[1] = 0;
-    math::vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
+    math::static_vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
     dc.DrawText(std::to_string(val[0]), xInc, canvasSize[1] - 20);
     dc.DrawLine(xInc, canvasSize[1], xInc, canvasSize[1] - 10);
   }
   for(int yInc = 20; yInc < canvasSize[0]; yInc+=40) {
     tmp[0] = 0;
     tmp[1] = yInc;
-    math::vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
+    math::static_vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
     dc.DrawText(std::to_string(val[1]), 20, yInc);
     dc.DrawLine(0, yInc, 10, yInc);
   }
 
 
-  math::vector<int, 2> indices =
+  math::static_vector<int, 2> indices =
     get_axes_choice_indices(get_axes_choice_from_string(std::string(axesChoice->GetString(axesChoice->GetSelection()))));
-  std::vector<std::list<math::vector<double, 4> > >::const_iterator solution;
+  std::vector<solution_t>::const_iterator solution;
 
   if(solutions.empty()) return;
-  /*Plot vector field*/
+  /*Plot static_vector field*/
   if(indices[0] == 1 && indices[1] == 2) {
     for(int xp = 0; xp < canvasSize[0]; xp+=50) {
       for(int yp = 0; yp < canvasSize[1]; yp+=50) {
-        math::vector<int, 2> p;
+        math::static_vector<int, 2> p;
         p[0] = xp;
         p[1] = yp;
-        math::vector<double, 2> v = math::pixel_to_value(p,
+        math::static_vector<double, 2> v = math::pixel_to_value(p,
         valueBoundaryTopLeft, pixelToValueRatio);
-        double xSlope = xFunc(initVals[0], v[0], v[1], initVals[3]);
-        double ySlope = yFunc(initVals[0], v[0], v[1], initVals[3]);
+        std::vector<double> tmp = {initVals[0], v[0], v[1], initVals[3]};
+        double xSlope = functions[1](tmp.data());
+        double ySlope = functions[2](tmp.data());
         if(xSlope == 0 || ySlope == 0) continue;
         double m = ySlope/xSlope;
         if(m <= 1 && m >= -1)
@@ -409,20 +415,21 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     if(solution->size() < 2) continue; //There are not enough points in the solution
 
     //We iterate over the points of the solution which are ordered by time
-    std::list<math::vector<double, 4> >::const_iterator iter;
-    math::vector<double, 4> vec1 = *solution->begin(), vec2;
+    std::list<std::vector<double> >::const_iterator iter;
+    std::vector<double> vec1 = *solution->begin(), vec2;
+
     for(iter = solution->begin()++; iter != solution->end(); ++iter) {
       vec2 = *iter;
 
-      math::vector<double,2> tmp2;
+      math::static_vector<double,2> tmp2;
       tmp2[0] = vec1[indices[0]];
       tmp2[1] = vec1[indices[1]];
-      math::vector<int, 2> pixel1 = math::value_to_pixel(tmp2,
+      math::static_vector<int, 2> pixel1 = math::value_to_pixel(tmp2,
         valueBoundaryTopLeft, pixelToValueRatio);
 
       tmp2[0] = vec2[indices[0]];
       tmp2[1] = vec2[indices[1]];
-      math::vector<int, 2> pixel2 = math::value_to_pixel(tmp2,
+      math::static_vector<int, 2> pixel2 = math::value_to_pixel(tmp2,
         valueBoundaryTopLeft, pixelToValueRatio);
       if(pixel1[0] < 0 || pixel1[0] > canvasSize[0] ||
         pixel1[1] < 0 || pixel1[1] > canvasSize[1] ||
@@ -440,21 +447,21 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   /*Paint isoclines*/
   dc.SetPen(*wxRED_PEN);
   for(int i = 0; i != isoclines.size(); ++i) {
-    std::vector<math::vector<double, 4> > nullcline = isoclines[i];
-    std::vector<math::vector<double, 4> >::const_iterator iter = nullcline.begin();
-    std::vector<math::vector<double, 4> >::const_iterator end = nullcline.end();
+    std::list<std::vector<double> > nullcline = isoclines[i];
+    std::list<std::vector<double> >::const_iterator iter = nullcline.begin();
+    std::list<std::vector<double> >::const_iterator end = nullcline.end();
     for(; iter != end; ++iter) {
-      math::vector<double,2> tmp;
+      math::static_vector<double,2> tmp;
       tmp[0] = (*iter)[indices[0]];
       tmp[1] = (*iter)[indices[1]];
-      math::vector<int, 2> pixel1 = math::value_to_pixel(tmp,
+      math::static_vector<int, 2> pixel1 = math::value_to_pixel(tmp,
         valueBoundaryTopLeft, pixelToValueRatio);
       dc.DrawLine(pixel1[0], pixel1[1], pixel1[0]+1, pixel1[1]+1);
     }
   }
 }
 
-math::vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {
+math::static_vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {
   int indexH, indexV;
   if(axesChoice == axes_choice::XT) {
     indexH = 1;
@@ -493,7 +500,7 @@ math::vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {
     indexH = 3;
     indexV = 2;
   }
-  math::vector<int, 2> ret;
+  math::static_vector<int, 2> ret;
   ret[0] = indexH;
   ret[1] = indexV;
   return ret;

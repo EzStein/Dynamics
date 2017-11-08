@@ -10,7 +10,7 @@
 #include <string>
 #include "math/matrix.h"
 
-#include "math/vector.h"
+#include "math/static_vector.h"
 
 #include "compiler/ast/AST.h"
 #include "compiler/parser.h"

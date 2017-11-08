@@ -1,137 +1,40 @@
 #ifndef VECTOR_GUARD
 #define VECTOR_GUARD
-
+#include "math/matrix.h"
 namespace math {
-  template <class NUM_T, int SIZE>
-  class vector {
+  /*Represents a column vector. This is just a matrix with COLS 1 and ROWS the size of the matrix*/
+  template<class NUM_T>
+  class vector : public matrix<NUM_T> {
+  private:
   public:
-    /*Default constructor which creates a vector of value 0*/
-    vector();
+    vector(int size) : matrix<NUM_T>(size, 1) { }
 
-    template<class OTHER_NUM_T>
-    vector(const vector<OTHER_NUM_T, SIZE>& vec) {
-      for(int i = 0; i != SIZE; ++i) {
-        elements[i] = static_cast<NUM_T>(vec[i]);
-      }
-    }
+    /*Default copy/move constructor*/
+    vector(const vector<NUM_T>& vec) : matrix<NUM_T>(vec) { }
+    vector(vector<NUM_T>&& vec) : matrix<NUM_T>(vec) { }
 
-    /*template<class... ARGS>
-    vector(ARGS... args) {
-      constructor_helper(args...);
-    }*/
-
-
+    /*Assignment operators are inherited!*/
 
     NUM_T& operator[](int index);
     const NUM_T& operator[](int index) const;
-
-    vector<NUM_T, SIZE>& operator+=(const vector<NUM_T, SIZE>&);
-    vector<NUM_T, SIZE>& operator-=(const vector<NUM_T, SIZE>&);
-    vector<NUM_T, SIZE>& operator*=(NUM_T);
-    vector<NUM_T, SIZE>& operator/=(NUM_T);
-    vector<NUM_T, SIZE>& operator-();
-  private:
-    NUM_T elements[SIZE];
-
-    /*template<class... ARGS>
-    void constructor_helper(int& count, NUM_T val1, ARGS... args) {
-      elements[++count] = val1;
-      constructor_helper(count, args...);
-    }*/
+    int size() const;
   };
 
-  template <class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>::vector() {
-    for(int i = 0; i < SIZE; ++i) {
-      elements[i] = static_cast<NUM_T>(0);
-    }
+  template<class NUM_T>
+  int vector<NUM_T>::size() const {
+    return this->ROWS;
   }
 
-
-
-  template<class NUM_T, int SIZE>
-  NUM_T& vector<NUM_T, SIZE>::operator[](int index) {
-    return elements[index];
+  template<class NUM_T>
+  NUM_T& vector<NUM_T>::operator[](int index) {
+    return matrix<NUM_T>::operator[](index)[0];
   }
 
-  template<class NUM_T, int SIZE>
-  const NUM_T& vector<NUM_T, SIZE>::operator[](int index) const {
-    return elements[index];
+  template<class NUM_T>
+  const NUM_T& vector<NUM_T>::operator[](int index) const {
+    return matrix<NUM_T>::operator[](index)[0];
   }
 
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>& vector<NUM_T, SIZE>::operator+=(const vector<NUM_T, SIZE>& val) {
-    for(int i = 0; i < SIZE; ++i) {
-      elements[i] += val.elements[i];
-    }
-    return *this;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>& vector<NUM_T, SIZE>::operator-=(const vector<NUM_T, SIZE>& val) {
-    for(int i = 0; i < SIZE; ++i) {
-      elements[i] -= val.elements[i];
-    }
-    return *this;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>& vector<NUM_T, SIZE>::operator*=(NUM_T val) {
-    for(int i = 0; i < SIZE; ++i) {
-      elements[i] *= val;
-    }
-    return *this;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>& vector<NUM_T, SIZE>::operator/=(NUM_T val) {
-    for(int i = 0; i < SIZE; ++i) {
-      elements[i] /= val;
-    }
-    return *this;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE>& vector<NUM_T, SIZE>::operator-() {
-    return *this *= -1;
-  }
-
-  /*What appears to be extra copies are made here, but these are removed with RVO and
-  elision which actually makes this implementation faster*/
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE> operator+(vector<NUM_T, SIZE> lhs, const vector<NUM_T, SIZE>& rhs) {
-    return lhs += rhs;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE> operator-(vector<NUM_T, SIZE> lhs, const vector<NUM_T, SIZE>& rhs) {
-    return lhs -= rhs;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE> operator*(NUM_T scal, vector<NUM_T, SIZE> vec) {
-    return vec *= scal;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE> operator*(vector<NUM_T, SIZE> vec, NUM_T scal) {
-    return vec *= scal;
-  }
-
-  template<class NUM_T, int SIZE>
-  vector<NUM_T, SIZE> operator/(vector<NUM_T, SIZE> vec, NUM_T scal) {
-    return vec /= scal;
-  }
-
-  template<class NUM_T, int SIZE>
-  std::ostream& operator<<(std::ostream& out, const vector<NUM_T, SIZE>& vec) {
-    out << "(";
-    for(int i = 0; i != SIZE - 1; ++i) {
-      out << vec[i] << ", ";
-    }
-    out << vec[SIZE - 1] << ")";
-    return out;
-  }
 }
+
 #endif

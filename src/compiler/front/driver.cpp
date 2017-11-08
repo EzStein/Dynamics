@@ -85,18 +85,18 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(string str) {
   return func;
 }
 
-template driver::var2_double_func_t driver::compile_as_function<driver::var2_double_func_t>(string);
-template driver::var3_double_func_t driver::compile_as_function<driver::var3_double_func_t>(string);
-template driver::var4_double_func_t driver::compile_as_function<driver::var4_double_func_t>(string);
+template driver::double_func_t driver::compile_as_function<driver::double_func_t>(string);
 
 template<class FUNC_TYPE>
 void driver::mark_available(FUNC_TYPE func) {
-  buffer_table.at(reinterpret_cast<void*>(func)).available = true;
+  try {
+    buffer_table.at(reinterpret_cast<void*>(func)).available = true;
+  } catch(std::out_of_range r) {
+    //Do nothing
+  }
 }
 
-template void driver::mark_available<driver::var2_double_func_t>(driver::var2_double_func_t);
-template void driver::mark_available<driver::var3_double_func_t>(driver::var3_double_func_t);
-template void driver::mark_available<driver::var4_double_func_t>(driver::var4_double_func_t);
+template void driver::mark_available<driver::double_func_t>(driver::double_func_t);
 
 /*
 * Unmaps all buffers

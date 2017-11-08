@@ -4,23 +4,17 @@
 #include <cstddef>
 #include <string>
 #include <map>
+#include <exception>
 #include "compiler/front/buffer_attributes.h"
 
 
 
 class driver {
 public:
-  /*NOTE: the function prototype is double func(double t, double x, double y, double z),
-  as in, t is the first parameter, followed by x, then y, then z etc..*/
-  /*The type for a function taking two variables, t and x*/
-  typedef double (*var2_double_func_t)(double, double);
-
-  /*The type for a function taking two variables, t, x, y*/
-  typedef double (*var3_double_func_t)(double, double, double);
-
-  /*The type for a function taking two variables, t, x, y, z*/
-  typedef double (*var4_double_func_t)(double, double, double, double);
-
+  /*NOTE: the function prototype is double func(double*)
+  where the passed in array has
+  t is the first element, followed by x, then y, then z etc..*/
+  typedef double (*double_func_t)(const double*);
 
   driver();
   ~driver();
@@ -46,7 +40,8 @@ public:
   template<class FUNC_TYPE> FUNC_TYPE compile_as_function(std::string);
 
   /*Marks the provided function as unused. It may not be free'd immediately. The buffer
-  space could be reused for a new function compilation*/
+  space could be reused for a new function compilation.
+  If the function was never allocated, this method does nothing*/
   template <class FUNC_TYPE> void mark_available(FUNC_TYPE);
 
 private:

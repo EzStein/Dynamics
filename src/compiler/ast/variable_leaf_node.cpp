@@ -23,14 +23,9 @@ std::ostream& variable_leaf_node::print(std::ostream& out) const {
 
 void variable_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
   AST::emit_stack_inc_amd64(acc, data);
-  unsigned int offset;
-  if(symPtr->parameter <= 7) {
-    offset = reinterpret_cast<unsigned int>(-72 + symPtr->parameter*8);
-  } else {
-    offset = 16 + 8 * (symPtr->parameter - 8);
-  }
-
-  acc += "fldl " +  std::to_string(offset) + "(%rbp)\n";
+  /*We obtain the offset based on the pointer passed to the function
+  in the rbi register*/
+  acc += "fldl " +  std::to_string(symPtr->parameter*8) + "(%rbi)\n";
 }
 
 expression_node* variable_leaf_node::copy() const {

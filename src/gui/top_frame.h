@@ -1,5 +1,6 @@
 #include "generated.h"
 #include "compiler/front/driver.h"
+#include "math/static_vector.h"
 #include "math/vector.h"
 #include <wx/glcanvas.h>
 #include <list>
@@ -16,21 +17,30 @@ private:
   wxGLCanvas* glPanel;
   wxGLContext* glContext;
   driver dr;
-  typedef std::list<math::vector<double, 4> > solution_t;
+  typedef std::list<std::vector<double> > solution_t;
+
+  /*A list of solutions to draw*/
   std::vector<solution_t> solutions;
-  std::vector<std::vector<math::vector<double, 4> > > isoclines;
-  math::vector<double, 2> valueBoundaryTopLeft;
+
+  /*A list to draw*/
+  std::vector<solution_t> isoclines;
+
+  /*An array of the initValues*/
+  std::vector<double> initVals;
+  /*A list of the functions. There should be one fewer functions than initVals*/
+  std::vector<driver::double_func_t> functions;
+
+  /*Info for converting coordinate systems*/
+  math::static_vector<double, 2> valueBoundaryTopLeft;
   /*Measures the number of pixels per unit
   in the x and y directions*/
-  math::vector<double, 2> pixelToValueRatio;
-  math::vector<double, 4> initVals;
+  math::static_vector<double, 2> pixelToValueRatio;
   double tMax = 20, tMin = -20;
   double tInc = 0.01;
-  driver::var4_double_func_t xFunc = nullptr, yFunc = nullptr, zFunc = nullptr;
+
 
   void set_nullclines();
   virtual void on_paint_dynamical_plane(wxPaintEvent&) override;
-
   virtual void on_button_click_compile(wxCommandEvent&) override;
   virtual void on_size_top_frame( wxSizeEvent& event ) override;
   virtual void on_choice_dimension(wxCommandEvent&) override;
@@ -61,5 +71,5 @@ enum class axes_choice {
   NONE
 };
 
-math::vector<int, 2> get_axes_choice_indices(axes_choice axesChoice);
+math::static_vector<int, 2> get_axes_choice_indices(axes_choice axesChoice);
 axes_choice get_axes_choice_from_string(std::string str);

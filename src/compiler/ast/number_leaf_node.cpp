@@ -54,9 +54,9 @@ void number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) co
   }
   sstream << ", %eax\n";
   acc += sstream.str();
-  acc += "movl %eax, -0x50(%rbp)\n";
+  acc += "movl %eax, -0x10(%rbp)\n";
 
-  acc += "fldl -0x50(%rbp)\n";
+  acc += "fldl -0x10(%rbp)\n";
 }
 
 expression_node* number_leaf_node::copy() const {

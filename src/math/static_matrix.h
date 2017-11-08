@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
-#include "math/vector.h"
+#include "math/static_vector.h"
 
 /*
 * A generic class that represents a static_matrix. It is parameterized,
@@ -102,9 +102,9 @@ public:
       arr[0][0] = elem;
     }
 
-    /*Constructs this static_matrix from a column vector
+    /*Constructs this static_matrix from a column static_vector
     This constructor should only be used */
-    static_matrix(const vector<NUM_T, ROWS>& vec) {
+    static_matrix(const static_vector<NUM_T, ROWS>& vec) {
       assert(COLS = 1);
       for(int r = 0; r != ROWS; ++r) {
         arr[r][0] = vec[r];
@@ -491,8 +491,8 @@ public:
   }
 
   template<class NUM_T, int ROWS, int COLS>
-  vector<NUM_T, ROWS> operator*(const static_matrix<NUM_T, ROWS, COLS>& mat, const vector<NUM_T, COLS>& vec) {
-    vector<NUM_T, ROWS> ret;
+  static_vector<NUM_T, ROWS> operator*(const static_matrix<NUM_T, ROWS, COLS>& mat, const static_vector<NUM_T, COLS>& vec) {
+    static_vector<NUM_T, ROWS> ret;
     for(int r = 0; r != ROWS; ++r) {
       NUM_T acc = static_cast<NUM_T>(0);
       for(int c = 0; c != COLS; ++c) {
