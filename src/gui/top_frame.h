@@ -38,7 +38,9 @@ private:
   double tMax = 20, tMin = -20;
   double tInc = 0.01;
 
+  GLuint sqrVAO, triVAO;
 
+  void initialize_gl();
   void set_nullclines();
   virtual void on_paint_dynamical_plane(wxPaintEvent&) override;
   virtual void on_button_click_compile(wxCommandEvent&) override;

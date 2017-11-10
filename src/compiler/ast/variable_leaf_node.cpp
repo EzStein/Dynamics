@@ -24,8 +24,8 @@ std::ostream& variable_leaf_node::print(std::ostream& out) const {
 void variable_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
   AST::emit_stack_inc_amd64(acc, data);
   /*We obtain the offset based on the pointer passed to the function
-  in the rbi register*/
-  acc += "fldl " +  std::to_string(symPtr->parameter*8) + "(%rbi)\n";
+  in the rdi register*/
+  acc += "fldl " +  std::to_string(symPtr->parameter*8) + "(%rdi)\n";
 }
 
 expression_node* variable_leaf_node::copy() const {

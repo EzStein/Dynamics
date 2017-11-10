@@ -70,12 +70,13 @@ namespace math {
     else
       increments = scratchSpace;
 
+    
     for(int i = 0; i != dimension; ++i) {
-      scratchSpace[i] = inc * vecField[i](initVals.data());
+      increments[i] = inc * vecField[i](initVals.data());
     }
     initVals[0] += inc;
     for(int i = 0; i != dimension; ++i) {
-      initVals[i+1] += scratchSpace[i];
+      initVals[i+1] += increments[i];
     }
 
     if(!scratchSpace)

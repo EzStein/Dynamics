@@ -8,6 +8,7 @@
 #include "compiler/front/driver.h"
 #include "math/static_vector.h"
 #include "math/util.h"
+#include "gl_program.h"
 #include <wx/glcanvas.h>
 #include <string>
 #include <list>
@@ -24,37 +25,76 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) : top_frame_base(window, i
 
   /*Preallocate the info*/
   initVals = std::vector<double>(4);
-  functions = std::vector<driver::double_func_t>(3);
+  functions = {nullptr, nullptr, nullptr};
 
   valueBoundaryTopLeft[0] = -1;
   valueBoundaryTopLeft[1] = 1;
   pixelToValueRatio[0] = 200;
   pixelToValueRatio[1] = 200;
   dynamicalPlane->Refresh();
+
+
 }
 
-/*
-* Reads a file into the character buffer provided,
-* appending a null terminating character if necessary.
-* No more than size characters will be read into the buffer.
-* Returns true if the whole file was read. False if it was truncated.
-*/
-bool read_file(const char * filePath, char* buffer, size_t size) {
-  FILE* file = fopen(filePath, "rb");
-  if(!file)
-    std::cout << "No such file or director: " << filePath << std::endl;
-  fseek(file, 0, SEEK_END);
-  const size_t fileSize = ftell(file);
-  rewind(file);
-  size = size - 1 < fileSize?size-1:fileSize;
-  fread(buffer, sizeof(char), size, file);
-  fclose(file);
-  buffer[size] = '\x00';
-  return size == fileSize;
-}
 
-void initialize_gl() {
 
+void top_frame::initialize_gl() {
+  /*We now set up opengl*/
+  /*Loads function pointers to gl functions*/
+  if (!gladLoadGL()) {
+      std::cout << "Failed to load gl function pointers!" << std::endl;
+  }
+
+  glClearColor(1.0f, 0.2f, 0.4f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  /*We now load the shader program*/
+  gl_program program(PROJECT_PATH"/resources/gl/vertex.vert", PROJECT_PATH"/resources/gl/fragment.frag");
+  program.bind();
+
+
+
+  GLuint triVBO;
+  glGenBuffers(1, &triVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, triVBO);
+  const float triVertices[] = {
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    0.0f, 0.5f, 0.0f
+  };
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triVertices), triVertices, GL_STATIC_DRAW);
+
+  /*We now set up TWO VAO's. One which
+  draws a triangle and one which draws a square*/
+
+  glGenVertexArrays(1, &triVAO);
+  glBindVertexArray(triVAO);
+  glVertexAttribPointer(program.get_attribute_location("aPos"), 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glEnableVertexAttribArray(program.get_attribute_location("aPos"));
+  glBindVertexArray(0);
+
+  /*Create another VBO*/
+  float sqrVertices[] = {
+    0.6f, 0.6f, 0.0f,
+    0.6f, -0.6f, 0.0f,
+    0.9f, 0.6f, 0.0f,
+    0.7f, 0.6f, 0.0f,
+    0.8f, 0.9f, 0.0f,
+    0.9f, -0.8f, 0.0f
+  };
+  GLuint sqrVBO;
+  glGenBuffers(1, &sqrVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, sqrVBO);
+
+
+  glBufferData(GL_ARRAY_BUFFER, sizeof(sqrVertices), sqrVertices, GL_STATIC_DRAW);
+
+  /*Make another VAO*/
+  glGenVertexArrays(1, &sqrVAO);
+  glBindVertexArray(sqrVAO);
+  glVertexAttribPointer(program.get_attribute_location("aPos"), 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glEnableVertexAttribArray(program.get_attribute_location("aPos"));
+  glBindVertexArray(0);
 }
 
 top_frame::~top_frame() {
@@ -63,113 +103,18 @@ top_frame::~top_frame() {
 
 void top_frame::on_paint_gl_renderer(wxPaintEvent& evt) {
   static int i = 0;
-  glPanel->SetCurrent(*glContext);
-  unsigned int VAO, shaderProgram;
-
-  static float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f,
-    0.5f, 0.5f, 0.0f
-  };
-  static unsigned int indices[] = {
-    0,1,2,0,3,1
-  };
-  if(i == 0) {
-
-    /*Loads function pointers to gl functions*/
-    if (!gladLoadGL()) {
-        std::cout << "Failed to load gl function pointers!" << std::endl;
-    }
-
-    /*Load and compile shaders*/
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    const char * path = PROJECT_PATH"/resources/gl/vertex.vert";
-    /*Allocate a buffer to read the file into*/
-    size_t bufferSize = 1024;
-    char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
-    /*READ the file into the buffer*/
-    if(!read_file(path, buffer, bufferSize)) {
-      std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
-      return;
-    }
-
-    glShaderSource(vertexShader, 1, &buffer, NULL);
-    glCompileShader(vertexShader);
-
-    int  success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if(!success) {
-      glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-      std::cout << "GL shader compilation error VERTEX: " << infoLog << std::endl;
-    }
-
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    path = PROJECT_PATH"/resources/gl/fragment.frag";
-
-    if(!read_file(path, buffer, bufferSize)) {
-      std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
-      return;
-    }
-
-    glShaderSource(fragmentShader, 1, &buffer, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success) {
-      glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-      std::cout << "GL shader compilation error FRAGMENT: " << infoLog << std::endl;
-    }
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-      glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-      std::cout << "GL shader linking error: " << infoLog << std::endl;
-    }
-    free(buffer);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-
-    glClearColor(1.0f, 0.2f, 0.4f, 1.0f);
-  	glClear(GL_COLOR_BUFFER_BIT);
-
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    unsigned int vboId;
-    glGenBuffers(1, &vboId);
-    glBindBuffer(GL_ARRAY_BUFFER, vboId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    unsigned int eboId;
-    glGenBuffers(1, &eboId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-
-
+  if(!i) {
+    glPanel->SetCurrent(*glContext);
+    initialize_gl();
+    i = 1;
+    std::cout << "INITIALIZED" << std::endl;
   }
-
-  /*int x, y;
-  glPanel->GetSize(&x, &y);
-  glViewport(0,0,x, y);*/
-
-  glUseProgram(shaderProgram);
-  int colorUniformLocation = glGetUniformLocation(shaderProgram, "baseColor");
-  glUniform4f(colorUniformLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-  glBindVertexArray(VAO);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glPanel->SetCurrent(*glContext);
+  glBindVertexArray(triVAO);
+  glDrawArrays(GL_TRIANGLES,0,3);
+  glBindVertexArray(sqrVAO);
+  glDrawArrays(GL_TRIANGLES,0,6);
   glBindVertexArray(0);
-
-
   glPanel->SwapBuffers();
 }
 
@@ -268,6 +213,7 @@ void top_frame::set_nullclines() {
 
   /*Set to 0 when invalid. 1 if positive or zero, -1 if negative*/
   for(driver::double_func_t func : functions) {
+    if(!func) return;
     int sign = 0;
     for(int x = 0; x != canvasSize[0]; ++x) {
       for(int y = 0; y != canvasSize[1]; ++y) {
