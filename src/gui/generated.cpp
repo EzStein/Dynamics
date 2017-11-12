@@ -204,12 +204,8 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	bSizer4->Add( bSizer2, 0, 0, 5 );
 	
 	m_notebook2 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	dynamicalPlane = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxTAB_TRAVERSAL );
-	m_notebook2->AddPage( dynamicalPlane, wxT("Dynamical Plane"), true );
 	parameterPlane = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	m_notebook2->AddPage( parameterPlane, wxT("Parameter Plane"), false );
-	glParent = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_notebook2->AddPage( glParent, wxT("OpenGL"), false );
 	
 	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -226,10 +222,6 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_choice1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
 	m_button2->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
 	axesChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
-	dynamicalPlane->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( top_frame_base::on_left_down_dynamical_plane ), NULL, this );
-	dynamicalPlane->Connect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_dynamical_plane ), NULL, this );
-	dynamicalPlane->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_dynamical_plane ), NULL, this );
-	dynamicalPlane->Connect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_dynamical_plane ), NULL, this );
 }
 
 top_frame_base::~top_frame_base()
@@ -240,9 +232,5 @@ top_frame_base::~top_frame_base()
 	m_choice1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
 	m_button2->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
 	axesChoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
-	dynamicalPlane->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( top_frame_base::on_left_down_dynamical_plane ), NULL, this );
-	dynamicalPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_dynamical_plane ), NULL, this );
-	dynamicalPlane->Disconnect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_dynamical_plane ), NULL, this );
-	dynamicalPlane->Disconnect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_dynamical_plane ), NULL, this );
 	
 }

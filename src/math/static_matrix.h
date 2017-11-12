@@ -111,6 +111,14 @@ public:
       }
     }
 
+    const NUM_T* data() const {
+      return &(arr[0][0]);
+    }
+
+    NUM_T* data() {
+      return &(arr[0][0]);
+    }
+
 
 
     /*Returns a reference to the row array that may be edited freely*/

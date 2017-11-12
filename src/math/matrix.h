@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <cmath>
 
 /*
 * A generic class that represents a matrix. It is parameterized,
@@ -59,6 +60,8 @@ namespace math {
       mat.arr = nullptr;
     }
 
+
+
     /*Copy Assignment*/
     matrix<NUM_T>& operator=(const matrix<NUM_T>& other) {
       /*Self assignment*/
@@ -94,6 +97,8 @@ namespace math {
     matrix(int rows, int cols) : ROWS(rows), COLS(cols) {
       arr = new NUM_T[rows*cols];
     }
+
+    matrix() : matrix(0,0) { };
 
 
 /*The following 3 constructors are used so that we can have a convenient variable argument list
@@ -137,6 +142,18 @@ public:
 
     int get_cols() const {
       return COLS;
+    }
+
+    /*Returns the standard matrix norm
+    which is the square root of the sum of the squres of all entries*/
+    NUM_T norm() const {
+      NUM_T sum = 0;
+      for(int r = 0; r != ROWS; ++r) {
+        for(int c = 0; c != COLS; ++c) {
+          sum += arr[r][c]*arr[r][c];
+        }
+      }
+      return std::sqrt(static_cast<double>(sum));
     }
 
     const NUM_T* data() const {

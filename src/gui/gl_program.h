@@ -12,14 +12,17 @@
 class gl_program {
 private:
   GLuint programID;
+  std::string vertexShaderPath, fragmentShaderPath;
 public:
 
-  gl_program(const char * vertexShaderPath, const char * fragmentShaderPath);
+  gl_program(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
   GLint get_attribute_location(const char *) const;
   void bind() const;
-  void setBoolUniform(const char* name, bool val) const;
-  void setFloatUniform(const char* name, float val) const;
-  void setIntUniform(const char* name, int val) const;
+  void compile();
+  void set_bool_uniform(const char* name, bool val) const;
+  void set_float_uniform(const char* name, float val) const;
+  void set_int_uniform(const char* name, int val) const;
+  void set_float_mat4_uniform(const char * name,  bool transpose, float * val) const;
 
 
 private:

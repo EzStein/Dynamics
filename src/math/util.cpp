@@ -60,7 +60,7 @@ namespace math {
   The return values are left in the initVals section.
   NOTE: the dimension refers to the number of variables not including time.
   initVals should have length dim+1, but vecField should have length dim*/
-  void euler(std::vector<double>& initVals,
+  void euler(math::vector<double>& initVals,
     const std::vector<driver::double_func_t>& vecField, double inc, double* scratchSpace) {
     assert(vecField.size() + 1 == initVals.size());
     int dimension = vecField.size();
@@ -70,7 +70,7 @@ namespace math {
     else
       increments = scratchSpace;
 
-    
+
     for(int i = 0; i != dimension; ++i) {
       increments[i] = inc * vecField[i](initVals.data());
     }

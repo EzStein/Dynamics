@@ -7,13 +7,24 @@ namespace math {
   class vector : public matrix<NUM_T> {
   private:
   public:
+    vector() : matrix<NUM_T>() { }
+
     vector(int size) : matrix<NUM_T>(size, 1) { }
 
     /*Default copy/move constructor*/
     vector(const vector<NUM_T>& vec) : matrix<NUM_T>(vec) { }
     vector(vector<NUM_T>&& vec) : matrix<NUM_T>(vec) { }
 
-    /*Assignment operators are inherited!*/
+    /*Assignment operators are not inherited!*/
+    vector<NUM_T>& operator=(const vector<NUM_T>& vec) {
+      matrix<NUM_T>::operator=(vec);
+      return *this;
+    }
+
+    vector<NUM_T>& operator=(vector<NUM_T>&& vec) {
+      matrix<NUM_T>::operator=(vec);
+      return *this;
+    }
 
     NUM_T& operator[](int index);
     const NUM_T& operator[](int index) const;

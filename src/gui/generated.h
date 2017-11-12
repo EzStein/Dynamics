@@ -73,9 +73,7 @@ class top_frame_base : public wxFrame
 		wxStaticText* m_staticText14;
 		wxChoice* axesChoice;
 		wxNotebook* m_notebook2;
-		wxPanel* dynamicalPlane;
 		wxPanel* parameterPlane;
-		wxPanel* glParent;
 		wxStatusBar* statusBar;
 		
 		// Virtual event handlers, overide them in your derived class
@@ -84,10 +82,6 @@ class top_frame_base : public wxFrame
 		virtual void on_choice_dimension( wxCommandEvent& event ) = 0;
 		virtual void on_button_click_compile( wxCommandEvent& event ) = 0;
 		virtual void on_choice_axes( wxCommandEvent& event ) = 0;
-		virtual void on_left_down_dynamical_plane( wxMouseEvent& event ) = 0;
-		virtual void on_motion_dynamical_plane( wxMouseEvent& event ) = 0;
-		virtual void on_paint_dynamical_plane( wxPaintEvent& event ) = 0;
-		virtual void on_size_dynamical_plane( wxSizeEvent& event ) = 0;
 		
 	
 	public:

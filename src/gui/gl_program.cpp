@@ -1,6 +1,9 @@
 #include "gl_program.h"
 
-gl_program::gl_program(const char * vertexShaderPath, const char * fragmentShaderPath) {
+gl_program::gl_program(const std::string& _vertexShaderPath, const std::string& _fragmentShaderPath)
+: vertexShaderPath(_vertexShaderPath), fragmentShaderPath(_fragmentShaderPath) { }
+
+void gl_program::compile() {
   /*Load and compile shaders*/
   GLuint vertexShader;
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -10,7 +13,7 @@ gl_program::gl_program(const char * vertexShaderPath, const char * fragmentShade
   char * buffer = static_cast<char*>(malloc(bufferSize*sizeof(char)));
 
   /*READ the file into the buffer*/
-  if(!read_file(vertexShaderPath, buffer, bufferSize)) {
+  if(!read_file(vertexShaderPath.c_str(), buffer, bufferSize)) {
     std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
     return;
   }
@@ -31,7 +34,7 @@ gl_program::gl_program(const char * vertexShaderPath, const char * fragmentShade
   unsigned int fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-  if(!read_file(fragmentShaderPath, buffer, bufferSize)) {
+  if(!read_file(fragmentShaderPath.c_str(), buffer, bufferSize)) {
     std::cout << "BUFFER TOO SMALL TO READ IN FILE" << std::endl;
     return;
   }
@@ -62,16 +65,20 @@ void gl_program::bind() const {
   glUseProgram(programID);
 }
 
-void gl_program::setBoolUniform(const char * name, bool val) const {
+void gl_program::set_bool_uniform(const char * name, bool val) const {
   glUniform1i(glGetUniformLocation(programID, name), static_cast<int>(val));
 }
 
-void gl_program::setIntUniform(const char * name, int val) const {
+void gl_program::set_int_uniform(const char * name, int val) const {
   glUniform1i(glGetUniformLocation(programID, name), val);
 }
 
-void gl_program::setFloatUniform(const char * name, float val) const {
+void gl_program::set_float_uniform(const char * name, float val) const {
   glUniform1f(glGetUniformLocation(programID, name), val);
+}
+
+void gl_program::set_float_mat4_uniform(const char * name,  bool transpose, float * val) const {
+  glUniformMatrix4fv(glGetUniformLocation(programID, name),1, transpose, val);
 }
 
 /*
