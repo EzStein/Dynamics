@@ -77,6 +77,10 @@ void gl_program::set_float_uniform(const char * name, float val) const {
   glUniform1f(glGetUniformLocation(programID, name), val);
 }
 
+void gl_program::set_float_vec4_uniform(const char * name, float* val) const {
+  glUniform4fv(glGetUniformLocation(programID, name), 1, val);
+}
+
 void gl_program::set_float_mat4_uniform(const char * name,  bool transpose, float * val) const {
   glUniformMatrix4fv(glGetUniformLocation(programID, name),1, transpose, val);
 }

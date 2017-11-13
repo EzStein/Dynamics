@@ -23,7 +23,7 @@ public:
   void set_float_uniform(const char* name, float val) const;
   void set_int_uniform(const char* name, int val) const;
   void set_float_mat4_uniform(const char * name,  bool transpose, float * val) const;
-
+  void set_float_vec4_uniform(const char * name, float* val) const;
 
 private:
   static bool read_file(const char * filePath, char* buffer, size_t size);

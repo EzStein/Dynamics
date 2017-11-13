@@ -65,7 +65,6 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	wxBoxSizer* bSizer4;
 	bSizer4 = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxBoxSizer* bSizer2;
 	bSizer2 = new wxBoxSizer( wxVERTICAL );
 	
 	wxBoxSizer* bSizer3;
@@ -84,10 +83,8 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	
 	bSizer2->Add( bSizer3, 0, wxEXPAND, 5 );
 	
-	functionListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
-	functionListCtrl->SetMaxSize( wxSize( 200,150 ) );
-	
-	bSizer2->Add( functionListCtrl, 1, wxALL, 5 );
+	m_dataViewListCtrl2 = new wxDataViewListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( m_dataViewListCtrl2, 0, wxALL, 5 );
 	
 	m_button2 = new wxButton( this, wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer2->Add( m_button2, 0, wxALL|wxEXPAND, 5 );
@@ -96,10 +93,8 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_staticText91->Wrap( -1 );
 	bSizer2->Add( m_staticText91, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
-	initialValueListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
-	initialValueListCtrl->SetMaxSize( wxSize( 200,150 ) );
-	
-	bSizer2->Add( initialValueListCtrl, 1, wxALL, 5 );
+	m_dataViewListCtrl1 = new wxDataViewListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( m_dataViewListCtrl1, 0, wxALL, 5 );
 	
 	m_staticText102 = new wxStaticText( this, wxID_ANY, wxT("Range"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText102->Wrap( -1 );
@@ -169,6 +164,9 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	
 	bSizer2->Add( fgSizer31, 0, wxEXPAND, 5 );
 	
+	renderCheckBox = new wxCheckBox( this, wxID_ANY, wxT("3d Render!"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( renderCheckBox, 0, wxALL, 5 );
+	
 	
 	bSizer4->Add( bSizer2, 0, wxALL, 5 );
 	
@@ -193,6 +191,7 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	axisVariable1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 	axisVariable2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 	axisVariable3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	renderCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
 }
 
 top_frame_base::~top_frame_base()
@@ -205,5 +204,6 @@ top_frame_base::~top_frame_base()
 	axisVariable1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 	axisVariable2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 	axisVariable3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	renderCheckBox->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
 	
 }

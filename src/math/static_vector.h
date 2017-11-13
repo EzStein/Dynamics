@@ -23,6 +23,22 @@ namespace math {
 
 
 
+    NUM_T norm() const {
+      NUM_T sum = static_cast<NUM_T>(0);
+      for(int i = 0; i != SIZE; ++i) {
+        sum += elements[i]*elements[i];
+      }
+      return static_cast<NUM_T>(std::sqrt(static_cast<double>(sum)));
+    }
+
+    static_vector<NUM_T, SIZE>& normalize() {
+      NUM_T norm = this->norm();
+      for(int i = 0; i != SIZE; ++i) {
+        elements[i] /= norm;
+      }
+      return *this;
+    }
+
     NUM_T& operator[](int index);
     const NUM_T& operator[](int index) const;
 
@@ -133,6 +149,15 @@ namespace math {
     }
     out << vec[SIZE - 1] << ")";
     return out;
+  }
+
+  template<class NUM_T>
+  math::static_vector<NUM_T, 3> cross(const math::static_vector<NUM_T, 3>& vec1, const math::static_vector<NUM_T, 3>& vec2) {
+    math::static_vector<NUM_T, 3> retVec;
+    retVec[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
+    retVec[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
+    retVec[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
+    return retVec;
   }
 }
 #endif

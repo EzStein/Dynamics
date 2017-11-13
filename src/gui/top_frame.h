@@ -34,7 +34,13 @@ private:
   math::static_vector<int, 2> initMousePos;
   math::static_vector<int, 2> initViewportCenter;
 
-  GLuint vao, vbo;
+  math::static_vector<double, 2> initZoomViewportCenter;
+  math::static_vector<double, 2> initZoomCenter;
+  math::static_vector<double, 2> initViewportSpan;
+  double totalMag;
+
+  GLuint vao2d, vao3d, vbo,
+  axes3dVbo, axes3dVao;
 
   void initialize_gl();
   void set_nullclines();
@@ -45,11 +51,15 @@ private:
   void on_size_dynamical_plane( wxSizeEvent& );
   void on_key_down_dynamical_plane( wxKeyEvent& );
   void on_key_up_dynamical_plane( wxKeyEvent& );
+  void on_mouse_wheel_dynamical_plane(wxMouseEvent&);
+  void on_magnify_dynamical_plane(wxMouseEvent&);
+  math::static_vector<double, 2> get_real_coordinates(int x, int y);
 
   virtual void on_button_click_compile(wxCommandEvent&) override;
   virtual void on_size_top_frame( wxSizeEvent& event ) override;
   virtual void on_menu_selection_vector_field(wxCommandEvent&) override;
   virtual void on_axis_choice(wxCommandEvent&) override;
   virtual void on_text_enter_dimension(wxCommandEvent& evt) override;
+  virtual void on_3d_render_check(wxCommandEvent& evt) override;
 
 };

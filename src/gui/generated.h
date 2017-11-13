@@ -23,8 +23,9 @@
 #include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/sizer.h>
-#include <wx/listctrl.h>
+#include <wx/dataview.h>
 #include <wx/choice.h>
+#include <wx/checkbox.h>
 #include <wx/panel.h>
 #include <wx/notebook.h>
 #include <wx/statusbr.h>
@@ -46,13 +47,14 @@ class top_frame_base : public wxFrame
 		wxMenu* m_menu2;
 		wxMenu* m_menu3;
 		wxMenu* m_menu4;
+		wxBoxSizer* bSizer2;
 		wxStaticText* m_staticText8;
 		wxTextCtrl* dimensionField;
 		wxButton* m_button21;
-		wxListCtrl* functionListCtrl;
+		wxDataViewListCtrl* m_dataViewListCtrl2;
 		wxButton* m_button2;
 		wxStaticText* m_staticText91;
-		wxListCtrl* initialValueListCtrl;
+		wxDataViewListCtrl* m_dataViewListCtrl1;
 		wxStaticText* m_staticText102;
 		wxStaticText* m_staticText11;
 		wxTextCtrl* tMinValField;
@@ -68,6 +70,7 @@ class top_frame_base : public wxFrame
 		wxChoice* axisVariable2;
 		wxStaticText* m_staticText18;
 		wxChoice* axisVariable3;
+		wxCheckBox* renderCheckBox;
 		wxNotebook* m_notebook2;
 		wxPanel* parameterPlane;
 		wxStatusBar* statusBar;
@@ -78,6 +81,7 @@ class top_frame_base : public wxFrame
 		virtual void on_text_enter_dimension( wxCommandEvent& event ) = 0;
 		virtual void on_button_click_compile( wxCommandEvent& event ) = 0;
 		virtual void on_axis_choice( wxCommandEvent& event ) = 0;
+		virtual void on_3d_render_check( wxCommandEvent& event ) = 0;
 		
 	
 	public:

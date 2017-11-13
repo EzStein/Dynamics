@@ -153,7 +153,7 @@ public:
           sum += (*this)[r][c]*(*this)[r][c];
         }
       }
-      return std::sqrt(static_cast<double>(sum));
+      return static_cast<NUM_T>(std::sqrt(static_cast<double>(sum)));
     }
 
     const NUM_T* data() const {
