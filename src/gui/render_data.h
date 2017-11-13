@@ -31,6 +31,13 @@ struct render_data {
   /*Indicates the span of the entire viewport in the x and y directions for 2d calculations*/
   double viewportSpanX, viewportSpanY;
   double viewportCenterX, viewportCenterY;
+  bool redraw = false;
+  bool render2d = true;
+
+  /*An array of 3 ints that mark which variable corresponds to which axes.
+  The variable number in axesVariable[0] is corresponds to the x axis, then the y, then the z axis.
+  Note that in 2d mode, only the first two entries are used.*/
+  int axesVariable[3];
 
   /*Generates the matrix that maps values to -1,1 for opengl's use*/
   math::static_matrix<float, 4,4> generate_2d_transformation_matrix() {
@@ -40,7 +47,7 @@ struct render_data {
     mat[0][3] = -viewportCenterX*mat[0][0];
 
     mat[1][1] = 2.0/viewportSpanY;
-    mat[1][3] = -viewportCenterY*mat[1][0];
+    mat[1][3] = -viewportCenterY*mat[1][1];
 
     mat[2][2] = 1;
     mat[3][3] = 1;

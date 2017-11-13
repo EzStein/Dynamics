@@ -13,6 +13,7 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <exception>
 
 top_frame::top_frame(wxWindow* window, wxWindowID id) :
  top_frame_base(window, id), program2d(PROJECT_PATH"/resources/gl/vert2d.vert", PROJECT_PATH"/resources/gl/frag2d.frag"),
@@ -24,14 +25,36 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   std::cout << glContext->IsOK() << std::endl;
   m_notebook2->AddPage( dynamicalPlane, wxT("Dynamical Plane"), false );
 
+  {
+    wxListItem col0;
+    col0.SetText(wxT("Variable"));
+    col0.SetWidth(80);
+    functionListCtrl->InsertColumn(0, col0);
+    wxListItem col1;
+    col1.SetText(wxT("Value"));
+    col1.SetWidth(150);
+    functionListCtrl->InsertColumn(1, col1);
+  }
+
+  {
+    wxListItem col0;
+    col0.SetText(wxT("Variable"));
+    col0.SetWidth(80);
+    initialValueListCtrl->InsertColumn(0, col0);
+    wxListItem col1;
+    col1.SetText(wxT("Value"));
+    col1.SetWidth(150);
+    initialValueListCtrl->InsertColumn(1, col1);
+  }
+
   dynamicalPlane->Connect( wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
   dynamicalPlane->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
   dynamicalPlane->Connect( wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
   dynamicalPlane->Connect( wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
 
-  /*Preallocate the info*/
-  initVals = std::vector<double>(4);
-  functions = {nullptr, nullptr, nullptr};
+  dynamicalPlane->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect( wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
 
   data.viewportCenterX = 0;
   data.viewportCenterY = 0;
@@ -54,8 +77,6 @@ void top_frame::initialize_gl() {
   /*We now load the shader program*/
   program3d.compile();
   program2d.compile();
-  program2d.bind();
-
 
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -74,7 +95,10 @@ top_frame::~top_frame() {
   dynamicalPlane->Disconnect( wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
   dynamicalPlane->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
   dynamicalPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
   dynamicalPlane->Disconnect( wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect( wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
 }
 
 void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
@@ -88,133 +112,168 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  /*We first need to calculate the total number of vertices in the solution set
-  We do this by iterating over the solutions and suming their sizes*/
-  int totalFloats = 0;
-  for(solution sol : data.solutions) {
-    totalFloats += sol.points.size();
-  }
-  /*Since there are two floats per vertex*/
-  totalFloats *= 2;
-  if(totalFloats == 0) {
-    /*In this event, there are no solutions given,
-    so we don't draw anything*/
-    return;
-  }
-  float* vertexData = new float[totalFloats];
-
-  /*We now fill in the data accordingly*/
-  int index = -1;
-  for(solution sol : data.solutions) {
-    for(math::vector<double> vec : sol.points) {
-      vertexData[++index] = static_cast<float>(vec[0]);
-      vertexData[++index] = static_cast<float>(vec[1]);
+  if(data.render2d) {
+    program2d.bind();
+    /*We are performing a 2d render*/
+    /*We first need to calculate the total number of vertices in the solution set
+    We do this by iterating over the solutions and suming their sizes*/
+    int totalFloats = 0;
+    for(solution sol : data.solutions) {
+      totalFloats += sol.points.size();
     }
+
+    /*Since there are two floats per vertex in 2d mode*/
+    totalFloats *= 2;
+
+    if(totalFloats == 0) {
+      /*In this event, there are no solutions given,
+      so we don't draw anything*/
+      return;
+    }
+
+    if(data.redraw) {
+      float* vertexData = new float[totalFloats];
+
+      /*We now fill in the data accordingly*/
+      int index = -1;
+      for(solution sol : data.solutions) {
+        for(math::vector<double> vec : sol.points) {
+          vertexData[++index] = static_cast<float>(vec[data.axesVariable[0]]);
+          vertexData[++index] = static_cast<float>(vec[data.axesVariable[1]]);
+        }
+      }
+
+      /*Copy the vertex data to the GPU*/
+      glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      glBufferData(GL_ARRAY_BUFFER,
+        totalFloats * sizeof(float), vertexData, GL_STREAM_DRAW);
+      delete[] vertexData;
+      data.redraw = false;
+      std::cout << "EXPENSIVE ALLOC: " << totalFloats * sizeof(float) << " bytes"<< std::endl;
+    }
+
+    glBindVertexArray(vao);
+    math::static_matrix<float, 4,4> transformationMatrix(data.generate_2d_transformation_matrix());
+
+    program2d.set_float_mat4_uniform("transformation", true, transformationMatrix.data());
+    int offset = 0;
+    for(solution sol : data.solutions) {
+      glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
+      offset += sol.points.size();
+    }
+    glBindVertexArray(0);
+    dynamicalPlane->SwapBuffers();
+  } else {
+
   }
-
-  /*Copy the vertex data to the GPU*/
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER,
-    totalFloats * sizeof(float), vertexData, GL_STREAM_DRAW);
-  delete[] vertexData;
-
-  glBindVertexArray(vao);
-  math::static_matrix<float, 4,4> transformationMatrix(data.generate_2d_transformation_matrix());
-  program2d.set_float_mat4_uniform("transformation", true, transformationMatrix.data());
-  int offset = 0;
-  for(solution sol : data.solutions) {
-    glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
-    offset += sol.points.size();
-  }
-
-  glBindVertexArray(0);
-  dynamicalPlane->SwapBuffers();
-}
-
-void top_frame::update_vals() {
-  tMax = std::stod(std::string(tMaxValField->GetValue()));
-  tMin = std::stod(std::string(tMinValField->GetValue()));
-  tInc = std::stod(std::string(tIncrementField->GetValue()));
-  initVals[1] = std::stod(std::string(xInitValField->GetValue()));
-  initVals[2] = std::stod(std::string(yInitValField->GetValue()));
-  initVals[3] = std::stod(std::string(zInitValField->GetValue()));
-  initVals[0] = std::stod(std::string(tInitValField->GetValue()));
 }
 
 void top_frame::on_button_click_compile(wxCommandEvent& event) {
-  std::string xFuncString = std::string(xFuncField->GetValue().mb_str());
-  std::string yFuncString = std::string(yFuncField->GetValue().mb_str());
-  std::string zFuncString = std::string(zFuncField->GetValue().mb_str());
-  if(xFuncString.empty() || yFuncString.empty() || zFuncString.empty())
-    return;
-  update_vals();
-
+  for(wxTextCtrl* funcField : functionTextCtrlList) {
+    /*If a single field is empty, we do nothing*/
+    if(funcField->IsEmpty()) return;
+  }
+  /*Otherwise, release the space allocated by previous compilations*/
   for(driver::double_func_t func : functions) {
     dr.mark_available(func);
   }
+  /*And reset the functions*/
   functions.clear();
 
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>(xFuncString));
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>(yFuncString));
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>(zFuncString));
+  for(wxTextCtrl* funcField : functionTextCtrlList) {
+    std::string funcString = std::string(funcField->GetValue().mb_str());
 
+    functions.push_back(
+      dr.compile_as_function<driver::double_func_t>(funcString)
+    );
+  }
 
   /*Clear all the solutions*/
   data.solutions = std::vector<solution>();
+  data.redraw = true;
   dynamicalPlane->Refresh();
 }
 
 void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
-  if(!functions[0] || !functions[1] || !functions[2]) return;
-  update_vals();
+  /*Set the initial mouse positions*/
+  initMousePos[0] = evt.GetPosition().x;
+  initMousePos[1] = evt.GetPosition().y;
+
+  /*If there are no functions, which happens at the begging, then we do nothgin*/
+  if(functions.empty()) return;
+
+
+
+  std::vector<double> initVals;
+  for(wxTextCtrl* initValField : initialValueTextCtrlList) {
+    std::string strVal(std::string(initValField->GetValue().mb_str()));
+    double val;
+    try {
+      val = std::stod(strVal);
+    } catch (const std::invalid_argument& arg) {
+      std::cout << "Initival value string, '" << strVal << "' is not a number!" << std::endl;
+      return;
+    }
+    initVals.push_back(val);
+  }
+
+  data.redraw = true;
+
   math::static_vector<int, 2> canvasSize;
   dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+
   /*we set the mouse position to be a standard vec of size 4 whose last element
   is 1 (this allows for translations)*/
+  /*Compute the mouse position value for 2d*/
   math::static_vector<double, 4> mousePos;
   mousePos[0] = 2*static_cast<double>(evt.GetPosition().x)/static_cast<double>(canvasSize[0]) - 1;
   mousePos[1] = 1 - 2*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1]);
   mousePos[2] = 0;
   mousePos[3] = 1;
-  math::static_vector<double, 2> mouseValPos;// =
-  //math::pixel_to_value(mousePos, valueBoundaryTopLeft, pixelToValueRatio);
+  math::static_vector<double, 2> mouseValPos;
   math::static_vector<double,4> tmp = data.generate_2d_inverse_transformation_matrix() * mousePos;
   mouseValPos[0] = tmp[0];
   mouseValPos[1] = tmp[1];
 
-  math::static_vector<int, 2> indices =
-    get_axes_choice_indices(get_axes_choice_from_string(
-      std::string(axesChoice->GetString(axesChoice->GetSelection()))));
+  // math::static_vector<int, 2> indices =
+  //   get_axes_choice_indices(get_axes_choice_from_string(
+  //     std::string(axesChoice->GetString(axesChoice->GetSelection()))));
+
+  data.axesVariable[0] = 0;
+  data.axesVariable[1] = 1;
 
   /*Set up initial condition*/
   math::vector<double> vec(4);
-  for(int i = 0; i != 4; ++i) {
-    if(i == indices[0])
+  for(int i = 0; i != initVals.size(); ++i) {
+    if(i == data.axesVariable[0])
       vec[i] = mouseValPos[0];
-    else if(i == indices[1])
+    else if(i == data.axesVariable[1])
       vec[i] = mouseValPos[1];
     else
       vec[i] = initVals[i];
   }
 
-  /*Construct a solution using the appropriate method*/
+  /*Retrieve tMax, tInc, and tMin*/
+  double tMax = std::stod(std::string(tMaxValField->GetValue().mb_str()));
+  double tMin = std::stod(std::string(tMinValField->GetValue().mb_str()));
+  double tInc = std::stod(std::string(tIncrementField->GetValue().mb_str()));
 
+  /*Construct a solution using the appropriate method*/
   solution sol;
   sol.initVals = vec;
   sol.points.push_back(vec);
+  double tolerance = 0.1;
   while(vec[0] < tMax) {
     math::euler(vec, functions, tInc);
-
-    sol.points.push_back(vec);
+    if((sol.points.back() - vec).norm() > tolerance)
+      sol.points.push_back(vec);
   }
-  vec = *sol.points.begin();
 
+  vec = *sol.points.begin();
   while(vec[0] > tMin) {
     math::euler(vec, functions, -tInc);
-    sol.points.push_front(vec);
+    if((sol.points.front() - vec).norm() > tolerance)
+      sol.points.push_front(vec);
   }
 
   data.solutions.push_back(sol);
@@ -316,200 +375,45 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
   mouseValPos[1] = tmp[1];
 
   statusBar->SetStatusText("t = " + std::to_string(mouseValPos[0]) + "\tx = " + std::to_string(mouseValPos[1]));
-}
 
-void top_frame::on_choice_dimension(wxCommandEvent& evt) {
-  int dim = std::stoi(std::string(evt.GetString()));
-  if(dim == 1) {
-
-  } else if(dim == 2) {
-
-  } else if(dim == 3) {
-
+  if(evt.Dragging() && evt.RightIsDown()) {
+    data.viewportCenterX = initViewportCenter[0] +
+    data.viewportSpanX*(static_cast<double>( initMousePos[0] - evt.GetPosition().x))
+    /static_cast<double>(canvasSize[0]);
+    data.viewportCenterY = initViewportCenter[1] +
+    data.viewportSpanY*(static_cast<double>(evt.GetPosition().y - initMousePos[1]))
+    /static_cast<double>(canvasSize[1]);
+    dynamicalPlane->Refresh();
   }
 }
 
-void top_frame::on_choice_axes(wxCommandEvent& evt) {
-  set_nullclines();
-  dynamicalPlane->Refresh();
+void top_frame::on_right_down_dynamical_plane(wxMouseEvent& evt) {
+  initMousePos[0] = evt.GetPosition().x;
+  initMousePos[1] = evt.GetPosition().y;
+  initViewportCenter[0] = data.viewportCenterX;
+  initViewportCenter[1] = data.viewportCenterY;
 }
 
-//void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
-  // wxPaintDC dc(dynamicalPlane);
-  // math::static_vector<int, 2> canvasSize;
-  // dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
-  // dc.SetBrush(*wxWHITE_BRUSH);
-  // dc.DrawRectangle(0,0,canvasSize[0], canvasSize[1]);
-  // dc.SetPen(*wxBLACK_PEN);
-  //
-  //
-  // /*Paint the axes*/
-  // math::static_vector<int, 2> tmp;
-  // for(int xInc = 40; xInc < canvasSize[0]; xInc+=80) {
-  //   tmp[0] = xInc;
-  //   tmp[1] = 0;
-  //   math::static_vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
-  //   dc.DrawText(std::to_string(val[0]), xInc, canvasSize[1] - 20);
-  //   dc.DrawLine(xInc, canvasSize[1], xInc, canvasSize[1] - 10);
-  // }
-  // for(int yInc = 20; yInc < canvasSize[0]; yInc+=40) {
-  //   tmp[0] = 0;
-  //   tmp[1] = yInc;
-  //   math::static_vector<double, 2> val = math::pixel_to_value(tmp, valueBoundaryTopLeft, pixelToValueRatio);
-  //   dc.DrawText(std::to_string(val[1]), 20, yInc);
-  //   dc.DrawLine(0, yInc, 10, yInc);
-  // }
-  //
-  //
-  // math::static_vector<int, 2> indices =
-  //   get_axes_choice_indices(get_axes_choice_from_string(std::string(axesChoice->GetString(axesChoice->GetSelection()))));
-  // std::vector<solution_t>::const_iterator solution;
-  //
-  // if(solutions.empty()) return;
-  // /*Plot static_vector field*/
-  // if(indices[0] == 1 && indices[1] == 2) {
-  //   for(int xp = 0; xp < canvasSize[0]; xp+=50) {
-  //     for(int yp = 0; yp < canvasSize[1]; yp+=50) {
-  //       math::static_vector<int, 2> p;
-  //       p[0] = xp;
-  //       p[1] = yp;
-  //       math::static_vector<double, 2> v = math::pixel_to_value(p,
-  //       valueBoundaryTopLeft, pixelToValueRatio);
-  //       std::vector<double> tmp = {initVals[0], v[0], v[1], initVals[3]};
-  //       double xSlope = functions[1](tmp.data());
-  //       double ySlope = functions[2](tmp.data());
-  //       if(xSlope == 0 || ySlope == 0) continue;
-  //       double m = ySlope/xSlope;
-  //       if(m <= 1 && m >= -1)
-  //         dc.DrawLine(xp-10, yp + 10*ySlope/xSlope, xp+10, yp-10*ySlope/xSlope);
-  //       else
-  //         dc.DrawLine(xp-10/m, yp + 10, xp+10/m, yp-10);
-  //     }
-  //   }
-  // }
-  //
-  // for(solution = solutions.begin(); solution != solutions.end(); ++solution) {
-  //   if(solution->size() < 2) continue; //There are not enough points in the solution
-  //
-  //   //We iterate over the points of the solution which are ordered by time
-  //   std::list<std::vector<double> >::const_iterator iter;
-  //   std::vector<double> vec1 = *solution->begin(), vec2;
-  //
-  //   for(iter = solution->begin()++; iter != solution->end(); ++iter) {
-  //     vec2 = *iter;
-  //
-  //     math::static_vector<double,2> tmp2;
-  //     tmp2[0] = vec1[indices[0]];
-  //     tmp2[1] = vec1[indices[1]];
-  //     math::static_vector<int, 2> pixel1 = math::value_to_pixel(tmp2,
-  //       valueBoundaryTopLeft, pixelToValueRatio);
-  //
-  //     tmp2[0] = vec2[indices[0]];
-  //     tmp2[1] = vec2[indices[1]];
-  //     math::static_vector<int, 2> pixel2 = math::value_to_pixel(tmp2,
-  //       valueBoundaryTopLeft, pixelToValueRatio);
-  //     if(pixel1[0] < 0 || pixel1[0] > canvasSize[0] ||
-  //       pixel1[1] < 0 || pixel1[1] > canvasSize[1] ||
-  //       pixel2[0] < 0 || pixel2[0] > canvasSize[0] ||
-  //         pixel2[1] < 0 || pixel2[1] > canvasSize[1]) {
-  //           vec1 = vec2;
-  //           continue;
-  //         }
-  //
-  //     dc.DrawLine(pixel1[0], pixel1[1], pixel2[0], pixel2[1]);
-  //     vec1 = vec2;
-  //   }
-  // }
-  //
-  // /*Paint isoclines*/
-  // dc.SetPen(*wxRED_PEN);
-  // for(int i = 0; i != isoclines.size(); ++i) {
-  //   std::list<std::vector<double> > nullcline = isoclines[i];
-  //   std::list<std::vector<double> >::const_iterator iter = nullcline.begin();
-  //   std::list<std::vector<double> >::const_iterator end = nullcline.end();
-  //   for(; iter != end; ++iter) {
-  //     math::static_vector<double,2> tmp;
-  //     tmp[0] = (*iter)[indices[0]];
-  //     tmp[1] = (*iter)[indices[1]];
-  //     math::static_vector<int, 2> pixel1 = math::value_to_pixel(tmp,
-  //       valueBoundaryTopLeft, pixelToValueRatio);
-  //     dc.DrawLine(pixel1[0], pixel1[1], pixel1[0]+1, pixel1[1]+1);
-  //   }
-  // }
-//}
+void top_frame::on_text_enter_dimension(wxCommandEvent& evt) {
 
-math::static_vector<int, 2> get_axes_choice_indices(axes_choice axesChoice) {
-  int indexH, indexV;
-  if(axesChoice == axes_choice::XT) {
-    indexH = 1;
-    indexV = 0;
-  } else if(axesChoice == axes_choice::TX) {
-    indexH = 0;
-    indexV = 1;
-  } else if(axesChoice == axes_choice::TY) {
-    indexH = 0;
-    indexV = 2;
-  } else if(axesChoice == axes_choice::YT) {
-    indexH = 2;
-    indexV = 0;
-  } else if(axesChoice == axes_choice::TZ) {
-    indexH = 0;
-    indexV = 3;
-  } else if(axesChoice == axes_choice::ZT) {
-    indexH = 3;
-    indexV = 0;
-  } else if(axesChoice == axes_choice::XY) {
-    indexH = 1;
-    indexV = 2;
-  } else if(axesChoice == axes_choice::YX) {
-    indexH = 2;
-    indexV = 1;
-  } else if(axesChoice == axes_choice::XZ) {
-    indexH = 1;
-    indexV = 3;
-  } else if(axesChoice == axes_choice::ZX) {
-    indexH = 3;
-    indexV = 1;
-  } else if(axesChoice == axes_choice::YZ) {
-    indexH = 2;
-    indexV = 3;
-  } else if(axesChoice == axes_choice::ZY) {
-    indexH = 3;
-    indexV = 2;
-  }
-  math::static_vector<int, 2> ret;
-  ret[0] = indexH;
-  ret[1] = indexV;
-  return ret;
-}
+  int dimension = std::stoi(std::string(dimensionField->GetValue().mb_str()));
+  if(dimension < 1) return;
 
-axes_choice get_axes_choice_from_string(std::string str){
-  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
-  if(str == "XT") {
-    return axes_choice::XT;
-  } else if(str == "TX") {
-    return axes_choice::TX;
-  } else if(str == "TY") {
-    return axes_choice::TY;
-  } else if(str == "YT") {
-    return axes_choice::YT;
-  } else if(str == "TZ") {
-    return axes_choice::TZ;
-  } else if(str == "ZT") {
-    return axes_choice::ZT;
-  } else if(str == "XY") {
-    return axes_choice::XY;
-  } else if(str == "YX") {
-    return axes_choice::YX;
-  } else if(str == "XZ") {
-    return axes_choice::XZ;
-  } else if(str == "ZX") {
-    return axes_choice::ZX;
-  } else if(str == "YZ") {
-    return axes_choice::YZ;
-  } else if(str == "ZY") {
-    return axes_choice::ZY;
-  }
+  /*Clear the functionTextCtrlList and the initialValueTextCtrlList*/
+  functionListCtrl->DeleteAllItems();
+  functionTextCtrlList.clear();
+
+  initialValueListCtrl->DeleteAllItems();
+  initialValueTextCtrlList.clear();
+
+  wxListItem item;
+  item.SetId(0);
+  initialValueListCtrl->InsertItem(item);
+
+  initialValueListCtrl->SetItem(0,0, wxT("A"));
+  initialValueListCtrl->SetItem(0,1, wxT("B"));
+  initialValueTextCtrlList.push_back(tInitialValueField);
+
 }
 
 
@@ -518,10 +422,41 @@ void top_frame::on_size_dynamical_plane( wxSizeEvent& event ) {
 }
 
 void top_frame::on_size_top_frame( wxSizeEvent& event ) {
-  dynamicalPlane->Refresh();
+
 }
 
 
 void top_frame::on_menu_selection_vector_field(wxCommandEvent&) {
+
+}
+
+void top_frame::on_key_down_dynamical_plane( wxKeyEvent& evt) {
+  //std::cout << "Down: " << evt.GetKeyCode() << std::endl;
+  /*The x and y increment is the distance represented by one pixel of the dynamicalPlane canvas*/
+  /*It is data.viewportSpanX/canvasSize.x*/
+  math::static_vector<int, 2> canvasSize;
+  dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+  double xInc = 4*data.viewportSpanX/static_cast<double>(canvasSize[0]);
+  double yInc = 4*data.viewportSpanY/static_cast<double>(canvasSize[1]);
+  if(evt.GetKeyCode() == WXK_LEFT) {
+    data.viewportCenterX -= xInc;
+    dynamicalPlane->Refresh();
+  } else if(evt.GetKeyCode() == WXK_RIGHT) {
+    data.viewportCenterX += xInc;
+    dynamicalPlane->Refresh();
+  } else if(evt.GetKeyCode() == WXK_UP) {
+    data.viewportCenterY += yInc;
+    dynamicalPlane->Refresh();
+  } else if(evt.GetKeyCode() == WXK_DOWN) {
+    data.viewportCenterY -= yInc;
+    dynamicalPlane->Refresh();
+  }
+}
+
+void top_frame::on_key_up_dynamical_plane( wxKeyEvent& evt) {
+  //std::cout << "Up: " << evt.GetKeyCode() << std::endl;
+}
+
+void top_frame::on_axis_choice(wxCommandEvent&) {
 
 }

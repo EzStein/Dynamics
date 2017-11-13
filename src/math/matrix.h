@@ -150,7 +150,7 @@ public:
       NUM_T sum = 0;
       for(int r = 0; r != ROWS; ++r) {
         for(int c = 0; c != COLS; ++c) {
-          sum += arr[r][c]*arr[r][c];
+          sum += (*this)[r][c]*(*this)[r][c];
         }
       }
       return std::sqrt(static_cast<double>(sum));

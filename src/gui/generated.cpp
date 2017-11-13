@@ -75,44 +75,19 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_staticText8->Wrap( -1 );
 	bSizer3->Add( m_staticText8, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxString m_choice1Choices[] = { wxT("1"), wxT("2"), wxT("3") };
-	int m_choice1NChoices = sizeof( m_choice1Choices ) / sizeof( wxString );
-	m_choice1 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice1NChoices, m_choice1Choices, 0 );
-	m_choice1->SetSelection( 2 );
-	bSizer3->Add( m_choice1, 0, wxALL, 5 );
+	dimensionField = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer3->Add( dimensionField, 0, wxALL, 5 );
+	
+	m_button21 = new wxButton( this, wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer3->Add( m_button21, 0, wxALL, 5 );
 	
 	
 	bSizer2->Add( bSizer3, 0, wxEXPAND, 5 );
 	
-	wxFlexGridSizer* fgSizer200;
-	fgSizer200 = new wxFlexGridSizer( 4, 2, 0, 0 );
-	fgSizer200->AddGrowableCol( 1 );
-	fgSizer200->SetFlexibleDirection( wxBOTH );
-	fgSizer200->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	functionListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
+	functionListCtrl->SetMaxSize( wxSize( 200,150 ) );
 	
-	m_staticText9 = new wxStaticText( this, wxID_ANY, wxT("x' = "), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText9->Wrap( -1 );
-	fgSizer200->Add( m_staticText9, 0, wxALL, 5 );
-	
-	xFuncField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer200->Add( xFuncField, 0, wxALL|wxEXPAND, 5 );
-	
-	yEqnLabel = new wxStaticText( this, wxID_ANY, wxT("y' = "), wxDefaultPosition, wxDefaultSize, 0 );
-	yEqnLabel->Wrap( -1 );
-	fgSizer200->Add( yEqnLabel, 0, wxALL, 5 );
-	
-	yFuncField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer200->Add( yFuncField, 1, wxALL|wxEXPAND, 5 );
-	
-	zEqnLabel = new wxStaticText( this, wxID_ANY, wxT("z' ="), wxDefaultPosition, wxDefaultSize, 0 );
-	zEqnLabel->Wrap( -1 );
-	fgSizer200->Add( zEqnLabel, 0, wxALL, 5 );
-	
-	zFuncField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer200->Add( zFuncField, 1, wxALL|wxEXPAND, 5 );
-	
-	
-	bSizer2->Add( fgSizer200, 0, wxEXPAND, 5 );
+	bSizer2->Add( functionListCtrl, 1, wxALL, 5 );
 	
 	m_button2 = new wxButton( this, wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer2->Add( m_button2, 0, wxALL|wxEXPAND, 5 );
@@ -121,41 +96,10 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	m_staticText91->Wrap( -1 );
 	bSizer2->Add( m_staticText91, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
-	wxFlexGridSizer* fgSizer3;
-	fgSizer3 = new wxFlexGridSizer( 0, 2, 0, 0 );
-	fgSizer3->SetFlexibleDirection( wxBOTH );
-	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	initialValueListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
+	initialValueListCtrl->SetMaxSize( wxSize( 200,150 ) );
 	
-	m_staticText101 = new wxStaticText( this, wxID_ANY, wxT("t ="), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText101->Wrap( -1 );
-	fgSizer3->Add( m_staticText101, 0, wxALL, 5 );
-	
-	tInitValField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer3->Add( tInitValField, 0, wxALL|wxEXPAND, 5 );
-	
-	m_staticText4 = new wxStaticText( this, wxID_ANY, wxT("x ="), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText4->Wrap( -1 );
-	fgSizer3->Add( m_staticText4, 0, wxALL, 5 );
-	
-	xInitValField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer3->Add( xInitValField, 0, wxALL|wxEXPAND, 5 );
-	
-	m_staticText5 = new wxStaticText( this, wxID_ANY, wxT("y ="), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText5->Wrap( -1 );
-	fgSizer3->Add( m_staticText5, 0, wxALL, 5 );
-	
-	yInitValField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer3->Add( yInitValField, 0, wxALL|wxEXPAND, 5 );
-	
-	m_staticText6 = new wxStaticText( this, wxID_ANY, wxT("z ="), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText6->Wrap( -1 );
-	fgSizer3->Add( m_staticText6, 0, wxALL, 5 );
-	
-	zInitValField = new wxTextCtrl( this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer3->Add( zInitValField, 0, wxALL|wxEXPAND, 5 );
-	
-	
-	bSizer2->Add( fgSizer3, 1, wxEXPAND, 5 );
+	bSizer2->Add( initialValueListCtrl, 1, wxALL, 5 );
 	
 	m_staticText102 = new wxStaticText( this, wxID_ANY, wxT("Range"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText102->Wrap( -1 );
@@ -187,21 +131,46 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	tIncrementField = new wxTextCtrl( this, wxID_ANY, wxT("0.01"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer31->Add( tIncrementField, 0, wxALL, 5 );
 	
-	m_staticText14 = new wxStaticText( this, wxID_ANY, wxT("Axes:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText14 = new wxStaticText( this, wxID_ANY, wxT("Project:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText14->Wrap( -1 );
 	fgSizer31->Add( m_staticText14, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxString axesChoiceChoices[] = { wxT("tx"), wxT("xy"), wxT("ty"), wxT("tz"), wxT("xt"), wxT("yt"), wxT("zt"), wxT("yz"), wxT("xz"), wxT("yx"), wxT("zy"), wxT("zx") };
-	int axesChoiceNChoices = sizeof( axesChoiceChoices ) / sizeof( wxString );
-	axesChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, axesChoiceNChoices, axesChoiceChoices, 0 );
-	axesChoice->SetSelection( 0 );
-	fgSizer31->Add( axesChoice, 1, wxALL|wxEXPAND, 5 );
+	m_staticText19 = new wxStaticText( this, wxID_ANY, wxT("MyLabel"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText19->Wrap( -1 );
+	fgSizer31->Add( m_staticText19, 0, wxALL, 5 );
+	
+	m_staticText15 = new wxStaticText( this, wxID_ANY, wxT("1st-axis"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText15->Wrap( -1 );
+	fgSizer31->Add( m_staticText15, 0, wxALL, 5 );
+	
+	wxArrayString axisVariable1Choices;
+	axisVariable1 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, axisVariable1Choices, 0 );
+	axisVariable1->SetSelection( 0 );
+	fgSizer31->Add( axisVariable1, 0, wxALL, 5 );
+	
+	m_staticText16 = new wxStaticText( this, wxID_ANY, wxT("2nd-axis"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText16->Wrap( -1 );
+	fgSizer31->Add( m_staticText16, 0, wxALL, 5 );
+	
+	wxArrayString axisVariable2Choices;
+	axisVariable2 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, axisVariable2Choices, 0 );
+	axisVariable2->SetSelection( 0 );
+	fgSizer31->Add( axisVariable2, 0, wxALL, 5 );
+	
+	m_staticText18 = new wxStaticText( this, wxID_ANY, wxT("3rd-axis"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText18->Wrap( -1 );
+	fgSizer31->Add( m_staticText18, 0, wxALL, 5 );
+	
+	wxArrayString axisVariable3Choices;
+	axisVariable3 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, axisVariable3Choices, 0 );
+	axisVariable3->SetSelection( 0 );
+	fgSizer31->Add( axisVariable3, 0, wxALL, 5 );
 	
 	
-	bSizer2->Add( fgSizer31, 0, 0, 5 );
+	bSizer2->Add( fgSizer31, 0, wxEXPAND, 5 );
 	
 	
-	bSizer4->Add( bSizer2, 0, 0, 5 );
+	bSizer4->Add( bSizer2, 0, wxALL, 5 );
 	
 	m_notebook2 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	parameterPlane = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
@@ -219,9 +188,11 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	// Connect Events
 	this->Connect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_top_frame ) );
 	this->Connect( menuItemVectorField->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( top_frame_base::on_menu_selection_vector_field ) );
-	m_choice1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
+	m_button21->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_text_enter_dimension ), NULL, this );
 	m_button2->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
-	axesChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
+	axisVariable1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	axisVariable2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	axisVariable3->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 }
 
 top_frame_base::~top_frame_base()
@@ -229,8 +200,10 @@ top_frame_base::~top_frame_base()
 	// Disconnect Events
 	this->Disconnect( wxEVT_SIZE, wxSizeEventHandler( top_frame_base::on_size_top_frame ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( top_frame_base::on_menu_selection_vector_field ) );
-	m_choice1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_dimension ), NULL, this );
+	m_button21->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_text_enter_dimension ), NULL, this );
 	m_button2->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( top_frame_base::on_button_click_compile ), NULL, this );
-	axesChoice->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_choice_axes ), NULL, this );
+	axisVariable1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	axisVariable2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
+	axisVariable3->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_axis_choice ), NULL, this );
 	
 }
