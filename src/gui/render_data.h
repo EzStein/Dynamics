@@ -33,6 +33,7 @@ struct render_data {
   double viewportCenterX, viewportCenterY;
   bool redraw = false;
   bool render2d = true;
+  int dimension = 3, parameters = 3;
 
 
   /*The following variables are used in 3D mode*/

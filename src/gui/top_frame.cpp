@@ -21,13 +21,6 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   dynamicalPlane = new wxGLCanvas(m_notebook2, wxID_ANY);
   m_notebook2->AddPage( dynamicalPlane, wxT("Dynamical Plane"), false );
 
-  wxGLContextAttrs contextAttrs;
-  contextAttrs.CoreProfile().OGLVersion(4,5).EndList();
-  wxGLCanvas* tmp = new wxGLCanvas(this, wxID_ANY);
-  glContext = new wxGLContext(tmp, NULL, &contextAttrs);
-  delete tmp;
-
-  std::cout << glContext->IsOK() << std::endl;
 
   dynamicalPlane->Connect( wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
   dynamicalPlane->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
@@ -45,11 +38,79 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   data.viewportCenterY = 0;
   data.viewportSpanX = 10;
   data.viewportSpanY = 10;
+
+  functionsListCtrl->AppendTextColumn("Variable");
+  functionsListCtrl->AppendTextColumn("Equation", wxDATAVIEW_CELL_EDITABLE);
+  wxVector<wxVariant> data;
+  data.push_back( wxVariant("x' = ") );
+  data.push_back( wxVariant("a(y-x)") );
+  functionsListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("y' = ") );
+  data.push_back( wxVariant("x(b-z)-y") );
+  functionsListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("z' = ") );
+  data.push_back( wxVariant("x*y - c*z") );
+  functionsListCtrl->AppendItem( data );
+  data.clear();
+
+  initialValuesListCtrl->AppendTextColumn("Variable");
+  initialValuesListCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
+
+  data.push_back( wxVariant("t = ") );
+  data.push_back( wxVariant("0") );
+  initialValuesListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("x = ") );
+  data.push_back( wxVariant("0") );
+  initialValuesListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("y = ") );
+  data.push_back( wxVariant("0") );
+  initialValuesListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("z = ") );
+  data.push_back( wxVariant("0") );
+  initialValuesListCtrl->AppendItem( data );
+  data.clear();
+
+  parametersListCtrl->AppendTextColumn("Parameter");
+  parametersListCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
+
+  data.push_back( wxVariant("a = ") );
+  data.push_back( wxVariant("0") );
+  parametersListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("b = ") );
+  data.push_back( wxVariant("0") );
+  parametersListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("c = ") );
+  data.push_back( wxVariant("0") );
+  parametersListCtrl->AppendItem( data );
+  data.clear();
+  /*data.push_back( wxVariant("x2' = ") );
+  data.push_back( wxVariant("") );
+  functionsListCtrl->AppendItem( data );
+  data.clear();
+  data.push_back( wxVariant("x3' = ") );
+  data.push_back( wxVariant("") );
+  functionsListCtrl->AppendItem( data );
+  data.clear();*/
+  std::cout << "Initialization Done"<< std::endl;
 }
 
 
 
 void top_frame::initialize_gl() {
+  wxGLContextAttrs contextAttrs;
+  contextAttrs.CoreProfile().OGLVersion(4,5).EndList();
+  wxGLCanvas* tmp = new wxGLCanvas(this, wxID_ANY);
+  glContext = new wxGLContext(tmp, NULL, &contextAttrs);
+  delete tmp;
+
+  dynamicalPlane->SetCurrent(*glContext);
   /*We now set up opengl*/
   /*Loads function pointers to gl functions*/
   if (!gladLoadGL()) {
@@ -142,12 +203,14 @@ math::static_vector<double, 2> top_frame::get_real_coordinates(int x, int y) {
 
 void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   static int a = 0;
-  dynamicalPlane->SetCurrent(*glContext);
+
   if(!a) {
     initialize_gl();
     a = 1;
     std::cout << "INITIALIZED" << std::endl;
   }
+
+  dynamicalPlane->SetCurrent(*glContext);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -206,15 +269,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     math::static_matrix<float, 4,4> transformationMatrix(data.generate_2d_transformation_matrix());
     program2d.set_float_mat4_uniform("transformation", true, transformationMatrix.data());
   } else {
-    static double t = 0;
-    t+=0.01;
-    data.cameraPosition[0] = 80*std::cos(t);
-    data.cameraPosition[1] = 80*std::sin(t);
-    data.cameraPosition[2] = 60;
-
-    data.cameraDirection[0] = 80 * std::cos(t);
-    data.cameraDirection[1] = 80 * std::sin(t);
-    data.cameraDirection[2] = 60;
 
     program3d.bind();
 
@@ -258,12 +312,12 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
 }
 
 void top_frame::on_3d_render_check(wxCommandEvent& evt) {
-  data.cameraPosition[0] = 1;
-  data.cameraPosition[1] = 0;
-  data.cameraPosition[2] = 0;
-  data.cameraDirection[0] = 1;
-  data.cameraDirection[1] = 0;
-  data.cameraDirection[2] = 0;
+  data.cameraPosition[0] = 20;
+  data.cameraPosition[1] = 20;
+  data.cameraPosition[2] = 20;
+  data.cameraDirection[0] = 20;
+  data.cameraDirection[1] = 20;
+  data.cameraDirection[2] = 20;
   data.redraw = true;
 
   data.render2d = !evt.IsChecked();
@@ -271,10 +325,10 @@ void top_frame::on_3d_render_check(wxCommandEvent& evt) {
 }
 
 void top_frame::on_button_click_compile(wxCommandEvent& event) {
-  for(wxTextCtrl* funcField : functionTextCtrlList) {
-    /*If a single field is empty, we do nothing*/
-    if(funcField->IsEmpty()) return;
-  }
+  // for(wxTextCtrl* funcField : functionTextCtrlList) {
+  //   /*If a single field is empty, we do nothing*/
+  //   if(funcField->IsEmpty()) return;
+  // }
   /*Otherwise, release the space allocated by previous compilations*/
   for(driver::double_func_t func : functions) {
     dr.mark_available(func);
@@ -308,6 +362,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
 
 void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   /*Set the initial mouse positions*/
+  dynamicalPlane->SetFocus();
   initMousePos[0] = evt.GetPosition().x;
   initMousePos[1] = evt.GetPosition().y;
 
@@ -343,9 +398,9 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   //     std::string(axesChoice->GetString(axesChoice->GetSelection()))));
 
   /*We now set the axis variables*/
-  data.axesVariable[0] = axisVariable1->GetSelection();
-  data.axesVariable[1] = axisVariable2->GetSelection();
-  data.axesVariable[2] = axisVariable3->GetSelection();
+  data.axesVariable[0] = axisVariableChoice1->GetSelection();
+  data.axesVariable[1] = axisVariableChoice2->GetSelection();
+  data.axesVariable[2] = axisVariableChoice3->GetSelection();
   if(data.axesVariable[0] == wxNOT_FOUND || data.axesVariable[1] == wxNOT_FOUND || data.axesVariable[2] == wxNOT_FOUND) {
     std::cout << "No variable selected for one or more axes" << std::endl;
     return;
@@ -467,29 +522,72 @@ void top_frame::set_nullclines() {
 }
 
 void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
-  if(evt.GetWheelRotation() == 0) {
-    initZoomViewportCenter[0] = data.viewportCenterX;
-    initZoomViewportCenter[1] = data.viewportCenterY;
-    initViewportSpan[0] = data.viewportSpanX;
-    initViewportSpan[1] = data.viewportSpanY;
-    totalMag = 1;
-    initZoomCenter = get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y);
-  }
+  if(data.render2d) {
+    if(evt.GetWheelRotation() == 0) {
+      initZoomViewportCenter[0] = data.viewportCenterX;
+      initZoomViewportCenter[1] = data.viewportCenterY;
+      initViewportSpan[0] = data.viewportSpanX;
+      initViewportSpan[1] = data.viewportSpanY;
+      totalMag = 1;
+      initZoomCenter = get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y);
+    }
 
-  math::static_vector<int, 2> canvasSize;
-  dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+    math::static_vector<int, 2> canvasSize;
+    dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
 
-  math::static_vector<double, 2> mouseValPos(get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y));
+    math::static_vector<double, 2> mouseValPos(get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y));
 
-  statusBar->SetStatusText("(" + std::to_string(mouseValPos[0]) + ", " + std::to_string(mouseValPos[1]) + ")");
+    statusBar->SetStatusText("(" + std::to_string(mouseValPos[0]) + ", " + std::to_string(mouseValPos[1]) + ")");
 
-  if(evt.Dragging() && evt.RightIsDown()) {
-    data.viewportCenterX = initViewportCenter[0] +
-    data.viewportSpanX*(static_cast<double>( initMousePos[0] - evt.GetPosition().x))
-    /static_cast<double>(canvasSize[0]);
-    data.viewportCenterY = initViewportCenter[1] +
-    data.viewportSpanY*(static_cast<double>(evt.GetPosition().y - initMousePos[1]))
-    /static_cast<double>(canvasSize[1]);
+    if(evt.Dragging() && evt.RightIsDown()) {
+      data.viewportCenterX = initViewportCenter[0] +
+      data.viewportSpanX*(static_cast<double>( initMousePos[0] - evt.GetPosition().x))
+      /static_cast<double>(canvasSize[0]);
+      data.viewportCenterY = initViewportCenter[1] +
+      data.viewportSpanY*(static_cast<double>(evt.GetPosition().y - initMousePos[1]))
+      /static_cast<double>(canvasSize[1]);
+      dynamicalPlane->Refresh();
+    }
+  } else if (evt.Dragging() && evt.RightIsDown()) {
+    math::static_matrix<float,4,4> inverse(math::invert(data.generate_projection_matrix()));
+
+    math::static_vector<int,2> mousePos;
+    mousePos[0] = evt.GetPosition().x;
+    mousePos[1] = evt.GetPosition().y;
+
+    math::static_vector<float,4> initVec;
+    initVec[0] = initMousePos[0];
+    initVec[1]= initMousePos[1];
+    initVec[2]= 0;
+    initVec[3]= 1;
+    initVec = inverse * initVec;
+
+    math::static_vector<float,4> finalVec;
+    finalVec[0] = mousePos[0];
+    finalVec[1]= mousePos[1];
+    finalVec[2]= 0;
+    finalVec[3]= 1;
+    finalVec = inverse * finalVec;
+
+    math::static_vector<float, 3> tmpInitVec, tmpFinalVec;
+    tmpInitVec[0] = initVec[0];
+    tmpInitVec[1] = initVec[1];
+    tmpInitVec[2] = initVec[2];
+
+    tmpFinalVec[0] = finalVec[0];
+    tmpFinalVec[1] = finalVec[1];
+    tmpFinalVec[2] = finalVec[3];
+
+    math::static_vector<float, 3> tmpQuaternian(math::cross(tmpInitVec - tmpFinalVec, initCameraDirection));
+    math::static_vector<float, 4> quaternian;
+    quaternian[0] = 0;//tmpQuaternian[0];
+    quaternian[1] = 1;//tmpQuaternian[1];
+    quaternian[2] = 0;//tmpQuaternian[2];
+    quaternian[3] = 0.01 * (initMousePos - mousePos).norm();
+
+    //std::cout << data.cameraDirection << std::endl;
+    math::static_matrix<float, 3,3> rot = math::quaternian_to_matrix(quaternian);
+    data.cameraDirection = -(rot * initCameraDirection);
     dynamicalPlane->Refresh();
   }
 }
@@ -499,32 +597,301 @@ void top_frame::on_right_down_dynamical_plane(wxMouseEvent& evt) {
   initMousePos[1] = evt.GetPosition().y;
   initViewportCenter[0] = data.viewportCenterX;
   initViewportCenter[1] = data.viewportCenterY;
+  initCameraDirection = data.cameraDirection;
+  std::cout << "A"<< std::endl;
+
+}
+
+void top_frame::on_text_enter_parameters(wxCommandEvent& evt) {
+  int params = std::stoi(std::string(parametersField->GetValue().mb_str()));
+  if(params < 0) return;
+  data.parameters = params;
+  parameterAxisVariableChoice1->Clear();
+  parameterAxisVariableChoice2->Clear();
+
+  parametersListCtrl->DeleteAllItems();
+  wxVector<wxVariant> row;
+
+  if(data.parameters == 0) {
+    return;
+  } else if(data.parameters == 1) {
+    parameterAxisVariableChoice1->Append("a");
+    parameterAxisVariableChoice2->Append("a");
+
+    row.push_back(wxVariant("a = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+
+    parameterAxisVariableChoice1->SetSelection(0);
+    parameterAxisVariableChoice2->SetSelection(0);
+  } else if(data.parameters == 2) {
+    parameterAxisVariableChoice1->Append("a");
+    parameterAxisVariableChoice2->Append("a");
+    parameterAxisVariableChoice1->Append("b");
+    parameterAxisVariableChoice2->Append("b");
+
+    row.push_back(wxVariant("a = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("b = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+
+    parameterAxisVariableChoice1->SetSelection(0);
+    parameterAxisVariableChoice2->SetSelection(1);
+  } else if(data.parameters == 3) {
+    parameterAxisVariableChoice1->Append("a");
+    parameterAxisVariableChoice2->Append("a");
+    parameterAxisVariableChoice1->Append("b");
+    parameterAxisVariableChoice2->Append("b");
+    parameterAxisVariableChoice1->Append("c");
+    parameterAxisVariableChoice2->Append("c");
+
+    row.push_back(wxVariant("a = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("b = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("c = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+
+    parameterAxisVariableChoice1->SetSelection(0);
+    parameterAxisVariableChoice2->SetSelection(1);
+  } else if(data.parameters == 4) {
+    parameterAxisVariableChoice1->Append("a");
+    parameterAxisVariableChoice2->Append("a");
+    parameterAxisVariableChoice1->Append("b");
+    parameterAxisVariableChoice2->Append("b");
+    parameterAxisVariableChoice1->Append("c");
+    parameterAxisVariableChoice2->Append("c");
+    parameterAxisVariableChoice1->Append("d");
+    parameterAxisVariableChoice2->Append("d");
+
+    row.push_back(wxVariant("a = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("b = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("c = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+    row.push_back(wxVariant("d = "));
+    row.push_back(wxVariant("0"));
+    parametersListCtrl->AppendItem(row);
+    row.clear();
+
+    parameterAxisVariableChoice1->SetSelection(0);
+    parameterAxisVariableChoice2->SetSelection(1);
+  } else {
+    for(int i = 0; i != data.parameters; ++i) {
+      std::string paramName = "a" + std::to_string(i+1);
+      parameterAxisVariableChoice1->Append(paramName);
+      parameterAxisVariableChoice2->Append(paramName);
+
+      row.push_back(wxVariant(paramName + " = "));
+      row.push_back(wxVariant("0"));
+      parametersListCtrl->AppendItem(row);
+      row.clear();
+    }
+    parameterAxisVariableChoice1->SetSelection(0);
+    parameterAxisVariableChoice2->SetSelection(1);
+  }
+}
+
+void top_frame::on_parameter_axis_choice(wxCommandEvent& evt) {
+
 }
 
 void top_frame::on_text_enter_dimension(wxCommandEvent& evt) {
 
-  int dimension = std::stoi(std::string(dimensionField->GetValue().mb_str()));
-  if(dimension < 1) return;
 
-  /*Clear the functionTextCtrlList and the initialValueTextCtrlList*/
-  functionTextCtrlList.clear();
-  initialValueTextCtrlList.clear();
+  int dim = std::stoi(std::string(dimensionField->GetValue().mb_str()));
+  if(dim < 1) return;
+  data.dimension = dim;
 
+  axisVariableChoice1->Clear();
+  axisVariableChoice2->Clear();
+  axisVariableChoice3->Clear();
 
+  axisVariableChoice1->Append("t");
+  axisVariableChoice2->Append("t");
+  axisVariableChoice3->Append("t");
 
-  axisVariable1->Clear();
-  axisVariable2->Clear();
-  axisVariable3->Clear();
+  initialValuesListCtrl->DeleteAllItems();
+  functionsListCtrl->DeleteAllItems();
+  wxVector<wxVariant> row;
+  row.push_back( wxVariant("t = ") );
+  row.push_back( wxVariant("0") );
+  initialValuesListCtrl->AppendItem( row );
+  row.clear();
 
-  axisVariable1->Append("t");
-  axisVariable2->Append("t");
-  axisVariable3->Append("t");
+  if(data.dimension == 1) {
+    axisVariableChoice1->Append("x");
+    axisVariableChoice2->Append("x");
+    axisVariableChoice3->Append("x");
+    axisVariableChoice1->SetSelection(0);
+    axisVariableChoice2->SetSelection(1);
+    axisVariableChoice3->SetSelection(1);
 
-  /*We need to set the values in the axes choice boxes*/
-  for(int i = 0; i != dimension; ++i) {
-    axisVariable1->Append(wxT("x" + std::to_string(i+1)));
-    axisVariable2->Append(wxT("x" + std::to_string(i+1)));
-    axisVariable3->Append(wxT("x" + std::to_string(i+1)));
+    row.push_back( wxVariant("x = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+
+    row.push_back( wxVariant("x' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+  } else if(data.dimension == 2) {
+    axisVariableChoice1->Append("x");
+    axisVariableChoice2->Append("x");
+    axisVariableChoice3->Append("x");
+    axisVariableChoice1->Append("y");
+    axisVariableChoice2->Append("y");
+    axisVariableChoice3->Append("y");
+    axisVariableChoice1->SetSelection(0);
+    axisVariableChoice2->SetSelection(1);
+    axisVariableChoice3->SetSelection(2);
+
+    row.push_back( wxVariant("x = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("y = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+
+    row.push_back( wxVariant("x' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+
+    row.push_back( wxVariant("y' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+  } else if(data.dimension == 3) {
+    axisVariableChoice1->Append("x");
+    axisVariableChoice2->Append("x");
+    axisVariableChoice3->Append("x");
+    axisVariableChoice1->Append("y");
+    axisVariableChoice2->Append("y");
+    axisVariableChoice3->Append("y");
+    axisVariableChoice1->Append("z");
+    axisVariableChoice2->Append("z");
+    axisVariableChoice3->Append("z");
+    axisVariableChoice1->SetSelection(1);
+    axisVariableChoice2->SetSelection(2);
+    axisVariableChoice3->SetSelection(3);
+
+    row.push_back( wxVariant("x = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("y = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("z = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+
+    row.push_back( wxVariant("x' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("y' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("z' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+  } else if(data.dimension == 4) {
+    axisVariableChoice1->Append("x");
+    axisVariableChoice2->Append("x");
+    axisVariableChoice3->Append("x");
+    axisVariableChoice1->Append("y");
+    axisVariableChoice2->Append("y");
+    axisVariableChoice3->Append("y");
+    axisVariableChoice1->Append("z");
+    axisVariableChoice2->Append("z");
+    axisVariableChoice3->Append("z");
+    axisVariableChoice1->Append("w");
+    axisVariableChoice2->Append("w");
+    axisVariableChoice3->Append("w");
+    axisVariableChoice1->SetSelection(1);
+    axisVariableChoice2->SetSelection(2);
+    axisVariableChoice3->SetSelection(3);
+
+    row.push_back( wxVariant("x = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("y = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("z = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("w = ") );
+    row.push_back( wxVariant("0") );
+    initialValuesListCtrl->AppendItem( row );
+    row.clear();
+
+    row.push_back( wxVariant("x' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("y' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("z' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+    row.push_back( wxVariant("w' = ") );
+    row.push_back( wxVariant("") );
+    functionsListCtrl->AppendItem( row );
+    row.clear();
+  } else  {
+    /*We need to set the values in the axes choice boxes*/
+    for(int i = 0; i != data.dimension; ++i) {
+      axisVariableChoice1->Append(wxT("x" + std::to_string(i+1)));
+      axisVariableChoice2->Append(wxT("x" + std::to_string(i+1)));
+      axisVariableChoice3->Append(wxT("x" + std::to_string(i+1)));
+
+      row.push_back( wxVariant("x" + std::to_string(i+1) + " = ") );
+      row.push_back( wxVariant("0") );
+      initialValuesListCtrl->AppendItem( row );
+      row.clear();
+
+      row.push_back( wxVariant("x" + std::to_string(i+1) + "' = ") );
+      row.push_back( wxVariant("") );
+      functionsListCtrl->AppendItem( row );
+      row.clear();
+    }
+    axisVariableChoice1->SetSelection(1);
+    axisVariableChoice2->SetSelection(2);
+    axisVariableChoice3->SetSelection(3);
   }
 }
 
@@ -544,23 +911,56 @@ void top_frame::on_menu_selection_vector_field(wxCommandEvent&) {
 
 void top_frame::on_key_down_dynamical_plane( wxKeyEvent& evt) {
   //std::cout << "Down: " << evt.GetKeyCode() << std::endl;
-  /*The x and y increment is the distance represented by one pixel of the dynamicalPlane canvas*/
-  /*It is data.viewportSpanX/canvasSize.x*/
-  math::static_vector<int, 2> canvasSize;
-  dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
-  double xInc = 4*data.viewportSpanX/static_cast<double>(canvasSize[0]);
-  double yInc = 4*data.viewportSpanY/static_cast<double>(canvasSize[1]);
-  if(evt.GetKeyCode() == WXK_LEFT) {
-    data.viewportCenterX -= xInc;
-    dynamicalPlane->Refresh();
-  } else if(evt.GetKeyCode() == WXK_RIGHT) {
-    data.viewportCenterX += xInc;
-    dynamicalPlane->Refresh();
-  } else if(evt.GetKeyCode() == WXK_UP) {
-    data.viewportCenterY += yInc;
-    dynamicalPlane->Refresh();
-  } else if(evt.GetKeyCode() == WXK_DOWN) {
-    data.viewportCenterY -= yInc;
+  if(data.render2d) {
+    /*The x and y increment is the distance represented by one pixel of the dynamicalPlane canvas*/
+    /*It is data.viewportSpanX/canvasSize.x*/
+    math::static_vector<int, 2> canvasSize;
+    dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+    double xInc = 4*data.viewportSpanX/static_cast<double>(canvasSize[0]);
+    double yInc = 4*data.viewportSpanY/static_cast<double>(canvasSize[1]);
+    if(evt.GetKeyCode() == WXK_LEFT) {
+      data.viewportCenterX -= xInc;
+      dynamicalPlane->Refresh();
+    } else if(evt.GetKeyCode() == WXK_RIGHT) {
+      data.viewportCenterX += xInc;
+      dynamicalPlane->Refresh();
+    } else if(evt.GetKeyCode() == WXK_UP) {
+      data.viewportCenterY += yInc;
+      dynamicalPlane->Refresh();
+    } else if(evt.GetKeyCode() == WXK_DOWN) {
+      data.viewportCenterY -= yInc;
+      dynamicalPlane->Refresh();
+    }
+  } else {
+    std::cout << evt.GetUnicodeKey()<< std::endl;
+    std::cout << WXK_CONTROL_W << "," << WXK_NONE<< std::endl;
+    if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_W) {
+      data.cameraPosition[0] -= 2;
+    } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_S) {
+      data.cameraPosition[0] += 2;
+    } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_A) {
+      data.cameraPosition[1] -= 2;
+    } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_D) {
+      std::cout << "D"<< std::endl;
+      data.cameraPosition[1] += 2;
+    } else if(evt.GetKeyCode() == WXK_SPACE) {
+      data.cameraPosition[2] += 2;
+    } else if(evt.GetKeyCode() == WXK_SHIFT) {
+      data.cameraPosition[2] -= 2;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_W) {
+      data.cameraPosition[0] -= 2;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_S) {
+      data.cameraPosition[0] += 2;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_A) {
+      data.cameraPosition[1] -= 2;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_D) {
+      data.cameraPosition[1] += 2;
+    } else if(evt.GetKeyCode() == WXK_SPACE) {
+      data.cameraPosition[2] += 2;
+    } else if(evt.GetKeyCode() == WXK_SHIFT) {
+      data.cameraPosition[2] -= 2;
+    }
+
     dynamicalPlane->Refresh();
   }
 }
@@ -572,8 +972,8 @@ void top_frame::on_key_up_dynamical_plane( wxKeyEvent& evt) {
 void top_frame::on_axis_choice(wxCommandEvent&) {
   std::cout <<"AA" << std::endl;
   data.redraw = true;
-  data.axesVariable[0] = axisVariable1->GetSelection();
-  data.axesVariable[1] = axisVariable2->GetSelection();
-  data.axesVariable[2] = axisVariable3->GetSelection();
+  data.axesVariable[0] = axisVariableChoice1->GetSelection();
+  data.axesVariable[1] = axisVariableChoice2->GetSelection();
+  data.axesVariable[2] = axisVariableChoice3->GetSelection();
   dynamicalPlane->Refresh();
 }

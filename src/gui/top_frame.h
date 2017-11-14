@@ -24,15 +24,14 @@ private:
 
   render_data data;
 
-  std::vector<wxTextCtrl*> functionTextCtrlList;
-  std::vector<wxTextCtrl*> initialValueTextCtrlList;
-
   /*A list of the functions. There should be one fewer functions than initVals*/
   std::vector<driver::double_func_t> functions;
 
   /*These values are updated at each mouse down event*/
   math::static_vector<int, 2> initMousePos;
   math::static_vector<int, 2> initViewportCenter;
+
+  math::static_vector<float, 3> initCameraDirection;
 
   math::static_vector<double, 2> initZoomViewportCenter;
   math::static_vector<double, 2> initZoomCenter;
@@ -61,5 +60,6 @@ private:
   virtual void on_axis_choice(wxCommandEvent&) override;
   virtual void on_text_enter_dimension(wxCommandEvent& evt) override;
   virtual void on_3d_render_check(wxCommandEvent& evt) override;
-
+  virtual void on_text_enter_parameters(wxCommandEvent& evt) override;
+  virtual void on_parameter_axis_choice(wxCommandEvent& evt) override;
 };

@@ -24,9 +24,10 @@
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/dataview.h>
+#include <wx/statbox.h>
+#include <wx/panel.h>
 #include <wx/choice.h>
 #include <wx/checkbox.h>
-#include <wx/panel.h>
 #include <wx/notebook.h>
 #include <wx/statusbr.h>
 #include <wx/frame.h>
@@ -47,40 +48,50 @@ class top_frame_base : public wxFrame
 		wxMenu* m_menu2;
 		wxMenu* m_menu3;
 		wxMenu* m_menu4;
+		wxNotebook* m_notebook21;
+		wxPanel* m_panel3;
 		wxBoxSizer* bSizer2;
 		wxStaticText* m_staticText8;
 		wxTextCtrl* dimensionField;
 		wxButton* m_button21;
-		wxDataViewListCtrl* m_dataViewListCtrl2;
+		wxStaticText* m_staticText151;
+		wxTextCtrl* parametersField;
+		wxButton* m_button3;
+		wxDataViewListCtrl* functionsListCtrl;
+		wxDataViewListCtrl* parametersListCtrl;
 		wxButton* m_button2;
-		wxStaticText* m_staticText91;
-		wxDataViewListCtrl* m_dataViewListCtrl1;
-		wxStaticText* m_staticText102;
+		wxPanel* m_panel6;
+		wxDataViewListCtrl* initialValuesListCtrl;
 		wxStaticText* m_staticText11;
 		wxTextCtrl* tMinValField;
 		wxStaticText* m_staticText121;
 		wxTextCtrl* tMaxValField;
 		wxStaticText* m_staticText141;
 		wxTextCtrl* tIncrementField;
-		wxStaticText* m_staticText14;
-		wxStaticText* m_staticText19;
+		wxPanel* m_panel4;
 		wxStaticText* m_staticText15;
-		wxChoice* axisVariable1;
+		wxChoice* axisVariableChoice1;
 		wxStaticText* m_staticText16;
-		wxChoice* axisVariable2;
+		wxChoice* axisVariableChoice2;
 		wxStaticText* m_staticText18;
-		wxChoice* axisVariable3;
+		wxChoice* axisVariableChoice3;
+		wxStaticText* m_staticText152;
+		wxChoice* parameterAxisVariableChoice1;
+		wxStaticText* m_staticText153;
+		wxChoice* parameterAxisVariableChoice2;
 		wxCheckBox* renderCheckBox;
+		wxPanel* m_panel5;
 		wxNotebook* m_notebook2;
-		wxPanel* parameterPlane;
 		wxStatusBar* statusBar;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void on_size_top_frame( wxSizeEvent& event ) = 0;
 		virtual void on_menu_selection_vector_field( wxCommandEvent& event ) = 0;
 		virtual void on_text_enter_dimension( wxCommandEvent& event ) = 0;
+		virtual void on_text_enter_parameters( wxCommandEvent& event ) = 0;
 		virtual void on_button_click_compile( wxCommandEvent& event ) = 0;
 		virtual void on_axis_choice( wxCommandEvent& event ) = 0;
+		virtual void on_parameter_axis_choice( wxCommandEvent& event ) = 0;
 		virtual void on_3d_render_check( wxCommandEvent& event ) = 0;
 		
 	

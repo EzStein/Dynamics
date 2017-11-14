@@ -539,7 +539,40 @@ public:
 
     return retMat;
   }
+
+  template<class NUM_T>
+  static_matrix<NUM_T, 3, 3> quaternian_to_matrix(const static_vector<NUM_T, 4>& quaternian) {
+    static_matrix<NUM_T, 3,3> mat(0);
+    NUM_T x = quaternian[0];
+    NUM_T y = quaternian[1];
+    NUM_T z = quaternian[2];
+    NUM_T w = quaternian[3];
+    NUM_T x2 = x*x;
+    NUM_T y2 = y*y;
+    NUM_T z2 = z*z;
+    NUM_T xy = x*y;
+    NUM_T xz = x*z;
+    NUM_T xw = x*w;
+    NUM_T yz = y*z;
+    NUM_T yw = y*w;
+    NUM_T zw = x*w;
+
+    mat[0][0] =1 - 2*y2 -2*z2;
+    mat[0][1] = 2*xy + 2*zw;
+    mat[0][2] = 2*xz - 2*yw;
+
+    mat[1][0] =2*xy -2*zw;
+    mat[1][1] = 1 - 2*x2 - 2*z2;
+    mat[1][2] = 2*yz + 2*xw;
+
+    mat[2][0] = 2*xz + 2*yw;
+    mat[2][1] = 2*yz - 2*xw;
+    mat[2][2] = 1 - 2*x2 - 2*y2;
+
+    return mat;
+  }
 }
+
 
 
 
