@@ -23,6 +23,7 @@ private:
   gl_program program2d, program3d;
 
   render_data data;
+  double pitch = 0, yaw = 0;
 
   /*A list of the functions. There should be one fewer functions than initVals*/
   std::vector<driver::double_func_t> functions;

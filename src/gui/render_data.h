@@ -48,14 +48,13 @@ struct render_data {
     /*We first compute the right, up and direction unit vectors*/
     math::static_vector<double, 3> up;
     up[0] = 0;
-    up[1] = 1;
-    up[2] = 0;
-
-    math::static_vector<double, 3> rightVector(math::cross(cameraDirection, up));
-    math::static_vector<double, 3> upVector(math::cross(cameraDirection, rightVector));
-    cameraDirection.normalize();
-    rightVector.normalize();
-    upVector.normalize();
+    up[1] = 0;
+    up[2] = 1;
+    math::static_vector<double, 3> zaxis(cameraDirection);
+    zaxis.normalize();
+    math::static_vector<double, 3> xaxis(math::cross(up, zaxis));
+    xaxis.normalize();
+    math::static_vector<double, 3> yaxis(math::cross(zaxis, xaxis));
 
     math::static_matrix<float, 4,4> translation(0);
     translation[0][0] = 1;
@@ -69,17 +68,17 @@ struct render_data {
     math::static_matrix<float, 4,4> rotation(0);
     rotation[3][3] = 1;
 
-    rotation[0][0] = rightVector[0];
-    rotation[0][1] = rightVector[1];
-    rotation[0][2] = rightVector[2];
+    rotation[0][0] = xaxis[0];
+    rotation[0][1] = xaxis[1];
+    rotation[0][2] = xaxis[2];
 
-    rotation[1][0] = upVector[0];
-    rotation[1][1] = upVector[1];
-    rotation[1][2] = upVector[2];
+    rotation[1][0] = yaxis[0];
+    rotation[1][1] = yaxis[1];
+    rotation[1][2] = yaxis[2];
 
-    rotation[2][0] = cameraDirection[0];
-    rotation[2][1] = cameraDirection[1];
-    rotation[2][2] = cameraDirection[2];
+    rotation[2][0] = zaxis[0];
+    rotation[2][1] = zaxis[1];
+    rotation[2][2] = zaxis[2];
 
     return rotation * translation;
   }

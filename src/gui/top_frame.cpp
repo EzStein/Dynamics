@@ -38,6 +38,10 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   data.viewportCenterY = 0;
   data.viewportSpanX = 10;
   data.viewportSpanY = 10;
+  data.cameraPosition[0] = 10;
+  data.cameraPosition[1] = 10;
+  data.cameraPosition[2] = 10;
+  data.cameraDirection = data.cameraPosition;
 
   functionsListCtrl->AppendTextColumn("Variable");
   functionsListCtrl->AppendTextColumn("Equation", wxDATAVIEW_CELL_EDITABLE);
@@ -212,7 +216,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
 
   dynamicalPlane->SetCurrent(*glContext);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if(data.redraw) {
     /*We first need to calculate the total number of vertices in the solution set
@@ -271,7 +275,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   } else {
 
     program3d.bind();
-
+    glEnable(GL_DEPTH_TEST);
     math::static_matrix<float, 4,4> model(data.generate_model_matrix());
     math::static_matrix<float, 4,4> view(data.generate_view_matrix());
     math::static_matrix<float, 4,4> projection(data.generate_projection_matrix());
@@ -312,12 +316,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
 }
 
 void top_frame::on_3d_render_check(wxCommandEvent& evt) {
-  data.cameraPosition[0] = 20;
-  data.cameraPosition[1] = 20;
-  data.cameraPosition[2] = 20;
-  data.cameraDirection[0] = 20;
-  data.cameraDirection[1] = 20;
-  data.cameraDirection[2] = 20;
   data.redraw = true;
 
   data.render2d = !evt.IsChecked();
@@ -665,46 +663,87 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
       dynamicalPlane->Refresh();
     }
   } else if (evt.Dragging() && evt.RightIsDown()) {
-    math::static_matrix<float,4,4> inverse(math::invert(data.generate_projection_matrix()));
-
-    math::static_vector<int,2> mousePos;
-    mousePos[0] = evt.GetPosition().x;
-    mousePos[1] = evt.GetPosition().y;
-
-    math::static_vector<float,4> initVec;
-    initVec[0] = initMousePos[0];
-    initVec[1]= initMousePos[1];
-    initVec[2]= 0;
-    initVec[3]= 1;
-    initVec = inverse * initVec;
-
-    math::static_vector<float,4> finalVec;
-    finalVec[0] = mousePos[0];
-    finalVec[1]= mousePos[1];
-    finalVec[2]= 0;
-    finalVec[3]= 1;
-    finalVec = inverse * finalVec;
-
-    math::static_vector<float, 3> tmpInitVec, tmpFinalVec;
-    tmpInitVec[0] = initVec[0];
-    tmpInitVec[1] = initVec[1];
-    tmpInitVec[2] = initVec[2];
-
-    tmpFinalVec[0] = finalVec[0];
-    tmpFinalVec[1] = finalVec[1];
-    tmpFinalVec[2] = finalVec[3];
-
-    math::static_vector<float, 3> tmpQuaternian(math::cross(tmpInitVec - tmpFinalVec, initCameraDirection));
-    math::static_vector<float, 4> quaternian;
-    quaternian[0] = 0;//tmpQuaternian[0];
-    quaternian[1] = 1;//tmpQuaternian[1];
-    quaternian[2] = 0;//tmpQuaternian[2];
-    quaternian[3] = 0.01 * (initMousePos - mousePos).norm();
-
-    //std::cout << data.cameraDirection << std::endl;
-    math::static_matrix<float, 3,3> rot = math::quaternian_to_matrix(quaternian);
-    data.cameraDirection = -(rot * initCameraDirection);
+    double xOffset = 0.002 * (evt.GetPosition().x - initMousePos[0]);
+    double yOffset = -0.002*(evt.GetPosition().y - initMousePos[1]);
+    pitch += xOffset;
+    yaw += yOffset;
+    initMousePos[0] = evt.GetPosition().x;
+    initMousePos[1] = evt.GetPosition().y;
+    data.cameraDirection[0] = std::cos(pitch)*std::cos(yaw);
+    data.cameraDirection[1] = std::sin(pitch);
+    data.cameraDirection[2] = std::cos(pitch)*std::sin(yaw);
     dynamicalPlane->Refresh();
+    //math::static_matrix<float,4,4> inverse(math::invert(data.generate_projection_matrix()));
+
+    // math::static_vector<float,3> up;
+    // up[0] = 0.0;
+    // up[1] = 0.0;
+    // up[2] = 1.0;
+    // math::static_vector<double,2> mousePos;
+    // mousePos[0] = evt.GetPosition().x;
+    // mousePos[1] = evt.GetPosition().y;
+    //
+    // math::static_vector<float, 2> canvasSize;
+    // int x,y;
+    // dynamicalPlane->GetSize(&x, &y);
+    // canvasSize[0] = x;
+    // canvasSize[1] = y;
+    // mousePos[0] = mousePos[0] - static_cast<float>(canvasSize[0])/2;
+    // mousePos[1] = mousePos[1] - static_cast<float>(canvasSize[1])/2;
+    //
+    // float denom = std::sqrt(initCameraDirection[0]*initCameraDirection[0]+initCameraDirection[1]*initCameraDirection[1]);
+    // math::static_vector<float,3> finalVecA, finalVecB;
+    // finalVecA[0]= initCameraDirection[1]*mousePos[0]/denom;
+    // finalVecA[1] = -initCameraDirection[0]*mousePos[0]/denom;
+    // finalVecA[2] = 0;
+    // finalVecB = math::cross(initCameraDirection, up);
+    // finalVecB.normalize();
+    // finalVecB *= mousePos[1];
+    //
+    //
+    // math::static_vector<float,3> initVecA, initVecB;
+    // initVecA[0]= initCameraDirection[1]*initMousePos[0]/denom;
+    // initVecA[1] = -initCameraDirection[0]*initMousePos[0]/denom;
+    // initVecA[2] = 0;
+    // initVecB = math::cross(initCameraDirection, up);
+    // initVecB.normalize();
+    // initVecB *= initMousePos[1];
+    //
+    //
+    // // math::static_vector<float,4> initVec;
+    // // initVec[0] = initMousePos[0];
+    // // initVec[1]= initMousePos[1];
+    // // initVec[2]= 0;
+    // // initVec[3]= 1;
+    // // initVec = inverse * initVec;
+    //
+    // // math::static_vector<float,4> finalVec;
+    // // finalVec[0] = mousePos[0];
+    // // finalVec[1]= mousePos[1];
+    // // finalVec[2]= 0;
+    // // finalVec[3]= 1;
+    // // finalVec = inverse * finalVec;
+    //
+    // // math::static_vector<float, 3> tmpInitVec, tmpFinalVec;
+    // // tmpInitVec[0] = initVec[0];
+    // // tmpInitVec[1] = initVec[1];
+    // // tmpInitVec[2] = initVec[2];
+    // //
+    // // tmpFinalVec[0] = finalVec[0];
+    // // tmpFinalVec[1] = finalVec[1];
+    // // tmpFinalVec[2] = finalVec[3];
+    //
+    // math::static_vector<float, 3> tmpQuaternian(math::cross(finalVecA+finalVecB - initVecA - initVecB, initCameraDirection));
+    // math::static_vector<float, 4> quaternian;
+    // quaternian[0] = 0;//tmpQuaternian[0];
+    // quaternian[1] = 1;//tmpQuaternian[1];
+    // quaternian[2] = 0;//tmpQuaternian[2];
+    // quaternian[3] = 0.01 * (math::static_vector<double,2>(initMousePos) - mousePos).norm();
+    //
+    // //std::cout << data.cameraDirection << std::endl;
+    // math::static_matrix<float, 3,3> rot = math::quaternian_to_matrix(quaternian);
+    // data.cameraDirection = -(rot * initCameraDirection);
+    // dynamicalPlane->Refresh();
   }
 }
 
@@ -1046,20 +1085,42 @@ void top_frame::on_key_down_dynamical_plane( wxKeyEvent& evt) {
       dynamicalPlane->Refresh();
     }
   } else {
+
+    /*We first calculate the displacement vector for each direction,
+    forward, right, and up*/
+    /*upDisp is always pointing in the positive z direction*/
+    math::static_vector<double,3> upDisp;
+    upDisp[0] = 0;
+    upDisp[1] = 0;
+    upDisp[2] = 1;
+
+    /*The forward Disp is the same direction as the camera direction,
+    but without the z component*/
+    math::static_vector<double, 3> forwardDisp;
+    forwardDisp[0] = -1*data.cameraDirection[0];
+    forwardDisp[1] = -1*data.cameraDirection[1];
+    forwardDisp[2] = 0;
+    forwardDisp.normalize();
+
+
+    /*The right displacement is orthogonal to the forwardDisp and the zaxis*/
+    math::static_vector<double, 3> rightDisp = math::cross(forwardDisp, upDisp);
+    rightDisp.normalize();
+
     if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_W) {
-      data.cameraPosition[0] -= 2;
+      data.cameraPosition += forwardDisp;
     } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_S) {
-      data.cameraPosition[0] += 2;
+      data.cameraPosition -= forwardDisp;
     } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_A) {
-      data.cameraPosition[1] -= 2;
+      data.cameraPosition -= rightDisp;
     } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_D) {
-      std::cout << "D"<< std::endl;
-      data.cameraPosition[1] += 2;
+      data.cameraPosition += rightDisp;
     } else if(evt.GetKeyCode() == WXK_SPACE) {
-      data.cameraPosition[2] += 2;
+      data.cameraPosition += upDisp;
     } else if(evt.GetKeyCode() == 64 + WXK_CONTROL_V) {
-      data.cameraPosition[2] -= 2;
+      data.cameraPosition -= upDisp;
     }
+    //data.cameraDirection = data.cameraPosition;
 
     dynamicalPlane->Refresh();
   }
