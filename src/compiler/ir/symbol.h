@@ -10,6 +10,7 @@
 
 struct symbol {
   symbol(std::string _name) : name(_name) { };
+  symbol(const std::string& _name, int _id, unsigned int _parameter) : name(_name), id(_id), parameter(_parameter) { }
   typedef std::list<symbol>::const_iterator ptr_type;
   std::string name;
   int id;

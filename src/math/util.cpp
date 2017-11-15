@@ -50,19 +50,20 @@ namespace math {
   the increment size, and
   an optional scratchSpace area may be provided, if speed is desired.
   This prevents allocating and deallocating small arrays very often.
-  NOTE: the size of the initVals vector should be one greater than the
-  size of the vecField function.
-  The first initVal is the time t parameter and all subsequent ones
-  correspond to the elements of vecField.
+  NOTE: the size of the initVals vector should be at least one greater than the
+  size of the vecField function. If it is more than this, then the trailing
+  entries are considered parameters and are not altered by this function.
+  The first initVal is the time t and all subsequent ones
+  correspond to the elements of vecField followed by parameters.
   The
   number of elements in the scratchSpace should be the
   same as the size of the vecField.
   The return values are left in the initVals section.
   NOTE: the dimension refers to the number of variables not including time.
-  initVals should have length dim+1, but vecField should have length dim*/
+  initVals should have length at least dim+1, but vecField should have length dim*/
   void euler(math::vector<double>& initVals,
     const std::vector<driver::double_func_t>& vecField, double inc, double* scratchSpace) {
-    assert(vecField.size() + 1 == initVals.size());
+    assert(vecField.size() + 1 <= initVals.size());
     int dimension = vecField.size();
     double* increments;
     if(!scratchSpace)

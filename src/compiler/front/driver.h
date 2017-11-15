@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 #include <exception>
+#include <list>
+#include "compiler/ir/symbol.h"
 #include "compiler/front/buffer_attributes.h"
 
 
@@ -37,7 +39,7 @@ public:
   /*Compiles the string and returns a pointer to the compiled function.
   Any function returned by this method may be free'd using the mark_unused template.
   The buffer containing the function may not be deallocated immediately, but will be marked as unused,*/
-  template<class FUNC_TYPE> FUNC_TYPE compile_as_function(std::string);
+  template<class FUNC_TYPE> FUNC_TYPE compile_as_function(const std::string&, std::list<symbol>&);
 
   /*Marks the provided function as unused. It may not be free'd immediately. The buffer
   space could be reused for a new function compilation.

@@ -39,7 +39,8 @@ parser::parser(istream& stream) {
   lexDef[string("\\s*!\\s*")] = token::EXCLAMATION;
   lexDef[string("\\s*^\\s*")] = token::CARET;
   lexDef[string("\\s*\\d\\d*|\\d\\d*\\.\\d\\d*\\s*")] = token::NUMBER;
-  lexDef[string("\\s*\\a\\s*")] = token::ID;
+  /*ID's will be a single letter followed by any number of digits*/
+  lexDef[string("\\s*\\a\\d*\\s*")] = token::ID;
   lex = lexer(&stream, lexDef);
 
   /*Generate operator array*/
@@ -321,30 +322,36 @@ AST parser::parse(list<symbol>& symbolTable) {
         /*We encounter an identifier, so we add it to the symbol table if does not yet exist and Construct
         a leaf node with a pointer to that symbol.*/
         symbol sym(lexeme);
-        /*True if the list does not contain the symbol*/
+        /*Points to symbolTable.end() if the list does not contain the symbol*/
         symbol::ptr_type symPtr = std::find(symbolTable.begin(), symbolTable.end(), sym);
 
 
         /*In the case that the symbol does not yet exist, we add it*/
+        // if(symPtr == symbolTable.end()) {
+        //   if(sym.name == "t")
+        //     sym.parameter = 0;
+        //   else if(sym.name == "x")
+        //     sym.parameter = 1;
+        //   else if(sym.name == "y")
+        //     sym.parameter = 2;
+        //   else if(sym.name == "z")
+        //     sym.parameter = 3;
+        //   else
+        //     throw std::invalid_argument("NO SUCH VARIABLE NAMDED: " + sym.name);
+        //
+        //   /*We add the symbol to the list*/
+        //   sym.id = ++symbolId;
+        //   symbolTable.push_back(sym);
+        //   /*The table is now nonempty. We get a pointer/iterator to the last element
+        //   by decrementing end() by 1*/
+        //   symPtr = symbolTable.end();
+        //   --symPtr;
+        // }
+        /*We assume that all symbols are already contained in the symbolTable
+        If they are not, we throw an exception*/
         if(symPtr == symbolTable.end()) {
-          if(sym.name == "t")
-            sym.parameter = 0;
-          else if(sym.name == "x")
-            sym.parameter = 1;
-          else if(sym.name == "y")
-            sym.parameter = 2;
-          else if(sym.name == "z")
-            sym.parameter = 3;
-          else
-            throw std::invalid_argument("NO SUCH VARIABLE NAMDED: " + sym.name);
-
-          /*We add the symbol to the list*/
-          sym.id = ++symbolId;
-          symbolTable.push_back(sym);
-          /*The table is now nonempty. We get a pointer/iterator to the last element
-          by decrementing end() by 1*/
-          symPtr = symbolTable.end();
-          --symPtr;
+          std::cout << "Symbol '" << lexeme <<"' not found in symbol table" << std::endl;
+          throw "Symbol '" + lexeme +"' not found in symbol table";
         }
         nodePtr = AST::make_variable_leaf_node(symPtr);
         nodeStack.push(nodePtr);

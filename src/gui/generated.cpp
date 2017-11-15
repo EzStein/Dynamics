@@ -284,8 +284,8 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	
 	bSizer9->Add( m_notebook21, 1, wxEXPAND | wxALL, 5 );
 	
-	m_panel5 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	bSizer9->Add( m_panel5, 1, wxEXPAND | wxALL, 5 );
+	parameterPlane = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bSizer9->Add( parameterPlane, 1, wxEXPAND | wxALL, 5 );
 	
 	
 	bSizer4->Add( bSizer9, 0, wxEXPAND, 5 );
@@ -313,6 +313,7 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	parameterAxisVariableChoice1->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	parameterAxisVariableChoice2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	renderCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
+	parameterPlane->Connect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_parameter_plane ), NULL, this );
 }
 
 top_frame_base::~top_frame_base()
@@ -329,5 +330,6 @@ top_frame_base::~top_frame_base()
 	parameterAxisVariableChoice1->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	parameterAxisVariableChoice2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	renderCheckBox->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
+	parameterPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_parameter_plane ), NULL, this );
 	
 }

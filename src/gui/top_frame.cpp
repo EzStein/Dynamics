@@ -79,15 +79,15 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   parametersListCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 
   data.push_back( wxVariant("a = ") );
-  data.push_back( wxVariant("0") );
+  data.push_back( wxVariant("10") );
   parametersListCtrl->AppendItem( data );
   data.clear();
   data.push_back( wxVariant("b = ") );
-  data.push_back( wxVariant("0") );
+  data.push_back( wxVariant("28") );
   parametersListCtrl->AppendItem( data );
   data.clear();
   data.push_back( wxVariant("c = ") );
-  data.push_back( wxVariant("0") );
+  data.push_back( wxVariant("2.6666666") );
   parametersListCtrl->AppendItem( data );
   data.clear();
   /*data.push_back( wxVariant("x2' = ") );
@@ -218,7 +218,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     /*We first need to calculate the total number of vertices in the solution set
     We do this by iterating over the solutions and suming their sizes*/
     int totalFloats = 0;
-    for(solution sol : data.solutions) {
+    for(const solution& sol : data.solutions) {
       totalFloats += sol.points.size();
     }
 
@@ -236,16 +236,16 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     /*We now fill in the data accordingly*/
     if(data.render2d) {
       int index = -1;
-      for(solution sol : data.solutions) {
-        for(math::vector<double> vec : sol.points) {
+      for(const solution& sol : data.solutions) {
+        for(const math::vector<double>& vec : sol.points) {
           vertexData[++index] = static_cast<float>(vec[data.axesVariable[0]]);
           vertexData[++index] = static_cast<float>(vec[data.axesVariable[1]]);
         }
       }
     } else {
       int index = -1;
-      for(solution sol : data.solutions) {
-        for(math::vector<double> vec : sol.points) {
+      for(const solution& sol : data.solutions) {
+        for(const math::vector<double>& vec : sol.points) {
           vertexData[++index] = static_cast<float>(vec[data.axesVariable[0]]);
           vertexData[++index] = static_cast<float>(vec[data.axesVariable[1]]);
           vertexData[++index] = static_cast<float>(vec[data.axesVariable[2]]);
@@ -303,7 +303,7 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   }
 
   int offset = 0;
-  for(solution sol : data.solutions) {
+  for(const solution& sol : data.solutions) {
     glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
     offset += sol.points.size();
   }
@@ -325,34 +325,65 @@ void top_frame::on_3d_render_check(wxCommandEvent& evt) {
 }
 
 void top_frame::on_button_click_compile(wxCommandEvent& event) {
-  // for(wxTextCtrl* funcField : functionTextCtrlList) {
-  //   /*If a single field is empty, we do nothing*/
-  //   if(funcField->IsEmpty()) return;
-  // }
+  for(int i = 0; i != functionsListCtrl->GetItemCount(); ++i) {
+    /*If a single field is empty, we do nothing*/
+
+    std::cout << i << std::endl;
+    if(functionsListCtrl->GetTextValue(i, 1) == "") return;
+    std::cout << i << std::endl;
+  }
+
   /*Otherwise, release the space allocated by previous compilations*/
   for(driver::double_func_t func : functions) {
     dr.mark_available(func);
   }
+  std::cout << "A" << std::endl;
   /*And reset the functions*/
   functions.clear();
 
-  /*for(wxTextCtrl* funcField : functionTextCtrlList) {
-    std::string funcString = std::string(funcField->GetValue().mb_str());
+  /*We construct the symbol table, it will depend on the dimension of the vector field*/
+  std::list<symbol> symbolTable;
+  if(data.dimension <= 4) {
+    switch(data.dimension) {
+      /*Observe the fall through (no breaks). Thus if the dim is 4, all the items are added to the symbolTable*/
+      case 4:symbolTable.push_back(symbol("w",4,4));
+      case 3:symbolTable.push_back(symbol("z",3,3));
+      case 2:symbolTable.push_back(symbol("y",2,2));
+      case 1:symbolTable.push_back(symbol("t",0,0));
+             symbolTable.push_back(symbol("x",1,1));
+    }
+  } else {
+    symbolTable.push_back(symbol("t",0,0));
+    for(int i = 0; i != data.dimension; ++i) {
+      std::string str("x" + std::to_string(i + 1));
+      symbolTable.push_back(symbol(str,i+1, i+1));
+    }
+  }
+  /*We now add the parameters to the symbol table*/
+  if(data.parameters <= 4) {
+    switch(data.parameters) {
+      case 4:symbolTable.push_back(symbol("d",data.dimension + 4,data.dimension + 4));
+      case 3:symbolTable.push_back(symbol("c",data.dimension + 3,data.dimension + 3));
+      case 2:symbolTable.push_back(symbol("b",data.dimension + 2,data.dimension + 2));
+      case 1:symbolTable.push_back(symbol("a",data.dimension + 1,data.dimension + 1));
+      default: break;/*Do nothing*/
+    }
+  } else {
+    for(int i = 0; i != data.parameters; ++i) {
+      std::string str("a" + std::to_string(i + 1));
+      symbolTable.push_back(symbol(str, data.dimension+1+i, data.dimension + 1 + i));
+    }
+  }
+
+  for(int i = 0; i != functionsListCtrl->GetItemCount(); ++i) {
+
+    /*If a single field is empty, we do nothing*/
+    std::string funcString(functionsListCtrl->GetTextValue(i,1).mb_str());
 
     functions.push_back(
-      dr.compile_as_function<driver::double_func_t>(funcString)
+      dr.compile_as_function<driver::double_func_t>(funcString, symbolTable)
     );
-  }*/
-
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>("10(y-x)")
-  );
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>("28x-xz-y")
-  );
-  functions.push_back(
-    dr.compile_as_function<driver::double_func_t>("xy-8z/3")
-  );
+  }
 
   /*Clear all the solutions*/
   data.solutions = std::vector<solution>();
@@ -366,13 +397,13 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   initMousePos[0] = evt.GetPosition().x;
   initMousePos[1] = evt.GetPosition().y;
 
-  /*If there are no functions, which happens at the begging, then we do nothgin*/
+  /*If there are no functions, which happens at the begging, then we do nothing*/
   if(functions.empty()) return;
 
 
   std::vector<double> initVals;
-  /*for(wxTextCtrl* initValField : initialValueTextCtrlList) {
-    std::string strVal(std::string(initValField->GetValue().mb_str()));
+  for(int i = 0; i != initialValuesListCtrl->GetItemCount(); ++i) {
+    std::string strVal(std::string(initialValuesListCtrl->GetTextValue(i, 1).mb_str()));
     double val;
     try {
       val = std::stod(strVal);
@@ -381,21 +412,24 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
       return;
     }
     initVals.push_back(val);
-  }*/
-  initVals.push_back(0);
-  initVals.push_back(0);
-  initVals.push_back(0);
-  initVals.push_back(0);
+  }
+  for(int i = 0; i != parametersListCtrl->GetItemCount(); ++i) {
+    std::string strVal(std::string(parametersListCtrl->GetTextValue(i, 1).mb_str()));
+    double val;
+    try {
+      val = std::stod(strVal);
+    } catch (const std::invalid_argument& arg) {
+      std::cout << "Initival value string, '" << strVal << "' is not a number!" << std::endl;
+      return;
+    }
+    initVals.push_back(val);
+  }
 
   data.redraw = true;
 
 
   math::static_vector<double, 2> mouseValPos(get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y));
 
-
-  // math::static_vector<int, 2> indices =
-  //   get_axes_choice_indices(get_axes_choice_from_string(
-  //     std::string(axesChoice->GetString(axesChoice->GetSelection()))));
 
   /*We now set the axis variables*/
   data.axesVariable[0] = axisVariableChoice1->GetSelection();
@@ -407,7 +441,7 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   }
 
   /*Set up initial condition*/
-  math::vector<double> vec(4);
+  math::vector<double> vec(initVals.size());
   for(int i = 0; i != initVals.size(); ++i) {
     if(i == data.axesVariable[0])
       vec[i] = mouseValPos[0];
@@ -422,7 +456,9 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   double tMin = std::stod(std::string(tMinValField->GetValue().mb_str()));
   double tInc = std::stod(std::string(tIncrementField->GetValue().mb_str()));
 
-  /*Construct a solution using the appropriate method*/
+
+  /*When we push the solutions we only need a subvector
+  that contains everything but the parameters*/
   solution sol;
   sol.initVals = vec;
   sol.points.push_back(vec);
@@ -433,7 +469,16 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
       sol.points.push_back(vec);
   }
 
-  vec = *sol.points.begin();
+  /*Set vec back to the initial values*/
+  for(int i = 0; i != initVals.size(); ++i) {
+    if(i == data.axesVariable[0])
+      vec[i] = mouseValPos[0];
+    else if(i == data.axesVariable[1])
+      vec[i] = mouseValPos[1];
+    else
+      vec[i] = initVals[i];
+  }
+
   while(vec[0] > tMin) {
     math::euler(vec, functions, -tInc);
     if((sol.points.front() - vec).norm() > tolerance)
@@ -441,6 +486,61 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   }
 
   data.solutions.push_back(sol);
+  dynamicalPlane->Refresh();
+}
+
+/*Called when a parameter is updated and all the trajectories need to be recomputed*/
+void top_frame::recompute_trajectories() {
+  std::vector<double> newParameters;
+  for(int i = 0; i != parametersListCtrl->GetItemCount(); ++i) {
+    std::string strVal(std::string(parametersListCtrl->GetTextValue(i, 1).mb_str()));
+    double val;
+    try {
+      val = std::stod(strVal);
+    } catch (const std::invalid_argument& arg) {
+      std::cout << "Initival value string, '" << strVal << "' is not a number!" << std::endl;
+      return;
+    }
+    newParameters.push_back(val);
+  }
+  /*Retrieve tMax, tInc, and tMin*/
+  double tMax = std::stod(std::string(tMaxValField->GetValue().mb_str()));
+  double tMin = std::stod(std::string(tMinValField->GetValue().mb_str()));
+  double tInc = std::stod(std::string(tIncrementField->GetValue().mb_str()));
+
+  for(solution& sol : data.solutions) {
+    /*First we clear all the data in this solution*/
+    sol.points = std::list<math::vector<double> >();
+
+    /*Now we set the initial vec to be the initial value with the new parameters*/
+    math::vector<double> vec = sol.initVals;
+    for(int i = 0; i != data.parameters; ++i) {
+      vec[data.dimension + 1 + i] = newParameters[i];
+
+    }
+
+    sol.initVals = vec;
+
+
+    sol.points.push_back(vec);
+    double tolerance = 0.1;
+    while(vec[0] < tMax) {
+      math::euler(vec, functions, tInc);
+      if((sol.points.back() - vec).norm() > tolerance)
+        sol.points.push_back(vec);
+    }
+
+    /*Set vec back to the initial values*/
+    vec = sol.initVals;
+
+    while(vec[0] > tMin) {
+      math::euler(vec, functions, -tInc);
+      if((sol.points.front() - vec).norm() > tolerance)
+        sol.points.push_front(vec);
+    }
+    std::cout << sol.points.size() << std::endl;
+  }
+  data.redraw = true;
   dynamicalPlane->Refresh();
 }
 
@@ -521,6 +621,19 @@ void top_frame::set_nullclines() {
   // }
 }
 
+void top_frame::on_motion_parameter_plane(wxMouseEvent& evt) {
+  static int i = 1;
+  ++i;
+  if(i%2 != 0) return;
+  math::static_vector<int,2> canvasSize;
+  parameterPlane->GetSize(&canvasSize[0], &canvasSize[1]);
+  double val = 10*static_cast<double>(evt.GetPosition().x)/static_cast<double>(canvasSize[0])+5;
+  parametersListCtrl->SetTextValue(std::to_string(val), 0, 1);
+  val = 10*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1])+20;
+  parametersListCtrl->SetTextValue(std::to_string(val), 1, 1);
+  recompute_trajectories();
+}
+
 void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
   if(data.render2d) {
     if(evt.GetWheelRotation() == 0) {
@@ -536,6 +649,9 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
     dynamicalPlane->GetSize(&canvasSize[0], &canvasSize[1]);
 
     math::static_vector<double, 2> mouseValPos(get_real_coordinates(evt.GetPosition().x, evt.GetPosition().y));
+
+    initialValuesListCtrl->SetTextValue(std::to_string(mouseValPos[0]), data.axesVariable[0],1);
+    initialValuesListCtrl->SetTextValue(std::to_string(mouseValPos[1]), data.axesVariable[1],1);
 
     statusBar->SetStatusText("(" + std::to_string(mouseValPos[0]) + ", " + std::to_string(mouseValPos[1]) + ")");
 
@@ -598,8 +714,6 @@ void top_frame::on_right_down_dynamical_plane(wxMouseEvent& evt) {
   initViewportCenter[0] = data.viewportCenterX;
   initViewportCenter[1] = data.viewportCenterY;
   initCameraDirection = data.cameraDirection;
-  std::cout << "A"<< std::endl;
-
 }
 
 void top_frame::on_text_enter_parameters(wxCommandEvent& evt) {
@@ -932,8 +1046,6 @@ void top_frame::on_key_down_dynamical_plane( wxKeyEvent& evt) {
       dynamicalPlane->Refresh();
     }
   } else {
-    std::cout << evt.GetUnicodeKey()<< std::endl;
-    std::cout << WXK_CONTROL_W << "," << WXK_NONE<< std::endl;
     if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_W) {
       data.cameraPosition[0] -= 2;
     } else if(evt.GetUnicodeKey() == 64 + WXK_CONTROL_S) {
@@ -945,19 +1057,7 @@ void top_frame::on_key_down_dynamical_plane( wxKeyEvent& evt) {
       data.cameraPosition[1] += 2;
     } else if(evt.GetKeyCode() == WXK_SPACE) {
       data.cameraPosition[2] += 2;
-    } else if(evt.GetKeyCode() == WXK_SHIFT) {
-      data.cameraPosition[2] -= 2;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_W) {
-      data.cameraPosition[0] -= 2;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_S) {
-      data.cameraPosition[0] += 2;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_A) {
-      data.cameraPosition[1] -= 2;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_D) {
-      data.cameraPosition[1] += 2;
-    } else if(evt.GetKeyCode() == WXK_SPACE) {
-      data.cameraPosition[2] += 2;
-    } else if(evt.GetKeyCode() == WXK_SHIFT) {
+    } else if(evt.GetKeyCode() == 64 + WXK_CONTROL_V) {
       data.cameraPosition[2] -= 2;
     }
 

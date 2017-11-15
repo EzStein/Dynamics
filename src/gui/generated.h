@@ -80,7 +80,7 @@ class top_frame_base : public wxFrame
 		wxStaticText* m_staticText153;
 		wxChoice* parameterAxisVariableChoice2;
 		wxCheckBox* renderCheckBox;
-		wxPanel* m_panel5;
+		wxPanel* parameterPlane;
 		wxNotebook* m_notebook2;
 		wxStatusBar* statusBar;
 		
@@ -93,6 +93,7 @@ class top_frame_base : public wxFrame
 		virtual void on_axis_choice( wxCommandEvent& event ) = 0;
 		virtual void on_parameter_axis_choice( wxCommandEvent& event ) = 0;
 		virtual void on_3d_render_check( wxCommandEvent& event ) = 0;
+		virtual void on_motion_parameter_plane( wxMouseEvent& event ) = 0;
 		
 	
 	public:

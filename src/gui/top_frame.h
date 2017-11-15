@@ -42,6 +42,7 @@ private:
   axes3dVbo, axes3dVao;
 
   void initialize_gl();
+  void recompute_trajectories();
   void set_nullclines();
   void on_paint_dynamical_plane(wxPaintEvent&);
   void on_left_down_dynamical_plane(wxMouseEvent&);
@@ -62,4 +63,6 @@ private:
   virtual void on_3d_render_check(wxCommandEvent& evt) override;
   virtual void on_text_enter_parameters(wxCommandEvent& evt) override;
   virtual void on_parameter_axis_choice(wxCommandEvent& evt) override;
+  //virtual void on_editing_done_parameter_list_ctrl(wxDataViewEvent& evt) override;
+  virtual void on_motion_parameter_plane(wxMouseEvent& evt) override;
 };
