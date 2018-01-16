@@ -42,6 +42,9 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   data.cameraPosition[1] = 10;
   data.cameraPosition[2] = 10;
   data.cameraDirection = data.cameraPosition;
+  data.axesVariable[0] = 1;
+  data.axesVariable[1] = 2;
+  data.axesVariable[2] = 3;
 
   functionsListCtrl->AppendTextColumn("Variable");
   functionsListCtrl->AppendTextColumn("Equation", wxDATAVIEW_CELL_EDITABLE);
@@ -158,6 +161,21 @@ void top_frame::initialize_gl() {
   glVertexAttribPointer(program3d.get_attribute_location("pos"), 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
   glEnableVertexAttribArray(program3d.get_attribute_location("pos"));
   glBindVertexArray(0);
+
+  glGenBuffers(1, &newtonVbo);
+  glBindBuffer(GL_ARRAY_BUFFER, newtonVbo);
+
+  float newtonData[2*10] = {
+    0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0
+  };
+  glBufferData(GL_ARRAY_BUFFER, 2*10*sizeof(float), newtonData, GL_DYNAMIC_DRAW);
+
+  glGenVertexArrays(1, &newtonVao);
+  glBindVertexArray(newtonVao);
+  glVertexAttribPointer(program2d.get_attribute_location("pos"), 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  glEnableVertexAttribArray(program2d.get_attribute_location("pos"));
+  glBindVertexArray(0);
 }
 
 top_frame::~top_frame() {
@@ -272,6 +290,30 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     glBindVertexArray(vao2d);
     math::static_matrix<float, 4,4> transformationMatrix(data.generate_2d_transformation_matrix());
     program2d.set_float_mat4_uniform("transformation", true, transformationMatrix.data());
+    int offset = 0;
+    for(const solution& sol : data.solutions) {
+      glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
+      offset += sol.points.size();
+    }
+    glBindVertexArray(0);
+
+    if(newtonsPoints.size() != 0) {
+      float* newtonData = new float[2*10];
+      int index = 0;
+      for(int i = 0; i != newtonsPoints.size(); ++i) {
+        newtonData[index] = newtonsPoints[i][0];
+        newtonData[++index] = newtonsPoints[i][1];
+        ++index;
+      }
+      glBindBuffer(GL_ARRAY_BUFFER, newtonVbo);
+      glBufferData(GL_ARRAY_BUFFER, 2*10*sizeof(float), newtonData, GL_DYNAMIC_DRAW);
+      glBindVertexArray(newtonVao);
+      glDrawArrays(GL_LINE_STRIP,0,10);
+      glBindVertexArray(0);
+      delete[] newtonData;
+    }
+
+
   } else {
 
     program3d.bind();
@@ -304,14 +346,16 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
     col[2] = 0.5;
     program3d.set_float_vec4_uniform("color", col);
     glBindVertexArray(vao3d);
+
+    int offset = 0;
+    for(const solution& sol : data.solutions) {
+      glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
+      offset += sol.points.size();
+    }
+    glBindVertexArray(0);
   }
 
-  int offset = 0;
-  for(const solution& sol : data.solutions) {
-    glDrawArrays(GL_LINE_STRIP,offset,sol.points.size());
-    offset += sol.points.size();
-  }
-  glBindVertexArray(0);
+
   dynamicalPlane->SwapBuffers();
 }
 
@@ -335,9 +379,13 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
   for(driver::double_func_t func : functions) {
     dr.mark_available(func);
   }
-  std::cout << "A" << std::endl;
+  for(driver::double_func_t func : jacobian) {
+    dr.mark_available(func);
+  }
+
   /*And reset the functions*/
   functions.clear();
+  jacobian.clear();
 
   /*We construct the symbol table, it will depend on the dimension of the vector field*/
   std::list<symbol> symbolTable;
@@ -372,15 +420,34 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
       symbolTable.push_back(symbol(str, data.dimension+1+i, data.dimension + 1 + i));
     }
   }
+  /*We now sort the table by the variable's parameter id*/
+  symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
+    return a.parameter < b.parameter;
+  });
+
 
   for(int i = 0; i != functionsListCtrl->GetItemCount(); ++i) {
 
     /*If a single field is empty, we do nothing*/
     std::string funcString(functionsListCtrl->GetTextValue(i,1).mb_str());
 
+    /*We add one function to the functions list and a row of functions
+    to the jacobian*/
+    AST function = dr.parse_as_ast(funcString, symbolTable);
+
     functions.push_back(
-      dr.compile_as_function<driver::double_func_t>(funcString, symbolTable)
+      dr.compile_as_function<driver::double_func_t>(function)
     );
+
+    /*We now compute the derivative with respect to each variable*/
+    for(symbol sym : symbolTable) {
+      /*We must check that the symbol is indeed a variable and not a parameter*/
+      if(sym.parameter == 0 || sym.parameter >= functionsListCtrl->GetItemCount() + 1) continue;
+      jacobian.push_back(
+        dr.compile_as_function<driver::double_func_t>(
+          /*This performs a copy on the ast*/AST(function).differentiate(sym.name))
+      );
+    }
   }
 
   /*Clear all the solutions*/
@@ -441,11 +508,11 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   /*Set up initial condition*/
   math::vector<double> vec(initVals.size());
   for(int i = 0; i != initVals.size(); ++i) {
-    if(i == data.axesVariable[0])
-      vec[i] = mouseValPos[0];
-    else if(i == data.axesVariable[1])
-      vec[i] = mouseValPos[1];
-    else
+    //  if(i == data.axesVariable[0])
+    //    vec[i] = mouseValPos[0];
+    //  else if(i == data.axesVariable[1])
+    //    vec[i] = mouseValPos[1];
+    //  else
       vec[i] = initVals[i];
   }
 
@@ -468,14 +535,7 @@ void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
   }
 
   /*Set vec back to the initial values*/
-  for(int i = 0; i != initVals.size(); ++i) {
-    if(i == data.axesVariable[0])
-      vec[i] = mouseValPos[0];
-    else if(i == data.axesVariable[1])
-      vec[i] = mouseValPos[1];
-    else
-      vec[i] = initVals[i];
-  }
+  vec = sol.initVals;
 
   while(vec[0] > tMin) {
     math::euler(vec, functions, -tInc);
@@ -625,9 +685,9 @@ void top_frame::on_motion_parameter_plane(wxMouseEvent& evt) {
   if(i%2 != 0) return;
   math::static_vector<int,2> canvasSize;
   parameterPlane->GetSize(&canvasSize[0], &canvasSize[1]);
-  double val = 10*static_cast<double>(evt.GetPosition().x)/static_cast<double>(canvasSize[0])+5;
+  double val = 10*static_cast<double>(evt.GetPosition().x)/static_cast<double>(canvasSize[0])-5;
   parametersListCtrl->SetTextValue(std::to_string(val), 0, 1);
-  val = 10*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1])+20;
+  val = 10*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1])-5;
   parametersListCtrl->SetTextValue(std::to_string(val), 1, 1);
   recompute_trajectories();
 }
@@ -662,6 +722,28 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
       /static_cast<double>(canvasSize[1]);
       dynamicalPlane->Refresh();
     }
+
+    if(functions.size() == 0) return;
+    /*We now compute the newton's method orbit at the given point*/
+    /*For this, we assume that the equations are autonomous
+    and that t is fixed to be zero*/
+    std::cout << "NEWTON:" << std::endl;
+    math::vector<double> init(6, 0);
+    init[0] = mouseValPos[0];
+    init[1] = mouseValPos[1];
+    init[3] = 10;
+    init[4] = 28;
+    init[5] = 2.666;
+    newtonsPoints.clear();
+    newtonsPoints.push_back(init);
+    for(int i =0; i != 9; ++i) {
+      if(!math::newton_raphson_iteration(init, functions, jacobian, true))
+        std::cout << "SINGULAR" << std::endl;
+      std::cout << math::matrix<double>(init).transpose() << std::endl;
+      newtonsPoints.push_back(init);
+    }
+    dynamicalPlane->Refresh();
+
   } else if (evt.Dragging() && evt.RightIsDown()) {
     double xOffset = 0.002 * (evt.GetPosition().x - initMousePos[0]);
     double yOffset = -0.002*(evt.GetPosition().y - initMousePos[1]);

@@ -27,7 +27,7 @@ AST compile_as_tree(const std::string& str) {
   return AST(parse.parse(*symbolTable));
 }
 
-int mains() {
+int main() {
   /*std::string str("z+1*x+y");
   stringstream sstream(str);
   parser parse(sstream);

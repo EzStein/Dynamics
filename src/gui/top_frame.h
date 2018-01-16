@@ -28,6 +28,12 @@ private:
   /*A list of the functions. There should be one fewer functions than initVals*/
   std::vector<driver::double_func_t> functions;
 
+  /*Represents the jacobian specifed function given in
+  row major order*/
+  std::vector<driver::double_func_t> jacobian;
+
+  std::vector<math::vector<double> > newtonsPoints;
+
   /*These values are updated at each mouse down event*/
   math::static_vector<int, 2> initMousePos;
   math::static_vector<int, 2> initViewportCenter;
@@ -40,7 +46,8 @@ private:
   double totalMag;
 
   GLuint vao2d, vao3d, vbo,
-  axes3dVbo, axes3dVao;
+  axes3dVbo, axes3dVao,
+  newtonVao, newtonVbo;
 
   void initialize_gl();
   void recompute_trajectories();

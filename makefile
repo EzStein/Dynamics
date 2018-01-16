@@ -1,5 +1,7 @@
+# OS agnostic Makefile
+# Set flags based on the operating system.
 ifeq ($(OS),Windows_NT)
-		OS = WIN
+    OS = WIN
     OS_SPECIFIC = -D WIN32
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
         OS_SPECIFIC += -D AMD64
@@ -14,16 +16,16 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
-				OS = LINUX
+	OS = LINUX
         OS_SPECIFIC = -D LINUX
     endif
     ifeq ($(UNAME_S),Darwin)
-				OS = MAC
-				OS_SPECIFIC = -m32 -stdlib=libc++ -mmacosx-version-min=10.7 -D OSX
+	OS = MAC
+	OS_SPECIFIC = -m32 -stdlib=libc++ -mmacosx-version-min=10.7 -D OSX
     endif
     UNAME_P := $(shell uname -p)
     ifeq ($(UNAME_P),x86_64)
-				OS_SPECIFIC += -D AMD64
+	OS_SPECIFIC += -D AMD64
     endif
     ifneq ($(filter %86,$(UNAME_P)),)
         OS_SPECIFIC += -D IA32
@@ -33,98 +35,113 @@ else
     endif
 endif
 
-
+# All source code including headers must be contained in this directory.
 SRC_DIR = src
+
+# Each .cpp file is compiled into a corresponding .o file in this directory.
 OBJ_DIR = obj
+
+# Directory in which to look for external include files.
 INCLUDE_DIR = include
+
+# Directory in which to look for external library files.
 LIB_DIR = lib
-EXE_DIR = exe
-APP_NAME = Dynamics
-MAC_DIR = mac_build
+
+# Directory where executables and bundles are stored. 
+BUILD_DIR = build
+
+# This is a subdirectory of both OBJ_DIR and SRC_DIR where main obj and src
+# files are kept.
+MAIN_DIR = main 
+
+APP_NAME = DynSolver
+
+# A routine which recursively finds all files in a root directory.
+rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
+
+# A list of all .cpp files with path starting at $(SRC_DIR)
+SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
+
+# A list of all OBJ files.
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+
+# A list of all OBJ files which do not contain a main method. That is,
+# they are not in the obj/main folder.
+NON_MAIN_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/%, $(OBJS))
+
 WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 
 WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
 
-#Finds all src files in all directories of any depth in src/
-rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
-SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
-OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+LIBRARY_FLAGS = -L$(LIB_DIR) \
+`$(WX_CONFIG) --gl-libs --libs` \
+$(call rwildcard, $(LIB_DIR)/,*) \
+-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++
 
-LIBS = `$(WX_CONFIG) --gl-libs --libs`
-LIBS += $(call rwildcard, $(LIB_DIR)/,*.a)
-LIBS += -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++
+INCLUDE_FLAGS = -I$(SRC_DIR) -isystem $(INCLUDE_DIR)
 
+COMPILER_FLAGS = -std=c++11 $(OS_SPECIFIC) $(WX_FLAGS) -ggdb -O0
 
-CC = g++ -std=c++11 -static-libgcc -static-libstdc++ -I$(SRC_DIR) -isystem $(INCLUDE_DIR) $(OS_SPECIFIC) $(WX_FLAGS)
+CC = g++
 
-DIRS = $(EXE_DIR) $(OBJ_DIR) $(dir $(OBJS))
-
-PRODUCTION = -Wall -pedantic  \
-    -pedantic-errors -Wextra -Wcast-align \
+WARNINGS = -Wall -Weffc++ -pedantic  \
+    -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
-    -Wfloat-equal  -Wformat  -Wformat=2 \
+    -Werror -Wfloat-equal  -Wformat  -Wformat=2 \
     -Wformat-nonliteral -Wformat-security  \
     -Wformat-y2k \
-    -Wimport  -Winit-self  -Winline \
+    -Wimplicit  -Wimport  -Winit-self  -Winline \
     -Winvalid-pch   \
-    -Wlong-long -Wmissing-braces \
+    -Wunsafe-loop-optimizations  -Wlong-long -Wmissing-braces \
     -Wmissing-field-initializers -Wmissing-format-attribute   \
     -Wmissing-include-dirs -Wmissing-noreturn \
-    -Wpacked -Wparentheses  -Wpointer-arith \
+    -Wpacked  -Wpadded -Wparentheses  -Wpointer-arith \
     -Wredundant-decls -Wreturn-type \
     -Wsequence-point  -Wshadow -Wsign-compare  -Wstack-protector \
     -Wstrict-aliasing -Wstrict-aliasing=2 -Wswitch  -Wswitch-default \
     -Wswitch-enum -Wtrigraphs  -Wuninitialized \
-    -Wunknown-pragmas  -Wunreachable-code \
-    -Wunused-function  -Wunused-label -Wunused \
+    -Wunknown-pragmas  -Wunreachable-code -Wunused \
+    -Wunused-function  -Wunused-label  -Wunused-parameter \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
-    -Wvolatile-register-var  -Wwrite-strings \
-		-Wno-unused-parameter \
-		-Wno-reorder -Wno-sign-conversion
+    -Wvolatile-register-var  -Wwrite-stringss
 
-DEVELOPMENT = -ggdb -O0
-PRODUCTION += -Waggregate-return -Weffc++ -O3 -Wunused-parameter -Wpadded -Werror
+all: app test
 
-all: $(EXE_DIR)/$(APP_NAME) package
+app: $(BUILD_DIR)/$(APP_NAME)
 
-$(EXE_DIR)/$(APP_NAME): $(OBJS) .dirstamp
-	@echo Linking...
-	$(CC) $(WARNINGS) $(DEVELOPMENT) $(OBJS) -L$(LIB_DIR) $(LIBS)  -o $@
+test: $(BUILD_DIR)/$(TEST_NAME)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp .dirstamp
-	@echo Compiling $<
-	@$(CC) $(WARNINGS) $(DEVELOPMENT) -c -o $@ $<
+$(BUILD_DIR)/$(APP_NAME): $(NON_MAIN_OBJS) $(APP_MAIN_OBJ)
+	@mkdir -p $(@D)
+	@echo Linking App...
+	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
-package: $(EXE_DIR)/$(APP_NAME) $(MAC_DIR)/Info.plist .dirstamp
-ifeq ($(OS),MAC)
-		@SetFile -t APPL $(EXE_DIR)/$(APP_NAME)
-		@cp $(MAC_DIR)/Info.plist $(EXE_DIR)/$(APP_NAME).app/Contents/Info.plist
-		@printf "APPL????" > $(EXE_DIR)/$(APP_NAME).app/Contents/PkgInfo
-		@cp $(EXE_DIR)/$(APP_NAME) $(EXE_DIR)/$(APP_NAME).app/Contents/MacOS/$(APP_NAME)
-		@cp resources/* $(EXE_DIR)/$(APP_NAME).app/Contents/Resources/
-endif
-ifeq ($(OS),LINUX)
+$(BUILD_DIR)/$(TEST_NAME): $(NON_MAIN_OBJS) $(TEST_MAIN_OBJ)
+	@mkdir -p $(@D)
+	@echo Linking Test...
+	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
-endif
+# If a certain object file is requested, it is compiled from the corresponding
+# source file.
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
+	@echo Compiling $^
+	@$(CC) $(WARNINGS) $(COMPILER_FLAGS) $(INCLUDE_FLAGS) -c -o $@ $^
 
-ifeq ($(OS),WINDOWS)
-endif
-
+# Generates a dependency file that associates each object file to the headers
+# which it depends on. This should be called manually whenever a .cpp file
+# changes its header dependency.
 depend:
 	rm .depend
-	$(foreach SRC,$(SRCS),$(CC) $(WARNINGS) $(DEVELOPMENT) \
-	$(INCLUDES) $(OS_SPECIFIC) -MM $(SRC) -MT  $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
+	$(foreach SRC,$(SRCS),$(CC) $(INCLUDE_FLAGS) -MM $(SRC) -MT \
+	$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
 
 -include .depend
 
-.dirstamp:
-	mkdir -p $(DIRS)
-	touch $@
-
 clean:
 	-@rm -r $(OBJ_DIR)
-	-@rm -r $(EXE_DIR)
-	-@rm .dirstamp
+	-@rm -r $(BUILD_DIR)
+	-@rm -r .depend
 
-.PHONY: build-wx clean-wx all clean depend
+.PHONY: all test app clean depend

@@ -20,5 +20,9 @@ namespace math {
   void euler(math::vector<double>& initVals,
     const std::vector<driver::double_func_t>& vecField, double inc,
     double* scratchSpace = nullptr);
+
+  bool newton_raphson_iteration(
+  math::vector<double>& init, const std::vector<driver::double_func_t>& functions,
+  const std::vector<driver::double_func_t>& jacobian, bool insertZeroTime = false);
 }
 #endif

@@ -83,4 +83,55 @@ namespace math {
     if(!scratchSpace)
       delete[] increments;
   }
+
+  /*
+  * performs one round of newtons method iteration
+  * on an arbitrary dimension. The input is a vector valued function
+  * given as a pointer to an array driver::double_func_t as well
+  as its jacobian, which is given as a pointer to the 2d
+  array of driver::double_func_t specified in row major order.
+  Additionally, the initial condition is specified as a math::vector<double>
+  which is overwritten with the final value after one iteration.
+  Note that the init vector should also include any parameters that need
+  to be passed to the function, but which are not variables to solve for.
+  * Returns true if the iteration was successful (the jacobian was non-singular)
+  and false otherwise.
+  * if insertZeroTime is true, then a time parameter of zero is inserted
+  * before the other parameters when a compiled function is called.
+  */
+  bool newton_raphson_iteration(
+  math::vector<double>& init, const std::vector<driver::double_func_t>& functions,
+  const std::vector<driver::double_func_t>& jacobian, bool insertZeroTime) {
+    int dimension = functions.size();
+    math::vector<double> parameters(init.size() + 1);
+    if(insertZeroTime) {
+      parameters[0] = 0.0;
+      for(int i = 1; i != parameters.size(); ++i) {
+        parameters[i] = init[i - 1];
+      }
+    } else {
+      for(int i = 0; i != init.size(); ++i) {
+        parameters[i] = init[i];
+      }
+    }
+
+    /*We first compute the jacobian matrix*/
+    matrix<double> jacobianMatrix(dimension,dimension);
+    for(int r = 0; r != dimension; ++r) {
+      for(int c = 0; c != dimension; ++c) {
+        jacobianMatrix[r][c] = jacobian[r*dimension + c](parameters.data());
+      }
+    }
+    /*We now compute the image of the init condition under the function and negate it.
+    This is used to solve a linear system*/
+    vector<double> vec(dimension);
+    for(int i = 0; i != dimension; ++i) {
+      vec[i] = -1 * functions[i](parameters.data());
+    }
+
+    vector<double> sol(init.size(), 0);
+    if(!solve_uniquely(jacobianMatrix, vec, sol)) return false;
+    init += sol;
+    return true;
+  }
 }

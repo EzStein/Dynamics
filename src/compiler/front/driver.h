@@ -8,6 +8,7 @@
 #include <list>
 #include "compiler/ir/symbol.h"
 #include "compiler/front/buffer_attributes.h"
+#include "compiler/ast/AST.h"
 
 
 
@@ -36,10 +37,16 @@ public:
   void flush_all_buffers();
   void flush_unused_buffers();
 
-  /*Compiles the string and returns a pointer to the compiled function.
+
+  /*
+  * Parses the string into a syntax tree using the symbol table provided.
+  */
+  AST parse_as_ast(const std::string& str, std::list<symbol>& symbolTable);
+
+  /*Compiles the AST and returns a pointer to the compiled function.
   Any function returned by this method may be free'd using the mark_unused template.
   The buffer containing the function may not be deallocated immediately, but will be marked as unused,*/
-  template<class FUNC_TYPE> FUNC_TYPE compile_as_function(const std::string&, std::list<symbol>&);
+  template<class FUNC_TYPE> FUNC_TYPE compile_as_function(const AST&);
 
   /*Marks the provided function as unused. It may not be free'd immediately. The buffer
   space could be reused for a new function compilation.

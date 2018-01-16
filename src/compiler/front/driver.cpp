@@ -32,18 +32,18 @@ driver& driver::operator=(driver&& dr) {
   return *this;
 }
 
+AST driver::parse_as_ast(const std::string& str, std::list<symbol>& symbolTable) {
+  stringstream sstream(str);
+  parser parse(sstream);
+  return parse.parse(symbolTable);
+}
+
 
 /*This function compiles the program. Since it is likely that many functions will be compiled
 and free'd often, this function attempts to reuse allocated memory. If a memory area is allocated
 and then marked as unused, it may be used for the new compilation instead of reallocating*/
-template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(const std::string& str,
-  std::list<symbol>& symbolTable) {
-  stringstream sstream(str);
-  parser parse(sstream);
+template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(const AST& ast) {
 
-  /*We fill the symbolTable according to the */
-  /*Compile the function*/
-  AST ast(parse.parse(symbolTable));
   std::string code = ast.emit_code_amd64();
   assembler assem;
   std::vector<unsigned char> vec;
@@ -85,7 +85,7 @@ template<class FUNC_TYPE> FUNC_TYPE driver::compile_as_function(const std::strin
   return func;
 }
 
-template driver::double_func_t driver::compile_as_function<driver::double_func_t>(const std::string&,std::list<symbol>&);
+template driver::double_func_t driver::compile_as_function<driver::double_func_t>(const AST&);
 
 template<class FUNC_TYPE>
 void driver::mark_available(FUNC_TYPE func) {

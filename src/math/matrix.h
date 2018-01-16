@@ -144,6 +144,23 @@ public:
       return COLS;
     }
 
+    /*Transposes this matrix
+    and returns a reference to itself*/
+    matrix<NUM_T>& transpose() {
+      NUM_T* newArr = new NUM_T[ROWS*COLS];
+      for(int r = 0; r != ROWS; ++r) {
+        for(int c = 0; c != COLS; ++c) {
+          newArr[c*ROWS + r] = (*this)[r][c];
+        }
+      }
+      int tmp = ROWS;
+      ROWS = COLS;
+      COLS = tmp;
+      delete[] arr;
+      arr = newArr;
+      return *this;
+    }
+
     /*Returns the standard matrix norm
     which is the square root of the sum of the squres of all entries*/
     NUM_T norm() const {

@@ -98,6 +98,7 @@ AST& AST::simplify() {
   return *this;
 }
 
+/*Note that this function mutates the tree*/
 AST& AST::differentiate(const std::string& var) {
   /*We first perform enough tree manipulations to get only the appropriate operators*/
   expression_node* newRoot = root->transform_operators();
