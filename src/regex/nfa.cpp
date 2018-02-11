@@ -92,7 +92,9 @@ bool nfa::accepts(const std::string& candidate) const {
   return accept_longest_prefix(candidate) == candidate.size();
 }
 
-int nfa::accept_longest_prefix(const std::string& candidate) const {
+int nfa::accept_longest_prefix(const std::string& candidate,
+                               int startPosition) const {
+  assert(startPosition >= 0 && startPosition <= candidate.size());
   // We find the longest prefix is by simulating the nfa until termination.
   // The nfa terminates once there are no more current states to transition
   // from, or we have reached the end of input. As we go, we keep track
@@ -104,7 +106,7 @@ int nfa::accept_longest_prefix(const std::string& candidate) const {
   //
   // We use two std::set to store which states we are currently in and which states
   // we will transition to. We swap the two lists on each iteration.
-  int pointer(0);
+  int pointer(startPosition);
   int longestPrefixSeen(-1);
   std::set<int> currentStates;
   std::set<int> nextStates;

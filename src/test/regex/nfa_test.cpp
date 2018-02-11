@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "test/catch.hpp"
 #include "regex/nfa.h"
 
 TEST_CASE("My First Test") {

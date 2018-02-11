@@ -67,7 +67,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 
 # A list of all OBJ files which do not contain a main method. That is,
 # they are not in the obj/main folder.
-NON_MAIN_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/%, $(OBJS))
+NON_MAIN_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/*, $(OBJS))
 
 WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 
@@ -88,10 +88,10 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
-    -Werror -Wfloat-equal  -Wformat  -Wformat=2 \
+    -Wfloat-equal  -Wformat  -Wformat=2 \
     -Wformat-nonliteral -Wformat-security  \
     -Wformat-y2k \
-    -Wimplicit  -Wimport  -Winit-self  -Winline \
+    -Wimport  -Winit-self  -Winline \
     -Winvalid-pch   \
     -Wunsafe-loop-optimizations  -Wlong-long -Wmissing-braces \
     -Wmissing-field-initializers -Wmissing-format-attribute   \
@@ -104,7 +104,7 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -Wunknown-pragmas  -Wunreachable-code -Wunused \
     -Wunused-function  -Wunused-label  -Wunused-parameter \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
-    -Wvolatile-register-var  -Wwrite-stringss
+    -Wvolatile-register-var  -Wwrite-strings
 
 all: app test
 
@@ -123,25 +123,30 @@ $(BUILD_DIR)/$(TEST_NAME): $(NON_MAIN_OBJS) $(TEST_MAIN_OBJ)
 	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
 # If a certain object file is requested, it is compiled from the corresponding
-# source file.
+# source file. Note that the dependencies list will be expanded using the
+# included .depend file, so we must compile only the first ($<).
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
-	@echo Compiling $^
-	@$(CC) $(WARNINGS) $(COMPILER_FLAGS) $(INCLUDE_FLAGS) -c -o $@ $^
+	@echo Compiling $<
+	@$(CC) $(WARNINGS) $(COMPILER_FLAGS) $(INCLUDE_FLAGS) -c -o $@ $<
 
 # Generates a dependency file that associates each object file to the headers
 # which it depends on. This should be called manually whenever a .cpp file
 # changes its header dependency.
 depend:
-	rm .depend
-	$(foreach SRC,$(SRCS),$(CC) $(INCLUDE_FLAGS) -MM $(SRC) -MT \
+	@rm -f .depend
+	@$(foreach SRC,$(SRCS),$(CC) $(INCLUDE_FLAGS) -MM $(SRC) -MT \
 	$(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC)) >> .depend;)
 
 -include .depend
 
 clean:
-	-@rm -r $(OBJ_DIR)
-	-@rm -r $(BUILD_DIR)
-	-@rm -r .depend
+	-@rm -rf $(OBJ_DIR)
+	-@rm -rf $(BUILD_DIR)
+	-@rm -rf .depend
 
 .PHONY: all test app clean depend
+
+# Disables all built in rules.
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:

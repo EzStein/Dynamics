@@ -92,14 +92,28 @@ class regex {
   // Returns true if the provided string is matched by this regular expression
   bool accepts(const std::string& candidate) const;
 
-  // Returns an integer indicating the length of matched prefix.
-  // The prefix can be recovered using candidate.substr(0, len) where
-  // len is the returned integer. In particular the substring
-  // spans from character 0 (inclusive) to character len (exclusive).
+  // Returns an integer indicating the length of the smallest
+  // matched prefix of candidate if it exists.
+  // We ignore characters whose indices are less than startPosition.
+  // That is, this function has the effect of
+  // finding the longest matched prefix of
+  // candidate.substr(startPosition, candidate.size() - startPosition).
+  // By default startPosition is 0 indicating that the whole string should
+  // be considered. The startPosition value may be anywhere from 0 to
+  // candidate.length() inclusive. If it is candidate.length(), then
+  // we consider the empty string. If startPosition is out of range then
+  // the behavior is undefined (we may assert an error in development mode).
+  // 
+  // The matched prefix if it exists can be recovered
+  // using candidate.substr(startPosition, length) where
+  // length is the returned integer. In particular the substring
+  // spans from character startPosition (inclusive)
+  // to character length (exclusive).
   // Note that if the empty string is the longest matched prefix,
   // this function returns 0. If the pattern does not match any prefix
   // (not even the empty string) then the value -1 is returned.
-  int accept_longest_prefix(const std::string& candidate) const;
+  int accept_longest_prefix(const std::string& candidate,
+                            int startPosition = 0) const;
 
  private:
   dfa automaton;

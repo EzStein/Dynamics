@@ -496,7 +496,9 @@ dfa::dfa(const std::string& pattern) {
   startState = classArray[startState];
 }
 
-int dfa::accept_longest_prefix(const std::string& candidate) const {
+int dfa::accept_longest_prefix(const std::string& candidate,
+                               int startPosition) const {
+  assert(startPosition >= 0 && startPosition <= candidate.size());
   // We simulate the dfa until termination. We terminate when we either
   // reach a state with no transition for a particular character, or
   // we reach the end of input. As we simulate the DFA we keep track of the
@@ -504,7 +506,7 @@ int dfa::accept_longest_prefix(const std::string& candidate) const {
   // value is set to -1, but if the startState is accepting, then we set it to 0.
   // We update the value every time we reach an accepting state.
   int longestPrefixSeen(-1);
-  int pointer(0);
+  int pointer(startPosition);
 
   if(graph[startState].accepting) {
     longestPrefixSeen = 0;
