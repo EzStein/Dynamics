@@ -26,13 +26,13 @@ namespace parser {
 // Grammar symbols are represented using integers. In general, an enumeration
 // type or class with public static integers is used for grammar symbols.
 // Note that an enum class does not have implicit integer conversion so may
-// not be ideal. There is no restriction as to which integers can be associated
-// to grammar symbols.
+// not be ideal. There are no restrictions on which integers may be tokens.
 //
 // The special grammar symbol denoted as epsilon can be specified by calling
 // the add_production functions without appending any symbols.
 //
-// No checks are made to ensure that the built grammar is well formed.
+// No checks are made to ensure that the built grammar is well formed
+// until a call to generate a parser is made.
 //
 // The start nonterminal for the grammar is assumed to be the nonterminal
 // associated with the production that was last added.

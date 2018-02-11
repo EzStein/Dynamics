@@ -49,6 +49,8 @@ bool grammar::is_nonterminal(int symbol) {
 }
 
 // We must construct the parsing table and the grammar info table.
+// After constructing the grammar table we construct the set of
+// LR(0) items and 
 lr_parser grammar::generate_lr0() const {
   lr_parser parser;
   for(auto iter = grammarTable.begin();

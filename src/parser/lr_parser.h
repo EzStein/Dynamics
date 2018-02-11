@@ -87,8 +87,13 @@ class lr_table {
   // production.
   // Precondition: the nonterminal, productionIndex pair must exist.
   void get_grammar_info(int nonterminal, int productionIndex,
-                        int& terminalSymbols, int& nonterminalSymbols)
+                        int& terminalSymbols, int& nonterminalSymbols);
 
+  // Returns the list of tokens that can cause a shift or reduce without
+  // an error on the given state. No check are performed to ensure that
+  // state is an actual state.
+  std::vector<int> get_expected_tokens(int state);
+  
   // This class are the entries in the table.
   // See the documentation of get for what next and reductionSize
   // refer to. The table does not actually store entries of type error.
@@ -103,7 +108,7 @@ class lr_table {
   // It is implemented as a std::vector of maps. The vector is
   // indexed by states and the maps map grammar symbols to the
   // corresponding table entry for the state, grammar symbol pair.
-  std::vector<std::unorderd_map<table_entry> > table;
+  std::vector<std::unorderd_map<int, table_entry> > table;
 };
 
 // Algorithm:
@@ -115,35 +120,51 @@ class lr_table {
 // the state stack and remove some (fewer) nonterminal attribute objects
 // from the attribute stack. We then push the new state onto the stack
 // and get a new attribute for that state from the callback function.
+// We also maintain a lexeme stack indicating the lexemes of terminals thus far
+// seen.
+// INVARIANT: stateStack contains all grammar symbols. attributeStack contains
+// those grammar symbols on the stateStack which are nonterminals while
+// lexemeStack contains those which are terminals.
 template <class ATTR_TYPE, class CALL_TYPE>
 void lr_parser::parser(const lexer&, CALL_TYPE callback) {
-  // A stack of the states representing terminals and nonterminals.
   std::stack<int> stateStack;
-  // A stack of the nonterminal attributes.
   std::stack<ATTR_TYPE> attributeStack;
-  // Holds the lexemes of the terminal symbols thus seen.
   std::stack<std::string> lexemeStack;
   
-  // The start state.
+  // The start state is always 0.
   stateStack.push(0);
-  
-  
   while(!stateStack.empty()) {
-    if(!lexer.has_next()) { throw "AN EXPCETION REGARDING REACHING END OF input early."}
+    int state(stateStack.top());
     
-    std::string lexeme;
-    int terminal = lexer.peek_token(lexeme);
+    if(!lexer.has_next()) {
+      // Premature end of input.
+      throw syntax_exception(-1, get_expected_states(state),
+                             syntax_exception::kEndPosition,
+                             lexer.character_position(),
+                             lexer.line_position(),
+                             "");
+    }
+    
+    std::string inputLexeme;
+    int inputToken = lexer.peek_token(inputLexeme);
+    
     int next, productionIndex;
     entry_type type;
-    get_table_entry(stateStack.peek(), terminal, type, next,
+    get_table_entry(state, inputToken, type, next,
                     productionIndex);
+    
     assert(type != entry_type::GOTO);
+    
     if(type = entry_type::ERROR) {
-      throw "some exception telling the user what input caused what where";
+      throw syntax_exception(inputToken, get_expected_states(state),
+                             lexer.token_position(),
+                             lexer.character_position(),
+                             lexer.line_position(),
+                             inputLexeme);
     }
     
     if(type = entry_type::SHIFT) {
-      lexer.consume_token(lexeme);
+      lexer.consume_token(inputLexeme);
       stateStack.push(next);
       lexemeStack.push(lexeme);
     } else if(type = entry_type::REDUCE) {
@@ -153,11 +174,13 @@ void lr_parser::parser(const lexer&, CALL_TYPE callback) {
       std::list<std::string> lexemes;
       for(int i = 0; i != nonterminalSymbols; ++i) {
         stateStack.pop();
-        childAttributes.push_front(attributeStack.pop());
+        childAttributes.push_front(attributeStack.top());
+        attributesStack.pop();
       }
       for(int i = 0; i != terminalSymbols; ++i) {
         stateStack.pop();
-        lexemes.push_front(lexemeStack.pop());
+        lexemes.push_front(lexemeStack.top());
+        lexemeStack.pop();
       }
       // The result of the two previous for loops is that all the needed grammar
       // symbols (nonterminalSymbols + terminalSymbols) are poped off the stack.
@@ -170,9 +193,28 @@ void lr_parser::parser(const lexer&, CALL_TYPE callback) {
       stateStack.push(next);
     }
   }
-  if(lexer.has_next()) {throw "Syntax Error: End of input not reached."}
-  
-  // If we reach here, we have parsed succesfully!
+  if(lexer.has_next()) {
+    std::string inputLexeme;
+    int inputToken = lexer.peek_token(inputLexeme);
+    throw syntax_exception(inputToken, std::vector<int>(),
+                           lexer.token_position(),
+                           lexer.character_position(),
+                           lexer.line_position(),
+                           inputLexeme);
+  }
+}
+
+std::vector<int> lr_parser::get_expected_states(int state) {
+  assert(0 <= state && state < table.size());
+  std::vector<int> expectedStates;
+  auto iter = table[state].begin();
+  auto end = table[state].end();
+  for(; iter != end; ++iter) {
+    if(iter->second.type != entry_type::GOTO) {
+      expectedStates.push_back(iter->first);
+    }
+  }
+  return expectedStates;
 }
 
 void lr_parser::get_table_entry(int state, int symbol, entry_type& entry,
