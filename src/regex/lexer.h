@@ -47,11 +47,11 @@ class lexer {
   // Returns the longest lexeme and token as described above, but it does
   // not advance the input pointer. That is, multiple calls to this function
   // without a call to consume_token will return the same values.
-  int peek_token(std::string& lexeme);
+  int peek_token(std::string& lexeme) const;
 
   // True if we have not yet consumed all the characters in the input string.
   // That is, the input pointer has not yet reached input.size().
-  bool has_next();
+  bool has_next() const;
 
   // Sets the input string and resets the input pointer to the string start.
   // The lexer class is a ruleset that operates on strings. Use this function
@@ -59,6 +59,22 @@ class lexer {
   // the input string is the empty string and this method should be used
   // to set the initial input.
   void set_input(const std::string& input);
+
+  // Returns the position of the first character in the lexeme
+  // that would be returned by a call to consume_token.
+  // The position is independent of the line number. That is, it does not
+  // reset for each new line. Note that the first character has position 0.
+  // If has_next returns false, we return 1 plus the position of the
+  // last character in the last token.
+  int character_position() const;
+
+  // Currently this function returns 0.
+  int line_position() const;
+
+  // Returns the position of the token that would be returned by a call
+  // to consume_token. The first token has position 0. If has_next returns
+  // false, we return 1 plus the position of the last token.
+  int token_position() const;
  private:
   // This struct represents one of the lexer's rules. It is essentially a
   // regex, int pair. It associates a regex pattern to its token.
@@ -84,12 +100,15 @@ class lexer {
   // This string represents the lexer's input. It is set at construction and
   // cannot subsequently be changed.
   std::string input;
-
+  
   // This integer points to the character in input which we are currently
   // examining. That is, a call to next_token will return a lexeme starting
   // with this character if possible.
   int pointer;
 
+  // Used to record the number of tokens we have seen so far.
+  int currentTokenPosition;
+  
   // As an optimization, we only compute the next token once, regardless
   // of how many calls we make that don't consume input.
   // We thus need to store the nextToken and the nextPointer.

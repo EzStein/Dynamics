@@ -7,7 +7,7 @@
 namespace dynsolver {
 namespace regex {
 lexer::lexer(const std::vector<string_rule>& stringRules)
-    : input(""), rules(stringRules.size()), pointer(0) {
+    : input(""), rules(stringRules.size()), pointer(0), currentTokenPosition(0) {
   // We initilialize rules by converting the each string in stringRules
   // to a regex pattern. The rules vector is already reserved to the
   // appropriate size.
@@ -22,7 +22,7 @@ lexer::lexer(const std::vector<string_rule>& stringRules)
   set_next_token();
 }
 
-bool lexer::has_next() {
+bool lexer::has_next() const {
   return pointer != input.size();
 }
 
@@ -50,7 +50,21 @@ void lexer::set_next_token() {
   nextToken = token;
 }
 
+int lexer::character_position() const {
+  return pointer;
+}
+
+int lexer::line_position() const {
+  return 0;
+}
+
+int lexer::token_position() const {
+  return currentTokenPosition;
+}
+
 int lexer::consume_token(std::string& lexeme) {
+  ++currentTokenPosition;
+  
   // We return the nextToken and associated lexeme. We then advance the pointer
   // and read in another token.
   lexeme = std::string(input, pointer, nextPointer - pointer);
@@ -66,15 +80,15 @@ int lexer::consume_token(std::string& lexeme) {
   return token;
 }
 
-int lexer::peek_token(std::string& lexeme) {
+int lexer::peek_token(std::string& lexeme) const {
   lexeme = std::string(input, pointer, nextPointer - pointer);
   return nextToken;
 }
 
-void lexer::set_input(const std::string& _input) {
+void lexer::set_input(const std::string& input_) {
   // Reset the input. We also make the pointer point to the start of the new
   // input string.
-  input = _input;
+  input = input_;
   pointer = 0;
 }
 
