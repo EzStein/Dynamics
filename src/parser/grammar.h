@@ -139,6 +139,21 @@ class grammar {
  private:
   // Whenever a symbol is added, we add it our set of symbols.
   std::set<int> symbols;
+
+  // These are the values in the firstFollowMap. It contains a set of first
+  // and a set of follow symbols. The bool value indicates whether the
+  // first set contains an epsilon.
+  struct first_follow_set {
+    // The default constructor initializes first follow and epsilon to
+    // empty sets and false.
+    first_follow_set() : epsilon(false);
+    std::set<int> first;
+    bool epsilon;
+    std::set<int> follow;
+  };
+
+  // Maps nonterminals to their first and follow sets.
+  std::unordered_map<int, first_follow_set> firstFollowMap;
   
   // Currently we implement the grammar as follows.
   // A map will associate each nonterminal symbol to an array of
@@ -164,6 +179,7 @@ class grammar {
     int head;
     std::vector<int> body;
     int pointer;
+    int productionIndex;
 
     // We implement the < operator so that we may store items in a std::set.
     // If a and b are items then a < b => b < a iff a and b are not identical.
@@ -172,7 +188,7 @@ class grammar {
     bool operator<(item other) {
       return (head < other.head)
           || (head == other.head && body < other.body)
-          || (head == other.head && body == other.body && pointer < other.pointer);
+          || (head == other.head && body == other.body && pointer < other.pointer)
     }
   };
 
@@ -185,6 +201,7 @@ class grammar {
   bool is_nonterminal(int symbol) const;
 
   // Computes the set items given by a transition on the given symbol.
+  // Only kernal items are computed. The closure is not.
   std::set<item> move_to(const std::set<item>& set, int symbol) const;
   
   // Computes the closure set of the provided item. This is the set of items
@@ -195,6 +212,21 @@ class grammar {
   // We iterate over the list of items, adding in new items each time
   // until an iteration adds no more new items.
   void closure(std::set<item>& set) const;
+
+  // Consults the firstFollowMap and returns the follow set for the provided
+  // symbol. Performs no checks on the input. This function should only
+  // be called after compute_first_follow().
+  std::set<int> follow(int symbol) const;
+
+  // Consults the firstFollowMap and returns the first set for the provided
+  // symbol. Performs no checks on the input. This function should only
+  // be called after compute_first_follow().
+  std::set<int> first(int symbol) const;
+
+  // 
+  void compute_first_follow();
 };
 } // namespace parser
 } // namespace dynsolver
+
+#endif

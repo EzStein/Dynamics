@@ -95,12 +95,11 @@ class lr_table {
   std::vector<int> get_expected_tokens(int state);
   
   // This class are the entries in the table.
-  // See the documentation of get for what next and reductionSize
+  // See the documentation of get for what next and productionIndex
   // refer to. The table does not actually store entries of type error.
   struct table_entry {
     entry_type type;
     int next;
-    int reductionSize;
     int productionIndex;
   };
   
@@ -218,7 +217,7 @@ std::vector<int> lr_parser::get_expected_states(int state) {
 }
 
 void lr_parser::get_table_entry(int state, int symbol, entry_type& entry,
-                                int& next, int& reductionSize, int& productionIndex) {
+                                int& next, int& productionIndex) {
   assert(0 <= state && state < table.size);
   
   std::unordered_map<table_entry>::const_iterator iter =
@@ -229,7 +228,6 @@ void lr_parser::get_table_entry(int state, int symbol, entry_type& entry,
   }
   entry = iter->second.type;
   next = iter->second.next;
-  reductionSize = iter->second.reductionSize;
   productionIndex = iter->second.productionIndex;
 }
 
@@ -247,3 +245,4 @@ void lr_parser::get_grammar_info(int nonterminal, int productionIndex,
 } // namespace parser
 } // namespace parser
 
+#endif
