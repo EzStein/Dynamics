@@ -22,12 +22,12 @@ namespace parser {
 // character of the offending token) before the error. lexeme indicates
 // lexeme of the offending token. linePosition indicates the line number of
 // the offending lexeme.
-class syntax_exception : public runtime_error {
+class syntax_exception : public std::runtime_error {
  public:
-  static constexpr kEndPosition(-1);
+  static constexpr int kEndPosition = -1;
   
   syntax_exception(int unexpectedToken,
-                   std::vector<int>& expectedTokens,
+                   const std::vector<int>& expectedTokens,
                    int tokenPosition, int characterPosition,
                    int linePosition, const std::string& lexeme);
 
@@ -51,7 +51,7 @@ class syntax_exception : public runtime_error {
   int unexpectedToken, tokenPosition, characterPosition, linePosition;
   std::string unexpectedLexeme;
   std::vector<int> expectedTokens;
-}
+};
 } // namespace parser
 } // namespace dynsolver
 #endif

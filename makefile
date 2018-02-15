@@ -50,9 +50,8 @@ LIB_DIR = lib
 # Directory where executables and bundles are stored. 
 BUILD_DIR = build
 
-# This is a subdirectory of both OBJ_DIR and SRC_DIR where main obj and src
-# files are kept.
-MAIN_DIR = main 
+TEST_DIR = test
+MAIN_DIR = main
 
 APP_NAME = DynSolver
 
@@ -65,9 +64,10 @@ SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 # A list of all OBJ files.
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 
-# A list of all OBJ files which do not contain a main method. That is,
-# they are not in the obj/main folder.
-NON_MAIN_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/*, $(OBJS))
+TEST_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/app.o, $(OBJS))
+
+APP_OBJS = $(filter-out  $(OBJ_DIR)/$(MAIN_DIR)/test.o,\
+$(filter-out $(OBJ_DIR)/$(TEST_DIR)/%, $(OBJS)))
 
 WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 
@@ -84,7 +84,8 @@ COMPILER_FLAGS = -std=c++11 $(OS_SPECIFIC) $(WX_FLAGS) -ggdb -O0
 
 CC = g++
 
-WARNINGS = -Wall -Weffc++ -pedantic  \
+WARNINGS = -pedantic
+#WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
@@ -106,18 +107,20 @@ WARNINGS = -Wall -Weffc++ -pedantic  \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings
 
+TEST_NAME = tests
+
 all: app test
 
 app: $(BUILD_DIR)/$(APP_NAME)
 
 test: $(BUILD_DIR)/$(TEST_NAME)
 
-$(BUILD_DIR)/$(APP_NAME): $(NON_MAIN_OBJS) $(APP_MAIN_OBJ)
+$(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 	@mkdir -p $(@D)
 	@echo Linking App...
 	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
-$(BUILD_DIR)/$(TEST_NAME): $(NON_MAIN_OBJS) $(TEST_MAIN_OBJ)
+$(BUILD_DIR)/$(TEST_NAME): $(TEST_OBJS)
 	@mkdir -p $(@D)
 	@echo Linking Test...
 	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
@@ -145,7 +148,10 @@ clean:
 	-@rm -rf $(BUILD_DIR)
 	-@rm -rf .depend
 
+print-%  : ; @echo $* = $($*)
+
 .PHONY: all test app clean depend
+
 
 # Disables all built in rules.
 MAKEFLAGS += --no-builtin-rules

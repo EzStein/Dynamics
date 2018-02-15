@@ -1,11 +1,12 @@
 #ifndef DYNSOLVER_PARSER_GRAMMAR_H_
 #define DYNSOLVER_PARSER_GRAMMAR_H_
 
+#include <unordered_map>
+#include <set>
+#include <vector>
+
 #include "parser/common.h"
 #include "parser/lr_parser.h"
-
-#include <map>
-#include <vector>
 
 namespace dynsolver {
 namespace parser {
@@ -94,6 +95,36 @@ namespace parser {
 // Note that it is a bad idea to store any of the returned references.
 // In particular, do not ever store a reference returned from append_symbol
 // since calls to add_production change the state of the returned reference.
+//
+//
+// The nomenclature found in literature on parsers is somewhat confusing for
+// a beginner. Often the same terms mean different things in different texts.
+// There are two wide classes of grammers which are often parsed differently.
+//
+// LL refers to top-down parsing, that is, an algorithm which produces a pre-order
+// traversal of the parse tree. Often times LL gramers are parsed using 
+// recursive descent or table driven parsing. An LL(k) parser uses k tokens of
+// lookahead before determining which production to use for the parse. Top-down
+// parsers also may have backtracking capabilities (both recursive descent and
+// table driven parsers can use this) but the grammer it parsers may not be
+// considered an LL(k) grammar. Thus the following words all refer to the
+// same idea: LL(k), top-down, bactracking recursive descent,
+// predictive/deterministic recursive descent, top-down table driven,
+// pre-order traversal. To construct a table driven LL(1) parser for a grammar
+// the grammar must not be left recursive or ambiguous. Additionally,
+// the grammar must be left factored. It is often possible to take
+// a grammar and form an equivalent grammar which is unambiguous, left-factored,
+// and non-left-recursive. It can be shown that LL(1) grammars are of this
+// form. Additionally, certain other restrictions apply.
+//
+// LR refers to bottom-up parsing and produces a post order traversal of the
+// parse tree. LR(k) uses k tokens of lookahead. Precedence and operator
+// precedence parsers are some types of bottom up parsers. Bottom up parsing
+// is commonly called shift-reduce parsing. It functions by reducing the input
+// string to the start nonterminal in the grammar. In doing so, it constructs
+// a derivation in reverse. When we read the input from left to right,
+// we attempt to reduce the leftmost symbols. The derivation that is constructed
+// is thus a rightmost derivation.
 class grammar {
  public:
   // Default constructor which represents a grammar with no nonterminals
@@ -131,10 +162,15 @@ class grammar {
   // the start symbol to be the provided nonterminal.
   production_builder& add_production(int nonterminal);
 
-  // Returns an lr parser for LR0 grammars.
-  // If the grammar is not LR0, an exception is thrown indicating the exact
+  // Returns an lr parser for SLR grammars.
+  // If the grammar is not SLR, an exception is thrown indicating the exact
   // problem.
-  lr_parser generate_lr0() const;
+  lr_parser generate_slr() const;
+
+  // Sets the start symbol for this grammar. No checks are performed to ensure
+  // that the start symbol is indeed a nonterminal. Note that any call to
+  // add_production after calling this method will reset the start symbol.
+  grammar& set_start(int nonterminal);
   
  private:
   // Whenever a symbol is added, we add it our set of symbols.
@@ -146,14 +182,14 @@ class grammar {
   struct first_follow_set {
     // The default constructor initializes first follow and epsilon to
     // empty sets and false.
-    first_follow_set() : epsilon(false);
+    first_follow_set() : epsilon(false) { };
     std::set<int> first;
     bool epsilon;
     std::set<int> follow;
   };
 
   // Maps nonterminals to their first and follow sets.
-  std::unordered_map<int, first_follow_set> firstFollowMap;
+  mutable std::unordered_map<int, first_follow_set> firstFollowMap;
   
   // Currently we implement the grammar as follows.
   // A map will associate each nonterminal symbol to an array of
@@ -185,10 +221,10 @@ class grammar {
     // If a and b are items then a < b => b < a iff a and b are not identical.
     // In particular, if a and b are equivalent then a < b is false and
     // b < a is false.
-    bool operator<(item other) {
+    bool operator<(item other) const {
       return (head < other.head)
           || (head == other.head && body < other.body)
-          || (head == other.head && body == other.body && pointer < other.pointer)
+          || (head == other.head && body == other.body && pointer < other.pointer);
     }
   };
 
@@ -211,7 +247,7 @@ class grammar {
   //
   // We iterate over the list of items, adding in new items each time
   // until an iteration adds no more new items.
-  void closure(std::set<item>& set) const;
+  void compute_closure(std::set<item>& set) const;
 
   // Consults the firstFollowMap and returns the follow set for the provided
   // symbol. Performs no checks on the input. This function should only
@@ -223,8 +259,9 @@ class grammar {
   // be called after compute_first_follow().
   std::set<int> first(int symbol) const;
 
-  // 
-  void compute_first_follow();
+  // Computes the first and follow sets for each grammar symbol storing the result
+  // in first follow map.
+  void compute_first_follow() const;
 };
 } // namespace parser
 } // namespace dynsolver

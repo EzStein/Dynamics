@@ -30,7 +30,7 @@ class lexer_builder {
   // first of the repeated rule will be used. This function returns a reference
   // to itself so that these function calls may be chained.
   // It is an error to use a negative value as the token paramter.
-  void register_rule(const std::string& pattern, int token);
+  lexer_builder& register_rule(const std::string& pattern, int token);
 
   // Constructs the lexer using the rule set and returns the result.
   // Note that the input to the lexer is by default set to the empty string.
@@ -42,7 +42,7 @@ class lexer_builder {
   // Internally, the lexer builder generates a vector of string rules which it
   // then passes to the lexer constructor.
   std::vector<lexer::string_rule> rules;
-}
+};
 
 } // namespace regex
 } // namespace dynsolver

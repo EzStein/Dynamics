@@ -7,10 +7,12 @@
 
 namespace dynsolver {
 namespace regex {
-lexer_builder::lexer_builder() : input("") { }
 
-void lexer_builder::register_rule(const std::string& pattern, int token) {
+lexer_builder::lexer_builder() { }
+
+lexer_builder& lexer_builder::register_rule(const std::string& pattern, int token) {
   rules.push_back(lexer::string_rule{pattern, token});
+  return *this;
 }
 
 lexer lexer_builder::build() {

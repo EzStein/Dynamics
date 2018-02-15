@@ -7,7 +7,7 @@
 namespace dynsolver {
 namespace regex {
 lexer::lexer(const std::vector<string_rule>& stringRules)
-    : input(""), rules(stringRules.size()), pointer(0), currentTokenPosition(0) {
+    : input(""), pointer(0), currentTokenPosition(0) {
   // We initilialize rules by converting the each string in stringRules
   // to a regex pattern. The rules vector is already reserved to the
   // appropriate size.

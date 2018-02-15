@@ -1,7 +1,8 @@
-#include "compiler/asm/asm.h"
+#include "asm/asm.h"
 #include <string>
 #include <iostream>
 #include <cctype>
+#include <cassert>
 #include <algorithm>
 instruction str_to_instruction(std::string str) {
   std::transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -364,7 +365,9 @@ void str_to_reg(std::string str, reg& regRet, reg_type& regTypeRet, size& sizeRe
 }
 
 
-
+std::string token_to_string(int tok) {
+  assert("unimplemented");
+}
 
 
 size char_to_size(char quant, bool fpu, bool fpuInt) {

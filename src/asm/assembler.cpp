@@ -3,37 +3,40 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-#include "compiler/asm/assembler.h"
-#include "compiler/lex/token.h"
-#include "compiler/lex/lexer.h"
+#include "asm/assembler.h"
+
+#include "regex/lexer_builder.h"
+#include "regex/lexer.h"
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <sstream>
 #include <map>
 
-std::vector<unsigned char> assembler::assemble(std::string str) {
-  std::map<std::string, token> lexDef;
-  lexDef[std::string(" *,")] = token::COMMA;
-  lexDef[std::string(" *\\(")] = token::LEFT_PAREN;
-  lexDef[std::string(" *\\)")] = token::RIGHT_PAREN;
-  lexDef[std::string(" *\\n")] = token::NEW_LINE;
-  lexDef[std::string(" *$")] = token::DOLLAR_SIGN;
-  lexDef[std::string(" *(0x|-0x)[ABCDEFabcdef\\d][ABCDEFabcdef\\d]*")] = token::HEX_INT;
-  lexDef[std::string(" *(-\\d|\\d)\\d*")] = token::DEC_INT;
-  lexDef[std::string(" *%[\\w][\\w]*")] = token::REG;
-  lexDef[std::string(" *%st\\(\\d\\)")] = token::REG;
-  lexDef[std::string(" *[\\w][\\w]*")] = token::INSTRUCTION;
+namespace dynsolver {
 
-  std::stringstream stream(str);
-  lexer lex = lexer(&stream, lexDef, false);
+std::vector<unsigned char> assembler::assemble(std::string str) {
+  regex::lexer lex = regex::lexer_builder()
+      .register_rule(" *,",token::COMMA)
+      .register_rule(" *\\(",token::LEFT_PAREN)
+      .register_rule(" *\\)",token::RIGHT_PAREN)
+      .register_rule(" *\\n",token::NEW_LINE)
+      .register_rule(" *$",token::DOLLAR_SIGN)
+      .register_rule(" *(0x|-0x)[ABCDEFabcdef\\d][ABCDEFabcdef\\d]*",token::HEX_INT)
+      .register_rule(" *(-\\d|\\d)\\d*",token::DEC_INT)
+      .register_rule(" *%[\\w][\\w]*",token::REG)
+      .register_rule(" *%st\\(\\d\\)",token::REG)
+      .register_rule(" *[\\w][\\w]*",token::INSTRUCTION).build();
+
+  lex.set_input(str);
+
   std::vector<unsigned char> vec;
   int lineNo = 0;
   while(1) {
     ++lineNo;
     std::string lexeme;
-    token tok;
-    tok = lex.next_token(lexeme);
+    int tok;
+    tok = lex.consume_token(lexeme);
 
 
     if(tok != token::INSTRUCTION)
@@ -66,7 +69,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     }
     /*We now have an instruction and operand size which may be NONE.
      If it is NONE, we will construct it from the operands*/
-    tok = lex.next_token(lexeme);
+    tok = lex.consume_token(lexeme);
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -117,7 +120,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       rmIsDest = false;
       addrMode = addressing_mode::REG;
     } else if(tok == token::DOLLAR_SIGN) {
-      tok = lex.next_token(lexeme);
+      tok = lex.consume_token(lexeme);
       /*Remove the whitespace from the string*/
       lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
       /*Make upper case*/
@@ -136,16 +139,16 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       if(tok == token::HEX_INT) {
         rmDisp = std::stoul(lexeme, nullptr, 16);
         /*Consume the left Paren*/
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " +  "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " +  "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
         rmDisp = std::stol(lexeme);
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
       } else {
         throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected register or memory operand";
       }
-      tok = lex.next_token(lexeme);
+      tok = lex.consume_token(lexeme);
       /*Remove the whitespace from the string*/
       lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
       /*Make upper case*/
@@ -162,11 +165,11 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       addressSize = size;
       addrMode = addressing_mode::MEM;
       rmIsDest = false;
-      lex.next_token(lexeme); //Consume the right Paren
+      lex.consume_token(lexeme); //Consume the right Paren
 
     }
 
-    tok = lex.next_token(lexeme);
+    tok = lex.consume_token(lexeme);
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -179,7 +182,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     }
     if(tok != token::COMMA) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' (" + token_to_string(tok) + ") Expected ','";
 
-    tok = lex.next_token(lexeme);
+    tok = lex.consume_token(lexeme);
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -213,16 +216,16 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       if(tok == token::HEX_INT) {
         rmDisp = std::stoul(lexeme, nullptr, 16);
         /*Consume the left Paren*/
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
         rmDisp = std::stol(lexeme);
-        if(lex.next_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
+        if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
       } else {
         throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected register or memory operand";
       }
-      tok = lex.next_token(lexeme);
+      tok = lex.consume_token(lexeme);
       /*Remove the whitespace from the string*/
       lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
       /*Make upper case*/
@@ -242,10 +245,10 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       addressSize = size;
       addrMode = addressing_mode::MEM;
       rmIsDest = true;
-      lex.next_token(lexeme); //Consume the right Paren
+      lex.consume_token(lexeme); //Consume the right Paren
     }
 
-    tok = lex.next_token(lexeme);
+    tok = lex.consume_token(lexeme);
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -937,3 +940,4 @@ void assembler::append(instruction inst, size operandSize, size addressSize, reg
     }
   }
 }
+} // namespace dynsolver

@@ -1,15 +1,17 @@
 #include "compiler/front/driver.h"
 #include "compiler/ast/AST.h"
-#include "compiler/parser.h"
+
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "compiler/asm/assembler.h"
+#include "asm/assembler.h"
+#include "compiler/expression_parser.h"
 
 using std::stringstream;
 using std::string;
 using std::map;
 using std::list;
+using namespace dynsolver;
 
 driver::driver() { }
 
@@ -33,9 +35,8 @@ driver& driver::operator=(driver&& dr) {
 }
 
 AST driver::parse_as_ast(const std::string& str, std::list<symbol>& symbolTable) {
-  stringstream sstream(str);
-  parser parse(sstream);
-  return parse.parse(symbolTable);
+  dynsolver::compiler::expression_parser parse;
+  return parse.parse(str);
 }
 
 
@@ -127,3 +128,4 @@ void driver::flush_unused_buffers() {
     }
   }
 }
+

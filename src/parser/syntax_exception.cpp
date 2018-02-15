@@ -30,31 +30,31 @@ std::string generate_message(int unexpectedToken,
 } // namespace anonymous
 
 syntax_exception::syntax_exception(int unexpectedToken,
-                                   std::vector<int>& expectedTokens,
+                                   const std::vector<int>& expectedTokens,
                                    int tokenPosition, int characterPosition,
                                    int linePosition, const std::string& lexeme)
-    : runtime_exception(generate_message(unexpectedToken, expectedTokens,
-                                         tokenPosition, characterPosition,
-                                         linePosition, lexeme)),
-      unexpectedToken(unexpectedToken),
-      expectedTokens(expectedTokens), tokenPosition(tokenPosition),
-      characterPosition(characterPosition), linePosition(linePosition)
-      lexeme(lexeme) { }
+    : std::runtime_error(generate_message(unexpectedToken, expectedTokens,
+                                          tokenPosition, characterPosition,
+                                          linePosition, lexeme)),
+    unexpectedToken(unexpectedToken),
+  expectedTokens(expectedTokens), tokenPosition(tokenPosition),
+  characterPosition(characterPosition), linePosition(linePosition),
+  unexpectedLexeme(lexeme) { }
 
 int syntax_exception::unexpected_token() const {
   return unexpectedToken;
 }
 
-std::vector<int>::const_iterator expected_tokens_begin() const {
+std::vector<int>::const_iterator syntax_exception::expected_tokens_begin() const {
   return expectedTokens.begin();
 }
 
-std::vector<int>::const_iterator expected_tokens_end() const {
+std::vector<int>::const_iterator syntax_exception::expected_tokens_end() const {
   return expectedTokens.end();
 }
 
-std::string syntax_exception::unexpected_lexme() const {
-  return unexpectedLexme;
+std::string syntax_exception::unexpected_lexeme() const {
+  return unexpectedLexeme;
 }
 
 int syntax_exception::token_position() const {

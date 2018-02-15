@@ -7,7 +7,18 @@
 #define ASM_H
 #include <string>
 
-
+struct token {
+  static const int COMMA = 0,
+    LEFT_PAREN = 1,
+    RIGHT_PAREN = 2,
+    NEW_LINE = 3,
+    DOLLAR_SIGN = 4,
+    HEX_INT = 5,
+    DEC_INT = 6,
+    REG = 7,
+    INSTRUCTION = 8,
+    ENDPOINT = 9;
+};
 
 /*
 * Lists supported intructions. Note that
@@ -105,5 +116,6 @@ bool is_fpu_pop_instruction(instruction inst);
 bool is_fpu_integer_instruction(instruction inst);
 bool is_fpu_instruction(instruction inst);
 instruction str_to_instruction(std::string str);
+std::string token_to_string(int tok);
 
 #endif

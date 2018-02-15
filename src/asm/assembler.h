@@ -1,7 +1,9 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
-#include "compiler/asm/asm.h"
+#include "asm/asm.h"
 #include <vector>
+namespace dynsolver {
+
 class assembler {
 public:
   /*Assemblers the instruction described by the appropriate imformation.
@@ -22,5 +24,5 @@ public:
   std::vector<unsigned char>& buf);
   std::vector<unsigned char> assemble(std::string str);
 };
-
+} // namespace dynsolver
 #endif

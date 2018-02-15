@@ -15,8 +15,8 @@ class malformed_grammar_exception : public std::runtime_error {
  public:
   // Constructs this exception with a message. The message is returned by a
   // call to what().
-  explicit malformed_pattern_exception(const std::string& message)
-      : runtime_error(message) { }
+  explicit malformed_grammar_exception(const std::string& message)
+      : std::runtime_error(message) { }
 };
 } // namespace parser
 } // namespace regex
