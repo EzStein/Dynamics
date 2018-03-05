@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "regex/dfa.h"
+
 namespace dynsolver {
 namespace regex {
 lexer::lexer(const std::vector<string_rule>& stringRules)
@@ -14,7 +16,7 @@ lexer::lexer(const std::vector<string_rule>& stringRules)
   for(std::vector<string_rule>::const_iterator iter = stringRules.begin();
       iter != stringRules.end(); ++iter) {
     assert(iter->token >= 0);
-    rules.push_back(pattern_rule{regex(iter->pattern), iter->token});
+    rules.push_back(pattern_rule{dfa(iter->pattern), iter->token});
   }
   
   // We initially set the pointer to 0. Then we load in the first token by

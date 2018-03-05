@@ -64,10 +64,21 @@ SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
 # A list of all OBJ files.
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 
-TEST_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/app.o, $(OBJS))
+TEST_NAME = tests
 
-APP_OBJS = $(filter-out  $(OBJ_DIR)/$(MAIN_DIR)/test.o,\
-$(filter-out $(OBJ_DIR)/$(TEST_DIR)/%, $(OBJS)))
+DEBUG_NAME = debug
+
+TEST_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/debug.o, \
+$(filter-out $(OBJ_DIR)/$(MAIN_DIR)/app.o, $(OBJS)))
+
+DEBUG_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/app.o, \
+$(filter-out  $(OBJ_DIR)/$(MAIN_DIR)/test.o,\
+$(filter-out $(OBJ_DIR)/$(TEST_DIR)/%, $(OBJS))))
+
+# Filter out test objects, test.o and debug.o
+APP_OBJS = $(filter-out $(OBJ_DIR)/$(MAIN_DIR)/debug.o, \
+$(filter-out  $(OBJ_DIR)/$(MAIN_DIR)/test.o,\
+$(filter-out $(OBJ_DIR)/$(TEST_DIR)/%, $(OBJS))))
 
 WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 
@@ -107,13 +118,13 @@ WARNINGS = -pedantic
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings
 
-TEST_NAME = tests
-
-all: app test
+all: app test junk
 
 app: $(BUILD_DIR)/$(APP_NAME)
 
 test: $(BUILD_DIR)/$(TEST_NAME)
+
+junk: $(BUILD_DIR)/$(DEBUG_NAME)
 
 $(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 	@mkdir -p $(@D)
@@ -123,6 +134,11 @@ $(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 $(BUILD_DIR)/$(TEST_NAME): $(TEST_OBJS)
 	@mkdir -p $(@D)
 	@echo Linking Test...
+	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
+
+$(BUILD_DIR)/$(DEBUG_NAME): $(DEBUG_OBJS)
+	@mkdir -p $(@D)
+	@echo Linking Debug...
 	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
 # If a certain object file is requested, it is compiled from the corresponding

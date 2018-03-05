@@ -1,5 +1,7 @@
 #include "regex/nfa.h"
 
+#include <iostream>
+
 #include <cassert>
 #include <cctype>
 #include <stack>
@@ -16,7 +18,7 @@ namespace regex {
 // We forward declare all of our helper functions here so that we can define
 // them after the class member definitions.
 namespace {
-// Since it is obvious that we are working with the nfa::state, we have typedef
+// Since it is obvious that we are working with the nfa::state, we have a typedef
 // statement.
 typedef nfa::state state;
 
@@ -68,34 +70,35 @@ const std::vector<char> nfa::digitList(make_digit_list()),
   nfa::nonalphabetList(make_nonalphabet_list()),
   nfa::anyList(make_any_list());
   
-// Definition of public members.
 nfa::nfa(const std::string& pattern) {
   // Generates the nfa graph and stores the result in graph
   // as well as the resulting startState and acceptingState. Pointer is
   // initally set to zero to indicate we are starting at the beginning of the
   // string. We throw an exception if the pointer does not point to the end
   // of the string after the function call.
-  int pointer = 0;
-  parse_expression(pattern, pointer, graph, &startState, &acceptingState);
-  if(pointer != pattern.size()) {
-    // Something went wrong with the parse. The string was not parsed completely.
-    throw malformed_pattern_exception(
-        "Malformed Pattern Exception at position "
-        + std::to_string(pointer) +
-        ": Parse terminated prematurely.");
+  // We must handle the empty string separately.
+  if(pattern.empty()) {
+    graph.push_back(state{kDeadStateTransition, -1, -1});
+    startState = 0;
+    acceptingState = 0;
+  } else {
+    int pointer = 0;
+    parse_expression(pattern, pointer, graph, &startState, &acceptingState);
+    if(pointer != pattern.size()) {
+      // Something went wrong with the parse. The string was not parsed completely.
+      throw malformed_pattern_exception(
+          "Malformed Pattern Exception at position "
+          + std::to_string(pointer) +
+          ": Parse terminated prematurely in pattern \""
+          + pattern + "\".");
+    }
   }
-}
-
-bool nfa::accepts(const std::string& candidate) const {
-  // We simply check if the longest accepted prefix of candidate is
-  // candidate itself.
-  return accept_longest_prefix(candidate) == candidate.size();
 }
 
 int nfa::accept_longest_prefix(const std::string& candidate,
                                int startPosition) const {
   assert(startPosition >= 0 && startPosition <= candidate.size());
-  // We find the longest prefix is by simulating the nfa until termination.
+  // We find the longest prefix by simulating the nfa until termination.
   // The nfa terminates once there are no more current states to transition
   // from, or we have reached the end of input. As we go, we keep track
   // of which position in the input was the last to admit an accepting state.
@@ -210,7 +213,7 @@ namespace {
 // B -> [ C ]
 // B -> L
 // L -> \( | \) | \[ | \] | \* | \+ | \? | \'|' | \\ | \. |
-//      \d | \D | \s | \S | \w | \W | \a | \A | N
+//      \d | \D | \s | \S | \w | \W | \a | \A | . | N
 // N -> any character except ()[]*+?|\
 // C -> 1 or more literals (L)
 //
@@ -346,7 +349,8 @@ void parse_factor(const std::string& input, int& pointer,
       // from acceptingState to newAcceptingState, and startState.
       int newAcceptingState = graph.size();
       graph.push_back(state{nfa::kDeadStateTransition, -1, -1});
-      graph[acceptingState] = state{nfa::kTwoEpsilonTransition, newAcceptingState, startState};
+      graph[acceptingState] =
+          state{nfa::kTwoEpsilonTransition, newAcceptingState, startState};
       
       acceptingState = newAcceptingState;
     } else if(input[pointer] == '?') {
@@ -390,13 +394,12 @@ void parse_literal(const std::string& input, int& pointer,
   // that the next character is an escapable character and parse it accordingly.
   // If that fails, we throw an exception. We also throw an exception if we have
   // reached the end of input unexpectedly.
-
   if(pointer >= input.size()) {
     // We have reached the end of input prematurely
-    throw malformed_pattern_exception("Malformed Pattern Exception at position"
+    throw malformed_pattern_exception("Malformed Pattern Exception at position "
                                       + std::to_string(pointer - 1) +
-                                      ": end of input"
-                                      " reached prematurely.");
+                                      ": End of input reached prematurely in pattern \""
+                                      + input +"\".");
   }
   // We may now assume that we have not reached the end of input
   if(input[pointer] == '\\') {
@@ -409,7 +412,8 @@ void parse_literal(const std::string& input, int& pointer,
       throw malformed_pattern_exception(
           "Malformed Pattern Exception at position "
           + std::to_string(pointer - 1) +
-          ": end of input reached prematurely."
+          ": End of input reached prematurely in pattern \""
+          + input + "\". "
           " Expected escapable character after backslash."
           " The following characters are"
           " escapable: ()[]*+?|\\.dDsSwWaA");
@@ -464,7 +468,7 @@ void parse_literal(const std::string& input, int& pointer,
             + std::to_string(pointer) +
             ": Expected escapable character after the backslash but found \'"
             + input[pointer] +
-            "\'. The following characters are"
+            "\' in pattern \"" + input + "\". The following characters are"
             " escapable: ()[]*+?|\\.dDsSwWaA");
     }
     // We finally consume the input and return from the function
@@ -492,7 +496,8 @@ void parse_literal(const std::string& input, int& pointer,
           + std::to_string(pointer) +
           ": Expected non-control character but found '"
           + input[pointer] +
-          "'. Non control characters are any character except "
+          "' in pattern \"" + input +
+          "\". Non-control characters are any character except "
           "()[]*+?|\\");
     case '.':
       build_alternation_nfa(graph, start, accepting, nfa::anyList);
@@ -519,13 +524,14 @@ void parse_character_class(const std::string& input, int& pointer,
     throw malformed_pattern_exception(
         "Malformed Pattern Exception at position"
         + std::to_string(pointer - 1) +
-        ": Reached end of input unexpectedly inside character class.");
+        ": Reached end of input unexpectedly inside character class in pattern \""
+        + input + "\".");
   }
   if(input[pointer] == ']') {
     throw malformed_pattern_exception(
         "Malformed Pattern Exception at position "
         + std::to_string(pointer) +
-        ": Character classes may not be empty.");
+        ": Character classes may not be empty in pattern \"" + input + "\".");
   }
   // In this event, we have a normal character class. We parse literals until
   // we reach a ']' character. As we parse literals we from the alternation of them.
@@ -547,8 +553,8 @@ void parse_character_class(const std::string& input, int& pointer,
   acceptingState = tmpAcceptingState;
   // While we have more input inside the character class, we parse a new fragment
   // and set up the appropriate transitions. The loop obeys the following
-  // invariant. Upon entering the each iteration, startState and
-  // acceptingState points to the startState and the acceptingStaten
+  // invariant. Upon entering each iteration, startState and
+  // acceptingState points to the startState and the acceptingState
   // of the fragment we are building respectively.
   while(pointer < input.size() && input[pointer] != ']') {
     // These are the start/accepting states of the newly parsed fragment
@@ -570,11 +576,12 @@ void parse_character_class(const std::string& input, int& pointer,
     throw malformed_pattern_exception(
         "Malformed Pattern Exception at position"
         + std::to_string(pointer - 1) +
-        ": Reached end of input unexpectedly inside character class.");
+        ": Reached end of input unexpectedly inside character class in pattern \""
+        + input + "\".");
   }
-
-  // We consume the ']' character and return from the function
-  ++pointer;
+  
+  // We consume the ']' character in the parse base method so we don't need to
+  // do it here.
   *start = startState;
   *accepting = acceptingState;
   assert(graph[*accepting].transition == nfa::kDeadStateTransition);
@@ -586,12 +593,14 @@ void match(const std::string& input, int& pointer, char c) {
     throw malformed_pattern_exception(
         "Malformed Pattern Exception at "
         + std::to_string(pointer - 1) +
-        ": Expected '" + c + "' but reached end of input prematurely.");
+        ": Expected '" + c + "' but reached end of input prematurely in pattern \""
+        + input + "\".");
   } else if(input[pointer] != c) {
     throw malformed_pattern_exception(
         "Malformed Pattern Exception at "
         + std::to_string(pointer - 1) +
-        ": Expected '" + c + "' but found '" + input[pointer] + "'.");
+        ": Expected '" + c + "' but found '" + input[pointer] + "' in pattern \""
+        + input + "\".");
   } else {
     ++pointer;
   }

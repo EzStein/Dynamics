@@ -4,17 +4,15 @@
 #include <limits>
 #include <string>
 
-#include "regex/dfa.h"
-
 namespace dynsolver {
 namespace regex {
 
-// This class constructs a regular expression from a string. It may then
-// simulate the regular expression to determine if a given string
-// matches the pattern. Additionally this class can find the longest prefix
+// This interface class  may be used to
+// simulate a regular expression to determine if a given string
+// matches a given pattern. Additionally this class can find the longest prefix
 // of a string that is matched by the regular expression. As such, greedy/lazy
-// operators are not yet supported. This implementation supports the follow
-// regular expression specification based loosely on perl.
+// operators are not yet supported. This implementation supports the following
+// regular expression specification based loosely on perl regex's.
 //
 // If a and b are patterns,
 // a|b    matches a or b (alternation)
@@ -28,9 +26,12 @@ namespace regex {
 // a+    matches one or more instances of a
 //
 // Character classes are supported. If x, y, and z, are characters,
-// [xyz]  matches x or y or z
+// [xyz]  matches x or y or z. Nested character classes are not supported.
+// In fact, only literals may appear in a character class. Literals include
+// the special character classes, any non-control character, and any
+// control character and any escaped control character.
 //
-// Character classes with the [^xyz] are not supported.
+// Character classes with the [^xyz] syntax are not supported.
 //
 // The following are special character classes:
 // \d    matches a digit character. That is, the characters 0123456789
@@ -50,6 +51,8 @@ namespace regex {
 // Nested character classes are not supported however character classes
 // may contain special character classes.
 //
+// The empty pattern matches only the empty string and nothing else.
+//
 // Note that in most regular expression engines there are escaped literals
 // that represent newlines, tabs, control characters, etc...
 // This implementation does not support such special literals. Note that
@@ -64,7 +67,8 @@ namespace regex {
 // by preceding it with a backslash. Note that the backslash is also an escape
 // character in c++. Thus in order to embed a backslash into a string in a c++
 // literal, use "\\". In particular, to match a ( the following c++ literal
-// should be used: "\\("
+// should be used: "\\(". Somewhat frustratingly, to match a backslash
+// we must provide the string "\\\\" in c++.
 //
 // In order to provide maximum flexibility, the null character may be embedded in the
 // middle of a c++ string which can then be used as either a pattern or as a
@@ -81,14 +85,8 @@ namespace regex {
 // will be represented internally using the ISO-8859 encoding scheme. Nearly,
 // all character encodings will encode the first 128 characters of unicode
 // the same way.
-//
-// The regex class itself is just a wrapper for either the nfa or dfa class.
 class regex {
- public:  
-  // Constructs a regular expression using an STL string as the pattern.
-  // Throws a malformed_pattern_excepton if the pattern is invalid
-  explicit regex(const std::string& pattern);
-
+ public:
   // Returns true if the provided string is matched by this regular expression
   bool accepts(const std::string& candidate) const;
 
@@ -112,11 +110,8 @@ class regex {
   // Note that if the empty string is the longest matched prefix,
   // this function returns 0. If the pattern does not match any prefix
   // (not even the empty string) then the value -1 is returned.
-  int accept_longest_prefix(const std::string& candidate,
-                            int startPosition = 0) const;
-
- private:
-  dfa automaton;
+  virtual int accept_longest_prefix(const std::string& candidate,
+                                    int startPosition = 0) const = 0;
 };
 
 } // namespace regex

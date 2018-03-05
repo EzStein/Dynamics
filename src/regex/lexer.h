@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "regex/regex.h"
+#include "regex/dfa.h"
 
 namespace dynsolver {
 namespace regex {
@@ -81,8 +82,13 @@ class lexer {
   // This struct represents one of the lexer's rules. It is essentially a
   // regex, int pair. It associates a regex pattern to its token.
   struct pattern_rule {
-    regex pattern;
+   public:
+    pattern_rule(const dfa& pattern, int token)
+        : patternObj(pattern), pattern(patternObj), token(token) { } 
+    regex& pattern;
     int token;
+   private:
+    dfa patternObj;
   };
 
   // This struct is not actually used in the internal representation of the

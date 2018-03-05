@@ -530,9 +530,5 @@ int dfa::accept_longest_prefix(const std::string& candidate,
   return longestPrefixSeen;
 }
 
-bool dfa::accepts(const std::string& candidate) const {
-  // We accept if the longest accepted prefix is the candidate itself
-  return accept_longest_prefix(candidate) == candidate.size();
-}
 } // namespace dynsolver
 } // namespace regex

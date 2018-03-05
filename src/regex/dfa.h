@@ -5,6 +5,7 @@
 
 #include "regex/common.h"
 #include "regex/nfa.h"
+#include "regex/regex.h"
 
 namespace dynsolver {
 namespace regex {
@@ -26,7 +27,7 @@ namespace regex {
 //
 // Class invariant: All DFA objects are minimal. That is, upon construction,
 // this class will attempt to minimize itself.
-class dfa {
+class dfa : public regex {
  public:
   // Constructs this DFA from the pattern provided. To do so, we first construct
   // an NFA from the pattern. We then use the powerset construction to build
@@ -55,10 +56,7 @@ class dfa {
   // this function returns 0. If the pattern does not match any prefix
   // (not even the empty string) then the value -1 is returned.
   int accept_longest_prefix(const std::string& candidate,
-                            int startPosition = 0) const;
-  
-  // Returns true if the DFA accepts the candidate string provided
-  bool accepts(const std::string& candidate) const;
+                            int startPosition = 0) const override;
   
  private:
   // This struct represents on DFA state. The transition array associates to
