@@ -8,6 +8,8 @@
 #include "parser/grammar.h"
 #include "parser/lr_parser.h"
 #include "regex/lexer.h"
+#include "compiler/ir/symbol.h"
+#include "util/util.h"
 
 namespace dynsolver {
 namespace compiler {
@@ -28,14 +30,14 @@ namespace compiler {
 // FACTOR -> MINUS FACTOR
 // FACTOR -> BASE
 // BASE -> FUNCTION LEFT_PARENTHESIS PARAMETER_LIST RIGHT_PARENTHESIS
-// PARAMETER_LIST -> EPSILON
-// PARAMETER_LIST -> NONEMPTY_PARAMETER_LIST
-// NONEMPTY_PARAMETER_LIST -> EXPRESSION COMMA NONEMPTY_PARAMETER_LIST
-// NONEMPTY_PARAMETER_LIST -> EXPRESSION
 // BASE -> LEFT_PARENTHESIS EXPRESSION RIGHT_PARENTHESIS
 // BASE -> NUMBER
 // BASE -> CONSTANT
 // BASE -> VARIABLE
+// PARAMETER_LIST -> EPSILON
+// PARAMETER_LIST -> NONEMPTY_PARAMETER_LIST
+// NONEMPTY_PARAMETER_LIST -> EXPRESSION COMMA NONEMPTY_PARAMETER_LIST
+// NONEMPTY_PARAMETER_LIST -> EXPRESSION
 //
 // In this grammar, exponentiation has highest precedence and is right
 // associative. Unary minus is next in precedence and is also right
@@ -55,11 +57,12 @@ class expression_parser {
   // Parses the provided expression, throwing an exception if the input is not
   // a legal expression according to the grammar above. Returns an abstract
   // syntax tree representing the input.
-  AST parse(const std::string& input);
+  AST parse(const std::string& input, const std::list<::symbol>& symbolTable);
 
  private:
   regex::lexer lexer;
   parser::lr_parser parser;
+  const std::list<::symbol>* symbols;
 
   // The following static variables represent tokens of input.
   static const int EXPRESSION = 0;
@@ -81,9 +84,10 @@ class expression_parser {
   static const int CONSTANT = 16;
   static const int FUNCTION = 17;
 
+ public:
   // This is the call back function used when parsing the input and building
   // the abstract syntax tree.
-  static expression_node* traverse(int nonterminal, int productionIndex,
+  expression_node* operator()(int nonterminal, int productionIndex,
                             const std::list<expression_node*>& children,
                             const std::list<std::string>& lexeme);
 };

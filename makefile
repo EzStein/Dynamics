@@ -118,13 +118,13 @@ WARNINGS = -pedantic
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings
 
-all: app test junk
+all: app test debug
 
 app: $(BUILD_DIR)/$(APP_NAME)
 
 test: $(BUILD_DIR)/$(TEST_NAME)
 
-junk: $(BUILD_DIR)/$(DEBUG_NAME)
+debug: $(BUILD_DIR)/$(DEBUG_NAME)
 
 $(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 	@mkdir -p $(@D)

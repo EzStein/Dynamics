@@ -10,6 +10,8 @@
 #include "regex/lexer.h"
 #include "parser/syntax_exception.h"
 
+#include <iostream>
+
 namespace dynsolver {
 namespace parser {
 
@@ -71,7 +73,7 @@ class lr_parser {
   
   
   // Indicates the type of entry in the parse table.
-  enum class entry_type {SHIFT, REDUCE, GOTO, ERROR};
+  enum class entry_type {SHIFT, REDUCE, GOTO, ERROR, ACCEPT};
   
   // Returns the entry type along with its data.
   //
@@ -85,6 +87,8 @@ class lr_parser {
   //
   // If GOTO is the type
   // next refers to the goto state.
+  //
+  // If ACCEPT is the type, the other fields are not used.
   //
   // If the type is ERROR, then there is no entry
   // in the parse table.
@@ -143,7 +147,7 @@ ATTR_TYPE lr_parser::parse(regex::lexer& lexer, CALL_TYPE callback) const {
   
   // The start state is always 0.
   stateStack.push(0);
-  while(lexer.has_next()) {
+  while(1) {
     if(stateStack.empty()) {
       std::string inputLexeme;
       int inputToken = lexer.peek_token(inputLexeme);
@@ -155,7 +159,12 @@ ATTR_TYPE lr_parser::parse(regex::lexer& lexer, CALL_TYPE callback) const {
     }
     int state(stateStack.top());
     std::string inputLexeme;
-    int inputToken = lexer.peek_token(inputLexeme);
+    int inputToken;
+    if(lexer.has_next()) {
+      inputToken = lexer.peek_token(inputLexeme);
+    } else {
+      inputToken = kEndOfInputToken;
+    }
     
     int next, productionIndex;
     entry_type type;
@@ -170,9 +179,9 @@ ATTR_TYPE lr_parser::parse(regex::lexer& lexer, CALL_TYPE callback) const {
                              lexer.character_position(),
                              lexer.line_position(),
                              inputLexeme);
-    }
-    
-    if(type == entry_type::SHIFT) {
+    } else if(type == entry_type::ACCEPT){
+      break;
+    } else if(type == entry_type::SHIFT) {
       lexer.consume_token(inputLexeme);
       stateStack.push(next);
       lexemeStack.push(inputLexeme);
@@ -202,14 +211,15 @@ ATTR_TYPE lr_parser::parse(regex::lexer& lexer, CALL_TYPE callback) const {
       stateStack.push(next);
     }
   }
-  if(stateStack.size() != 1 || stateStack.top() != 0) {
+  /*  if(stateStack.size() != 1 || stateStack.top() != 0) {
+    std::cout << stateStack.size() << ", " << stateStack.top() << std::endl;
     // Premature end of input.
     throw syntax_exception(-1, get_expected_tokens(stateStack.top()),
                            syntax_exception::kEndPosition,
                            lexer.character_position(),
                            lexer.line_position(),
                            "");
-  }
+                           }*/
   return attributeStack.top();
 }
 } // namespace parser

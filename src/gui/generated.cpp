@@ -314,6 +314,7 @@ top_frame_base::top_frame_base( wxWindow* parent, wxWindowID id, const wxString&
 	parameterAxisVariableChoice2->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	renderCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
 	parameterPlane->Connect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_parameter_plane ), NULL, this );
+	parameterPlane->Connect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_parameter_plane ), NULL, this );
 }
 
 top_frame_base::~top_frame_base()
@@ -331,5 +332,6 @@ top_frame_base::~top_frame_base()
 	parameterAxisVariableChoice2->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( top_frame_base::on_parameter_axis_choice ), NULL, this );
 	renderCheckBox->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( top_frame_base::on_3d_render_check ), NULL, this );
 	parameterPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler( top_frame_base::on_motion_parameter_plane ), NULL, this );
+	parameterPlane->Disconnect( wxEVT_PAINT, wxPaintEventHandler( top_frame_base::on_paint_parameter_plane ), NULL, this );
 	
 }

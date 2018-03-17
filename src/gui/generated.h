@@ -94,6 +94,7 @@ class top_frame_base : public wxFrame
 		virtual void on_parameter_axis_choice( wxCommandEvent& event ) = 0;
 		virtual void on_3d_render_check( wxCommandEvent& event ) = 0;
 		virtual void on_motion_parameter_plane( wxMouseEvent& event ) = 0;
+		virtual void on_paint_parameter_plane( wxPaintEvent& event ) = 0;
 		
 	
 	public:

@@ -9,6 +9,8 @@
 #include "regex/lexer.h"
 #include "parser/syntax_exception.h"
 
+#include <iostream>
+
 namespace dynsolver {
 namespace parser {
 
@@ -48,6 +50,7 @@ void lr_parser::get_grammar_info(int nonterminal, int productionIndex,
   assert(iter1 != grammarInfo.end());
   auto iter2 = iter1->second.find(productionIndex);
   assert(iter2 != iter1->second.end());
+  
   terminalSymbols = iter2->second.terminalSymbols;
   nonterminalSymbols = iter2->second.nonterminalSymbols;
 }

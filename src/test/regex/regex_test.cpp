@@ -352,6 +352,12 @@ void test_prefix(regex_type type) {
   REQUIRE(expr->accept_longest_prefix("-234.666") == 8);
 }
 
+void test_regression(regex_type type) {
+  std::unique_ptr<regex> expr;
+  expr = get_regex_obj("^", type);
+  REQUIRE(expr->accepts("^"));
+}
+
 TEST_CASE("REGEX NFA: Prefix") {
   test_prefix(regex_type::NFA);
 }
@@ -388,6 +394,10 @@ TEST_CASE("REGEX NFA: Parentheses") {
   test_parentheses(regex_type::NFA);
 }
 
+TEST_CASE("REGEX NFA: Regression") {
+  test_prefix(regex_type::NFA);
+}
+
 TEST_CASE("REGEX DFA: Single Character") {
   test_single_character(regex_type::DFA);
 }
@@ -421,6 +431,10 @@ TEST_CASE("REGEX DFA: Parentheses") {
 }
 
 TEST_CASE("REGEX DFA: Prefix") {
+  test_prefix(regex_type::DFA);
+}
+
+TEST_CASE("REGEX DFA: Regression") {
   test_prefix(regex_type::DFA);
 }
 } // namespace regex

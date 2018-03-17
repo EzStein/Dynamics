@@ -34,9 +34,10 @@ driver& driver::operator=(driver&& dr) {
   return *this;
 }
 
-AST driver::parse_as_ast(const std::string& str, std::list<symbol>& symbolTable) {
+AST driver::parse_as_ast(const std::string& str,
+                         const std::list<symbol>& symbolTable) {
   dynsolver::compiler::expression_parser parse;
-  return parse.parse(str);
+  return parse.parse(str, symbolTable);
 }
 
 

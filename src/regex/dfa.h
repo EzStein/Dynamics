@@ -1,3 +1,4 @@
+
 #ifndef DYNSOLVER_REGEX_DFA_H_
 #define DYNSOLVER_REGEX_DFA_H_
 
@@ -13,9 +14,7 @@ namespace regex {
 // deterministic finite automata. Whereas the NFA implementation generally
 // requires less space then the DFA implementation, simulating an NFA is far
 // slower than simulating a DFA. If you want a fast regex evaluation at the
-// expensive of a larger memory cost, use a DFA. Since this class is an
-// implementation detail, all its members are private. regex and lexer
-// are friend classes.
+// expensive of a larger memory cost, use a DFA.
 //
 // This class is optimized for speed. It is implemented using a std::vector
 // whose elements are states. Each state contains a fixed kMaxCharacterValue+1
@@ -59,24 +58,27 @@ class dfa : public regex {
                             int startPosition = 0) const override;
   
  private:
-  // This struct represents on DFA state. The transition array associates to
+  // This struct represents a DFA state. The transition array associates to
   // each character (an index from 0 to kMaxCharacterValue inclusive)
   // the state that it transitions to.
   // That integer is itself an index in the vector containing all states. If
-  // an element in the array is -1, then there is no transition over that
+  // an element in the array is kDeadStateTransition,
+  // then there is no transition over that
   // character (equivalently there is a transition to a non-accepting state
   // with only self-loops). A
   // bool is used to indicate if the state is accepting or not.
   struct state {
     int transitions[kNumberOfCharacters];
     bool accepting;
-
+    
     // The state can be initialized with no arguments.
     state() { }
-
+    
     // The state can be initialized with the accepting value.
-    state(bool _accepting) : accepting(_accepting) { }
+    state(bool accepting) : accepting(accepting) { }
   };
+
+  static const int kDeadStateTransition = -1;
 
   // The underlying data structure of the DFA. The indexes of the vector
   // are used to name each state.

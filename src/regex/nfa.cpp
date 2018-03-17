@@ -293,7 +293,7 @@ void parse_term(const std::string& input, int& pointer,
   
   // We now check to see if the next character can be a prefix of a Term.
   // In general, all characters may be a prefix of a term nonterminal
-  // except the following: )]*+?^|
+  // except the following: )]*+?|
   // A helper function is used to determine if this is the case.
   if(pointer < input.size() && is_term_prefix(input[pointer])) {
     // In this case, we parse a term and construct a concatenation
@@ -479,7 +479,7 @@ void parse_literal(const std::string& input, int& pointer,
 
   // Here we can assume that we have not reached the end of input
   // and the character pointed to is not a backslash.
-  // If the character is a ()[]*+?^| then we throw an error.
+  // If the character is a ()[]*+?| then we throw an error.
   // If the character is a . we parse a character class.
   // Otherwise we build an nfa fragment that matches that character.
   switch(input[pointer]) {
@@ -516,8 +516,7 @@ void parse_character_class(const std::string& input, int& pointer,
                                 int* accepting) {
   // Note that in our grammar definition, the character class production
   // is defined iteratively rather than recursively. We likewise will implement
-  // it as such. We first determine if the starting character is a ^. If so
-  // we have different implementations.
+  // it as such.
 
   if(pointer >= input.size()) {
     // We have reached the end of input unexpectedly
@@ -665,7 +664,6 @@ bool is_term_prefix(char c) {
     case '*':
     case '+':
     case '?':
-    case '^':
     case '|':
       return false;
     default:

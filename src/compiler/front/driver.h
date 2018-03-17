@@ -41,7 +41,7 @@ public:
   /*
   * Parses the string into a syntax tree using the symbol table provided.
   */
-  AST parse_as_ast(const std::string& str, std::list<symbol>& symbolTable);
+  AST parse_as_ast(const std::string& str, const std::list<symbol>& symbolTable);
 
   /*Compiles the AST and returns a pointer to the compiled function.
   Any function returned by this method may be free'd using the mark_unused template.

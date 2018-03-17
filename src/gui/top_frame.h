@@ -49,6 +49,9 @@ private:
   axes3dVbo, axes3dVao,
   newtonVao, newtonVbo;
 
+  std::vector<math::static_vector<int, 2> > parameterBifurcationPoints;
+  std::vector<math::static_vector<int, 2> > parameterBifurcationPoints2;
+
   void initialize_gl();
   void recompute_trajectories();
   void set_nullclines();
@@ -61,6 +64,7 @@ private:
   void on_key_up_dynamical_plane( wxKeyEvent& );
   void on_mouse_wheel_dynamical_plane(wxMouseEvent&);
   void on_magnify_dynamical_plane(wxMouseEvent&);
+  void compute_parameter_plane();
   math::static_vector<double, 2> get_real_coordinates(int x, int y);
 
   virtual void on_button_click_compile(wxCommandEvent&) override;
@@ -71,6 +75,7 @@ private:
   virtual void on_3d_render_check(wxCommandEvent& evt) override;
   virtual void on_text_enter_parameters(wxCommandEvent& evt) override;
   virtual void on_parameter_axis_choice(wxCommandEvent& evt) override;
+  virtual void on_paint_parameter_plane(wxPaintEvent&) override;
   //virtual void on_editing_done_parameter_list_ctrl(wxDataViewEvent& evt) override;
   virtual void on_motion_parameter_plane(wxMouseEvent& evt) override;
 };

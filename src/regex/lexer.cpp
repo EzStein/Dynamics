@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 #include "regex/dfa.h"
 
 namespace dynsolver {
@@ -16,12 +18,8 @@ lexer::lexer(const std::vector<string_rule>& stringRules)
   for(std::vector<string_rule>::const_iterator iter = stringRules.begin();
       iter != stringRules.end(); ++iter) {
     assert(iter->token >= 0);
-    rules.push_back(pattern_rule{dfa(iter->pattern), iter->token});
+    rules.push_back(pattern_rule{nfa(iter->pattern), iter->token});
   }
-  
-  // We initially set the pointer to 0. Then we load in the first token by
-  // calling set_next_token();
-  set_next_token();
 }
 
 bool lexer::has_next() const {
@@ -29,6 +27,7 @@ bool lexer::has_next() const {
 }
 
 void lexer::set_next_token() {
+
   // We iterate through all the rules and keep track of the longest prefix
   // and the associated token.
   int longestPrefix = -1;
@@ -36,7 +35,6 @@ void lexer::set_next_token() {
   for(std::vector<pattern_rule>::const_iterator iter = rules.begin();
       iter != rules.end(); ++iter) {
     int tmp = iter->pattern.accept_longest_prefix(input, pointer);
-
     // We only update our token and longestPrefix if the new one is strictly
     // larger than the old. If they are the same, we defer to the previously
     // held value. If there is no match, then clearly the if body does not
@@ -47,7 +45,7 @@ void lexer::set_next_token() {
     }
   }
   if(longestPrefix != -1) {
-    nextPointer = pointer + longestPrefix;
+    nextPointer = longestPrefix;
   }  
   nextToken = token;
 }
@@ -92,6 +90,9 @@ void lexer::set_input(const std::string& input_) {
   // input string.
   input = input_;
   pointer = 0;
+  // We initially set the pointer to 0. Then we load in the first token by
+  // calling set_next_token();
+  set_next_token();
 }
 
 } // namespace regex

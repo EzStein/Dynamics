@@ -50,11 +50,11 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   functionsListCtrl->AppendTextColumn("Equation", wxDATAVIEW_CELL_EDITABLE);
   wxVector<wxVariant> data;
   data.push_back( wxVariant("x' = ") );
-  data.push_back( wxVariant("a(y-x)") );
+  data.push_back( wxVariant("a*(y-x)") );
   functionsListCtrl->AppendItem( data );
   data.clear();
   data.push_back( wxVariant("y' = ") );
-  data.push_back( wxVariant("x(b-z)-y") );
+  data.push_back( wxVariant("x*(b-z)-y") );
   functionsListCtrl->AppendItem( data );
   data.clear();
   data.push_back( wxVariant("z' = ") );
@@ -105,7 +105,7 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   data.push_back( wxVariant("") );
   functionsListCtrl->AppendItem( data );
   data.clear();*/
-  std::cout << "Initialization Done"<< std::endl;
+
 }
 
 
@@ -229,7 +229,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
   if(!a) {
     initialize_gl();
     a = 1;
-    std::cout << "INITIALIZED" << std::endl;
   }
 
   dynamicalPlane->SetCurrent(*glContext);
@@ -282,7 +281,6 @@ void top_frame::on_paint_dynamical_plane(wxPaintEvent& evt) {
       totalFloats * sizeof(float), vertexData, GL_STREAM_DRAW);
     delete[] vertexData;
     data.redraw = false;
-    std::cout << "EXPENSIVE ALLOC: " << totalFloats * sizeof(float) << " bytes"<< std::endl;
   }
 
   if(data.render2d) {
@@ -367,12 +365,11 @@ void top_frame::on_3d_render_check(wxCommandEvent& evt) {
 }
 
 void top_frame::on_button_click_compile(wxCommandEvent& event) {
+
   for(int i = 0; i != functionsListCtrl->GetItemCount(); ++i) {
     /*If a single field is empty, we do nothing*/
 
-    std::cout << i << std::endl;
     if(functionsListCtrl->GetTextValue(i, 1) == "") return;
-    std::cout << i << std::endl;
   }
 
   /*Otherwise, release the space allocated by previous compilations*/
@@ -386,6 +383,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
   /*And reset the functions*/
   functions.clear();
   jacobian.clear();
+
 
   /*We construct the symbol table, it will depend on the dimension of the vector field*/
   std::list<symbol> symbolTable;
@@ -422,6 +420,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
   }
   /*We now sort the table by the variable's parameter id*/
   symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
+
     return a.parameter < b.parameter;
   });
 
@@ -433,6 +432,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
 
     /*We add one function to the functions list and a row of functions
     to the jacobian*/
+
     AST function = dr.parse_as_ast(funcString, symbolTable);
 
     functions.push_back(
@@ -443,17 +443,133 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
     for(symbol sym : symbolTable) {
       /*We must check that the symbol is indeed a variable and not a parameter*/
       if(sym.parameter == 0 || sym.parameter >= functionsListCtrl->GetItemCount() + 1) continue;
+
       jacobian.push_back(
         dr.compile_as_function<driver::double_func_t>(
           /*This performs a copy on the ast*/AST(function).differentiate(sym.name))
       );
+
     }
   }
 
   /*Clear all the solutions*/
   data.solutions = std::vector<solution>();
   data.redraw = true;
+
+  if(functions.size() == 2) {
+    compute_parameter_plane();
+    parameterPlane->Refresh();
+  }
   dynamicalPlane->Refresh();
+}
+
+void top_frame::on_paint_parameter_plane(wxPaintEvent& evt) {
+  int width, height;
+  parameterPlane->GetSize(&width, &height);
+  wxPaintDC dc(parameterPlane);
+  dc.SetBrush(*wxWHITE_BRUSH);
+  dc.SetPen(*wxBLACK_PEN);
+  dc.DrawRectangle(0,0,width,height);
+  dc.SetBrush(*wxBLACK_BRUSH);
+  for(auto it = parameterBifurcationPoints.begin(); it != parameterBifurcationPoints.end();
+      ++it) {
+    dc.DrawRectangle((*it)[0], (*it)[1], 1,1);
+  }
+  dc.SetBrush(*wxRED_BRUSH);
+  for(auto it = parameterBifurcationPoints2.begin(); it != parameterBifurcationPoints2.end();
+      ++it) {
+    dc.DrawRectangle((*it)[0], (*it)[1], 1,1);
+  }
+}
+
+void top_frame::compute_parameter_plane() {
+  parameterBifurcationPoints.clear();
+  parameterBifurcationPoints2.clear();
+  int width, height;
+  parameterPlane->GetSize(&width, &height);
+  std::vector<std::vector<bool> > pointVals, pointVals2;
+  pointVals.clear();
+  pointVals2.clear();
+  math::vector<double> init(4,0);
+  math::vector<double> initStart(2,0);
+  initStart[0] = 0;
+  initStart[1] = 0;
+
+  pointVals.resize(width);
+  pointVals2.resize(width);
+  for(int x = 0; x != width; ++x) {
+    bool positive = true;
+    bool positive2 = true;
+    init[0] = initStart[0];
+    init[1] = initStart[1];
+    pointVals[x].resize(height);
+    pointVals2[x].resize(height);
+    for(int y = 0; y != height; ++y) {
+      math::static_vector<double, 2> pix;
+      pix[0] = x;
+      pix[1] = y;
+      math::static_vector<double, 2> real;
+      real[0] =  10*(static_cast<double>(x)/static_cast<double>(width))-5;
+      real[1] = -10*(static_cast<double>(y)/static_cast<double>(height))+5;
+      init[2] = real[0];
+      init[3] = real[1];
+      bool success;
+      for(int i =0; i != 6; ++i) {
+        if(!(success = math::newton_raphson_iteration(init, functions, jacobian, true)))
+          break;
+      }
+      if(!success) continue;
+      if(y == 0) {
+        initStart[0] = init[0];
+        initStart[1] = init[1];
+      }
+        
+      double args[5] = {0, init[0], init[1], real[0], real[1]};
+      double val =
+          jacobian[0](args) + jacobian[3](args);
+      if(val < 0)
+        pointVals[x][y] = false;
+      else
+        pointVals[x][y] = true;
+      double val2 = jacobian[0](args) * jacobian[3](args)
+          - jacobian[1](args) * jacobian[2](args);
+      if(val2 < 0)
+        pointVals2[x][y] = false;
+      else
+        pointVals2[x][y] = true;
+      
+      if(val < 0 && positive || val > 0 && !positive) {
+        positive = !positive;
+        parameterBifurcationPoints.push_back(pix);
+      }
+      if(val2 < 0 && positive2 || val2 > 0 && !positive2) {
+        positive2 = !positive2;
+        parameterBifurcationPoints2.push_back(pix);
+      }
+    }
+  }
+  for(int y = 0; y != height; ++y) {
+    bool positive = true;
+    bool positive2 = true;
+    for(int x = 0; x != width; ++x) {
+      bool val = pointVals[x][y];
+      if(val != positive) {
+        positive = !positive;
+        math::static_vector<int, 2> pix;
+        pix[0] = x;
+        pix[1] = y;
+        parameterBifurcationPoints.push_back(pix);
+      }
+      bool val2 = pointVals2[x][y];
+      if(val2 != positive2) {
+        positive2 = !positive2;
+        math::static_vector<int, 2> pix;
+        pix[0] = x;
+        pix[1] = y;
+        parameterBifurcationPoints2.push_back(pix);
+      }
+    }
+  }
 }
 
 void top_frame::on_left_down_dynamical_plane(wxMouseEvent& evt) {
@@ -596,7 +712,6 @@ void top_frame::recompute_trajectories() {
       if((sol.points.front() - vec).norm() > tolerance)
         sol.points.push_front(vec);
     }
-    std::cout << sol.points.size() << std::endl;
   }
   data.redraw = true;
   dynamicalPlane->Refresh();
@@ -687,7 +802,7 @@ void top_frame::on_motion_parameter_plane(wxMouseEvent& evt) {
   parameterPlane->GetSize(&canvasSize[0], &canvasSize[1]);
   double val = 10*static_cast<double>(evt.GetPosition().x)/static_cast<double>(canvasSize[0])-5;
   parametersListCtrl->SetTextValue(std::to_string(val), 0, 1);
-  val = 10*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1])-5;
+  val = -10*static_cast<double>(evt.GetPosition().y)/static_cast<double>(canvasSize[1])+5;
   parametersListCtrl->SetTextValue(std::to_string(val), 1, 1);
   recompute_trajectories();
 }
@@ -727,7 +842,7 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
     /*We now compute the newton's method orbit at the given point*/
     /*For this, we assume that the equations are autonomous
     and that t is fixed to be zero*/
-    std::cout << "NEWTON:" << std::endl;
+
     math::vector<double> init(6, 0);
     init[0] = mouseValPos[0];
     init[1] = mouseValPos[1];
@@ -739,7 +854,7 @@ void top_frame::on_motion_dynamical_plane(wxMouseEvent& evt) {
     for(int i =0; i != 9; ++i) {
       if(!math::newton_raphson_iteration(init, functions, jacobian, true))
         std::cout << "SINGULAR" << std::endl;
-      std::cout << math::matrix<double>(init).transpose() << std::endl;
+
       newtonsPoints.push_back(init);
     }
     dynamicalPlane->Refresh();
@@ -1213,7 +1328,6 @@ void top_frame::on_key_up_dynamical_plane( wxKeyEvent& evt) {
 }
 
 void top_frame::on_axis_choice(wxCommandEvent&) {
-  std::cout <<"AA" << std::endl;
   data.redraw = true;
   data.axesVariable[0] = axisVariableChoice1->GetSelection();
   data.axesVariable[1] = axisVariableChoice2->GetSelection();

@@ -17,7 +17,7 @@ struct token {
     DEC_INT = 6,
     REG = 7,
     INSTRUCTION = 8,
-    ENDPOINT = 9;
+    ENDPOINT = -1;
 };
 
 /*

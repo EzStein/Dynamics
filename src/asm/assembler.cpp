@@ -12,7 +12,7 @@
 #include <string>
 #include <sstream>
 #include <map>
-
+#include <iostream>
 namespace dynsolver {
 
 std::vector<unsigned char> assembler::assemble(std::string str) {
@@ -20,7 +20,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       .register_rule(" *,",token::COMMA)
       .register_rule(" *\\(",token::LEFT_PAREN)
       .register_rule(" *\\)",token::RIGHT_PAREN)
-      .register_rule(" *\\n",token::NEW_LINE)
+      .register_rule(" *\n",token::NEW_LINE)
       .register_rule(" *$",token::DOLLAR_SIGN)
       .register_rule(" *(0x|-0x)[ABCDEFabcdef\\d][ABCDEFabcdef\\d]*",token::HEX_INT)
       .register_rule(" *(-\\d|\\d)\\d*",token::DEC_INT)
@@ -33,6 +33,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
   std::vector<unsigned char> vec;
   int lineNo = 0;
   while(1) {
+
     ++lineNo;
     std::string lexeme;
     int tok;
@@ -70,6 +71,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     /*We now have an instruction and operand size which may be NONE.
      If it is NONE, we will construct it from the operands*/
     tok = lex.consume_token(lexeme);
+
     /*Remove the whitespace from the string*/
     lexeme.erase(std::remove(lexeme.begin(), lexeme.end(), ' '), lexeme.end());
     /*Make upper case*/
@@ -146,7 +148,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
       } else {
-        throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected register or memory operand";
+        throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + std::to_string(tok) + "' Expected register or memory operand";
       }
       tok = lex.consume_token(lexeme);
       /*Remove the whitespace from the string*/
@@ -180,7 +182,10 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       if(tok == token::ENDPOINT) break;
       if(tok == token::NEW_LINE) continue;
     }
-    if(tok != token::COMMA) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' (" + token_to_string(tok) + ") Expected ','";
+
+    if(tok != token::COMMA) throw std::string("On line, "+ std::to_string(lineNo)
+                                + ": " + "Unexpected token '" + lexeme
+                                + "' (" + token_to_string(tok) + ") Expected ','");
 
     tok = lex.consume_token(lexeme);
     /*Remove the whitespace from the string*/

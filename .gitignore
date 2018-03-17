@@ -2,9 +2,7 @@
 lib
 obj
 exe
-GPATH
-GRTAGS
-GTAGS
+compile_commands.json
 wxWidgets
 include
 .depend

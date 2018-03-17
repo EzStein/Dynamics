@@ -13,18 +13,32 @@ std::string generate_message(int unexpectedToken,
                              const std::vector<int>& expectedTokens,
                              int tokenPosition, int characterPosition,
                              int linePosition, const std::string& lexeme) {
-  std::string message =
-      "Syntax Exception: unexpected token '" + lexeme +
-      "' (" + std::to_string(unexpectedToken) +
-      ") at position " + std::to_string(characterPosition) +
-      " (" + std::to_string(tokenPosition) +
-      ") on line " + std::to_string(linePosition) +
-      ". Expected tokens:";
-  for(std::vector<int>::const_iterator iter = expectedTokens.begin();
-      iter != expectedTokens.end(); ++iter) {
-    message += " " + std::to_string(*iter) + ",";
+  std::string message;
+  if(tokenPosition == syntax_exception::kEndPosition) {
+    message =
+        "Syntax Exception: unexpected end of input "
+        "at position " + std::to_string(characterPosition) +
+        " on line " + std::to_string(linePosition) +
+        ". Expected tokens:";
+    for(std::vector<int>::const_iterator iter = expectedTokens.begin();
+        iter != expectedTokens.end(); ++iter) {
+      message += " " + std::to_string(*iter) + ",";
+    }
+    message += ".";
+  } else {
+    message =
+        "Syntax Exception: unexpected token '" + lexeme +
+        "' (" + std::to_string(unexpectedToken) +
+        ") at position " + std::to_string(characterPosition) +
+        " (" + std::to_string(tokenPosition) +
+        ") on line " + std::to_string(linePosition) +
+        ". Expected tokens:";
+    for(std::vector<int>::const_iterator iter = expectedTokens.begin();
+        iter != expectedTokens.end(); ++iter) {
+      message += " " + std::to_string(*iter) + ",";
+    }
+    message += ".";
   }
-  message += ".";
   return message;
 }
 } // namespace anonymous

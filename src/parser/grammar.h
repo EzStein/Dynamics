@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <set>
 #include <vector>
+#include <iostream>
 
 #include "parser/common.h"
 #include "parser/lr_parser.h"
@@ -27,7 +28,8 @@ namespace parser {
 // Grammar symbols are represented using integers. In general, an enumeration
 // type or class with public static integers is used for grammar symbols.
 // Note that an enum class does not have implicit integer conversion so may
-// not be ideal. There are no restrictions on which integers may be tokens.
+// not be ideal. Negative integers are reserved and may not be used as
+// grammar symbols.
 //
 // The special grammar symbol denoted as epsilon can be specified by calling
 // the add_production functions without appending any symbols.
@@ -165,7 +167,7 @@ class grammar {
   // Returns an lr parser for SLR grammars.
   // If the grammar is not SLR, an exception is thrown indicating the exact
   // problem.
-  lr_parser generate_slr() const;
+  lr_parser generate_slr();
 
   // Sets the start symbol for this grammar. No checks are performed to ensure
   // that the start symbol is indeed a nonterminal. Note that any call to

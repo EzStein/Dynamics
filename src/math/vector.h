@@ -43,6 +43,7 @@ namespace math {
     return matrix<NUM_T>::operator[](index)[0];
   }
 
+
   template<class NUM_T>
   const NUM_T& vector<NUM_T>::operator[](int index) const {
     return matrix<NUM_T>::operator[](index)[0];

@@ -82,23 +82,31 @@ bool merge(std::set<int>& dest, const std::set<int>& src) {
 // each symbol and populate the firstFollowMap. We repeate this process until
 // there is no change in the firstFollowMap.
 void grammar::compute_first_follow() const {
+  // We first place the end marker into the follow set of the start nonterminal.
+  firstFollowMap[kGeneratedStartSymbol].follow.insert(kEndOfInputToken);
+  
   bool updated(true);
   while(updated) {
     updated = false;
     for(std::set<int>::const_iterator symbol = symbols.begin();
         symbol != symbols.end(); ++symbol) {
-      auto productions = grammarTable.find(*symbol);
+      
+      std::unordered_map<int, std::vector<std::vector<int> > >::const_iterator
+          productions = grammarTable.find(*symbol);
       if(productions == grammarTable.end()) {
         // Symbol is a terminal, we update the first but not follow entries.
         firstFollowMap[*symbol].epsilon = false;
         firstFollowMap[*symbol].first.insert(*symbol);
+        continue;
       }
       bool epsilon = false;
-      for(auto production = productions->second.begin();
+      for(std::vector<std::vector<int> >::const_iterator production
+              = productions->second.begin();
           production != productions->second.end();
           ++production) {
         bool epsilonBreak(false);
-        for(auto iter = production->begin(); iter != production->end(); ++iter) {
+        for(std::vector<int>::const_iterator
+                iter = production->begin(); iter != production->end(); ++iter) {
           if(!epsilonBreak) {
             updated |= merge(firstFollowMap[*symbol].first, firstFollowMap[*iter].first);
             if(firstFollowMap[*iter].epsilon) {
@@ -141,9 +149,13 @@ std::set<int> grammar::follow(int symbol) const {
 // We must construct the parsing table and the grammar info table.
 // After constructing the grammar info table we construct the set of
 // LR(0) items and the parsing table.
-lr_parser grammar::generate_slr() const {
-  compute_first_follow();
+lr_parser grammar::generate_slr() {
+  // We initially add the generated start symbol to the grammarTable and the list
+  // of symbols. We remove them upon completion of this function.
+  grammarTable[kGeneratedStartSymbol].push_back(std::vector<int>{start});
+  symbols.insert(kGeneratedStartSymbol);
   lr_parser parser;
+  compute_first_follow();
   for(std::unordered_map<int, std::vector<std::vector<int> > >::const_iterator
           iter = grammarTable.begin();
       iter != grammarTable.end(); ++iter) {
@@ -163,11 +175,12 @@ lr_parser grammar::generate_slr() const {
           ++nonterminalSymbols;
         }
       }
+
       parser.grammarInfo[iter->first][productionIndex]
           = production_info{terminalSymbols, nonterminalSymbols};
     }
   }
-
+  
   // This is used to process all the states. Unprocessed states
   // are pushed onto the stack and processed ones are popped off.
   std::stack<std::set<item> > stateStack;
@@ -179,12 +192,12 @@ lr_parser grammar::generate_slr() const {
   // We form the set of initial items and then take its closure.
   std::set<item> initial;
   std::unordered_map<int, std::vector<std::vector<int> > >::const_iterator
-      initProductions = grammarTable.find(start);
+      initProductions = grammarTable.find(kGeneratedStartSymbol);
   int counter = -1;
   for(std::vector<std::vector<int> >::const_iterator iter
           = initProductions->second.begin();
       iter != initProductions->second.end(); ++iter) {
-    initial.insert(item{start,*iter,0,++counter});
+    initial.insert(item{kGeneratedStartSymbol,*iter,0,++counter});
   }
   
   stateStack.push(initial);
@@ -209,9 +222,17 @@ lr_parser grammar::generate_slr() const {
     for(std::set<item>::const_iterator item
             = currentState.begin(); item != currentState.end(); ++item) {
       if(item->pointer == item->body.size()) {
+        // If the head is the start symbol, then we add ACCEPT as the action
+        // for the end of input token.
+        if(item->head == kGeneratedStartSymbol) {
+          parser.table[index][kEndOfInputToken] =
+              lr_parser::table_entry{lr_parser::entry_type::ACCEPT, -1, -1};
+        }
         // We add an entry for each entry (in follow item.head).
         std::set<int> followSet(follow(item->head));
         for(auto symbol = followSet.begin(); symbol != followSet.end(); ++symbol) {
+          if(item->head == kGeneratedStartSymbol
+             && *symbol == kEndOfInputToken) continue;
           // If there is already an entry, then there is a reduce reduce conflict
           if(parser.table[index].find(*symbol) != parser.table[index].end()) {
             throw malformed_grammar_exception("Reduce Reduce conflict");
@@ -250,6 +271,8 @@ lr_parser grammar::generate_slr() const {
       }
     }
   }
+  grammarTable.erase(kGeneratedStartSymbol);
+  symbols.erase(kGeneratedStartSymbol);
   return parser;
 }
 
@@ -279,7 +302,7 @@ void grammar::compute_closure(std::set<grammar::item>& set) const {
         if(productions != grammarTable.end()) {
           // We iterate over the list of productions for the
           // nonterminal that we found.
-          int counter = 0;
+          int counter = -1;
           for(auto prod = productions->second.begin();
               prod != productions->second.end();
               ++prod) {

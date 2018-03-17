@@ -83,12 +83,10 @@ class lexer {
   // regex, int pair. It associates a regex pattern to its token.
   struct pattern_rule {
    public:
-    pattern_rule(const dfa& pattern, int token)
-        : patternObj(pattern), pattern(patternObj), token(token) { } 
-    regex& pattern;
+    pattern_rule(const nfa& pattern, int token)
+        : pattern(pattern), token(token) { } 
     int token;
-   private:
-    dfa patternObj;
+    nfa pattern;
   };
 
   // This struct is not actually used in the internal representation of the

@@ -3,6 +3,7 @@
 * To change this template file, choose Tools | Templates
 * and open the template in the editor.
 */
+#include <iostream>
 #include "compiler/ast/visitor/comparator/std_node_comparator.h"
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"

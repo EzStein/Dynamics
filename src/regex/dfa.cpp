@@ -1,10 +1,13 @@
 #include "regex/dfa.h"
 
+#include <iostream>
+
 #include <cassert>
 #include <list>
 #include <map>
 #include <set>
 #include <stack>
+#include <unordered_map>
 #include <vector>
 
 #include "regex/common.h"
@@ -13,15 +16,8 @@
 namespace dynsolver {
 namespace regex {
 
-// This is used to contain helper objects for the dfa constructor
+// This namespace is used to contain helper objects for the dfa constructor
 namespace {
-// Used in the power set construction as the values of the map
-// which associates sets to their DFA state.
-struct set_info {
-  int index;
-  bool visited;
-};
-
 // Used in Hopcroft's algorithm to store bounds of classes in the partition.
 // See description below.
 struct index_pair {
@@ -46,7 +42,6 @@ void swap(int* partition, int* partitionInverse,
 } // namespace anonymous
 
 // Public member definitions
-
 dfa::dfa(const std::string& pattern) {
   // This function first constructs an NFA from the pattern. We then build
   // the graph of this dfa using the powerset construction. Finally,
@@ -64,30 +59,17 @@ dfa::dfa(const std::string& pattern) {
   // states that contain an NFA accepting state.
   //
   // We maintain both a stack and a map. The stack is a collection of
-  // std::set<int> (a set of NFA states) that have yet to be processed.
+  // iterators to std::set<int> (a set of NFA states) that have yet to be processed.
   // It is initialized to contain the std::set containing just
   // the epsilon closure of the NFA start. While
   // the stack is nonempty, we pop an element off the stack. Using this element,
-  // we add potentially kNumberOfCharacters
-  // more elements (one corresponding to the set of
-  // states reacheable through a given character transition). For each of the
-  // kNumberOfCharacters added elements,
-  // we lookup the index of the corresponding DFA state in
-  // the map. If it does not already exist, we generate a DFA state and add the
-  // set associated with it to the map. Finally, we add transitions from the
-  // DFA state associated with the popped set to each of the
-  // kNumberOfCharacters states
-  // associated with the newly pushed sets. If the DFA state associated to the
+  // we identify the all the NFA states that are recheable through a given character
+  // transition. If that set of states has already been processed, it will be
+  // contained in the map and we can lookup its index in the graph.
+  // Otherwise, we generate a DFA state and add the
+  // set associated with it to the map. We also add it to the stack
+  // to be processed. If the DFA state associated to the
   // popped set is accepting if the popped set contains an NFA accepting state.
-  // Note that it is possible that one of the newly pushed sets will already
-  // be in the stack, or will have already been processed by the stack. Thus
-  // we associated to each set (using the same map as the index association)
-  // a visited bool which is set to true once the set is processed by the stack.
-  //
-  // The map associates a std::set<int> representing a set of nfa states
-  // to a set_info struct which exists in an anonymous namespace. The struct
-  // has an index field storing the dfa state associated to it, and a
-  // visited bool indicating whether the set has already been processed or not.
   //
   // Note that in order to prevent unnecessary redundent storage and copying,
   // the stack will actually contain iterators that point to key-value pairs
@@ -100,9 +82,12 @@ dfa::dfa(const std::string& pattern) {
   // graphInverse which maps state and character pairs to a list
   // of states which transition to the given one on the given character
   // See the next section for more details on graphInverse variable.
-  std::stack<std::map<std::set<int>, set_info>::iterator> processingStack;
-  std::map<std::set<int>, set_info > setInfoMap;
-  std::vector<std::list<int> > graphInverse[kNumberOfCharacters];
+  std::stack<std::map<std::set<int>, int>::iterator> processingStack;
+  std::map<std::set<int>, int> nfaStates;
+  
+  // Graph inverse is used as follows. graphInverse[character][state_index] =
+  // a list of states which transition to state_index on character.
+  std::array<std::unordered_map<int, std::list<int> >, kNumberOfCharacters> graphInverse;
 
   std::set<int> initialSet;
   nfa.epsilon_closure(std::set<int>{nfa.startState}, initialSet);
@@ -113,68 +98,57 @@ dfa::dfa(const std::string& pattern) {
   } else {
     graph.push_back(state(false));
   }
-  setInfoMap.insert(std::make_pair(initialSet, set_info{0, false}));
-  processingStack.push(setInfoMap.begin());
+  nfaStates[initialSet] = 0;
+  processingStack.push(nfaStates.begin());
   
   // Invariant: All sets that are in the stack are the same as their epsilon
   // closure. Additionally, all sets in the stack have a mapping already defined
   // in setInfoMap (this is implicit since the stack actually stores iterators to
-  // the setInfoMap) and an associated state in the graph vector.
+  // the setInfoMap) and an associated state in the graph vector. Each element in
+  // the stack has the visited flag set.
   while(! processingStack.empty()) {
-    std::map<std::set<int>, set_info>::iterator
-        examinedSetIterator(processingStack.top());
+    std::map<std::set<int>, int>::iterator
+        examinedStateIterator(processingStack.top());
     processingStack.pop();
-    // If the state has already been visited, we skip it.
-    if(examinedSetIterator->second.visited) {
-      continue;
-    }
-    int dfaStateIndex = examinedSetIterator->second.index;
+    int dfaState = examinedStateIterator->second;
+    // We add a transition from dfaStateIndex on each c
     for(int c = 0; c != kNumberOfCharacters; ++c) {
       char characterVal = static_cast<char>(c);
       std::set<int> tmpSet;
-      std::set<int> setToAdd;
-      nfa.transition_function(examinedSetIterator->first, characterVal, tmpSet);
+      nfa.transition_function(examinedStateIterator->first, characterVal, tmpSet);
       if(tmpSet.empty()) {
         // There are no transitions from this DFA state along this character
-        graph[dfaStateIndex].transitions[c] = -1;
+        graph[dfaState].transitions[c] = kDeadStateTransition;
         continue; // We don't need to add anything to the map or stack
       }
-      nfa.epsilon_closure(tmpSet, setToAdd);
-      
-      // We now lookup the index of the setToAdd in the dfa graph vector.
-      // If it does not exist, we add an element to the dfa graph vector, and
-      // to the setInfoMap.
-      int index;
-      std::map<std::set<int>, set_info>::iterator
-          iter(setInfoMap.find(setToAdd));
-      if(iter == setInfoMap.end()) {
+      std::set<int> newNfaState;
+      nfa.epsilon_closure(tmpSet, newNfaState);
+      std::map<std::set<int>, int>::iterator
+          newNfaStateIter(nfaStates.find(newNfaState));
+      if(newNfaStateIter == nfaStates.end()) {
         // The set has not yet been added to the map or the graph vector
         // We first check if it is an accepting state
         bool accepting;
-        if(setToAdd.find(nfa.acceptingState) != setToAdd.end()) {
+        if(newNfaState.find(nfa.acceptingState) != newNfaState.end()) {
           accepting = true;
         } else {
           accepting = false;
         }
-        index = graph.size();
+        int index = graph.size();
         graph.push_back(state(accepting));
         // We will later add iter to the stack, so we update it with the
         // newly added set.
-        iter = setInfoMap.insert(std::make_pair(setToAdd, set_info{index, false})).first;
-      } else {
-        // The set already exists in the map and the graph vector
-        index = iter->second.index;
+        newNfaStateIter = nfaStates.insert(std::make_pair(newNfaState, index)).first;
+        processingStack.push(newNfaStateIter);
       }
-      processingStack.push(iter);
       // We now set the transition from the examined dfa state
-      graph[dfaStateIndex].transitions[c] = index;
+      graph[dfaState].transitions[c] = newNfaStateIter->second;
       // We also update graphInverse.
-      graphInverse[c][index].push_back(dfaStateIndex);
+      graphInverse[c][newNfaStateIter->second].push_back(dfaState);
     }
-    // We have finished processing the set so we mark it as visited
-    examinedSetIterator->second.visited = true;
   }
-
+  
+  
   // We now have a DFA in the appropriate state. The startState variable
   // is set, and graph is populated with the appropriate values. However the DFA
   // may not be minimal. We use Hopcroft's algorithm to minimize it.
@@ -223,10 +197,11 @@ dfa::dfa(const std::string& pattern) {
   // In this implementation, each class of the partition is assigned an index.
   // We need the following data structures:
   //
-  // graphInverse - This is a std::vector<std::list<int> >[] that maps each
-  //                DFA state and character pair to a list of states that 
-  //                transition to it over that character. In particular,
-  //                graphInverse[character][state] contains  implies that
+  // graphInverse - This is a
+  //                std::array<std::unordered_map<int, std::list<int>, kNumberOfCharacters> 
+  //                which maps a DFA state and character pair to a list of states that 
+  //                transition to it over that character. In particular, if
+  //                graphInverse[character][state] contains val then
   //                graph[val].transition[character] == state
   //
   // partition - A fixed size array of ints refering to all the states of the
@@ -343,28 +318,21 @@ dfa::dfa(const std::string& pattern) {
   }
   // Sanity Check
   assert(front + 1 == back);
+  
   // Front is now the index in the partition of the last accepting state and
   // back is the index of the first rejecting state.
   // The indices of the accepting class:
-  classIndices.push_back(index_pair{0, back});
-  // Indices of the rejecting class:
-  classIndices.push_back(index_pair{back, graph.size()});
 
-  // We finally initialize the classSplitPointer of both classes
-  // to be the low endpoint of the two classes.
-  classSplitPointer.push_back(0);
-  classSplitPointer.push_back(back);
-
-  // To kick off the algorithm, we add the smaller of the two classes to the
-  // splitter stack. The variable back is the size of the accepting states
-  // and value graph.size() - back is the size of the rejecting states.
-  if(back < graph.size() - back) {
-    // Push the accepting class
-    splitters.push(0);
-  } else {
-    // Push the rejecting class
-    splitters.push(1);
+  if (back != 0) {
+    classIndices.push_back(index_pair{0, back});
+    classSplitPointer.push_back(0);
   }
+
+  if (graph.size() != back) {
+    classIndices.push_back(index_pair{back, graph.size()});
+    classSplitPointer.push_back(back);
+  }
+  splitters.push(0);
 
   // Main algorithm loop
   while(! splitters.empty()) {
@@ -450,6 +418,7 @@ dfa::dfa(const std::string& pattern) {
         int newClass = classIndices.size();
         if(splitPointer - lowIndex < highIndex - splitPointer) {
           // The first section is smaller.
+
           classIndices.push_back(index_pair{lowIndex, splitPointer});
           classIndices[*classIter] = index_pair{splitPointer, highIndex};
           classSplitPointer.push_back(lowIndex);
@@ -460,6 +429,7 @@ dfa::dfa(const std::string& pattern) {
             classArray[partition[i]] = newClass;
           }
         } else {
+          assert(lowIndex != splitPointer);
           classIndices.push_back(index_pair{splitPointer, highIndex});
           classIndices[*classIter] = index_pair{lowIndex, splitPointer};
           classSplitPointer.push_back(splitPointer);
@@ -479,21 +449,48 @@ dfa::dfa(const std::string& pattern) {
   // graph. We iterate over all the classes, adding them to the minimal graph
   // and filling in the transitions.
   std::vector<state> minimalGraph;
-  minimalGraph.reserve(classIndices.size());
+  minimalGraph.resize(classIndices.size());
+  
+  /*    for(int i = 0; i != graph.size(); ++i) {
+    std::cout << partition[i]<< ", ";
+  }
+    std::cout << "\n";
+        for(int i = 0; i != classIndices.size(); ++i) {
+          std::cout << i << ": " <<classIndices[i].low << ", " << classIndices[i].high << "\n";
+  }
+  std::cout << "\n";*/
+   
   for(int classVal = 0; classVal != classIndices.size(); ++classVal) {
+
     int representativeState = partition[classIndices[classVal].low];
     for(int character = 0; character != kNumberOfCharacters; ++character) {
-      minimalGraph[classVal].transitions[character]
-          = classArray[graph[representativeState].transitions[character]];
+      int transition = graph[representativeState].transitions[character];
+      if(transition == kDeadStateTransition) {
+        minimalGraph[classVal].transitions[character]
+            = kDeadStateTransition;
+      } else {
+        minimalGraph[classVal].transitions[character]
+            = classArray[transition];
+      }
     }
     minimalGraph[classVal].accepting = graph[representativeState].accepting;
   }
+  startState = classArray[startState];
   delete[] partition;
   delete[] partitionInverse;
   delete[] classArray;
 
   std::swap(minimalGraph, graph);
-  startState = classArray[startState];
+
+  /* std::cout << startState << "\n\n";
+  for(int i = 0; i != graph.size(); ++i) {
+    std::cout << i << ": " << std::endl;
+    for(int j  = 0; j != 256; ++j) {
+            if( graph[i].transitions[j] != -1)
+                std::cout << static_cast<char>(j) << " " <<  graph[i].transitions[j] << " ";
+    }
+  }
+  std::cout << std::endl;*/
 }
 
 int dfa::accept_longest_prefix(const std::string& candidate,
@@ -517,9 +514,10 @@ int dfa::accept_longest_prefix(const std::string& candidate,
   // indicates the index of the state we are in before consuming the next
   // character in the input
   while(pointer != candidate.size()) {
+    // We cast to an unsigned char to ensure correct conversion on all platforms
     int transitionCharacter = static_cast<unsigned char>(candidate[pointer]);
     currentState = graph[currentState].transitions[transitionCharacter];
-    if(currentState == -1)
+    if(currentState == kDeadStateTransition)
       break; // There was no transition for the given character
     if(graph[currentState].accepting) {
       // + 1 since we return the length of the prefix up to and including pointer
