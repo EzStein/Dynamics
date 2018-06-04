@@ -2,7 +2,6 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-#include "app/app.h"
+#include "gui/app.h"
 
-
-wxIMPLEMENT_APP(app);
+wxIMPLEMENT_APP(dynsolver::gui::app);

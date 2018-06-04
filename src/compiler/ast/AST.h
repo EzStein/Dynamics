@@ -2,6 +2,7 @@
 #define AST_GUARD
 #include <cstddef>
 #include <iostream>
+#include "compiler/function.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"
@@ -91,6 +92,9 @@ public:
   AST& optimize();
 
   std::string emit_code_amd64() const;
+
+  // Compiles the code and returns a function wrapper.
+  dynsolver::compiler::function<double, const double*> compile();
 
   /*
   * This should be called immediatly after on operation is performed that decrements the FPU stack.

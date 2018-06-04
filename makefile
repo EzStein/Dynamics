@@ -85,7 +85,7 @@ WX_CONFIG = /home/ezra/Documents/builds/wxWidgets-3.1.0/64bit-build/wx-config
 WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
 
 LIBRARY_FLAGS = -L$(LIB_DIR) \
-`$(WX_CONFIG) --gl-libs --libs` \
+`$(WX_CONFIG) --gl-libs --libs all` \
 $(call rwildcard, $(LIB_DIR)/,*) \
 -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++
 

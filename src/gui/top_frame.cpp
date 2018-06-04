@@ -1,50 +1,41 @@
-
+#ifdef NO_COMPILATION_GUARD
+#include "top_frame.h"
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-#include "app/app.h"
-#include "top_frame.h"
-#include "compiler/front/driver.h"
-#include "math/static_vector.h"
-#include "math/util.h"
-#include "gl_program.h"
-#include <wx/glcanvas.h>
-#include <string>
-#include <list>
 #include <iostream>
 #include <exception>
 
+#include "app/app.h"
+
 top_frame::top_frame(wxWindow* window, wxWindowID id) :
- top_frame_base(window, id), program2d(PROJECT_PATH"/resources/gl/vert2d.vert", PROJECT_PATH"/resources/gl/frag2d.frag"),
+ top_frame_base(window, id),
+ program2d(PROJECT_PATH"/resources/gl/vert2d.vert", PROJECT_PATH"/resources/gl/frag2d.frag"),
  program3d(PROJECT_PATH"/resources/gl/vert3d.vert", PROJECT_PATH"/resources/gl/frag3d.frag") {
-  dynamicalPlane = new wxGLCanvas(m_notebook2, wxID_ANY);
-  m_notebook2->AddPage( dynamicalPlane, wxT("Dynamical Plane"), false );
+  dynamicalPlane = new wxGLCanvas(dynamicalPlaneBox, wxID_ANY);
+  dynamicalPlaneBox->AddChild(dynamicalPlane);
+  
+  parametePlane = new wxGLCanvas(parameterPlaneBox, wxID_ANY);
+  parameterPlaneBox->AddChild(parameterPlane);
 
-
-  dynamicalPlane->Connect( wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
-  dynamicalPlane->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
-  dynamicalPlane->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
-
-  dynamicalPlane->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler(top_frame::on_mouse_wheel_dynamical_plane ), NULL, this);
-
-  dynamicalPlane->Connect( wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
-  dynamicalPlane->Connect( wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
-
-  dynamicalPlane->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
-  dynamicalPlane->Connect( wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
-
-  data.viewportCenterX = 0;
-  data.viewportCenterY = 0;
-  data.viewportSpanX = 10;
-  data.viewportSpanY = 10;
-  data.cameraPosition[0] = 10;
-  data.cameraPosition[1] = 10;
-  data.cameraPosition[2] = 10;
-  data.cameraDirection = data.cameraPosition;
-  data.axesVariable[0] = 1;
-  data.axesVariable[1] = 2;
-  data.axesVariable[2] = 3;
+  // Registers the event handlers for dynamical and parameter gl canvases.
+  dynamicalPlane->Connect(
+      wxEVT_PAINT,wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_MOUSEWHEEL, wxMouseEventHandler(top_frame::on_mouse_wheel_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Connect(
+      wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
 
   functionsListCtrl->AppendTextColumn("Variable");
   functionsListCtrl->AppendTextColumn("Equation", wxDATAVIEW_CELL_EDITABLE);
@@ -107,8 +98,6 @@ top_frame::top_frame(wxWindow* window, wxWindowID id) :
   data.clear();*/
 
 }
-
-
 
 void top_frame::initialize_gl() {
   wxGLContextAttrs contextAttrs;
@@ -179,16 +168,22 @@ void top_frame::initialize_gl() {
 }
 
 top_frame::~top_frame() {
-
-  dynamicalPlane->Disconnect( wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler(top_frame::on_mouse_wheel_dynamical_plane ), NULL, this);
-
-  dynamicalPlane->Disconnect( wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
-  dynamicalPlane->Disconnect( wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_PAINT, wxPaintEventHandler(top_frame::on_paint_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_LEFT_DOWN, wxMouseEventHandler(top_frame::on_left_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_MOUSEWHEEL, wxMouseEventHandler(top_frame::on_mouse_wheel_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_MOTION, wxMouseEventHandler(top_frame::on_motion_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_RIGHT_DOWN, wxMouseEventHandler(top_frame::on_right_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_SIZE, wxSizeEventHandler(top_frame::on_size_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_KEY_DOWN, wxKeyEventHandler(top_frame::on_key_down_dynamical_plane ), NULL, this);
+  dynamicalPlane->Disconnect(
+      wxEVT_KEY_UP, wxKeyEventHandler(top_frame::on_key_up_dynamical_plane ), NULL, this);
 }
 
 void top_frame::on_mouse_wheel_dynamical_plane(wxMouseEvent& evt) {
@@ -372,85 +367,7 @@ void top_frame::on_button_click_compile(wxCommandEvent& event) {
     if(functionsListCtrl->GetTextValue(i, 1) == "") return;
   }
 
-  /*Otherwise, release the space allocated by previous compilations*/
-  for(driver::double_func_t func : functions) {
-    dr.mark_available(func);
-  }
-  for(driver::double_func_t func : jacobian) {
-    dr.mark_available(func);
-  }
 
-  /*And reset the functions*/
-  functions.clear();
-  jacobian.clear();
-
-
-  /*We construct the symbol table, it will depend on the dimension of the vector field*/
-  std::list<symbol> symbolTable;
-  if(data.dimension <= 4) {
-    switch(data.dimension) {
-      /*Observe the fall through (no breaks). Thus if the dim is 4, all the items are added to the symbolTable*/
-      case 4:symbolTable.push_back(symbol("w",4,4));
-      case 3:symbolTable.push_back(symbol("z",3,3));
-      case 2:symbolTable.push_back(symbol("y",2,2));
-      case 1:symbolTable.push_back(symbol("t",0,0));
-             symbolTable.push_back(symbol("x",1,1));
-    }
-  } else {
-    symbolTable.push_back(symbol("t",0,0));
-    for(int i = 0; i != data.dimension; ++i) {
-      std::string str("x" + std::to_string(i + 1));
-      symbolTable.push_back(symbol(str,i+1, i+1));
-    }
-  }
-  /*We now add the parameters to the symbol table*/
-  if(data.parameters <= 4) {
-    switch(data.parameters) {
-      case 4:symbolTable.push_back(symbol("d",data.dimension + 4,data.dimension + 4));
-      case 3:symbolTable.push_back(symbol("c",data.dimension + 3,data.dimension + 3));
-      case 2:symbolTable.push_back(symbol("b",data.dimension + 2,data.dimension + 2));
-      case 1:symbolTable.push_back(symbol("a",data.dimension + 1,data.dimension + 1));
-      default: break;/*Do nothing*/
-    }
-  } else {
-    for(int i = 0; i != data.parameters; ++i) {
-      std::string str("a" + std::to_string(i + 1));
-      symbolTable.push_back(symbol(str, data.dimension+1+i, data.dimension + 1 + i));
-    }
-  }
-  /*We now sort the table by the variable's parameter id*/
-  symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
-
-    return a.parameter < b.parameter;
-  });
-
-
-  for(int i = 0; i != functionsListCtrl->GetItemCount(); ++i) {
-
-    /*If a single field is empty, we do nothing*/
-    std::string funcString(functionsListCtrl->GetTextValue(i,1).mb_str());
-
-    /*We add one function to the functions list and a row of functions
-    to the jacobian*/
-
-    AST function = dr.parse_as_ast(funcString, symbolTable);
-
-    functions.push_back(
-      dr.compile_as_function<driver::double_func_t>(function)
-    );
-
-    /*We now compute the derivative with respect to each variable*/
-    for(symbol sym : symbolTable) {
-      /*We must check that the symbol is indeed a variable and not a parameter*/
-      if(sym.parameter == 0 || sym.parameter >= functionsListCtrl->GetItemCount() + 1) continue;
-
-      jacobian.push_back(
-        dr.compile_as_function<driver::double_func_t>(
-          /*This performs a copy on the ast*/AST(function).differentiate(sym.name))
-      );
-
-    }
-  }
 
   /*Clear all the solutions*/
   data.solutions = std::vector<solution>();
@@ -1334,3 +1251,4 @@ void top_frame::on_axis_choice(wxCommandEvent&) {
   data.axesVariable[2] = axisVariableChoice3->GetSelection();
   dynamicalPlane->Refresh();
 }
+#endif

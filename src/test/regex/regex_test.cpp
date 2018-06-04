@@ -34,7 +34,6 @@ std::unique_ptr<regex> get_regex_obj(const std::string& pattern, regex_type type
 
 void test_single_character(regex_type type) {
   std::unique_ptr<regex> expr;
-  
   // Tests the most basic input: a single character pattern matches itself.
   for(int i = 0; i <= kMaxCharacterValue; ++i) {
     std::string pattern(1, static_cast<unsigned char>(i));

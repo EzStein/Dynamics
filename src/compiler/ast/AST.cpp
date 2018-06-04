@@ -1,6 +1,7 @@
 #include <new>
 #include <algorithm>
 #include "AST.h"
+#include "asm/assembler.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "compiler/ast/binary_addition_operator_node.h"
@@ -335,4 +336,11 @@ bool operator>(const AST& ast1, const AST& ast2) {
 
 bool operator>=(const AST& ast1, const AST& ast2) {
   return *ast1.root >= *ast2.root;
+}
+
+dynsolver::compiler::function<double, const double*> AST::compile() {
+  std::string code = emit_code_amd64();
+  dynsolver::assembler assem;
+  std::vector<unsigned char> vec = assem.assemble(code);
+  return dynsolver::compiler::function<double, const double*>(vec);
 }

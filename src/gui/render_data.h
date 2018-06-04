@@ -3,7 +3,6 @@
 #include <list>
 #include <vector>
 #include "math/vector.h"
-#include "math/static_matrix.h"
 #include <climits>
 
 /*A data structure representing a curve in n-space*/
