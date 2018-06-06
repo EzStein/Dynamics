@@ -60,9 +60,12 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 # A list of all .cpp files with path starting at $(SRC_DIR)
 SRCS = $(call rwildcard,$(SRC_DIR)/,*.cpp)
+SRCS += $(call rwildcard,$(SRC_DIR)/,*.c)
 
 # A list of all OBJ files.
 OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+TMP := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(OBJS))
+OBJS := $(TMP)
 
 TEST_NAME = tests
 
@@ -87,7 +90,7 @@ WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
 LIBRARY_FLAGS = -L$(LIB_DIR) \
 `$(WX_CONFIG) --gl-libs --libs all` \
 $(call rwildcard, $(LIB_DIR)/,*) \
--lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++ -lglut
+-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++ -lglut -l:libGLEW.a
 
 INCLUDE_FLAGS = -I$(SRC_DIR) -isystem $(INCLUDE_DIR)
 
@@ -95,8 +98,10 @@ COMPILER_FLAGS = -std=c++11 $(OS_SPECIFIC) $(WX_FLAGS) -ggdb -O0
 
 CC = g++
 
-#WARNINGS = -pedantic
-WARNINGS = -Wall -Weffc++ -pedantic  \
+GCC = gcc
+
+WARNINGS = -pedantic
+#WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \
@@ -129,7 +134,7 @@ debug: $(BUILD_DIR)/$(DEBUG_NAME)
 $(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 	@mkdir -p $(@D)
 	@echo Linking App...
-	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
+	$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
 $(BUILD_DIR)/$(TEST_NAME): $(TEST_OBJS)
 	@mkdir -p $(@D)
@@ -149,6 +154,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@echo Compiling $<
 	@$(CC) $(WARNINGS) $(COMPILER_FLAGS) $(INCLUDE_FLAGS) -c -o $@ $<
 
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	@echo Compiling $<
+	@$(GCC) $(INCLUDE_FLAGS) -c -o $@ $<
+
 # Generates a dependency file that associates each object file to the headers
 # which it depends on. This should be called manually whenever a .cpp file
 # changes its header dependency.
@@ -163,6 +173,7 @@ clean:
 	-@rm -rf $(OBJ_DIR)
 	-@rm -rf $(BUILD_DIR)
 	-@rm -rf .depend
+	-@rm -rf compile_commands.json
 
 print-%  : ; @echo $* = $($*)
 

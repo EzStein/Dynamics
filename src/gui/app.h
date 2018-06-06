@@ -1,6 +1,6 @@
 #ifndef DYNSOLVER_GUI_APP_H_
 #define DYNSOLVER_GUI_APP_H_
-
+#include <glad/glad.h>
 #include <vector>
 #include <unordered_map>
 
@@ -8,8 +8,6 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
-// It is important that the glad header is included before wx/glcanvas.h
-#include <glad/glad.h>
 #include <wx/glcanvas.h>
 
 #include "gui/model.h"
@@ -78,7 +76,7 @@ class app : public wxApp {
   const wxGLAttributes& get_gl_attributes();
 
   // The event handler for our custom event which will setup opengl.
-  void setup_opengl();
+  void setup_opengl(wxCommandEvent&);
 };
 
 } // namespace gui
