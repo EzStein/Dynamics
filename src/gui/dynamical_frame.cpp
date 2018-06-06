@@ -1,4 +1,5 @@
 #include "gui/dynamical_frame.h"
+#include <wx/glcanvas.h>
 
 namespace dynsolver {
 namespace gui {

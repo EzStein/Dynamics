@@ -87,7 +87,7 @@ WX_FLAGS = $(subst -I,-isystem, $(shell $(WX_CONFIG) --cxxflags))
 LIBRARY_FLAGS = -L$(LIB_DIR) \
 `$(WX_CONFIG) --gl-libs --libs all` \
 $(call rwildcard, $(LIB_DIR)/,*) \
--lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++
+-lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lstdc++ -lglut
 
 INCLUDE_FLAGS = -I$(SRC_DIR) -isystem $(INCLUDE_DIR)
 
@@ -95,8 +95,8 @@ COMPILER_FLAGS = -std=c++11 $(OS_SPECIFIC) $(WX_FLAGS) -ggdb -O0
 
 CC = g++
 
-WARNINGS = -pedantic
-#WARNINGS = -Wall -Weffc++ -pedantic  \
+#WARNINGS = -pedantic
+WARNINGS = -Wall -Weffc++ -pedantic  \
     -pedantic-errors -Wextra -Waggregate-return -Wcast-align \
     -Wcast-qual  -Wchar-subscripts  -Wcomment -Wconversion \
     -Wdisabled-optimization \

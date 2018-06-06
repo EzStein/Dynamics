@@ -329,7 +329,7 @@ dfa::dfa(const std::string& pattern) {
   }
 
   if (graph.size() != back) {
-    classIndices.push_back(index_pair{back, graph.size()});
+    classIndices.push_back(index_pair{back, static_cast<int>(graph.size())});
     classSplitPointer.push_back(back);
   }
   splitters.push(0);

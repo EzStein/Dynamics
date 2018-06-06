@@ -124,10 +124,16 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	statusBar = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
 	
 	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_button7->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 }
 
 console_frame_base::~console_frame_base()
 {
+	// Disconnect Events
+	m_button7->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
+	
 }
 
 dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
@@ -137,7 +143,6 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	wxBoxSizer* bSizer34;
 	bSizer34 = new wxBoxSizer( wxVERTICAL );
 	
-	wxPanel* dynamicalWindowBox;
 	dynamicalWindowBox = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	bSizer34->Add( dynamicalWindowBox, 1, wxEXPAND | wxALL, 5 );
 	

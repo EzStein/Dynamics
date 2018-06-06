@@ -8,6 +8,9 @@
 #ifndef WX_PRECOMP
   #include <wx/wx.h>
 #endif
+// It is important that the glad header is included before wx/glcanvas.h
+#include <glad/glad.h>
+#include <wx/glcanvas.h>
 
 #include "gui/model.h"
 #include "gui/parameter_frame.h"
@@ -35,15 +38,29 @@ class app : public wxApp {
   // Represents all the data used in this program.
   model modelData;
 
+  // glContextAttributes is used for initializing any opengl contexts in this
+  // program. glAttributes is used for initializing any glCanvas in this program.
+  wxGLContextAttrs glContextAttributes;
+  wxGLAttributes glAttributes;
+  
+  // The opengl context used across all windows for rendering.
+  wxGLContext* glContext;
+  
   // A mapping from the id's of the dynamical/parameter windows to their
   // gui frames.
-  std::unordered_map<int, dynamical_frame*> dynamicalFrames;
-  std::unordered_map<int, parameter_frame*> parameterFrames;
+  typedef int dynamical_window_id;
+  typedef int parameter_window_id;
+  std::unordered_map<dynamical_window_id, dynamical_frame*> dynamicalFrames;
+  std::unordered_map<parameter_window_id, parameter_frame*> parameterFrames;
 
   // The main frame that is always shown.
   console_frame* consoleFrame;
   
  public:
+  app();
+  
+  ~app();
+  
   virtual bool OnInit() override;
   
   // Called when the last frame has been closed.
@@ -52,8 +69,18 @@ class app : public wxApp {
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model();
+
+  // Returns a reference to the opengl context used in this program.
+  const wxGLContext& get_gl_context();
+
+  // Returns a reference to the attributes used for constructing all opengl
+  // canvas's in this program.
+  const wxGLAttributes& get_gl_attributes();
+
+  // The event handler for our custom event which will setup opengl.
+  void setup_opengl();
 };
+
 } // namespace gui
 } // namespace dynsolver
-
 #endif

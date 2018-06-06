@@ -1,6 +1,8 @@
 #ifndef DYNSOLVER_GUI_DYNAMICAL_FRAME_H_
 #define DYNSOLVER_GUI_DYNAMICAL_FRAME_H_
 
+#include <wx/glcanvas.h>
+
 #include "gui/generated.h"
 
 namespace dynsolver {
@@ -15,8 +17,12 @@ class dynamical_frame : public dynamical_frame_base {
   // A reference to the model object of this program. 
   app& appl;
 
+  // The opengl canvas and opengl context used to render the dynamical window
+  wxGLCanvas* glCanvas;
+  
   // The id associated to this frame.
-  int id;
+  typedef int dynamical_window_id;
+  dynamical_window_id id;
   
  public:
   dynamical_frame(app&, int id);

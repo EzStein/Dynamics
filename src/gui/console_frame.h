@@ -3,11 +3,10 @@
 
 #include "gui/generated.h"
 
+
 namespace dynsolver {
 namespace gui {
-
 class app;
-
 // Subclass of the console_frame_base implements the view controller for the
 // main frame of the app.
 class console_frame : public console_frame_base {
@@ -16,6 +15,7 @@ class console_frame : public console_frame_base {
   
  public:
   console_frame(app&);
+  virtual void compile_button_on_button_click(wxCommandEvent&) override;
 };
 } // namespace gui
 } // namespace dynsolver

@@ -9,9 +9,10 @@
 #include "compiler/function.h"
 #include "math/vector.h"
 
-
 namespace dynsolver {
 namespace gui {
+
+class app;
 
 // Contains helper classes
 // Represents a point in 2 dimensions.
@@ -114,27 +115,11 @@ struct singular_point {
   std::vector<eigenvector> eignvectors;
 };*/
 
-// Represents a single solution
-// and all of its points ordered by the time component.
-class solution_data {
- public:
-  // Constructs the solution data from the given points.
-  solution_data(const std::vector<math::vector>&);
-  
- private:
-  // The list of points ordered by the time component.
-  std::vector<math::vector> points;
-  
-  // This is a copy of the above data in a form that openGL
-  // can interpret. More documentation to come.
-  std::vector<float> gl_raw;
-};
-
 // A specification for drawing a solution through an initial point.
 class solution {
  public:
   solution(const math::vector& initial, double tMax, double tMin, double increment,
-           const solution_data& data);
+           const std::vector<math::vector>& data);
  private:
   // The starting point of the solution including the initial value of t.
   math::vector initial;
@@ -151,8 +136,11 @@ class solution {
   // Currently we use standard euler's method. This indicates the standard
   // increment.
   double increment;
-  
-  solution_data data;
+
+  // The points of the solution, stored as an array of math::vector's ordered
+  // by the time component.
+  // NOTE: This is actually inefficient, consider using a 2-D array.
+  std::vector<math::vector> data;
 };
 
 // Represents information associated with an instance of a dynamical window.
@@ -200,21 +188,10 @@ struct expression {
 // model has changed.
 class model {
  private:
-  // True if the model is currently representing a compiled system.
-  // False if no system is being viewed. If false, the following variables,
-  // have no meaning and do not need to satisfy invariants.
-  bool compiled;
-
-  // These are id's which are currently not mapped in the unordered_map
-  // of dynamical and parameter windows.
-  int uniqueDynamicalId;
-  int uniqueParameterId;
-  
   // The number of variables involved including the variable of differentiation, t.
   // Should always be 2 or greater. This number shall be denoted as n, and the dimension
   // of the vector field shall be denoted as d = n - 1.
-  int dynamicalVariables;
-  // One less than the number of dynamical variables.
+  // We only store the dimension of the vector field.
   int dynamicalDimension;
 
   // The number of parameters used. Should be nonnegative.
@@ -228,9 +205,17 @@ class model {
   // Each dynamical and parameter window will have an id. The id is associated
   // with the some information in the following maps. The id is also used to
   // lookup the appropriate frames in the app class.
-  std::unordered_map<int, dynamical_window> dynamicalWindows;
-  std::unordered_map<int, parameter_window> parameterWindows;
+  // Consider using strong typdefs
+  typedef int dynamical_window_id;
+  std::unordered_map<dynamical_window_id, dynamical_window> dynamicalWindows;
+  // This is an id number which is not currently mapped in dynamicalWindows map.
+  dynamical_window_id uniqueDynamicalId;
+  typedef int parameter_window_id;
+  std::unordered_map<parameter_window_id, parameter_window> parameterWindows;
+  // This is an id number which is not currently mapped in parameterWindows map.
+  parameter_window_id uniqueParameterId;
 
+  
   // The following variables are updated on every recompile.
   
   // The following stores CAS syntax tree info.
@@ -250,15 +235,31 @@ class model {
   
   // The following variables demonstrate what to draw on the dynamical plane.
   // They are specifications for what to draw, and the actually pixel data.
-  std::list<solution> solutions;
+  // Each solution has a unique id.
+  typedef int solution_id;
+  std::unordered_map<solution_id, solution> solutions;
+  // All solutions mapped have id's strictly less than this number.
+  solution_id uniqueSolutionId;
   
   // Indicates the current parameter values that are being used to draw on the
   // dynamical plane. This position also shows up on the parameter plane.
   math::vector parameterPosition;
 
   window2d defaultWindow;
+
+  // True if the model is currently representing a compiled system.
+  // False if no system is being viewed. If false, the following variables,
+  // have no meaning and do not need to satisfy any invariants.
+  bool compiled;
  public:
   model();
+  
+  // The dynamical dimension is one less than the number of dynamical variables.
+  int get_dynamical_dimension();
+
+  // Returns the number of dynamical variables including the variable of
+  // integration t.
+  int get_dynamical_variables();
 
   // Sets the number of parameters used.
   // Requires that the provided integer is non-negative.

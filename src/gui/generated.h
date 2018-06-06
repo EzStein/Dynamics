@@ -50,6 +50,10 @@ class console_frame_base : public wxFrame
 		wxPanel* parametersTableBox;
 		wxPanel* objectsTableBox;
 		wxStatusBar* statusBar;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
+		
 	
 	public:
 		
@@ -67,6 +71,7 @@ class dynamical_frame_base : public wxFrame
 	private:
 	
 	protected:
+		wxPanel* dynamicalWindowBox;
 		wxStatusBar* m_statusBar2;
 		wxMenu* m_menu21;
 		wxMenuBar* m_menubar1;

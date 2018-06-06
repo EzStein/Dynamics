@@ -80,13 +80,8 @@ void window2d::scale_real(point2d scale, point2d real) {
   scale_pixel(scale, pixel_coordinate_of(real));
 }
 
-solution_data::solution_data(const std::vector<math::vector>& points) :
-    points(points) {
-  
-}
-
 solution::solution(const math::vector& initial, double tMax, double tMin,
-                   double increment, const solution_data& data) :
+                   double increment, const std::vector<math::vector>& data) :
     initial(initial), tMax(tMax), tMin(tMin), increment(increment), data(data) { }
 
 dynamical_window::dynamical_window(window2d window, int horizontalAxisVariable,
@@ -99,24 +94,27 @@ parameter_window::parameter_window(window2d window, int horizontalAxisVariable,
     window(window), horizontalAxisVariable(horizontalAxisVariable),
     verticalAxisVariable(verticalAxisVariable) { }
 
-model::model() : compiled(false),
+model::model() : uniqueDynamicalId(0), uniqueParameterId(0),
+                 parameterPosition(1, 0.0),
                  defaultWindow(window2d(point2d(500, 500),
                                         point2d(10, 10),
                                         point2d(-5, 5))),
-                 parameterPosition(1, 0.0),
-                 uniqueDynamicalId(0), uniqueParameterId(0) { }
+                 compiled(false) { }
+
 
 void model::add_initial_value_solution(const math::vector& initial,
                                        double tMin, double tMax,
                                        double increment) {
-  assert(initial.size() == dynamicalVariables);
+  assert(initial.size() == get_dynamical_variables());
   assert(initial[0] > tMin && initial[0] < tMax && increment > 0);
   assert(compiled);
   std::vector<math::vector> points;
-  int pointsCount = static_cast<int>(
-      (tMax - tMin)/increment);
-  points.resize(pointsCount, math::vector(dynamicalVariables, 0.0));
-  int initialIndex = static_cast<int>((initial[0] - tMin)/increment);
+  std::vector<math::vector>::size_type pointsCount =
+      static_cast<std::vector<math::vector>::size_type>((tMax - tMin)/increment);
+  points.resize(pointsCount, math::vector(get_dynamical_variables(), 0.0));
+  std::vector<math::vector>::size_type initialIndex
+      = static_cast<std::vector<math::vector>::size_type>(
+          (initial[0] - tMin)/increment);
   std::vector<compiler::function<double, const double*>> systemFunctions;
 
   for(std::vector<expression>::const_iterator iter = system.begin();
@@ -124,7 +122,7 @@ void model::add_initial_value_solution(const math::vector& initial,
     systemFunctions.push_back(iter->function);
   }
   
-  int i = initialIndex;
+  std::vector<math::vector>::size_type i = initialIndex;
   math::vector tmp(initial);
   // Fill in forwards
   while(i < points.size() && tmp[0] <= tMax) {
@@ -138,26 +136,27 @@ void model::add_initial_value_solution(const math::vector& initial,
   }
   i = initialIndex;
   tmp = initial;
+  
   // Fill in backwards
-  while(i >= 0 && tmp[0] >= tMin) {
+  while(i > 0 && tmp[0] >= tMin) {
     points[i] = tmp;
     math::euler(tmp, systemFunctions, parameterPosition, -increment);
     --i;
   }
-  while(i >= 0) {
+  while(i > 0) {
     points[i] = points[i + 1];
     --i;
   }
+  points[i] = points[i + 1];
   
-  solutions.push_back(
-      solution(initial, tMax, tMin, increment, solution_data(points)));
+  solutions.insert(std::make_pair(++uniqueSolutionId,
+                                  solution(initial, tMax, tMin, increment, points)));
 }
                     
 bool model::compile(std::vector<std::string> newExpressions) {
   assert(newExpressions.size() >= 1);
   expressions = newExpressions;
-  dynamicalDimension = expressions.size();
-  dynamicalVariables = dynamicalDimension + 1;
+  dynamicalDimension = static_cast<int>(expressions.size());
   // parameterVariables remains unchanged.
 
   for(std::unordered_map<int, dynamical_window>::iterator
@@ -202,7 +201,7 @@ bool model::compile(std::vector<std::string> newExpressions) {
     symbolTable.push_back(symbol("t",0,0));
     for(int i = 0; i != dynamicalDimension; ++i) {
       std::string str("x" + std::to_string(i + 1));
-      symbolTable.push_back(symbol(str,i+1, i+1));
+      symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
     }
   }
   
@@ -237,7 +236,7 @@ bool model::compile(std::vector<std::string> newExpressions) {
     system.push_back(expression{ast, function});
     for(symbol sym : symbolTable) {
       //We must check that the symbol is indeed a variable and not a parameter
-      if(sym.parameter == 0 || sym.parameter >= dynamicalVariables)
+      if(sym.parameter == 0 || sym.parameter >= get_dynamical_variables())
         continue;
       AST diffAst = AST(ast).differentiate(sym.name);
       compiler::function<double, const double*> diffFunction = diffAst.compile();
@@ -264,8 +263,8 @@ int model::add_parameter_window(window2d window, int horizontalAxisVariable,
 
 int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
                                 int verticalAxisVariable) {
-  assert(horizontalAxisVariable < dynamicalVariables);
-  assert(verticalAxisVariable < dynamicalVariables);
+  assert(horizontalAxisVariable < get_dynamical_variables());
+  assert(verticalAxisVariable < get_dynamical_variables());
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
@@ -275,8 +274,8 @@ int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
 
 void model::set_dynamical_axes(int horizontalVariable, int verticalVariable,
                                int dynamicalId) {
-  assert(horizontalVariable < dynamicalVariables);
-  assert(verticalVariable < dynamicalVariables);
+  assert(horizontalVariable < get_dynamical_variables());
+  assert(verticalVariable < get_dynamical_variables());
   dynamicalWindows.at(dynamicalId).horizontalAxisVariable = horizontalVariable;
   dynamicalWindows.at(dynamicalId).verticalAxisVariable = verticalVariable;
 }
@@ -291,6 +290,14 @@ void model::set_parameter_axes(int horizontalVariable, int verticalVariable,
 
 void model::set_parameters(int parameters) {
   parameterVariables = parameters;
+}
+
+int model::get_dynamical_variables() {
+  return dynamicalDimension + 1;
+}
+
+int model::get_dynamical_dimension() {
+  return dynamicalDimension;
 }
 
 void model::move_dynamical_window(int x, int y, int) { assert(false); }
