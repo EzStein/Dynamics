@@ -1,24 +1,24 @@
 #ifndef DYNSOLVER_GUI_APP_H_
 #define DYNSOLVER_GUI_APP_H_
-#include <glad/glad.h>
-#include <vector>
+
 #include <unordered_map>
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-  #include <wx/wx.h>
-#endif
+// Included first since this has implications on how opengl functions.
+#include <glad/glad.h>
 #include <wx/glcanvas.h>
 
-#include "gui/model.h"
-#include "gui/parameter_frame.h"
-#include "gui/dynamical_frame.h"
-#include "gui/console_frame.h"
 
-#define PROJECT_PATH "/home/ezra/Documents/projects/hubbard_research"
+#include "gui/common.h"
+#include "gui/model.h"
+
+class wxDialog;
 
 namespace dynsolver {
 namespace gui {
+
+class dynamical_frame;
+class parameter_frame;
+class console_frame;
 
 // WxWidgets will call the OnInit method of this class on program startup.
 // This class handles communication between all the windows and dialogs.
@@ -33,6 +33,10 @@ namespace gui {
 // the event is not responsible for updating after the event.
 class app : public wxApp {
  private:
+  // A custom logger for handling error and warning messages.
+  // Currently we direct everything to standard error.
+  wxLogStderr customLogger;
+  
   // Represents all the data used in this program.
   model modelData;
 
@@ -44,10 +48,6 @@ class app : public wxApp {
   // The opengl context used across all windows for rendering.
   wxGLContext* glContext;
   
-  // A mapping from the id's of the dynamical/parameter windows to their
-  // gui frames.
-  typedef int dynamical_window_id;
-  typedef int parameter_window_id;
   std::unordered_map<dynamical_window_id, dynamical_frame*> dynamicalFrames;
   std::unordered_map<parameter_window_id, parameter_frame*> parameterFrames;
 
@@ -75,8 +75,17 @@ class app : public wxApp {
   // canvas's in this program.
   const wxGLAttributes& get_gl_attributes();
 
-  // The event handler for our custom event which will setup opengl.
-  void setup_opengl(wxCommandEvent&);
+  void paint_dynamical_window(dynamical_window_id);
+  void resize_dynamical_window(dynamical_window_id);
+
+  wxGLContextAttrs getGlContextAttributes();
+  wxGLAttributes getGlAttributes();
+
+  void add_solution(const math::vector&, double, double, double);
+
+private:
+  // Sends a refresh request to the glCanvas's of all dynamical windows.
+  void refresh_dynamical_windows();
 };
 
 } // namespace gui

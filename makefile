@@ -122,6 +122,7 @@ WARNINGS = -pedantic
     -Wunused-function  -Wunused-label  -Wunused-parameter \
     -Wunused-value  -Wunused-variable  -Wvariadic-macros \
     -Wvolatile-register-var  -Wwrite-strings
+#WARNINGS = -Weverything
 
 all: app test debug
 
@@ -134,7 +135,7 @@ debug: $(BUILD_DIR)/$(DEBUG_NAME)
 $(BUILD_DIR)/$(APP_NAME): $(APP_OBJS)
 	@mkdir -p $(@D)
 	@echo Linking App...
-	$(CC) $^ $(LIBRARY_FLAGS) -o $@
+	@$(CC) $^ $(LIBRARY_FLAGS) -o $@
 
 $(BUILD_DIR)/$(TEST_NAME): $(TEST_OBJS)
 	@mkdir -p $(@D)

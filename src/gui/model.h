@@ -1,16 +1,27 @@
 #ifndef DYNSOLVER_GUI_MODEL_H_
 #define DYNSOLVER_GUI_MODEL_H_
 
-#include <list>
 #include <vector>
 #include <unordered_map>
 
+#include <glad/glad.h>
+
+#include "common.h"
 #include "compiler/ast/AST.h"
 #include "compiler/function.h"
 #include "math/vector.h"
 
+
+class wxGLCanvas;
+class wxGLContext;
+
+
 namespace dynsolver {
+namespace math {
+class square_matrix;
+}
 namespace gui {
+
 
 class app;
 
@@ -88,39 +99,21 @@ class window2d {
 
   // Scales the window by scale about the pixel point provided.
   void scale_pixel(point2d scale, point2d pixel);
-};
 
-/*struct isocline {
-  // Specifies the direction that the vector field points on the level set
-  // curve. The vector should be nonzero. The magnitude of direction has
-  // no effect on the resulting level set. The t variable is excluded.
-  math::vector direction;
-};
+  point2d get_size() const;
+  point2d get_position() const;
+  point2d get_center() const;
 
-struct eigenvector {
-  // The direction of the eigenvector.
-  math::vector direction;
-  
-  // The eigenvalue
-  double value;
+  // This transformation matrix is a 4x4 matrix which maps
+  // real coordinates to normalized device coordinates for use in opengl.
+  math::square_matrix get_transformation_matrix();
 };
-
-struct singular_point {
-  enum class type {
-    NODE, SPIRAL, SADDLE
-  };
-  type type;
-  math::vector location;
-  
-  std::vector<eigenvector> eignvectors;
-};*/
 
 // A specification for drawing a solution through an initial point.
-class solution {
- public:
+struct solution {
   solution(const math::vector& initial, double tMax, double tMin, double increment,
-           const std::vector<math::vector>& data);
- private:
+	   const std::vector<math::vector>&);
+  
   // The starting point of the solution including the initial value of t.
   math::vector initial;
 
@@ -137,17 +130,57 @@ class solution {
   // increment.
   double increment;
 
-  // The points of the solution, stored as an array of math::vector's ordered
-  // by the time component.
-  // NOTE: This is actually inefficient, consider using a 2-D array.
   std::vector<math::vector> data;
+};
+
+// This class manages a vertex buffer object.
+// It is an RAII style class representing a VBO.
+// One may think of this object as containing the actuall vertex
+// data.
+class vbo_manager {
+private:
+  GLenum storage;
+  GLuint vbo;
+  size_t size;
+  
+public:
+  // Constructs an unintialized VBO.
+  vbo_manager(GLenum storage);
+
+  // Constructs a VBO with the given data.
+  vbo_manager(unsigned char* data, size_t size, GLenum storage);
+
+  // Destroys the VBO
+  ~vbo_manager();
+
+  // Copy and move constructors
+  vbo_manager(const vbo_manager&);
+  vbo_manager(vbo_manager&&);
+
+  // Copy and move assignment
+  vbo_manager& operator=(const vbo_manager&);
+  vbo_manager& operator=(vbo_manager&&);
+
+  // Returns the VBO index.
+  // NOTE: this index should be used only to read the
+  // VBO. Do not use it to modify its contents.
+  GLuint get_vbo() const;
+
+  // Returns the number of bytes stored in the VBO.
+  size_t get_size() const;
+
+  // Copies the data pointed to by data into the VBO.
+  // The number of bytes copied is given by size.
+  // Requires that size is nonzero.
+  void set_data(unsigned char* data, size_t size);
 };
 
 // Represents information associated with an instance of a dynamical window.
 // Multiple dynamical windows may be open at any given time.
 class dynamical_window {
- public:
-  // Information about the dynamical plane.
+ private:
+  // This represents the viewport area of the dynamical plane visible
+  // in this window.
   window2d window;
   
   // An integer representing which variable corresponds to which axis.
@@ -156,8 +189,41 @@ class dynamical_window {
   int horizontalAxisVariable;
   int verticalAxisVariable;
 
-  dynamical_window(window2d window, int horizontalAxisVariable,
-                   int verticalAxisVariable);
+  GLuint vao;
+  GLuint program;
+  
+  struct solution_render_data {
+    vbo_manager vbo;
+    unsigned int vertices;
+  };
+
+  typedef std::unordered_map<solution_id,
+			     solution_render_data>::const_iterator solution_iter;
+  
+  // This map associates a solution to the opengl render data.
+  std::unordered_map<solution_id, solution_render_data> solutionRenderData;
+  
+public:
+  dynamical_window(const window2d& window, int horizontalAxisVariable,
+                   int verticalAxisVariable, GLuint vao, GLuint program,
+		   const std::unordered_map<solution_id, solution>&);
+
+  // Getters and setters
+  void set_horizontal_axis_variable(int);
+  int get_horizontal_axis_variable() const;
+  void set_vertical_axis_variable(int);
+  int get_vertical_axis_variable() const;
+  void set_window(const window2d&);
+
+  // Renders the window to the currently bound context.
+  void paint();
+  
+  void resize();
+
+  // Generates a VBo for the corresponding solution data and id.
+  void generate_vbo(solution_id, const std::vector<math::vector>&);
+
+  const window2d& get_window() const;
 };
 
 class parameter_window {
@@ -170,7 +236,7 @@ class parameter_window {
   int horizontalAxisVariable;
   int verticalAxisVariable;
   
-  parameter_window(window2d window, int horizontalAxisVariable,
+  parameter_window(const window2d& window, int horizontalAxisVariable,
                    int verticalAxisVariable);
 };
 
@@ -183,9 +249,10 @@ struct expression {
 
 // This class is used to hold all the data behind the GUI system.
 // In general, the data can only be accessed using getters and setters.
-// This class is completely decoupled from the view. It is the responsibility of
+// This class almost completely decoupled from the view. It is the responsibility of
 // the view to update the user interface when it expects that a value in the
-// model has changed.
+// model has changed. The exception is that all opengl work occurs in this
+// file.
 class model {
  private:
   // The number of variables involved including the variable of differentiation, t.
@@ -206,12 +273,13 @@ class model {
   // with the some information in the following maps. The id is also used to
   // lookup the appropriate frames in the app class.
   // Consider using strong typdefs
-  typedef int dynamical_window_id;
   std::unordered_map<dynamical_window_id, dynamical_window> dynamicalWindows;
+  
   // This is an id number which is not currently mapped in dynamicalWindows map.
   dynamical_window_id uniqueDynamicalId;
-  typedef int parameter_window_id;
+
   std::unordered_map<parameter_window_id, parameter_window> parameterWindows;
+  
   // This is an id number which is not currently mapped in parameterWindows map.
   parameter_window_id uniqueParameterId;
 
@@ -236,8 +304,8 @@ class model {
   // The following variables demonstrate what to draw on the dynamical plane.
   // They are specifications for what to draw, and the actually pixel data.
   // Each solution has a unique id.
-  typedef int solution_id;
   std::unordered_map<solution_id, solution> solutions;
+  
   // All solutions mapped have id's strictly less than this number.
   solution_id uniqueSolutionId;
   
@@ -251,15 +319,33 @@ class model {
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
   bool compiled;
+
+  // True once opengl is initialized. Most of the above functions require
+  // that opengl be initialized in order to function correctly.
+  bool glInitialized;
+
+  // These two variables represent the opengl program and VAO.
+  GLuint vao;
+  GLuint program;
+  
  public:
   model();
   
+  ~model();
+
+  void paint_dynamical_window(dynamical_window_id id);
+  void resize_dynamical_window(dynamical_window_id id);
+
+  // Called exactly once when opengl is initialized.
+  // Within this method, the context provided is set current.
+  void initialize_opengl();
+  
   // The dynamical dimension is one less than the number of dynamical variables.
-  int get_dynamical_dimension();
+  int get_dynamical_dimension() const;
 
   // Returns the number of dynamical variables including the variable of
   // integration t.
-  int get_dynamical_variables();
+  int get_dynamical_variables() const;
 
   // Sets the number of parameters used.
   // Requires that the provided integer is non-negative.
@@ -297,10 +383,10 @@ class model {
   // of the newly added window. Requires that the axis variables fall
   // within the appropriate range.
   int add_dynamical_window(window2d window, int horizontalAxisVariable,
-                                  int verticalAxisVariable);
+			   int verticalAxisVariable);
   int add_parameter_window(window2d window, int horizontalAxisVariable,
                                   int verticalAxisVariable);
-
+  
   // Adjusts the position/scale of the dynamical/parameter
   // window according to the number of pixels shown and/or the scale.
   void move_dynamical_window(int x, int y, int dynamicalId);
@@ -308,7 +394,10 @@ class model {
 
   void move_parameter_window(int x, int y, int parameterId);
   void scale_parameter_window(double scale, int x, int y, int parameterId);
+
+  const dynamical_window& get_dynamical_window(dynamical_window_id) const;
 };
 } // namespace gui
 } // namespace dynsolver
 #endif
+

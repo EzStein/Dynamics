@@ -231,7 +231,6 @@ std::string AST::emit_code_amd64() const {
   "movq %rbp, %rsp\n"
   "popq %rbp\n"
   "retq";
-  std::cout << retVal << std::endl;
   return retVal;
 }
 

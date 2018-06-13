@@ -71,7 +71,7 @@ class dynamical_frame_base : public wxFrame
 	private:
 	
 	protected:
-		wxPanel* dynamicalWindowBox;
+		wxBoxSizer* dynamicalWindowBox;
 		wxStatusBar* m_statusBar2;
 		wxMenu* m_menu21;
 		wxMenuBar* m_menubar1;
@@ -79,16 +79,6 @@ class dynamical_frame_base : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void dynamical_frame_on_set_focus( wxFocusEvent& event ) = 0;
-		virtual void dynamical_window_box_on_key_down( wxKeyEvent& event ) = 0;
-		virtual void dynamical_window_box_on_key_up( wxKeyEvent& event ) = 0;
-		virtual void dynamical_window_box_on_left_down( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_left_up( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_motion( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_mouse_wheel( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_paint( wxPaintEvent& event ) = 0;
-		virtual void dynamical_window_box_on_right_down( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_right_up( wxMouseEvent& event ) = 0;
-		virtual void dynamical_window_box_on_size( wxSizeEvent& event ) = 0;
 		
 	
 	public:

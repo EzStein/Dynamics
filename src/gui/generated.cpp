@@ -140,14 +140,10 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
-	wxBoxSizer* bSizer34;
-	bSizer34 = new wxBoxSizer( wxVERTICAL );
-	
-	dynamicalWindowBox = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	bSizer34->Add( dynamicalWindowBox, 1, wxEXPAND | wxALL, 5 );
+	dynamicalWindowBox = new wxBoxSizer( wxVERTICAL );
 	
 	
-	this->SetSizer( bSizer34 );
+	this->SetSizer( dynamicalWindowBox );
 	this->Layout();
 	m_statusBar2 = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
 	m_menu21 = new wxMenu();
@@ -184,32 +180,12 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	
 	// Connect Events
 	this->Connect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
-	dynamicalWindowBox->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( dynamical_frame_base::dynamical_window_box_on_key_down ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_KEY_UP, wxKeyEventHandler( dynamical_frame_base::dynamical_window_box_on_key_up ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_left_down ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_left_up ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_motion ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_mouse_wheel ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::dynamical_window_box_on_paint ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_right_down ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_right_up ), NULL, this );
-	dynamicalWindowBox->Connect( wxEVT_SIZE, wxSizeEventHandler( dynamical_frame_base::dynamical_window_box_on_size ), NULL, this );
 }
 
 dynamical_frame_base::~dynamical_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
-	dynamicalWindowBox->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( dynamical_frame_base::dynamical_window_box_on_key_down ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_KEY_UP, wxKeyEventHandler( dynamical_frame_base::dynamical_window_box_on_key_up ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_left_down ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_left_up ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_motion ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_mouse_wheel ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::dynamical_window_box_on_paint ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_right_down ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::dynamical_window_box_on_right_up ), NULL, this );
-	dynamicalWindowBox->Disconnect( wxEVT_SIZE, wxSizeEventHandler( dynamical_frame_base::dynamical_window_box_on_size ), NULL, this );
 	
 	delete m_menu21; 
 }

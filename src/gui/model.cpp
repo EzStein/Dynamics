@@ -3,8 +3,14 @@
 #include <vector>
 #include <cassert>
 
+#include <glad/glad.h>
+#include <wx/glcanvas.h>
+
 #include "compiler/expression_parser.h"
 #include "math/util.h"
+#include "math/vector.h"
+#include "constants.h"
+#include "gui/gl_util.h"
 
 namespace dynsolver {
 namespace gui {
@@ -48,6 +54,14 @@ point2d window2d::real_coordinate_of(point2d pixel) const {
   return real;
 }
 
+point2d window2d::get_size() const {
+  return size;
+}
+
+point2d window2d::get_position() const{
+  return position;
+}
+
 bool window2d::contains_pixel(point2d pixel) const {
   return (pixel.x() >= 0 && pixel.x() < size.x()
           && pixel.y() >= 0 && pixel.y() < size.y());
@@ -80,16 +94,197 @@ void window2d::scale_real(point2d scale, point2d real) {
   scale_pixel(scale, pixel_coordinate_of(real));
 }
 
+point2d window2d::get_center() const {
+  point2d center;
+  center.x() = position.x() + span.x()/2;
+  center.y() = position.y() - span.y()/2;
+  return center;
+}
+
+math::square_matrix window2d::get_transformation_matrix() {
+  point2d center(get_center());
+  math::square_matrix mat(4, 0.0);
+  mat[0][0] = 2.0/span.x();
+  mat[0][3] = -center.x()*mat[0][0];
+
+  mat[1][1] = 2.0/span.y();
+  mat[1][3] = -center.y()*mat[1][1];
+
+  mat[2][2] = 1;
+  mat[3][3] = 1;
+  return mat;
+}
+
 solution::solution(const math::vector& initial, double tMax, double tMin,
                    double increment, const std::vector<math::vector>& data) :
     initial(initial), tMax(tMax), tMin(tMin), increment(increment), data(data) { }
 
-dynamical_window::dynamical_window(window2d window, int horizontalAxisVariable,
-                                   int verticalAxisVariable) :
-    window(window), horizontalAxisVariable(horizontalAxisVariable),
-    verticalAxisVariable(verticalAxisVariable) { }
+dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVariable,
+                                   int verticalAxisVariable, GLuint vao, GLuint program,
+				   const std::unordered_map<solution_id, solution>& solutions) :
+  window(window), horizontalAxisVariable(horizontalAxisVariable), vao(vao), program(program),
+    verticalAxisVariable(verticalAxisVariable) {
+  
+  for(std::unordered_map<solution_id, solution>::const_iterator iter = solutions.begin();
+      iter != solutions.end(); ++iter) {
+    // Foreach solution
+    std::vector<float> data;
+    size_t points = iter->second.data.size();
+    size_t size = points * 2 * sizeof(float);
+    for(std::vector<math::vector>::const_iterator point = iter->second.data.begin();
+	point != iter->second.data.end(); ++point) {
+      data.push_back((*point)[horizontalAxisVariable]);
+      data.push_back((*point)[verticalAxisVariable]);
+    }
+    vbo_manager vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
+    solution_render_data val{vbo, points};
+    solutionRenderData.insert(std::make_pair(iter->first, val));
+  }
+}
 
-parameter_window::parameter_window(window2d window, int horizontalAxisVariable,
+void dynamical_window::set_horizontal_axis_variable(int val) {
+  horizontalAxisVariable = val;
+}
+int dynamical_window::get_horizontal_axis_variable() const {
+  return horizontalAxisVariable;
+}
+void dynamical_window::set_vertical_axis_variable(int val) {
+  verticalAxisVariable = val;
+}
+int dynamical_window::get_vertical_axis_variable() const {
+  return verticalAxisVariable;
+}
+void dynamical_window::set_window(const window2d& val) {
+  window = val;
+}
+
+const window2d& dynamical_window::get_window() const {
+  return window;
+}
+
+void dynamical_window::generate_vbo(solution_id id, const std::vector<math::vector>& solution) {
+  std::vector<float> data;
+  size_t points = solution.size();
+  size_t size = points * 2 * sizeof(float);
+  for(std::vector<math::vector>::const_iterator point = solution.begin();
+      point != solution.end(); ++point) {
+    data.push_back((*point)[horizontalAxisVariable]);
+    data.push_back((*point)[verticalAxisVariable]);
+  }
+  vbo_manager vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
+  solution_render_data val{vbo, points};
+  solutionRenderData.insert(std::make_pair(id, val));
+}
+
+void dynamical_window::paint() {
+  glViewport(0, 0, window.get_size().x(), window.get_size().y());
+  glUseProgram(program);
+  glBindVertexArray(vao);
+  GLuint location =
+    glGetUniformLocation(program, constants::vertex_shader::kTransformationUniform.c_str());
+  math::square_matrix mat(window.get_transformation_matrix());
+  float float_data[16];
+  
+  for(int i = 0; i != 4; ++i) {
+    for(int j = 0; j != 4; ++j) {
+      float_data[4*i+j] =
+	mat[i][j];
+    }
+  }
+  
+  glUniformMatrix4fv(location, 1, true, float_data);
+  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  for(solution_iter iter = solutionRenderData.begin();
+      iter != solutionRenderData.end(); ++iter) {
+    glBindVertexBuffer(constants::vertex_shader::kVertexBinding,
+		       iter->second.vbo.get_vbo(), 0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+  
+void dynamical_window::resize() { }
+
+vbo_manager::vbo_manager(GLenum storage) : storage(storage), size(0) {
+  glGenBuffers(1, &vbo);
+}
+
+vbo_manager::vbo_manager(unsigned char* data, size_t size, GLenum storage)
+   : storage(storage), size(size) {
+  glGenBuffers(1, &vbo);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
+  glBufferData(GL_COPY_WRITE_BUFFER, size, data, storage);
+}
+
+vbo_manager::~vbo_manager() {
+  // Does nothing if VBO is 0
+  glDeleteBuffers(1, &vbo);
+}
+
+vbo_manager::vbo_manager(const vbo_manager& other) :
+  storage(other.storage), size(other.size) {
+  glGenBuffers(1, &vbo);
+  if(size != 0) {
+    glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
+    glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
+    glBindBuffer(GL_COPY_READ_BUFFER, other.vbo);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size);
+  }
+}
+
+vbo_manager::vbo_manager(vbo_manager&& other) : vbo(other.vbo),
+  storage(other.storage), size(other.size) {
+  // Prevent the vbo from being destroyed.
+  other.vbo = 0;
+}
+
+vbo_manager& vbo_manager::operator=(const vbo_manager& other) {
+  if(&other == this) return *this;
+  glDeleteBuffers(1, &vbo);
+  
+  storage = other.storage;
+  size = other.size;
+  glGenBuffers(1, &vbo);
+  if(size != 0) {
+    glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
+    glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
+    glBindBuffer(GL_COPY_READ_BUFFER, other.vbo);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size);
+  }
+}
+
+vbo_manager& vbo_manager::operator=(vbo_manager&& other) {
+  if(&other == this) return *this;
+  storage = other.storage;
+  size = other.size;
+  vbo = other.vbo;
+  
+  // Prevent the vbo from being destroyed.
+  other.vbo = 0;
+  return *this;
+}
+
+void vbo_manager::set_data(unsigned char* data, size_t newSize) {
+  glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
+  if(newSize > size) {
+    // The buffer must increase so we reallocate.
+    glBufferData(GL_COPY_WRITE_BUFFER, newSize, data, storage);
+  } else {
+    // We can reuse the same buffer
+    glBufferSubData(GL_COPY_WRITE_BUFFER, 0, newSize, data);
+  }
+  size = newSize;
+}
+
+GLuint vbo_manager::get_vbo() const {
+  return vbo;
+}
+
+size_t vbo_manager::get_size() const {
+  return size;
+}
+
+parameter_window::parameter_window(const window2d& window, int horizontalAxisVariable,
                                    int verticalAxisVariable) :
     window(window), horizontalAxisVariable(horizontalAxisVariable),
     verticalAxisVariable(verticalAxisVariable) { }
@@ -99,7 +294,15 @@ model::model() : uniqueDynamicalId(0), uniqueParameterId(0),
                  defaultWindow(window2d(point2d(500, 500),
                                         point2d(10, 10),
                                         point2d(-5, 5))),
-                 compiled(false) { }
+                 compiled(false),
+		 glInitialized(false) { }
+
+model::~model() {
+  if(glInitialized) {
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(program);
+  }
+}
 
 
 void model::add_initial_value_solution(const math::vector& initial,
@@ -148,9 +351,15 @@ void model::add_initial_value_solution(const math::vector& initial,
     --i;
   }
   points[i] = points[i + 1];
-  
-  solutions.insert(std::make_pair(++uniqueSolutionId,
+
+  int solutionId = ++uniqueSolutionId;
+  solutions.insert(std::make_pair(solutionId,
                                   solution(initial, tMax, tMin, increment, points)));
+  // We now need to update the VBO's of each window.
+  for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
+	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
+    iter->second.generate_vbo(solutionId, solutions.at(solutionId).data);
+  }
 }
                     
 bool model::compile(std::vector<std::string> newExpressions) {
@@ -163,9 +372,9 @@ bool model::compile(std::vector<std::string> newExpressions) {
           iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
     // For each dynamicalWindow
-    iter->second.window = defaultWindow;
-    iter->second.horizontalAxisVariable = 0;
-    iter->second.verticalAxisVariable = 1;
+    iter->second.set_window(defaultWindow);
+    iter->second.set_horizontal_axis_variable(0);
+    iter->second.set_vertical_axis_variable(1);
   }
   for(std::unordered_map<int, parameter_window>::iterator
           iter = parameterWindows.begin();
@@ -268,7 +477,8 @@ int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
-          dynamical_window(window, horizontalAxisVariable, verticalAxisVariable)));
+          dynamical_window(window, horizontalAxisVariable, verticalAxisVariable,
+			   vao, program, solutions)));
   return uniqueDynamicalId++;
 }
 
@@ -276,8 +486,8 @@ void model::set_dynamical_axes(int horizontalVariable, int verticalVariable,
                                int dynamicalId) {
   assert(horizontalVariable < get_dynamical_variables());
   assert(verticalVariable < get_dynamical_variables());
-  dynamicalWindows.at(dynamicalId).horizontalAxisVariable = horizontalVariable;
-  dynamicalWindows.at(dynamicalId).verticalAxisVariable = verticalVariable;
+  dynamicalWindows.at(dynamicalId).set_horizontal_axis_variable(horizontalVariable);
+  dynamicalWindows.at(dynamicalId).set_vertical_axis_variable(verticalVariable);
 }
 
 void model::set_parameter_axes(int horizontalVariable, int verticalVariable,
@@ -292,11 +502,11 @@ void model::set_parameters(int parameters) {
   parameterVariables = parameters;
 }
 
-int model::get_dynamical_variables() {
+int model::get_dynamical_variables() const {
   return dynamicalDimension + 1;
 }
 
-int model::get_dynamical_dimension() {
+int model::get_dynamical_dimension() const {
   return dynamicalDimension;
 }
 
@@ -304,5 +514,33 @@ void model::move_dynamical_window(int x, int y, int) { assert(false); }
 void model::scale_dynamical_window(double scale, int x, int y, int) { assert(false); }
 void model::move_parameter_window(int x, int y, int) { assert(false); }
 void model::scale_parameter_window(double scale, int x, int y, int) { assert(false); }
+
+void model::initialize_opengl() {
+  glInitialized = true;
+
+  // Construct the VAO and program objects for the solution renderer.
+  program = gl::compile_program(constants::vertex_shader::kCode,
+				constants::fragment_shader::kCode);
+  glGenVertexArrays(1, &vao);
+  glUseProgram(program);
+  glBindVertexArray(vao);
+  glEnableVertexAttribArray(constants::vertex_shader::kPositionAttribute);
+  glVertexAttribFormat(constants::vertex_shader::kPositionAttribute,
+		       2, GL_FLOAT, GL_FALSE, 0);
+  glVertexAttribBinding(constants::vertex_shader::kPositionAttribute,
+			constants::vertex_shader::kVertexBinding);
+}
+
+void model::paint_dynamical_window(dynamical_window_id id) {
+  dynamicalWindows.at(id).paint();
+}
+void model::resize_dynamical_window(dynamical_window_id id) {
+  dynamicalWindows.at(id).resize();
+}
+
+const dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
+  // Dangerous if another window is added after returning!!
+  return dynamicalWindows.at(id);
+}
 } // namespace gui
 } // namespace dynslover

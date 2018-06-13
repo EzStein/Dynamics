@@ -10,7 +10,7 @@ console_frame::console_frame(app& app) : console_frame_base(NULL), appl(app) {
 }
 
 void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
-   appl.setup_opengl(event);
+  
 }
 
 } // namespace gui
