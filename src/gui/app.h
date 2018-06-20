@@ -19,6 +19,8 @@ namespace gui {
 class dynamical_frame;
 class parameter_frame;
 class console_frame;
+class solution_dialog;
+struct solution_specification;
 
 // WxWidgets will call the OnInit method of this class on program startup.
 // This class handles communication between all the windows and dialogs.
@@ -38,7 +40,7 @@ class app : public wxApp {
   wxLogStderr customLogger;
   
   // Represents all the data used in this program.
-  model modelData;
+  model* modelData;
 
   // glContextAttributes is used for initializing any opengl contexts in this
   // program. glAttributes is used for initializing any glCanvas in this program.
@@ -53,6 +55,8 @@ class app : public wxApp {
 
   // The main frame that is always shown.
   console_frame* consoleFrame;
+
+  solution_dialog* solutionDialog;
   
  public:
   app();
@@ -76,12 +80,18 @@ class app : public wxApp {
   const wxGLAttributes& get_gl_attributes();
 
   void paint_dynamical_window(dynamical_window_id);
-  void resize_dynamical_window(dynamical_window_id);
+  void resize_dynamical_window(dynamical_window_id, double, double);
 
   wxGLContextAttrs getGlContextAttributes();
   wxGLAttributes getGlAttributes();
 
-  void add_solution(const math::vector&, double, double, double);
+  void add_solution(const solution_specification&);
+
+  // Compiles the provided system and updates the UI. Returns true
+  // on success.
+  bool compile(const std::vector<std::string>);
+
+  solution_dialog* get_solution_dialog();
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

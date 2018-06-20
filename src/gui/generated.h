@@ -19,10 +19,13 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/panel.h>
+#include <wx/dataview.h>
 #include <wx/button.h>
+#include <wx/stattext.h>
+#include <wx/combobox.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
+#include <wx/panel.h>
 #include <wx/statusbr.h>
 #include <wx/frame.h>
 #include <wx/propgrid/propgrid.h>
@@ -45,14 +48,18 @@ class console_frame_base : public wxFrame
 		wxMenu* m_menu1;
 		wxMenu* m_menu2;
 		wxMenu* m_menu4;
-		wxPanel* equationsTableBox;
-		wxButton* m_button7;
+		wxDataViewListCtrl* equationsDataViewCtrl;
+		wxButton* compileButton;
+		wxStaticText* m_staticText1;
+		wxComboBox* variablesComboBox;
 		wxPanel* parametersTableBox;
 		wxPanel* objectsTableBox;
 		wxStatusBar* statusBar;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void variables_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
+		virtual void variables_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
 		
 	
 	public:
@@ -73,12 +80,18 @@ class dynamical_frame_base : public wxFrame
 	protected:
 		wxBoxSizer* dynamicalWindowBox;
 		wxStatusBar* m_statusBar2;
-		wxMenu* m_menu21;
+		wxMenu* popupMenu;
+		wxMenuItem* solutionMenu;
+		wxMenuItem* isoclineMenu;
+		wxMenuItem* singularPointMenu;
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu4;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void dynamical_frame_on_set_focus( wxFocusEvent& event ) = 0;
+		virtual void solution_menu_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void isocline_menu_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void singular_point_menu_on_menu_selection( wxCommandEvent& event ) = 0;
 		
 	
 	public:
@@ -89,7 +102,7 @@ class dynamical_frame_base : public wxFrame
 		
 		void dynamical_frame_baseOnContextMenu( wxMouseEvent &event )
 		{
-			this->PopupMenu( m_menu21, event.GetPosition() );
+			this->PopupMenu( popupMenu, event.GetPosition() );
 		}
 	
 };
@@ -130,16 +143,20 @@ class solution_dialog_base : public wxDialog
 	
 	protected:
 		wxNotebook* m_notebook2;
-		wxPanel* m_panel9;
-		wxPropertyGrid* m_propertyGrid8;
+		wxPanel* m_panel11;
+		wxDataViewListCtrl* initialValueDataViewCtrl;
 		wxPanel* m_panel10;
-		wxPropertyGrid* m_propertyGrid9;
-		wxPGProperty* m_propertyGridItem4;
-		wxPGProperty* m_propertyGridItem5;
-		wxPGProperty* m_propertyGridItem6;
-		wxPGProperty* m_propertyGridItem7;
-		wxButton* m_button4;
-		wxButton* m_button5;
+		wxPropertyGrid* solutionPropertyGrid;
+		wxPGProperty* tMinPropertyGridItem;
+		wxPGProperty* tMaxPropertyGridItem;
+		wxPGProperty* incrementPropertyGridItem;
+		wxButton* addButton;
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void add_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
+		
 	
 	public:
 		

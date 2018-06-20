@@ -2,6 +2,18 @@
 namespace dynsolver {
 namespace constants {
 
+namespace gl {
+namespace text_renderer_program {
+const std::string kVertexShaderFilePath(app::kProjectPath + "/resources/gl/text_renderer.vert");
+const std::string kFragmentShaderFilePath(app::kProjectPath + "/resources/gl/text_renderer.frag");
+const std::string kTransformationUniform("transformation");
+const std::string kTextColorUniform("textColor");
+const std::string kSamplerUniform("sampler");
+const GLuint kVertexPositionAttribute(0);
+const GLuint kTexturePositionAttribute(1);
+}
+}
+
 namespace app {
 const std::string kProjectPath("/home/ezra/Documents/projects/hubbard_research");
 const int kGLMajorVersion(4);

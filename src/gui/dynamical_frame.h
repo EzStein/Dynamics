@@ -23,12 +23,19 @@ class dynamical_frame : public dynamical_frame_base {
   
   // The id associated to this frame.
   dynamical_window_id id;
+
+  // Variables which are set whenever the mouse is right clicked.
+  // The value is stored until the next right click.
+  int rightClickMouseX, rightClickMouseY;
   
  public:
-  dynamical_frame(app&, dynamical_window_id id);
+  dynamical_frame(app&, wxFrame* parent, dynamical_window_id id, int width, int height);
   ~dynamical_frame();
 
-  void dynamical_frame_on_set_focus(wxFocusEvent&) override;
+  virtual void dynamical_frame_on_set_focus(wxFocusEvent&) override;
+  virtual void solution_menu_on_menu_selection(wxCommandEvent&) override;
+  virtual void isocline_menu_on_menu_selection(wxCommandEvent&) override;
+  virtual void singular_point_menu_on_menu_selection(wxCommandEvent&) override;
   void gl_canvas_on_key_down(wxKeyEvent&);
   void gl_canvas_on_key_up(wxKeyEvent&);
   void gl_canvas_on_left_down(wxMouseEvent&);

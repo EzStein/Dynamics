@@ -10,7 +10,9 @@
 #include "compiler/ast/AST.h"
 #include "compiler/function.h"
 #include "math/vector.h"
-
+#include "gl/buffer.h"
+#include "gl/program.h"
+#include "gl/vertex_array.h"
 
 class wxGLCanvas;
 class wxGLContext;
@@ -100,8 +102,12 @@ class window2d {
   // Scales the window by scale about the pixel point provided.
   void scale_pixel(point2d scale, point2d pixel);
 
-  point2d get_size() const;
-  point2d get_position() const;
+  const point2d& get_size() const;
+  void set_size(const point2d&);
+  
+  const point2d& get_position() const;
+  const point2d& get_span() const;
+  
   point2d get_center() const;
 
   // This transformation matrix is a 4x4 matrix which maps
@@ -109,10 +115,22 @@ class window2d {
   math::square_matrix get_transformation_matrix();
 };
 
+struct solution_specification {
+  solution_specification();
+  
+  // The initial value of the solution. This vector also encodes,
+  // the number of variables of the dynamical plane.
+  math::vector initialValue;
+
+  double tMax;
+  double tMin;
+  double increment;
+};
+
 // A specification for drawing a solution through an initial point.
 struct solution {
   solution(const math::vector& initial, double tMax, double tMin, double increment,
-	   const std::vector<math::vector>&);
+	   const std::list<math::vector>&);
   
   // The starting point of the solution including the initial value of t.
   math::vector initial;
@@ -130,49 +148,7 @@ struct solution {
   // increment.
   double increment;
 
-  std::vector<math::vector> data;
-};
-
-// This class manages a vertex buffer object.
-// It is an RAII style class representing a VBO.
-// One may think of this object as containing the actuall vertex
-// data.
-class vbo_manager {
-private:
-  GLenum storage;
-  GLuint vbo;
-  size_t size;
-  
-public:
-  // Constructs an unintialized VBO.
-  vbo_manager(GLenum storage);
-
-  // Constructs a VBO with the given data.
-  vbo_manager(unsigned char* data, size_t size, GLenum storage);
-
-  // Destroys the VBO
-  ~vbo_manager();
-
-  // Copy and move constructors
-  vbo_manager(const vbo_manager&);
-  vbo_manager(vbo_manager&&);
-
-  // Copy and move assignment
-  vbo_manager& operator=(const vbo_manager&);
-  vbo_manager& operator=(vbo_manager&&);
-
-  // Returns the VBO index.
-  // NOTE: this index should be used only to read the
-  // VBO. Do not use it to modify its contents.
-  GLuint get_vbo() const;
-
-  // Returns the number of bytes stored in the VBO.
-  size_t get_size() const;
-
-  // Copies the data pointed to by data into the VBO.
-  // The number of bytes copied is given by size.
-  // Requires that size is nonzero.
-  void set_data(unsigned char* data, size_t size);
+  std::list<math::vector> data;
 };
 
 // Represents information associated with an instance of a dynamical window.
@@ -193,7 +169,7 @@ class dynamical_window {
   GLuint program;
   
   struct solution_render_data {
-    vbo_manager vbo;
+    gl::buffer vbo;
     unsigned int vertices;
   };
 
@@ -217,11 +193,13 @@ public:
 
   // Renders the window to the currently bound context.
   void paint();
-  
-  void resize();
+
+  // Called when the dynamical window is resized. The new
+  // width and height is given.
+  void resize(double width, double height);
 
   // Generates a VBo for the corresponding solution data and id.
-  void generate_vbo(solution_id, const std::vector<math::vector>&);
+  void generate_vbo(solution_id, const std::list<math::vector>&);
 
   const window2d& get_window() const;
 };
@@ -253,6 +231,9 @@ struct expression {
 // the view to update the user interface when it expects that a value in the
 // model has changed. The exception is that all opengl work occurs in this
 // file.
+//
+// NOTE: The model may NOT be constructed until an opengl context is set current,
+// and the opengl function pointers are loaded.
 class model {
  private:
   // The number of variables involved including the variable of differentiation, t.
@@ -320,25 +301,15 @@ class model {
   // have no meaning and do not need to satisfy any invariants.
   bool compiled;
 
-  // True once opengl is initialized. Most of the above functions require
-  // that opengl be initialized in order to function correctly.
-  bool glInitialized;
-
   // These two variables represent the opengl program and VAO.
-  GLuint vao;
-  GLuint program;
+  gl::vertex_array vao;
+  gl::program program;
   
  public:
   model();
-  
-  ~model();
 
   void paint_dynamical_window(dynamical_window_id id);
-  void resize_dynamical_window(dynamical_window_id id);
-
-  // Called exactly once when opengl is initialized.
-  // Within this method, the context provided is set current.
-  void initialize_opengl();
+  void resize_dynamical_window(dynamical_window_id id, double width, double height);
   
   // The dynamical dimension is one less than the number of dynamical variables.
   int get_dynamical_dimension() const;
@@ -356,9 +327,7 @@ class model {
   // variable etc... Requires the size of init to be equal to n. Requires,
   // that init[0] is strictly between tMin and tMax and that tMin
   // is strictly less than tMax. Requires that increment is positive.
-  void add_initial_value_solution(const math::vector& init,
-                                  double tMin, double tMax,
-                                  double increment);
+  void add_solution(const solution_specification&);
 
   // Like set_parameter_position except also updates the
   // defaultParameterPosition variable.

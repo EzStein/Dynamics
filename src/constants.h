@@ -14,6 +14,18 @@ extern const int kGLMajorVersion;
 extern const int kGLMinorVersion;
 } // namespace app
 
+
+namespace gl {
+namespace text_renderer_program {
+extern const std::string kTransformationUniform;
+extern const std::string kVertexShaderFilePath;
+extern const std::string kFragmentShaderFilePath;
+extern const std::string kTextColorUniform;
+extern const std::string kSamplerUniform;
+extern const GLuint kVertexPositionAttribute;
+extern const GLuint kTexturePositionAttribute;
+}
+}
 namespace vertex_shader {
 extern const std::string kCode;
 extern const GLuint kPositionAttribute;

@@ -6,11 +6,11 @@
 #include <wx/frame.h>
 #include <wx/glcanvas.h>
 
-#include "gui/gl_util.h"
 #include "constants.h"
 #include "gui/console_frame.h"
 #include "gui/dynamical_frame.h"
 #include "gui/parameter_frame.h"
+#include "gui/solution_dialog.h"
 
 namespace dynsolver {
 namespace gui {
@@ -18,17 +18,16 @@ namespace gui {
 namespace {
 // Attempts to create the opengl context with the provided attributes.
 wxGLContext create_context(const wxGLAttributes&, const wxGLContextAttrs&);
-
 } // namespace anonymous
 
-app::app() : glContext(nullptr) { }
+app::app() : glContext(nullptr), solutionDialog(nullptr), modelData(nullptr) { }
 
 app::~app() {
+  delete modelData;
   delete glContext;
 }
 
 bool app::OnInit() {
-  
   // Set wx global logging to output directly to stderr.
   wxLog::SetActiveTarget(&customLogger);
   
@@ -83,27 +82,23 @@ bool app::OnInit() {
   bool success = gladLoadGL();
   assert(success);
 
-  modelData.initialize_opengl();
+  // We may now finally construct the model.
+  modelData = new model();
   
   // Setup a basic example.
-  modelData.set_parameters(2);
-  std::vector<std::string> initialExpressions;
-  initialExpressions.push_back("b*x^2 - a*y");
-  initialExpressions.push_back("x*y - a - t");
-  success = modelData.compile(initialExpressions);
-  assert(success);
-
-  window2d win(point2d(500, 500), point2d(10, 10), point2d(-5, 5));
-  int parameterId = modelData.add_parameter_window(win,0,1);
-  int dynamicalId = modelData.add_dynamical_window(win,1,2);
-  parameterFrames.insert(
-      std::make_pair(parameterId, new parameter_frame(*this, parameterId)));
-  dynamicalFrames.insert(
-      std::make_pair(dynamicalId, new dynamical_frame(*this, dynamicalId)));
   consoleFrame = new console_frame(*this);
   consoleFrame->Show();
+  
+  int initialSize = 500;
+  window2d win(point2d(initialSize, initialSize), point2d(10, 10), point2d(-5, 5));
+  int dynamicalId = modelData->add_dynamical_window(win, 1, 2);
+  dynamicalFrames.insert( std::make_pair(dynamicalId,
+					 new dynamical_frame(*this, consoleFrame, dynamicalId,
+							     initialSize, initialSize)));
   dynamicalFrames.begin()->second->Show();
-  parameterFrames.begin()->second->Show();
+  
+  solutionDialog = new solution_dialog(consoleFrame);
+  
   return true;
 }
 
@@ -111,8 +106,12 @@ int app::OnExit() {
   return 0;
 }
 
+solution_dialog* app::get_solution_dialog() {
+  return solutionDialog;
+}
+
 const model& app::get_model() {
-  return modelData;
+  return *modelData;
 }
 
 const wxGLContext& app::get_gl_context() {
@@ -124,11 +123,11 @@ const wxGLAttributes& app::get_gl_attributes() {
 }
 
 void app::paint_dynamical_window(dynamical_window_id id) {
-  modelData.paint_dynamical_window(id);
+  modelData->paint_dynamical_window(id);
 }
 
-void app::resize_dynamical_window(dynamical_window_id id) {
-  modelData.resize_dynamical_window(id);
+void app::resize_dynamical_window(dynamical_window_id id, double width, double height) {
+  modelData->resize_dynamical_window(id, width, height);
 }
 
 wxGLContextAttrs app::getGlContextAttributes() {
@@ -139,11 +138,18 @@ wxGLAttributes app::getGlAttributes() {
   return glAttributes;
 }
 
-void app::add_solution(const math::vector& initialVector, double tMin,
-		       double tMax, double increment) {
-  modelData.add_initial_value_solution(initialVector,
-				       tMin, tMax, increment);
+void app::add_solution(const solution_specification& spec) {
+  modelData->add_solution(spec);
   refresh_dynamical_windows();
+}
+
+bool app::compile(const std::vector<std::string> system) {
+  if(modelData->compile(system)) {
+    refresh_dynamical_windows();
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void app::refresh_dynamical_windows() {
@@ -164,9 +170,8 @@ wxGLContext create_context(const wxGLAttributes& glAttributes,
   
   // Initialize opengl and create an opengl context.
   wxGLContext glContext(dummyCanvas, nullptr, &glContextAttributes);
-  
-  // Deletes both the frame and the canvas automatically.
-  delete dummyFrame;
+
+  dummyFrame->Close(); // Also deletes the dummy frame and canvas.
   
   return glContext;
 }

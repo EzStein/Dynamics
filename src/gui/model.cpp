@@ -6,11 +6,12 @@
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
 
+#include "parser/syntax_exception.h"
 #include "compiler/expression_parser.h"
 #include "math/util.h"
 #include "math/vector.h"
 #include "constants.h"
-#include "gui/gl_util.h"
+#include "gl/shader.h"
 
 namespace dynsolver {
 namespace gui {
@@ -37,6 +38,8 @@ const double& point2d::y() const {
   return (*this)[1];
 }
 
+solution_specification::solution_specification() : initialValue(1) { }
+
 window2d::window2d(point2d size, point2d span, point2d position) :
     size(size), span(span), position(position) { }
 
@@ -54,11 +57,19 @@ point2d window2d::real_coordinate_of(point2d pixel) const {
   return real;
 }
 
-point2d window2d::get_size() const {
+const point2d& window2d::get_size() const {
   return size;
 }
 
-point2d window2d::get_position() const{
+const point2d& window2d::get_span() const {
+  return span;
+}
+
+void window2d::set_size(const point2d& newSize) {
+  size = newSize;
+}
+
+const point2d& window2d::get_position() const{
   return position;
 }
 
@@ -116,7 +127,7 @@ math::square_matrix window2d::get_transformation_matrix() {
 }
 
 solution::solution(const math::vector& initial, double tMax, double tMin,
-                   double increment, const std::vector<math::vector>& data) :
+                   double increment, const std::list<math::vector>& data) :
     initial(initial), tMax(tMax), tMin(tMin), increment(increment), data(data) { }
 
 dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVariable,
@@ -131,12 +142,12 @@ dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVar
     std::vector<float> data;
     size_t points = iter->second.data.size();
     size_t size = points * 2 * sizeof(float);
-    for(std::vector<math::vector>::const_iterator point = iter->second.data.begin();
+    for(std::list<math::vector>::const_iterator point = iter->second.data.begin();
 	point != iter->second.data.end(); ++point) {
       data.push_back((*point)[horizontalAxisVariable]);
       data.push_back((*point)[verticalAxisVariable]);
     }
-    vbo_manager vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
+    gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
     solution_render_data val{vbo, points};
     solutionRenderData.insert(std::make_pair(iter->first, val));
   }
@@ -162,16 +173,17 @@ const window2d& dynamical_window::get_window() const {
   return window;
 }
 
-void dynamical_window::generate_vbo(solution_id id, const std::vector<math::vector>& solution) {
+void dynamical_window::generate_vbo(solution_id id, const std::list<math::vector>& solution) {
   std::vector<float> data;
   size_t points = solution.size();
   size_t size = points * 2 * sizeof(float);
-  for(std::vector<math::vector>::const_iterator point = solution.begin();
+  for(std::list<math::vector>::const_iterator point = solution.begin();
       point != solution.end(); ++point) {
     data.push_back((*point)[horizontalAxisVariable]);
     data.push_back((*point)[verticalAxisVariable]);
+    //    std::cout << (*point)[horizontalAxisVariable] << std::endl;
   }
-  vbo_manager vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
+  gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
   solution_render_data val{vbo, points};
   solutionRenderData.insert(std::make_pair(id, val));
 }
@@ -198,90 +210,13 @@ void dynamical_window::paint() {
   for(solution_iter iter = solutionRenderData.begin();
       iter != solutionRenderData.end(); ++iter) {
     glBindVertexBuffer(constants::vertex_shader::kVertexBinding,
-		       iter->second.vbo.get_vbo(), 0, 2 * sizeof(float));
+		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
     glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
 }
   
-void dynamical_window::resize() { }
-
-vbo_manager::vbo_manager(GLenum storage) : storage(storage), size(0) {
-  glGenBuffers(1, &vbo);
-}
-
-vbo_manager::vbo_manager(unsigned char* data, size_t size, GLenum storage)
-   : storage(storage), size(size) {
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
-  glBufferData(GL_COPY_WRITE_BUFFER, size, data, storage);
-}
-
-vbo_manager::~vbo_manager() {
-  // Does nothing if VBO is 0
-  glDeleteBuffers(1, &vbo);
-}
-
-vbo_manager::vbo_manager(const vbo_manager& other) :
-  storage(other.storage), size(other.size) {
-  glGenBuffers(1, &vbo);
-  if(size != 0) {
-    glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
-    glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
-    glBindBuffer(GL_COPY_READ_BUFFER, other.vbo);
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size);
-  }
-}
-
-vbo_manager::vbo_manager(vbo_manager&& other) : vbo(other.vbo),
-  storage(other.storage), size(other.size) {
-  // Prevent the vbo from being destroyed.
-  other.vbo = 0;
-}
-
-vbo_manager& vbo_manager::operator=(const vbo_manager& other) {
-  if(&other == this) return *this;
-  glDeleteBuffers(1, &vbo);
-  
-  storage = other.storage;
-  size = other.size;
-  glGenBuffers(1, &vbo);
-  if(size != 0) {
-    glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
-    glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
-    glBindBuffer(GL_COPY_READ_BUFFER, other.vbo);
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size);
-  }
-}
-
-vbo_manager& vbo_manager::operator=(vbo_manager&& other) {
-  if(&other == this) return *this;
-  storage = other.storage;
-  size = other.size;
-  vbo = other.vbo;
-  
-  // Prevent the vbo from being destroyed.
-  other.vbo = 0;
-  return *this;
-}
-
-void vbo_manager::set_data(unsigned char* data, size_t newSize) {
-  glBindBuffer(GL_COPY_WRITE_BUFFER, vbo);
-  if(newSize > size) {
-    // The buffer must increase so we reallocate.
-    glBufferData(GL_COPY_WRITE_BUFFER, newSize, data, storage);
-  } else {
-    // We can reuse the same buffer
-    glBufferSubData(GL_COPY_WRITE_BUFFER, 0, newSize, data);
-  }
-  size = newSize;
-}
-
-GLuint vbo_manager::get_vbo() const {
-  return vbo;
-}
-
-size_t vbo_manager::get_size() const {
-  return size;
+void dynamical_window::resize(double width, double height) {
+  window.set_size(point2d(width, height));
 }
 
 parameter_window::parameter_window(const window2d& window, int horizontalAxisVariable,
@@ -289,35 +224,38 @@ parameter_window::parameter_window(const window2d& window, int horizontalAxisVar
     window(window), horizontalAxisVariable(horizontalAxisVariable),
     verticalAxisVariable(verticalAxisVariable) { }
 
+namespace {
+std::vector<gl::shader> build_shaders() {
+  std::vector<gl::shader> shaders;
+  shaders.push_back(gl::shader(constants::vertex_shader::kCode, GL_VERTEX_SHADER));
+  shaders.push_back(gl::shader(constants::fragment_shader::kCode, GL_FRAGMENT_SHADER));
+  return shaders;
+}
+}
+
 model::model() : uniqueDynamicalId(0), uniqueParameterId(0),
                  parameterPosition(1, 0.0),
                  defaultWindow(window2d(point2d(500, 500),
                                         point2d(10, 10),
                                         point2d(-5, 5))),
                  compiled(false),
-		 glInitialized(false) { }
-
-model::~model() {
-  if(glInitialized) {
-    glDeleteVertexArrays(1, &vao);
-    glDeleteProgram(program);
-  }
+		 program(build_shaders()) {
+  glUseProgram(program.get_handle());
+  glBindVertexArray(vao.get_handle());
+  glEnableVertexAttribArray(constants::vertex_shader::kPositionAttribute);
+  glVertexAttribFormat(constants::vertex_shader::kPositionAttribute,
+		       2, GL_FLOAT, GL_FALSE, 0);
+  glVertexAttribBinding(constants::vertex_shader::kPositionAttribute,
+			constants::vertex_shader::kVertexBinding);
 }
 
 
-void model::add_initial_value_solution(const math::vector& initial,
-                                       double tMin, double tMax,
-                                       double increment) {
-  assert(initial.size() == get_dynamical_variables());
-  assert(initial[0] > tMin && initial[0] < tMax && increment > 0);
+void model::add_solution(const solution_specification& spec) {
+  assert(spec.initialValue.size() == get_dynamical_variables());
+  assert(spec.initialValue[0] > spec.tMin && spec.initialValue[0] < spec.tMax && spec.increment > 0);
   assert(compiled);
-  std::vector<math::vector> points;
-  std::vector<math::vector>::size_type pointsCount =
-      static_cast<std::vector<math::vector>::size_type>((tMax - tMin)/increment);
-  points.resize(pointsCount, math::vector(get_dynamical_variables(), 0.0));
-  std::vector<math::vector>::size_type initialIndex
-      = static_cast<std::vector<math::vector>::size_type>(
-          (initial[0] - tMin)/increment);
+  
+  std::list<math::vector> points;
   std::vector<compiler::function<double, const double*>> systemFunctions;
 
   for(std::vector<expression>::const_iterator iter = system.begin();
@@ -325,36 +263,24 @@ void model::add_initial_value_solution(const math::vector& initial,
     systemFunctions.push_back(iter->function);
   }
   
-  std::vector<math::vector>::size_type i = initialIndex;
-  math::vector tmp(initial);
+  math::vector tmp(spec.initialValue);
   // Fill in forwards
-  while(i < points.size() && tmp[0] <= tMax) {
-    points[i] = tmp;
-    math::euler(tmp, systemFunctions, parameterPosition, increment);
-    ++i;
+  while(tmp[0] <= spec.tMax) {
+    points.push_back(tmp);
+    math::euler(tmp, systemFunctions, parameterPosition, spec.increment);
   }
-  while(i != points.size()) {
-    points[i] = points[i - 1];
-    ++i;
-  }
-  i = initialIndex;
-  tmp = initial;
   
+  tmp = spec.initialValue;
   // Fill in backwards
-  while(i > 0 && tmp[0] >= tMin) {
-    points[i] = tmp;
-    math::euler(tmp, systemFunctions, parameterPosition, -increment);
-    --i;
+  while(tmp[0] >= spec.tMin) {
+    points.push_front(tmp);
+    math::euler(tmp, systemFunctions, parameterPosition, -spec.increment);
   }
-  while(i > 0) {
-    points[i] = points[i + 1];
-    --i;
-  }
-  points[i] = points[i + 1];
-
+  
   int solutionId = ++uniqueSolutionId;
   solutions.insert(std::make_pair(solutionId,
-                                  solution(initial, tMax, tMin, increment, points)));
+                                  solution(spec.initialValue, spec.tMax,
+					   spec.tMin, spec.increment, points)));
   // We now need to update the VBO's of each window.
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
@@ -372,9 +298,16 @@ bool model::compile(std::vector<std::string> newExpressions) {
           iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
     // For each dynamicalWindow
-    iter->second.set_window(defaultWindow);
-    iter->second.set_horizontal_axis_variable(0);
-    iter->second.set_vertical_axis_variable(1);
+    point2d size(iter->second.get_window().get_size());
+    point2d span(defaultWindow.get_span());
+    point2d position(defaultWindow.get_position());
+    iter->second.set_window(window2d(size, span, position));
+    
+    if(iter->second.get_horizontal_axis_variable() > dynamicalDimension)
+      iter->second.set_horizontal_axis_variable(0);
+    
+    if(iter->second.get_vertical_axis_variable() > dynamicalDimension)
+      iter->second.set_vertical_axis_variable(1);
   }
   for(std::unordered_map<int, parameter_window>::iterator
           iter = parameterWindows.begin();
@@ -398,20 +331,10 @@ bool model::compile(std::vector<std::string> newExpressions) {
 
   // Set up symbol table.
   std::list<symbol> symbolTable;
-  if(dynamicalDimension <= 4) {
-    switch(dynamicalDimension) {
-      case 4:symbolTable.push_back(symbol("w",4,4));
-      case 3:symbolTable.push_back(symbol("z",3,3));
-      case 2:symbolTable.push_back(symbol("y",2,2));
-      case 1:symbolTable.push_back(symbol("t",0,0));
-             symbolTable.push_back(symbol("x",1,1));
-    }
-  } else {
-    symbolTable.push_back(symbol("t",0,0));
-    for(int i = 0; i != dynamicalDimension; ++i) {
-      std::string str("x" + std::to_string(i + 1));
-      symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
-    }
+  symbolTable.push_back(symbol("t",0,0));
+  for(int i = 0; i != dynamicalDimension; ++i) {
+    std::string str("x" + std::to_string(i + 1));
+    symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
   }
   
   if(parameterVariables <= 4) {
@@ -440,7 +363,12 @@ bool model::compile(std::vector<std::string> newExpressions) {
   compiler::expression_parser parse;
   for(std::vector<std::string>::const_iterator expr = expressions.begin();
       expr != expressions.end(); ++expr) {
-    AST ast = parse.parse(*expr, symbolTable);
+    AST ast;
+    try {
+      ast = parse.parse(*expr, symbolTable);
+    } catch (const parser::syntax_exception& exc) {
+      return false;
+    }
     compiler::function<double, const double*> function = ast.compile();
     system.push_back(expression{ast, function});
     for(symbol sym : symbolTable) {
@@ -454,7 +382,6 @@ bool model::compile(std::vector<std::string> newExpressions) {
   }
 
   solutions.clear();
-  parameterPosition = math::vector(parameterVariables, 0.0);
   compiled = true;
   return true;
 }
@@ -472,13 +399,13 @@ int model::add_parameter_window(window2d window, int horizontalAxisVariable,
 
 int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
                                 int verticalAxisVariable) {
-  assert(horizontalAxisVariable < get_dynamical_variables());
-  assert(verticalAxisVariable < get_dynamical_variables());
+  assert(horizontalAxisVariable < get_dynamical_variables() || !compiled);
+  assert(verticalAxisVariable < get_dynamical_variables() || !compiled);
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
           dynamical_window(window, horizontalAxisVariable, verticalAxisVariable,
-			   vao, program, solutions)));
+			   vao.get_handle(), program.get_handle(), solutions)));
   return uniqueDynamicalId++;
 }
 
@@ -515,27 +442,11 @@ void model::scale_dynamical_window(double scale, int x, int y, int) { assert(fal
 void model::move_parameter_window(int x, int y, int) { assert(false); }
 void model::scale_parameter_window(double scale, int x, int y, int) { assert(false); }
 
-void model::initialize_opengl() {
-  glInitialized = true;
-
-  // Construct the VAO and program objects for the solution renderer.
-  program = gl::compile_program(constants::vertex_shader::kCode,
-				constants::fragment_shader::kCode);
-  glGenVertexArrays(1, &vao);
-  glUseProgram(program);
-  glBindVertexArray(vao);
-  glEnableVertexAttribArray(constants::vertex_shader::kPositionAttribute);
-  glVertexAttribFormat(constants::vertex_shader::kPositionAttribute,
-		       2, GL_FLOAT, GL_FALSE, 0);
-  glVertexAttribBinding(constants::vertex_shader::kPositionAttribute,
-			constants::vertex_shader::kVertexBinding);
-}
-
 void model::paint_dynamical_window(dynamical_window_id id) {
   dynamicalWindows.at(id).paint();
 }
-void model::resize_dynamical_window(dynamical_window_id id) {
-  dynamicalWindows.at(id).resize();
+void model::resize_dynamical_window(dynamical_window_id id, double width, double height) {
+  dynamicalWindows.at(id).resize(width, height);
 }
 
 const dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {

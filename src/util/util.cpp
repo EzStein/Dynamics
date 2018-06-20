@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include "util.h"
-
+namespace dynsolver {
 using std::string;
 void util::strip_white_space(string& str) {
   string::iterator end = str.end();
@@ -55,4 +55,26 @@ bool util::is_integer(const std::string& s) {
 
 long util::string_to_long(const std::string& s) {
   return std::strtol(s.c_str(),nullptr,10);
+}
+
+namespace util {
+std::string read_file(const std::string& path) {
+  FILE* file = fopen(path.c_str(), "rb");
+  if(!file) {
+    throw "No such file or directory: " + path;
+  }
+  
+  // Seeks to the end of the file to get file size
+  fseek(file, 0, SEEK_END);
+  size_t fileSize = ftell(file);
+  rewind(file);
+
+  char * buffer = new char[fileSize];
+  fread(buffer, sizeof(char), fileSize, file);
+  fclose(file);
+  std::string result(buffer, buffer + fileSize);
+  delete[] buffer;
+  return result;
+}
+}
 }
