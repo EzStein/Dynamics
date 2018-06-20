@@ -21,7 +21,7 @@ std::vector<shader> generate_shaders() {
 
 text_renderer::text_renderer() : prog(generate_shaders()),
 				 vbo(nullptr, 16 * sizeof(GLfloat), GL_DYNAMIC_DRAW),
-				 vertexAttributeBinding(0), textureUnit(GL_TEXTURE0) {
+				 vertexAttributeBinding(0), textureUnit(0) {
   // Initialize Program Info
   transformationUniform =
     glGetUniformLocation(prog.get_handle(),
@@ -88,7 +88,7 @@ void text_renderer::render_text(const std::string& text, int x, int y, font& fon
   glUseProgram(prog.get_handle());
   glUniform4f(textColorUniform, red, green, blue, alpha);
   glUniformMatrix4fv(transformationUniform, 1, GL_TRUE, transformation);
-  glActiveTexture(textureUnit);
+  glActiveTexture(GL_TEXTURE0 + textureUnit);
   
   for(char c : text) {
     size_t width, height, bearingX, bearingY, advance;

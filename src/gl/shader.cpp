@@ -10,8 +10,11 @@ shader::shader(const std::string& code, GLenum type) {
   GLint success;
   glGetShaderiv(handle, GL_COMPILE_STATUS, &success);
   if(!success) {
+    char infoLog[1024];
+    glGetShaderInfoLog(handle, 1024, nullptr, infoLog);
     glDeleteShader(handle);
-    throw shader_compile_exception("Vertex Shader failed to compile!");
+    throw shader_compile_exception("Shader failed to compile: "
+				   + std::string(infoLog));
   }
 }
 

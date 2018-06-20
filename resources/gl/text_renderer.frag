@@ -1,11 +1,11 @@
 #version 430 core
 
-smooth in textureCoordnate;
+smooth in vec2 textureCoordnate;
 
 uniform vec4 textColor;
 uniform sampler2D sampler;
 
-out outColor;
+out vec4 outColor;
 
 void main() {
   float opacity = texture(sampler, textureCoordnate).r;

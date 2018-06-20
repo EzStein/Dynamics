@@ -2,10 +2,12 @@
 namespace dynsolver {
 namespace constants {
 
+const std::string kDefaultFontFilePath("/home/ezra/Documents/projects/hubbard_research/resources/fonts/OpenSans-Regular.ttf");
+
 namespace gl {
 namespace text_renderer_program {
-const std::string kVertexShaderFilePath(app::kProjectPath + "/resources/gl/text_renderer.vert");
-const std::string kFragmentShaderFilePath(app::kProjectPath + "/resources/gl/text_renderer.frag");
+const std::string kVertexShaderFilePath("/home/ezra/Documents/projects/hubbard_research/resources/gl/text_renderer.vert");
+const std::string kFragmentShaderFilePath("/home/ezra/Documents/projects/hubbard_research/resources/gl/text_renderer.frag");
 const std::string kTransformationUniform("transformation");
 const std::string kTextColorUniform("textColor");
 const std::string kSamplerUniform("sampler");

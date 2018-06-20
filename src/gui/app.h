@@ -68,6 +68,12 @@ class app : public wxApp {
   // Called when the last frame has been closed.
   virtual int OnExit() override;
 
+  virtual bool OnExceptionInMainLoop() override;
+  
+  virtual void OnUnhandledException() override;
+  
+  virtual bool StoreCurrentException() override;
+
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model();

@@ -17,8 +17,11 @@ program::program(const std::vector<shader>& shaders) {
   GLint success;
   glGetProgramiv(handle, GL_LINK_STATUS, &success);
   if(!success) {
+    char infoLog[1024];
+    glGetProgramInfoLog(handle, 1024, nullptr, infoLog);
     glDeleteProgram(handle);
-    throw program_link_exception("Program failed to link!");
+    throw program_link_exception("Program failed to link: "
+				 + std::string(infoLog));
   }
 }
 

@@ -1,6 +1,7 @@
 #include "gui/app.h"
 
 #include <cassert>
+#include <stdexcept>
 
 #include <wx/msgdlg.h>
 #include <wx/frame.h>
@@ -18,6 +19,21 @@ namespace gui {
 namespace {
 // Attempts to create the opengl context with the provided attributes.
 wxGLContext create_context(const wxGLAttributes&, const wxGLContextAttrs&);
+
+void APIENTRY opengl_debug_message_callback( GLenum source,
+					       GLenum type,
+					       GLuint id,
+					       GLenum severity,
+					       GLsizei length,
+					       const GLchar* message,
+					       const void* userParam ) {
+  if(severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
+    throw std::runtime_error("OpenGL exception: " + std::to_string(type) + ": " + message);
+  } else {
+    std::cout << "GL Notification: " << message << std::endl;
+  }
+}
+
 } // namespace anonymous
 
 app::app() : glContext(nullptr), solutionDialog(nullptr), modelData(nullptr) { }
@@ -82,6 +98,10 @@ bool app::OnInit() {
   bool success = gladLoadGL();
   assert(success);
 
+  // We set up opengl debugging and callback info.
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(opengl_debug_message_callback, nullptr);
+  
   // We may now finally construct the model.
   modelData = new model();
   
@@ -104,6 +124,32 @@ bool app::OnInit() {
 
 int app::OnExit() {
   return 0;
+}
+
+bool app::OnExceptionInMainLoop() {
+  try {
+    throw;
+  } catch(const std::exception& exc) {
+    std::cout << exc.what() << std::endl;
+  }
+  return false;
+}
+  
+void app::OnUnhandledException() {
+  try {
+    throw;
+  } catch(const std::exception& exc) {
+    std::cout << exc.what() << std::endl;
+  }
+}
+
+bool app::StoreCurrentException() {
+  try {
+    throw;
+  } catch(const std::exception& exc) {
+    std::cout << exc.what() << std::endl;
+  }
+  return false;
 }
 
 solution_dialog* app::get_solution_dialog() {

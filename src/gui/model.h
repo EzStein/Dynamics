@@ -13,6 +13,8 @@
 #include "gl/buffer.h"
 #include "gl/program.h"
 #include "gl/vertex_array.h"
+#include "gl/font.h"
+#include "gl/text_renderer.h"
 
 class wxGLCanvas;
 class wxGLContext;
@@ -167,6 +169,9 @@ class dynamical_window {
 
   GLuint vao;
   GLuint program;
+
+  gl::font& font;
+  gl::text_renderer& textRenderer;
   
   struct solution_render_data {
     gl::buffer vbo;
@@ -182,7 +187,9 @@ class dynamical_window {
 public:
   dynamical_window(const window2d& window, int horizontalAxisVariable,
                    int verticalAxisVariable, GLuint vao, GLuint program,
-		   const std::unordered_map<solution_id, solution>&);
+		   const std::unordered_map<solution_id, solution>&,
+		   gl::font& font,
+		   gl::text_renderer& textRenderer);
 
   // Getters and setters
   void set_horizontal_axis_variable(int);
@@ -236,6 +243,9 @@ struct expression {
 // and the opengl function pointers are loaded.
 class model {
  private:
+  gl::font font;
+  gl::text_renderer textRenderer;
+  
   // The number of variables involved including the variable of differentiation, t.
   // Should always be 2 or greater. This number shall be denoted as n, and the dimension
   // of the vector field shall be denoted as d = n - 1.

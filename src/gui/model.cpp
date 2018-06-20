@@ -132,9 +132,11 @@ solution::solution(const math::vector& initial, double tMax, double tMin,
 
 dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVariable,
                                    int verticalAxisVariable, GLuint vao, GLuint program,
-				   const std::unordered_map<solution_id, solution>& solutions) :
+				   const std::unordered_map<solution_id, solution>& solutions,
+				   gl::font& font,
+				   gl::text_renderer& textRenderer) :
   window(window), horizontalAxisVariable(horizontalAxisVariable), vao(vao), program(program),
-    verticalAxisVariable(verticalAxisVariable) {
+  verticalAxisVariable(verticalAxisVariable), font(font), textRenderer(textRenderer) {
   
   for(std::unordered_map<solution_id, solution>::const_iterator iter = solutions.begin();
       iter != solutions.end(); ++iter) {
@@ -213,6 +215,8 @@ void dynamical_window::paint() {
 		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
     glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
+  
+  textRenderer.render_text("Hello World", 100, 100, font);
 }
   
 void dynamical_window::resize(double width, double height) {
@@ -239,7 +243,9 @@ model::model() : uniqueDynamicalId(0), uniqueParameterId(0),
                                         point2d(10, 10),
                                         point2d(-5, 5))),
                  compiled(false),
-		 program(build_shaders()) {
+		 program(build_shaders()),
+		 dynamicalDimension(0),
+		 font(constants::kDefaultFontFilePath) {
   glUseProgram(program.get_handle());
   glBindVertexArray(vao.get_handle());
   glEnableVertexAttribArray(constants::vertex_shader::kPositionAttribute);
@@ -405,7 +411,7 @@ int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
       std::make_pair(
           uniqueDynamicalId,
           dynamical_window(window, horizontalAxisVariable, verticalAxisVariable,
-			   vao.get_handle(), program.get_handle(), solutions)));
+			   vao.get_handle(), program.get_handle(), solutions, font, textRenderer)));
   return uniqueDynamicalId++;
 }
 

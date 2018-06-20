@@ -8,6 +8,8 @@
 namespace dynsolver {
 namespace constants {
 
+extern const std::string kDefaultFontFilePath;
+
 namespace app {
 extern const std::string kProjectPath;
 extern const int kGLMajorVersion;
