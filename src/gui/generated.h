@@ -48,6 +48,9 @@ class console_frame_base : public wxFrame
 		wxMenu* m_menu1;
 		wxMenu* m_menu2;
 		wxMenu* m_menu4;
+		wxMenuItem* newDynamicalWindowMenuItem;
+		wxMenuItem* closeDynamicalWindowsMenuItem;
+		wxMenu* m_menu8;
 		wxDataViewListCtrl* equationsDataViewCtrl;
 		wxButton* compileButton;
 		wxStaticText* m_staticText1;
@@ -57,8 +60,13 @@ class console_frame_base : public wxFrame
 		wxStatusBar* statusBar;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void console_frame_on_close( wxCloseEvent& event ) = 0;
+		virtual void new_dynamical_window_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void close_dynamical_windows_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void variables_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
+		virtual void variables_combo_box_on_kill_focus( wxFocusEvent& event ) = 0;
 		virtual void variables_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
 		
 	
@@ -86,12 +94,15 @@ class dynamical_frame_base : public wxFrame
 		wxMenuItem* singularPointMenu;
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu4;
+		wxMenuItem* editMenuItem;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void dynamical_frame_on_close( wxCloseEvent& event ) = 0;
 		virtual void dynamical_frame_on_set_focus( wxFocusEvent& event ) = 0;
 		virtual void solution_menu_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		
 	
 	public:
@@ -221,17 +232,14 @@ class dynamical_dialog_base : public wxDialog
 	private:
 	
 	protected:
-		wxPropertyGrid* m_propertyGrid1;
-		wxPGProperty* m_propertyGridItem5;
-		wxPGProperty* m_propertyGridItem7;
-		wxPGProperty* m_propertyGridItem91;
-		wxPGProperty* m_propertyGridItem92;
-		wxPGProperty* m_propertyGridItem6;
-		wxPGProperty* m_propertyGridItem8;
-		wxPGProperty* m_propertyGridItem9;
-		wxPGProperty* m_propertyGridItem10;
-		wxButton* m_button8;
-		wxButton* m_button9;
+		wxPropertyGrid* dynamicalPropertyGrid;
+		wxButton* okButton;
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
+		
 	
 	public:
 		
@@ -248,13 +256,18 @@ class singular_point_dialog_base : public wxDialog
 	private:
 	
 	protected:
-		wxPropertyGrid* m_propertyGrid10;
-		wxButton* m_button20;
-		wxButton* m_button21;
+		wxDataViewListCtrl* initialValueDataViewCtrl;
+		wxButton* addButton;
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void add_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
+		
 	
 	public:
 		
-		singular_point_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,349 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		singular_point_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Singular Point"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,349 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~singular_point_dialog_base();
 	
 };

@@ -17,9 +17,10 @@ namespace dynsolver {
 namespace gui {
 
 class dynamical_frame;
-class parameter_frame;
 class console_frame;
 class solution_dialog;
+class singular_point_dialog;
+class dynamical_dialog;
 struct solution_specification;
 
 // WxWidgets will call the OnInit method of this class on program startup.
@@ -37,7 +38,7 @@ class app : public wxApp {
  private:
   // A custom logger for handling error and warning messages.
   // Currently we direct everything to standard error.
-  wxLogStderr customLogger;
+  wxLogStderr* customLogger;
   
   // Represents all the data used in this program.
   model* modelData;
@@ -51,12 +52,15 @@ class app : public wxApp {
   wxGLContext* glContext;
   
   std::unordered_map<dynamical_window_id, dynamical_frame*> dynamicalFrames;
-  std::unordered_map<parameter_window_id, parameter_frame*> parameterFrames;
 
   // The main frame that is always shown.
   console_frame* consoleFrame;
 
+  // Reusable dialogs are made at construction and destroyed when the console
+  // frame is closed.
   solution_dialog* solutionDialog;
+  singular_point_dialog* singularPointDialog;
+  dynamical_dialog* dynamicalDialog;
   
  public:
   app();
@@ -73,6 +77,27 @@ class app : public wxApp {
   virtual void OnUnhandledException() override;
   
   virtual bool StoreCurrentException() override;
+
+  // Closes the dynamical window, freeing up all of its info in the model.
+  // This is called in the on close event of the dynamical_frame, so there
+  // is no need to destroy the frame manually.
+  void delete_dynamical_window(dynamical_window_id id);
+
+  // Called in order to delete all dynamical windows.
+  // Does not assume that the dynamical frames have been destroyed,
+  // so it destroys them.
+  void delete_all_dynamical_windows();
+
+  // Tells the application to shut down. This is called by the console_frame on
+  // close handler.
+  void close_application();
+
+  // Constructs a new dynamical window according to the provided specification.
+  void new_dynamical_window(const dynamical_window_specification&);
+
+  // Changes the specification of the dynamical window.
+  void set_dynamical_window_specification(const dynamical_window_specification&,
+					  dynamical_window_id id);
 
   // Returns a const model that the GUI's will use to update their
   // displays.
@@ -98,6 +123,10 @@ class app : public wxApp {
   bool compile(const std::vector<std::string>);
 
   solution_dialog* get_solution_dialog();
+
+  singular_point_dialog* get_singular_point_dialog();
+
+  dynamical_dialog* get_dynamical_window_dialog();
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

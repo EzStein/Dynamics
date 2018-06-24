@@ -29,13 +29,15 @@ class dynamical_frame : public dynamical_frame_base {
   int rightClickMouseX, rightClickMouseY;
   
  public:
-  dynamical_frame(app&, wxFrame* parent, dynamical_window_id id, int width, int height);
+  dynamical_frame(app&, dynamical_window_id id, int width, int height);
   ~dynamical_frame();
 
   virtual void dynamical_frame_on_set_focus(wxFocusEvent&) override;
   virtual void solution_menu_on_menu_selection(wxCommandEvent&) override;
   virtual void isocline_menu_on_menu_selection(wxCommandEvent&) override;
   virtual void singular_point_menu_on_menu_selection(wxCommandEvent&) override;
+  virtual void dynamical_frame_on_close(wxCloseEvent&) override;
+  virtual void edit_menu_item_on_menu_selection(wxCommandEvent&) override;
   void gl_canvas_on_key_down(wxKeyEvent&);
   void gl_canvas_on_key_up(wxKeyEvent&);
   void gl_canvas_on_left_down(wxMouseEvent&);

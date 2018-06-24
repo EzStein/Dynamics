@@ -1,3 +1,4 @@
+
 #include "gui/app.h"
 
 #include <cassert>
@@ -10,8 +11,9 @@
 #include "constants.h"
 #include "gui/console_frame.h"
 #include "gui/dynamical_frame.h"
-#include "gui/parameter_frame.h"
 #include "gui/solution_dialog.h"
+#include "gui/singular_point_dialog.h"
+#include "gui/dynamical_dialog.h"
 
 namespace dynsolver {
 namespace gui {
@@ -33,19 +35,23 @@ void APIENTRY opengl_debug_message_callback( GLenum source,
     std::cout << "GL Notification: " << message << std::endl;
   }
 }
-
 } // namespace anonymous
 
-app::app() : glContext(nullptr), solutionDialog(nullptr), modelData(nullptr) { }
+app::app() : glContext(nullptr), solutionDialog(nullptr),
+	     modelData(nullptr), dynamicalDialog(nullptr), customLogger(nullptr) { }
 
 app::~app() {
+  // This destructer is called multiple times for some stupid reason!
   delete modelData;
+  modelData = nullptr;
   delete glContext;
+  glContext = nullptr;
 }
 
 bool app::OnInit() {
+  customLogger = new wxLogStderr();
   // Set wx global logging to output directly to stderr.
-  wxLog::SetActiveTarget(&customLogger);
+  wxLog::SetActiveTarget(customLogger);
   
   // Initializes the attributes which are used to generate an opengl context.
   glAttributes.Defaults().EndList();
@@ -108,18 +114,54 @@ bool app::OnInit() {
   // Setup a basic example.
   consoleFrame = new console_frame(*this);
   consoleFrame->Show();
-  
-  int initialSize = 500;
-  window2d win(point2d(initialSize, initialSize), point2d(10, 10), point2d(-5, 5));
-  int dynamicalId = modelData->add_dynamical_window(win, 1, 2);
-  dynamicalFrames.insert( std::make_pair(dynamicalId,
-					 new dynamical_frame(*this, consoleFrame, dynamicalId,
-							     initialSize, initialSize)));
-  dynamicalFrames.begin()->second->Show();
-  
-  solutionDialog = new solution_dialog(consoleFrame);
+
+  // Set up dialogs
+  solutionDialog = new solution_dialog();
+  singularPointDialog = new singular_point_dialog();
+  dynamicalDialog = new dynamical_dialog();
   
   return true;
+}
+
+void app::delete_dynamical_window(dynamical_window_id id) {
+  modelData->delete_dynamical_window(id);
+  dynamicalFrames.at(id)->Destroy();
+  dynamicalFrames.erase(id);
+}
+
+// Called in order to delete all dynamical windows.
+// Does not assume that the dynamical frames have been destroyed,
+// so it destroys them
+void app::delete_all_dynamical_windows() {
+  modelData->delete_all_dynamical_windows();
+  for(std::unordered_map<dynamical_window_id, dynamical_frame*>::const_iterator iter
+	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
+    iter->second->Destroy();
+  }
+  dynamicalFrames.clear();
+}
+
+void app::close_application() {
+  delete_all_dynamical_windows();
+  solutionDialog->Destroy();
+  singularPointDialog->Destroy();
+  dynamicalDialog->Destroy();
+  consoleFrame->Destroy();
+}
+
+void app::new_dynamical_window(const dynamical_window_specification& spec) {
+  int width = 500;
+  int height = 500;
+  dynamical_window_id id = modelData->add_dynamical_window(spec, width, height);
+  dynamical_frame* frame = new dynamical_frame(*this, id, width, height);
+  dynamicalFrames.insert(std::make_pair(id, frame));
+  frame->Show();
+}
+
+void app::set_dynamical_window_specification(const dynamical_window_specification& spec,
+					dynamical_window_id id) {
+  modelData->set_dynamical_window_specification(spec, id);
+  dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
 int app::OnExit() {
@@ -154,6 +196,14 @@ bool app::StoreCurrentException() {
 
 solution_dialog* app::get_solution_dialog() {
   return solutionDialog;
+}
+
+singular_point_dialog* app::get_singular_point_dialog() {
+  return singularPointDialog;
+}
+
+dynamical_dialog* app::get_dynamical_window_dialog() {
+  return dynamicalDialog;
 }
 
 const model& app::get_model() {
@@ -191,7 +241,8 @@ void app::add_solution(const solution_specification& spec) {
 
 bool app::compile(const std::vector<std::string> system) {
   if(modelData->compile(system)) {
-    refresh_dynamical_windows();
+    consoleFrame->set_yes_compile();
+    delete_all_dynamical_windows();
     return true;
   } else {
     return false;

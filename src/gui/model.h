@@ -26,7 +26,6 @@ class square_matrix;
 }
 namespace gui {
 
-
 class app;
 
 // Contains helper classes
@@ -109,33 +108,25 @@ class window2d {
   
   const point2d& get_position() const;
   const point2d& get_span() const;
-  
+
+  // Returns the center of the this window in real coordinates.
   point2d get_center() const;
 
   // This transformation matrix is a 4x4 matrix which maps
   // real coordinates to normalized device coordinates for use in opengl.
-  math::square_matrix get_transformation_matrix();
+  math::square_matrix real_to_ndc();
+
+  // This transformation matrix is a 4x4 matrix which maps
+  // pixel coordinate to normalized device coordinates for use in opengl.
+  // In pixel coordinates, the origin is the lower left corner of the screen.
+  math::square_matrix pixel_to_ndc();
 };
 
 struct solution_specification {
   solution_specification();
   
-  // The initial value of the solution. This vector also encodes,
-  // the number of variables of the dynamical plane.
-  math::vector initialValue;
-
-  double tMax;
-  double tMin;
-  double increment;
-};
-
-// A specification for drawing a solution through an initial point.
-struct solution {
-  solution(const math::vector& initial, double tMax, double tMin, double increment,
-	   const std::list<math::vector>&);
-  
   // The starting point of the solution including the initial value of t.
-  math::vector initial;
+  math::vector initialValue;
 
   // Invariant:
   // tMax must be strictly greater than tMin. initial[0] must be
@@ -149,80 +140,34 @@ struct solution {
   // Currently we use standard euler's method. This indicates the standard
   // increment.
   double increment;
+};
+
+// A specification for drawing a solution through an initial point.
+struct solution {
+  solution_specification specification;
 
   std::list<math::vector> data;
 };
 
-// Represents information associated with an instance of a dynamical window.
-// Multiple dynamical windows may be open at any given time.
-class dynamical_window {
- private:
-  // This represents the viewport area of the dynamical plane visible
-  // in this window.
-  window2d window;
-  
-  // An integer representing which variable corresponds to which axis.
-  // A 0 indicates the variable of differentiation t. 1 indicates x (x1),
-  // 2 indicates y (x2), etc..
-  int horizontalAxisVariable;
-  int verticalAxisVariable;
-
-  GLuint vao;
-  GLuint program;
-
-  gl::font& font;
-  gl::text_renderer& textRenderer;
-  
-  struct solution_render_data {
-    gl::buffer vbo;
-    unsigned int vertices;
-  };
-
-  typedef std::unordered_map<solution_id,
-			     solution_render_data>::const_iterator solution_iter;
-  
-  // This map associates a solution to the opengl render data.
-  std::unordered_map<solution_id, solution_render_data> solutionRenderData;
-  
-public:
-  dynamical_window(const window2d& window, int horizontalAxisVariable,
-                   int verticalAxisVariable, GLuint vao, GLuint program,
-		   const std::unordered_map<solution_id, solution>&,
-		   gl::font& font,
-		   gl::text_renderer& textRenderer);
-
-  // Getters and setters
-  void set_horizontal_axis_variable(int);
-  int get_horizontal_axis_variable() const;
-  void set_vertical_axis_variable(int);
-  int get_vertical_axis_variable() const;
-  void set_window(const window2d&);
-
-  // Renders the window to the currently bound context.
-  void paint();
-
-  // Called when the dynamical window is resized. The new
-  // width and height is given.
-  void resize(double width, double height);
-
-  // Generates a VBo for the corresponding solution data and id.
-  void generate_vbo(solution_id, const std::list<math::vector>&);
-
-  const window2d& get_window() const;
+struct singular_point_specification {
+  singular_point_specification();
+  math::vector initialValue;
 };
 
-class parameter_window {
- public:  
-  // Information about the dynamical plane.
-  window2d window;
+// Used to pass to and from the dynamical window dialog to obtain
+// imformation on the viewport and axes for generating or changing a dynamical
+// window.
+struct dynamical_window_specification {
+  unsigned int dynamicalVariables;
   
-  // An integer representing the variable that corresponds to each axis.
-  // 0 is a, 1 is b (a1), 2 is c (a2) etc...
   int horizontalAxisVariable;
   int verticalAxisVariable;
-  
-  parameter_window(const window2d& window, int horizontalAxisVariable,
-                   int verticalAxisVariable);
+
+  // The real minimum and maximum viewport bounds.
+  double horizontalAxisMin;
+  double horizontalAxisMax;
+  double verticalAxisMin;
+  double verticalAxisMax;
 };
 
 // A tuple which associates an abstract syntax tree with its compiled
@@ -242,7 +187,75 @@ struct expression {
 // NOTE: The model may NOT be constructed until an opengl context is set current,
 // and the opengl function pointers are loaded.
 class model {
+public:
+  static const std::string k2dVertexShaderFilePath;
+  static const GLuint k2dPositionAttribute;
+  static const GLuint k2dVertexBinding;
+  static const std::string k2dTransformationUniform;
+  
+  static const std::string k2dFragmentShaderFilePath;
+  static const std::string k2dColorUniform;
+  
  private:
+    // Represents information associated with an instance of a dynamical window.
+  // Multiple dynamical windows may be open at any given time.
+  class dynamical_window {
+  private:
+    // A reference to the containing model. Since this is an inner class of model,
+    // it may access all of its private variables.
+    model& modelData;
+    
+    // This represents the viewport area of the dynamical plane visible
+    // in this window.
+    window2d window;
+  
+    // An integer representing which variable corresponds to which axis.
+    // A 0 indicates the variable of differentiation t. 1 indicates x (x1),
+    // 2 indicates y (x2), etc.. -1 indicates that no axes have been selected.
+    int horizontalAxisVariable;
+    int verticalAxisVariable;
+
+    gl::buffer axesVbo;
+    GLsizei axesVboVertexCount;
+
+    struct solution_render_data {
+      gl::buffer vbo;
+      unsigned int vertices;
+    };
+  
+    std::unordered_map<dynamical_window_id, solution_render_data> solutionRenderData;
+  
+  public:
+    dynamical_window(model&,
+		     const window2d& window,
+		     int horizontalAxisVariable,
+		     int verticalAxisVariable);
+
+    void set_specification(const dynamical_window_specification& spec);
+
+    int get_horizontal_axis_variable() const;
+
+    int get_vertical_axis_variable() const;
+    void set_window(const window2d&);
+
+    // Renders the window to the currently bound context.
+    void paint();
+
+    // Called when the dynamical window is resized. The new
+    // width and height is given.
+    void resize(double width, double height);
+
+    // Generates a VBo for the corresponding solution data and id.
+    void generate_vbo(solution_id, const std::list<math::vector>&);
+    
+    // Generates a VBo for the corresponding solution data and id.
+    void update_vbo(solution_id);
+
+    const window2d& get_window() const;
+
+    void clear();
+  };
+  
   gl::font font;
   gl::text_renderer textRenderer;
   
@@ -252,9 +265,8 @@ class model {
   // We only store the dimension of the vector field.
   int dynamicalDimension;
 
-  // The number of parameters used. Should be nonnegative.
-  // This number shall be denoted as p.
   int parameterVariables;
+  math::vector parameterPosition;
 
   // A list of expressions corresponding to the abstract syntax trees.
   // The size is d.
@@ -268,11 +280,6 @@ class model {
   
   // This is an id number which is not currently mapped in dynamicalWindows map.
   dynamical_window_id uniqueDynamicalId;
-
-  std::unordered_map<parameter_window_id, parameter_window> parameterWindows;
-  
-  // This is an id number which is not currently mapped in parameterWindows map.
-  parameter_window_id uniqueParameterId;
 
   
   // The following variables are updated on every recompile.
@@ -299,10 +306,6 @@ class model {
   
   // All solutions mapped have id's strictly less than this number.
   solution_id uniqueSolutionId;
-  
-  // Indicates the current parameter values that are being used to draw on the
-  // dynamical plane. This position also shows up on the parameter plane.
-  math::vector parameterPosition;
 
   window2d defaultWindow;
 
@@ -312,10 +315,14 @@ class model {
   bool compiled;
 
   // These two variables represent the opengl program and VAO.
-  gl::vertex_array vao;
-  gl::program program;
+  gl::vertex_array vao2d;
+  gl::program program2d;
+  const GLuint k2dTransformationUniformLocation;
+  const GLuint k2dColorUniformLocation;
   
- public:
+  std::vector<gl::shader> build_shaders();
+
+public:
   model();
 
   void paint_dynamical_window(dynamical_window_id id);
@@ -327,10 +334,6 @@ class model {
   // Returns the number of dynamical variables including the variable of
   // integration t.
   int get_dynamical_variables() const;
-
-  // Sets the number of parameters used.
-  // Requires that the provided integer is non-negative.
-  void set_parameters(int);
   
   // Adds the initial value solution. Init, is the initial point
   // whose first entry is the time component, second entry is the first
@@ -339,40 +342,30 @@ class model {
   // is strictly less than tMax. Requires that increment is positive.
   void add_solution(const solution_specification&);
 
-  // Like set_parameter_position except also updates the
-  // defaultParameterPosition variable.
-  void set_parameter_position(math::vector);
-
   // Resets most variables and compiles the array of strings into a vector
   // field system of ODE's. Sets the dimension etc... Returns true
   // on success.
   // Requires that the vector has size 1 or more.
   bool compile(std::vector<std::string>);
-  
-  // The integers refer to variables
-  // 0 is t, 1 is x (x1), 2 is y (x2), etc...
-  // Sets the dynamical plane's horizontal and vertical axes.
-  void set_dynamical_axes(int horizontalVariable, int verticalVariable, int dynamicalId);
-  
-  // 0 is a (a1), 1 is b (a2), 2 is c (a3), etc...
-  // Sets the parameter plane's horizontal and vertical axes.
-  void set_parameter_axes(int horizontalVariable, int verticalVariable, int parameterId);
 
   // These functions add dynamical and parameter windows. They return the id,
-  // of the newly added window. Requires that the axis variables fall
-  // within the appropriate range.
-  int add_dynamical_window(window2d window, int horizontalAxisVariable,
-			   int verticalAxisVariable);
-  int add_parameter_window(window2d window, int horizontalAxisVariable,
-                                  int verticalAxisVariable);
+  // of the newly added window. The width and height of the window are specified,
+  // in pixels.
+  int add_dynamical_window(const dynamical_window_specification&, int width, int height);
+
+  void set_dynamical_window_specification(const dynamical_window_specification& spec,
+					  dynamical_window_id id);
+
+  // Deletes all the data associated with the given window.
+  void delete_dynamical_window(dynamical_window_id id);
+
+  // Deletes all the data associated with all dynamical windows.
+  void delete_all_dynamical_windows();
   
   // Adjusts the position/scale of the dynamical/parameter
   // window according to the number of pixels shown and/or the scale.
   void move_dynamical_window(int x, int y, int dynamicalId);
   void scale_dynamical_window(double scale, int x, int y, int dynamicalId);
-
-  void move_parameter_window(int x, int y, int parameterId);
-  void scale_parameter_window(double scale, int x, int y, int parameterId);
 
   const dynamical_window& get_dynamical_window(dynamical_window_id) const;
 };

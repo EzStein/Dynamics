@@ -7,8 +7,6 @@
 namespace dynsolver {
 namespace gui {
 
-class app;
-
 // This is used for selecting an initial value solution.
 // It is a dialog that may only be shown as modal.
 // To show, use the 
@@ -17,14 +15,14 @@ class solution_dialog : public solution_dialog_base {
   solution_specification solutionSpecification;
   
  public:
-  solution_dialog(wxFrame* parent);
+  solution_dialog();
 
   // Shows the dialog modally. The dialog is populated with imformation,
   // based on the solution_specification provided. If the dialog is closed,
   // or canceled, this function returns false.
   // Otherwise it returns true and fills the solution_specification pointer
   // with the specification that the user generated. Only one instance of this
-  // class is meant to in the program. That is, you should reuse it.
+  // class is meant to be in the program. That is, you should reuse it.
   bool show_dialog(const solution_specification&, solution_specification*);
   virtual void cancel_button_on_button_click(wxCommandEvent&) override;
   virtual void add_button_on_button_click(wxCommandEvent&) override;

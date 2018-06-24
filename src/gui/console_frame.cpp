@@ -6,19 +6,76 @@
 #include <wx/msgdlg.h>
 
 #include "gui/app.h"
+#include "gui/dynamical_dialog.h"
+
+#include "util/util.h"
 
 namespace dynsolver {
 namespace gui {
 
 console_frame::console_frame(app& app) : console_frame_base(nullptr, wxID_ANY, "Console"),
-					 appl(app) {
+					 appl(app), variablesComboBoxValue("") {
   // Add in widgets and setup events not already done in console_frame_base.
   equationsDataViewCtrl->AppendTextColumn("Variable");
   equationsDataViewCtrl->AppendTextColumn("Expression", wxDATAVIEW_CELL_EDITABLE);
-  update_equations_data_view_ctrl(2);
+  set_no_compile();
 }
 
 console_frame::~console_frame() { }
+
+void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) {
+  variablesComboBox->SetValue("3");
+  
+  equationsDataViewCtrl->DeleteAllItems();
+  wxVector<wxVariant> data;
+  data.push_back(wxVariant("x1"));
+  data.push_back(wxVariant("10*(x2-x1)"));
+  equationsDataViewCtrl->AppendItem(data);
+  data.clear();
+  data.push_back(wxVariant("x2"));
+  data.push_back(wxVariant("x1*(28-x3)-x2"));
+  equationsDataViewCtrl->AppendItem(data);
+  data.clear();
+  data.push_back(wxVariant("x3"));
+  data.push_back(wxVariant("x1*x2-x3*8/3"));
+  equationsDataViewCtrl->AppendItem(data);
+  data.clear();
+
+  compileButton->Enable();
+}
+
+void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&) {
+  dynamical_window_specification spec;
+  spec.horizontalAxisMin = -5;
+  spec.horizontalAxisMax = 5;
+  spec.verticalAxisMin = -5;
+  spec.verticalAxisMax = 5;
+  spec.horizontalAxisVariable = 0;
+  spec.verticalAxisVariable = 1;
+  spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
+  if(appl.get_dynamical_window_dialog()->show_dialog(spec, &spec)) {
+    appl.new_dynamical_window(spec);
+  }
+}
+
+void console_frame::close_dynamical_windows_menu_item_on_selection(wxCommandEvent&) {
+  appl.delete_all_dynamical_windows();
+}
+
+void console_frame::console_frame_on_close(wxCloseEvent& evt) {
+  appl.close_application();
+}
+
+void console_frame::set_no_compile() {
+  variablesComboBox->SetValue(variablesComboBoxValue);
+  compileButton->Disable();
+  equationsDataViewCtrl->DeleteAllItems();
+  newDynamicalWindowMenuItem->Enable(false);
+}
+
+void console_frame::set_yes_compile() {
+  newDynamicalWindowMenuItem->Enable(true);
+}
 
 void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
   // We first verify that each expression is nonempty
@@ -45,24 +102,39 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
   }
 }
 
-void console_frame::variables_combo_box_on_text_enter(wxCommandEvent& evt) {
-  SetFocus(); // Sets the focus to the underlying frame.
+void console_frame::read_variables_combo_box_input() {
   int variables(0);
+  std::string variablesString(variablesComboBox->GetValue().ToStdString());
+  if(!util::has_only_digits(variablesString)) {
+    variablesComboBox->SetValue(variablesComboBoxValue);
+    return;
+  }
   try {
-    variables = std::stoi(variablesComboBox->GetValue().ToStdString());
+    variables = std::stoi(variablesString);
   } catch(const std::invalid_argument& exc) {
-    evt.Skip();
+    variablesComboBox->SetValue(variablesComboBoxValue);
     return;
   } catch(const std::out_of_range& exc) {
-    evt.Skip();
+    variablesComboBox->SetValue(variablesComboBoxValue);
     return;
   }
 
   if(variables <= 0) {
-    evt.Skip();
+    variablesComboBox->SetValue(variablesComboBoxValue);
     return;
   }
+  variablesComboBoxValue = variablesString;
   update_equations_data_view_ctrl(variables);
+}
+
+void console_frame::variables_combo_box_on_text_enter(wxCommandEvent& evt) {
+  SetFocus(); // Sets the focus to the underlying frame.
+  // No need to do anything since the text box loses focus anyway after this
+  // event is called.
+}
+
+void console_frame::variables_combo_box_on_kill_focus(wxFocusEvent& evt) {
+  read_variables_combo_box_input();
 }
 
 void console_frame::variables_combo_box_on_combo_box(wxCommandEvent& evt) {
@@ -81,6 +153,7 @@ void console_frame::update_equations_data_view_ctrl(int variables) {
     equationsDataViewCtrl->AppendItem(data);
     data.clear();
   }
+  compileButton->Enable();
 }
 } // namespace gui
 } // namespace dynsolver

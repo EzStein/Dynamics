@@ -1,8 +1,9 @@
 #include <cstdlib>
 #include "util.h"
 namespace dynsolver {
+namespace util {
 using std::string;
-void util::strip_white_space(string& str) {
+void strip_white_space(string& str) {
   string::iterator end = str.end();
   for(string::iterator iter = str.begin(); iter != end;) {
     if(isspace(*iter)) {
@@ -14,7 +15,7 @@ void util::strip_white_space(string& str) {
   }
 }
 
-double util::string_to_double(const string& str) {
+double string_to_double(const string& str) {
   double ret = 0;
   typedef string::const_iterator iter;
   iter currChar = str.begin();
@@ -44,7 +45,7 @@ double util::string_to_double(const string& str) {
   return ret;
 }
 
-bool util::is_integer(const std::string& s) {
+bool is_integer(const std::string& s) {
    if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
 
    char * p;
@@ -53,11 +54,10 @@ bool util::is_integer(const std::string& s) {
    return (*p == 0);
 }
 
-long util::string_to_long(const std::string& s) {
+long string_to_long(const std::string& s) {
   return std::strtol(s.c_str(),nullptr,10);
 }
 
-namespace util {
 std::string read_file(const std::string& path) {
   FILE* file = fopen(path.c_str(), "rb");
   if(!file) {
@@ -76,5 +76,9 @@ std::string read_file(const std::string& path) {
   delete[] buffer;
   return result;
 }
+
+bool has_only_digits(const std::string& str) {
+  return str.find_first_not_of("0123456789") == std::string::npos;
 }
-}
+} // namespace util
+} // dynsolver

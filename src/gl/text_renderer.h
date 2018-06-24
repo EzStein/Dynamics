@@ -1,3 +1,4 @@
+
 #ifndef DYNSOLVER_GL_TEXT_RENDERER_H_
 #define DYNSOLVER_GL_TEXT_RENDERER_H_
 
@@ -26,17 +27,29 @@ private:
   GLuint textColorUniform;
   GLuint vertexAttributeBinding;
   GLenum textureUnit;
+
+  static const std::string kVertexShaderFilePath;
+  static const std::string kFragmentShaderFilePath;
+  static const std::string kTransformationUniform;
+  static const std::string kTextColorUniform;
+  static const std::string kSamplerUniform;
+  static const GLuint kVertexPositionAttribute;
+  static const GLuint kTexturePositionAttribute;
   
 public:
   text_renderer();
 
   // Draws the text to the screen at the given coordinates and in the given
   // font. The coordinates are the window space positions relative to the
-  // bottom left corner of the screen.
+  // bottom left corner of the screen. fontSize is the size in pixels
+  // of the font. Generally this just means the height of the rendered text.
   void render_text(const std::string& text, int x, int y, font&,
-		   GLfloat scale = 1.0f,
+		   GLfloat fontSize = 20,
 		   GLfloat red = 0.0f, GLfloat green = 0.0f, GLfloat blue = 0.0f,
 		   GLfloat alpha = 1.0f);
+  
+private:
+  std::vector<shader> generate_shaders();
 };
 } // namespace gl
 } // namespace dynsolver

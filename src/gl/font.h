@@ -32,6 +32,8 @@ private:
   FT_Face face;
   FT_Library& library;
 
+  FT_UInt baseHeight;
+
 public:
   font(const std::string& file);
   ~font();
@@ -48,11 +50,11 @@ public:
 			  size_t& width, size_t& height,
 			  size_t& bearingX, size_t& bearingY,
 			  size_t& advance, GLuint& texture);
+  
+  FT_UInt get_base_height() const;
 };
 
-// Renders the provided string using the given font.
-// One may specify 
-void render_text();
+
 }
 }
 #endif

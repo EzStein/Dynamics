@@ -20,6 +20,10 @@ double string_to_double(const std::string&);
 bool is_integer(const std::string&);
 long string_to_long(const std::string&);
 
+// Taken form stack overflow:
+// https://stackoverflow.com/questions/2844817/how-do-i-check-if-a-c-string-is-an-int
+bool has_only_digits(const std::string&);
+
 // Reads the entirety of the file into memory and returns it
 // as a string. Throws an exception on failure.
 std::string read_file(const std::string& path);

@@ -12,6 +12,8 @@
 #include "math/vector.h"
 #include "constants.h"
 #include "gl/shader.h"
+#include "util/util.h"
+#include "../app.h"
 
 namespace dynsolver {
 namespace gui {
@@ -39,6 +41,8 @@ const double& point2d::y() const {
 }
 
 solution_specification::solution_specification() : initialValue(1) { }
+
+singular_point_specification::singular_point_specification() : initialValue(1) { }
 
 window2d::window2d(point2d size, point2d span, point2d position) :
     size(size), span(span), position(position) { }
@@ -112,7 +116,7 @@ point2d window2d::get_center() const {
   return center;
 }
 
-math::square_matrix window2d::get_transformation_matrix() {
+math::square_matrix window2d::real_to_ndc() {
   point2d center(get_center());
   math::square_matrix mat(4, 0.0);
   mat[0][0] = 2.0/span.x();
@@ -126,24 +130,34 @@ math::square_matrix window2d::get_transformation_matrix() {
   return mat;
 }
 
-solution::solution(const math::vector& initial, double tMax, double tMin,
-                   double increment, const std::list<math::vector>& data) :
-    initial(initial), tMax(tMax), tMin(tMin), increment(increment), data(data) { }
+math::square_matrix window2d::pixel_to_ndc() {
+  point2d center(get_center());
+  math::square_matrix mat(4, 0.0);
+  mat[0][0] = 2.0/size.x();
+  mat[0][3] = -1;
 
-dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVariable,
-                                   int verticalAxisVariable, GLuint vao, GLuint program,
-				   const std::unordered_map<solution_id, solution>& solutions,
-				   gl::font& font,
-				   gl::text_renderer& textRenderer) :
-  window(window), horizontalAxisVariable(horizontalAxisVariable), vao(vao), program(program),
-  verticalAxisVariable(verticalAxisVariable), font(font), textRenderer(textRenderer) {
-  
-  for(std::unordered_map<solution_id, solution>::const_iterator iter = solutions.begin();
-      iter != solutions.end(); ++iter) {
+  mat[1][1] = 2.0/size.y();
+  mat[1][3] = -1;
+
+  mat[2][2] = 1;
+  mat[3][3] = 1;
+  return mat;
+}
+
+model::dynamical_window::dynamical_window(model& model,
+					  const window2d& window, int horizontalAxisVariable,
+					  int verticalAxisVariable) :
+  modelData(model), window(window),
+  horizontalAxisVariable(horizontalAxisVariable),
+  verticalAxisVariable(verticalAxisVariable),
+  axesVbo(nullptr, 8 * sizeof(float), GL_DYNAMIC_DRAW),
+  axesVboVertexCount(4) {
+  for(std::unordered_map<solution_id, solution>::const_iterator iter = modelData.solutions.begin();
+      iter != modelData.solutions.end(); ++iter) {
     // Foreach solution
     std::vector<float> data;
-    size_t points = iter->second.data.size();
-    size_t size = points * 2 * sizeof(float);
+    unsigned int points = iter->second.data.size();
+    unsigned int size = points * 2 * sizeof(float);
     for(std::list<math::vector>::const_iterator point = iter->second.data.begin();
 	point != iter->second.data.end(); ++point) {
       data.push_back((*point)[horizontalAxisVariable]);
@@ -153,29 +167,58 @@ dynamical_window::dynamical_window(const window2d& window, int horizontalAxisVar
     solution_render_data val{vbo, points};
     solutionRenderData.insert(std::make_pair(iter->first, val));
   }
+
+  // Set up axes vbo. This VBO is organized in pixel coordinates.
+  float tmpData[8] = {
+    10, 0, 10, window.get_size().y(),
+    0, 10, window.get_size().x(), 10
+  };
+  axesVbo.set_data(reinterpret_cast<unsigned char*>(tmpData), 8 * sizeof(float));
+  
 }
 
-void dynamical_window::set_horizontal_axis_variable(int val) {
-  horizontalAxisVariable = val;
+void model::dynamical_window::set_specification
+(const dynamical_window_specification& spec) {
+  window = window2d(window.get_size(),
+		    point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
+			  spec.verticalAxisMax - spec.verticalAxisMin),
+		    point2d(spec.horizontalAxisMin, spec.verticalAxisMax));
+  
+  if(horizontalAxisVariable != spec.horizontalAxisVariable ||
+     verticalAxisVariable != spec.verticalAxisVariable) {
+    horizontalAxisVariable = spec.horizontalAxisVariable;
+    verticalAxisVariable = spec.verticalAxisVariable;
+    
+    // Update VBO's
+    for(std::unordered_map<solution_id, solution>::const_iterator iter
+	  = modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+      update_vbo(iter->first);
+    }
+  }
+
 }
-int dynamical_window::get_horizontal_axis_variable() const {
+
+int model::dynamical_window::get_horizontal_axis_variable() const {
   return horizontalAxisVariable;
 }
-void dynamical_window::set_vertical_axis_variable(int val) {
-  verticalAxisVariable = val;
-}
-int dynamical_window::get_vertical_axis_variable() const {
+
+int model::dynamical_window::get_vertical_axis_variable() const {
   return verticalAxisVariable;
 }
-void dynamical_window::set_window(const window2d& val) {
+void model::dynamical_window::set_window(const window2d& val) {
   window = val;
 }
 
-const window2d& dynamical_window::get_window() const {
+const window2d& model::dynamical_window::get_window() const {
   return window;
 }
 
-void dynamical_window::generate_vbo(solution_id id, const std::list<math::vector>& solution) {
+void model::dynamical_window::clear() {
+  solutionRenderData.clear();
+}
+
+void model::dynamical_window::generate_vbo(solution_id id,
+					   const std::list<math::vector>& solution) {
   std::vector<float> data;
   size_t points = solution.size();
   size_t size = points * 2 * sizeof(float);
@@ -183,76 +226,127 @@ void dynamical_window::generate_vbo(solution_id id, const std::list<math::vector
       point != solution.end(); ++point) {
     data.push_back((*point)[horizontalAxisVariable]);
     data.push_back((*point)[verticalAxisVariable]);
-    //    std::cout << (*point)[horizontalAxisVariable] << std::endl;
   }
   gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
   solution_render_data val{vbo, points};
   solutionRenderData.insert(std::make_pair(id, val));
 }
 
-void dynamical_window::paint() {
+void model::dynamical_window::update_vbo(solution_id id) {
+  std::vector<float> data;
+  std::list<math::vector> solution = modelData.solutions.at(id).data;
+  size_t points = solution.size();
+  size_t size = points * 2 * sizeof(float);
+  for(std::list<math::vector>::const_iterator point = solution.begin();
+      point != solution.end(); ++point) {
+    data.push_back((*point)[horizontalAxisVariable]);
+    data.push_back((*point)[verticalAxisVariable]);
+  }
+  solutionRenderData.at(id).vertices = points;
+  solutionRenderData.at(id).vbo.set_data(reinterpret_cast<unsigned char *>(data.data()), size);
+}
+
+void model::dynamical_window::paint() {
   glViewport(0, 0, window.get_size().x(), window.get_size().y());
-  glUseProgram(program);
-  glBindVertexArray(vao);
-  GLuint location =
-    glGetUniformLocation(program, constants::vertex_shader::kTransformationUniform.c_str());
-  math::square_matrix mat(window.get_transformation_matrix());
-  float float_data[16];
+  glUseProgram(modelData.program2d.get_handle());
+  glBindVertexArray(modelData.vao2d.get_handle());
+  math::square_matrix mat(window.real_to_ndc());
+  float transformationMatrix[16];
   
   for(int i = 0; i != 4; ++i) {
     for(int j = 0; j != 4; ++j) {
-      float_data[4*i+j] =
+      transformationMatrix[4*i+j] =
 	mat[i][j];
     }
   }
-  
-  glUniformMatrix4fv(location, 1, true, float_data);
-  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+  // Set color to Red
+  glUniform4f(modelData.k2dColorUniformLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		     1, true, transformationMatrix);
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-  for(solution_iter iter = solutionRenderData.begin();
+  for(std::unordered_map<solution_id, solution_render_data>::const_iterator iter
+	= solutionRenderData.begin();
       iter != solutionRenderData.end(); ++iter) {
-    glBindVertexBuffer(constants::vertex_shader::kVertexBinding,
+    glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
     glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
+
+  mat = window.pixel_to_ndc();
+  for(int i = 0; i != 4; ++i) {
+    for(int j = 0; j != 4; ++j) {
+      transformationMatrix[4*i+j] =
+	mat[i][j];
+    }
+  }
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation, 1, true, transformationMatrix);
+
+  // Set color to Black
+  glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+  glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
+		     0, 2 * sizeof(float));
+  glDrawArrays(GL_LINES, 0, axesVboVertexCount);
   
-  textRenderer.render_text("Hello World", 100, 100, font);
+  //  modelData.textRenderer.render_text("Hello World", 100, 100, modelData.font, fontSize);
 }
   
-void dynamical_window::resize(double width, double height) {
+void model::dynamical_window::resize(double width, double height) {
   window.set_size(point2d(width, height));
+  // Set up axes vbo. This VBO is organized in pixel coordinates.
+  float tmpData[8] = {
+    10, 0, 10, window.get_size().y(),
+    0, 10, window.get_size().x(), 10
+  };
+  axesVbo.set_data(reinterpret_cast<unsigned char*>(tmpData), 8 * sizeof(float));
 }
 
-parameter_window::parameter_window(const window2d& window, int horizontalAxisVariable,
-                                   int verticalAxisVariable) :
-    window(window), horizontalAxisVariable(horizontalAxisVariable),
-    verticalAxisVariable(verticalAxisVariable) { }
+const std::string model::k2dVertexShaderFilePath
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"}, "2d_renderer.vert"));
+const GLuint model::k2dPositionAttribute(0);
+const GLuint model::k2dVertexBinding(0);
+const std::string model::k2dTransformationUniform("transformation");
 
-namespace {
-std::vector<gl::shader> build_shaders() {
+const std::string model::k2dFragmentShaderFilePath
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"}, "2d_renderer.frag"));
+const std::string model::k2dColorUniform("inColor");
+
+std::vector<gl::shader> model::build_shaders() {
   std::vector<gl::shader> shaders;
-  shaders.push_back(gl::shader(constants::vertex_shader::kCode, GL_VERTEX_SHADER));
-  shaders.push_back(gl::shader(constants::fragment_shader::kCode, GL_FRAGMENT_SHADER));
+  shaders.push_back(gl::shader(util::read_file(model::k2dVertexShaderFilePath),
+			       GL_VERTEX_SHADER));
+  shaders.push_back(gl::shader(util::read_file(model::k2dFragmentShaderFilePath),
+			       GL_FRAGMENT_SHADER));
   return shaders;
 }
-}
 
-model::model() : uniqueDynamicalId(0), uniqueParameterId(0),
-                 parameterPosition(1, 0.0),
+model::model() : parameterVariables(0),
+		 parameterPosition(1, 0.0),
+		 uniqueDynamicalId(0),
                  defaultWindow(window2d(point2d(500, 500),
                                         point2d(10, 10),
                                         point2d(-5, 5))),
-                 compiled(false),
-		 program(build_shaders()),
+
+		 font(constants::kDefaultFontFilePath),
 		 dynamicalDimension(0),
-		 font(constants::kDefaultFontFilePath) {
-  glUseProgram(program.get_handle());
-  glBindVertexArray(vao.get_handle());
-  glEnableVertexAttribArray(constants::vertex_shader::kPositionAttribute);
-  glVertexAttribFormat(constants::vertex_shader::kPositionAttribute,
+		 compiled(false),
+		 program2d(build_shaders()),
+		 k2dTransformationUniformLocation
+		 (glGetUniformLocation(program2d.get_handle(),
+				       k2dTransformationUniform.c_str())),
+		 k2dColorUniformLocation
+		 (glGetUniformLocation(program2d.get_handle(),
+				       k2dColorUniform.c_str())) {
+  glUseProgram(program2d.get_handle());
+  glBindVertexArray(vao2d.get_handle());
+  glEnableVertexAttribArray(k2dPositionAttribute);
+  glVertexAttribFormat(k2dPositionAttribute,
 		       2, GL_FLOAT, GL_FALSE, 0);
-  glVertexAttribBinding(constants::vertex_shader::kPositionAttribute,
-			constants::vertex_shader::kVertexBinding);
+  glVertexAttribBinding(k2dPositionAttribute,
+			k2dVertexBinding);
+
+
 }
 
 
@@ -285,8 +379,7 @@ void model::add_solution(const solution_specification& spec) {
   
   int solutionId = ++uniqueSolutionId;
   solutions.insert(std::make_pair(solutionId,
-                                  solution(spec.initialValue, spec.tMax,
-					   spec.tMin, spec.increment, points)));
+                                  solution{spec, points}));
   // We now need to update the VBO's of each window.
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
@@ -296,79 +389,32 @@ void model::add_solution(const solution_specification& spec) {
                     
 bool model::compile(std::vector<std::string> newExpressions) {
   assert(newExpressions.size() >= 1);
-  expressions = newExpressions;
-  dynamicalDimension = static_cast<int>(expressions.size());
-  // parameterVariables remains unchanged.
 
-  for(std::unordered_map<int, dynamical_window>::iterator
-          iter = dynamicalWindows.begin();
-      iter != dynamicalWindows.end(); ++iter) {
-    // For each dynamicalWindow
-    point2d size(iter->second.get_window().get_size());
-    point2d span(defaultWindow.get_span());
-    point2d position(defaultWindow.get_position());
-    iter->second.set_window(window2d(size, span, position));
-    
-    if(iter->second.get_horizontal_axis_variable() > dynamicalDimension)
-      iter->second.set_horizontal_axis_variable(0);
-    
-    if(iter->second.get_vertical_axis_variable() > dynamicalDimension)
-      iter->second.set_vertical_axis_variable(1);
-  }
-  for(std::unordered_map<int, parameter_window>::iterator
-          iter = parameterWindows.begin();
-      iter != parameterWindows.end(); ++iter) {
-    // For each parameterWindow
-    iter->second.window = defaultWindow;
-    if(parameterVariables >= 2) {
-      iter->second.horizontalAxisVariable = 0;
-      iter->second.verticalAxisVariable = 1;
-    } else if(parameterVariables == 1) {
-      iter->second.horizontalAxisVariable = 0;
-      iter->second.verticalAxisVariable = 0;
-    } else {
-      iter->second.horizontalAxisVariable = -1;
-      iter->second.verticalAxisVariable = -1;
-    }
-  }
+  int newDynamicalDimension = newExpressions.size();
   
-  system.clear();
-  jacobian.clear();
-
   // Set up symbol table.
   std::list<symbol> symbolTable;
   symbolTable.push_back(symbol("t",0,0));
-  for(int i = 0; i != dynamicalDimension; ++i) {
+  for(int i = 0; i != newDynamicalDimension; ++i) {
     std::string str("x" + std::to_string(i + 1));
     symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
   }
-  
-  if(parameterVariables <= 4) {
-    switch(parameterVariables) {
-      case 4:
-        symbolTable.push_back(symbol("d",dynamicalDimension + 4,dynamicalDimension + 4));
-      case 3:
-        symbolTable.push_back(symbol("c",dynamicalDimension + 3,dynamicalDimension + 3));
-      case 2:
-        symbolTable.push_back(symbol("b",dynamicalDimension + 2,dynamicalDimension + 2));
-      case 1:
-        symbolTable.push_back(symbol("a",dynamicalDimension + 1,dynamicalDimension + 1));
-      default: break;//Do nothing
-    }
-  } else {
-    for(int i = 0; i != parameterVariables; ++i) {
-      std::string str("a" + std::to_string(i + 1));
-      symbolTable.push_back(symbol(str, dynamicalDimension+1+i, dynamicalDimension + 1 + i));
-    }
+
+  for(int i = 0; i != parameterVariables; ++i) {
+    std::string str("a" + std::to_string(i + 1));
+    symbolTable.push_back(symbol(str, newDynamicalDimension+1+i, newDynamicalDimension + 1 + i));
   }
   
   symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
       return a.parameter < b.parameter;
     });
+
+  std::vector<expression> newSystem;
+  std::vector<expression> newJacobian;
   
   compiler::expression_parser parse;
-  for(std::vector<std::string>::const_iterator expr = expressions.begin();
-      expr != expressions.end(); ++expr) {
+  for(std::vector<std::string>::const_iterator expr = newExpressions.begin();
+      expr != newExpressions.end(); ++expr) {
     AST ast;
     try {
       ast = parse.parse(*expr, symbolTable);
@@ -376,15 +422,28 @@ bool model::compile(std::vector<std::string> newExpressions) {
       return false;
     }
     compiler::function<double, const double*> function = ast.compile();
-    system.push_back(expression{ast, function});
+    newSystem.push_back(expression{ast, function});
     for(symbol sym : symbolTable) {
       //We must check that the symbol is indeed a variable and not a parameter
       if(sym.parameter == 0 || sym.parameter >= get_dynamical_variables())
         continue;
       AST diffAst = AST(ast).differentiate(sym.name);
       compiler::function<double, const double*> diffFunction = diffAst.compile();
-      jacobian.push_back(expression{diffAst, diffFunction});
+      newJacobian.push_back(expression{diffAst, diffFunction});
     }
+  }
+
+  // We have successfully compiled!
+
+  system = newSystem;
+  jacobian = newJacobian;
+
+  expressions = newExpressions;
+  dynamicalDimension = static_cast<int>(expressions.size());
+
+  for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
+	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
+    iter->second.clear();
   }
 
   solutions.clear();
@@ -392,47 +451,33 @@ bool model::compile(std::vector<std::string> newExpressions) {
   return true;
 }
 
-int model::add_parameter_window(window2d window, int horizontalAxisVariable,
-                                int verticalAxisVariable) {
-  assert(horizontalAxisVariable < parameterVariables);
-  assert(verticalAxisVariable < parameterVariables);
-  parameterWindows.insert(
-      std::make_pair(
-          uniqueParameterId,
-          parameter_window(window, horizontalAxisVariable, verticalAxisVariable)));
-  return uniqueParameterId++;
-}
-
-int model::add_dynamical_window(window2d window, int horizontalAxisVariable,
-                                int verticalAxisVariable) {
-  assert(horizontalAxisVariable < get_dynamical_variables() || !compiled);
-  assert(verticalAxisVariable < get_dynamical_variables() || !compiled);
+int model::add_dynamical_window(const dynamical_window_specification& spec,
+				int width, int height) {
+  assert(spec.horizontalAxisVariable < get_dynamical_variables() || !compiled);
+  assert(spec.verticalAxisVariable < get_dynamical_variables() || !compiled);
+  window2d window(point2d(width, height),
+		  point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
+			  spec.verticalAxisMax - spec.verticalAxisMin),
+		  point2d(spec.horizontalAxisMin, spec.verticalAxisMax));
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
-          dynamical_window(window, horizontalAxisVariable, verticalAxisVariable,
-			   vao.get_handle(), program.get_handle(), solutions, font, textRenderer)));
+          dynamical_window(*this, window, spec.horizontalAxisVariable,
+			   spec.verticalAxisVariable)));
   return uniqueDynamicalId++;
 }
 
-void model::set_dynamical_axes(int horizontalVariable, int verticalVariable,
-                               int dynamicalId) {
-  assert(horizontalVariable < get_dynamical_variables());
-  assert(verticalVariable < get_dynamical_variables());
-  dynamicalWindows.at(dynamicalId).set_horizontal_axis_variable(horizontalVariable);
-  dynamicalWindows.at(dynamicalId).set_vertical_axis_variable(verticalVariable);
+void model::set_dynamical_window_specification(const dynamical_window_specification& spec,
+					       dynamical_window_id id) {
+  dynamicalWindows.at(id).set_specification(spec);
 }
 
-void model::set_parameter_axes(int horizontalVariable, int verticalVariable,
-                               int parameterId) {
-  assert(horizontalVariable < parameterVariables);
-  assert(verticalVariable < parameterVariables);
-  parameterWindows.at(parameterId).horizontalAxisVariable = horizontalVariable;
-  parameterWindows.at(parameterId).verticalAxisVariable = verticalVariable;
+void model::delete_dynamical_window(dynamical_window_id id) {
+  dynamicalWindows.erase(id);
 }
 
-void model::set_parameters(int parameters) {
-  parameterVariables = parameters;
+void model::delete_all_dynamical_windows() {
+  dynamicalWindows.clear();
 }
 
 int model::get_dynamical_variables() const {
@@ -445,8 +490,6 @@ int model::get_dynamical_dimension() const {
 
 void model::move_dynamical_window(int x, int y, int) { assert(false); }
 void model::scale_dynamical_window(double scale, int x, int y, int) { assert(false); }
-void model::move_parameter_window(int x, int y, int) { assert(false); }
-void model::scale_parameter_window(double scale, int x, int y, int) { assert(false); }
 
 void model::paint_dynamical_window(dynamical_window_id id) {
   dynamicalWindows.at(id).paint();
@@ -455,7 +498,7 @@ void model::resize_dynamical_window(dynamical_window_id id, double width, double
   dynamicalWindows.at(id).resize(width, height);
 }
 
-const dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
+const model::dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
   // Dangerous if another window is added after returning!!
   return dynamicalWindows.at(id);
 }

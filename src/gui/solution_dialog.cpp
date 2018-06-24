@@ -3,8 +3,8 @@
 namespace dynsolver {
 namespace gui {
 
-solution_dialog::solution_dialog(wxFrame* parent) :
-  solution_dialog_base(parent) {
+solution_dialog::solution_dialog() :
+  solution_dialog_base(nullptr) {
   initialValueDataViewCtrl->AppendTextColumn("Variable");
   initialValueDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 }
@@ -35,7 +35,11 @@ void solution_dialog::set_ui() {
   initialValueDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
   for(int i = 0; i != solutionSpecification.initialValue.size(); ++i) {
-    data.push_back("x" + std::to_string(i));
+    if(i == 0) {
+      data.push_back("t");
+    } else {
+      data.push_back("x" + std::to_string(i));
+    }
     data.push_back(std::to_string(solutionSpecification.initialValue[i]));
     initialValueDataViewCtrl->AppendItem(data);
     data.clear();

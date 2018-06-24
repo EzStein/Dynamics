@@ -10,10 +10,11 @@ namespace dynsolver {
 namespace gl {
 
 font::font(const std::string& file) :
-  library(free_type_library_singleton::get_free_type_library()) {
+  library(free_type_library_singleton::get_free_type_library()),
+  baseHeight(48) {
   int failure = FT_New_Face(library, file.c_str(), 0, &face);
   assert(!failure);
-  FT_Set_Pixel_Sizes(face, 0, 48);
+  FT_Set_Pixel_Sizes(face, 0, baseHeight);
 }
 
 font::~font() {
@@ -58,6 +59,10 @@ void font::get_character_data(unsigned long characterCode,
   advance = charData.advance;
   texture = textureHandle;
   characters.insert(std::make_pair(characterCode, std::move(charData)));
+}
+
+FT_UInt font::get_base_height() const {
+  return baseHeight;
 }
 } // namespace gl
 } // namespace dynsolver
