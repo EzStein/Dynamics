@@ -150,8 +150,8 @@ void app::close_application() {
 }
 
 void app::new_dynamical_window(const dynamical_window_specification& spec) {
-  int width = 500;
-  int height = 500;
+  int width = 600;
+  int height = 600;
   dynamical_window_id id = modelData->add_dynamical_window(spec, width, height);
   dynamical_frame* frame = new dynamical_frame(*this, id, width, height);
   dynamicalFrames.insert(std::make_pair(id, frame));
@@ -161,6 +161,11 @@ void app::new_dynamical_window(const dynamical_window_specification& spec) {
 void app::set_dynamical_window_specification(const dynamical_window_specification& spec,
 					dynamical_window_id id) {
   modelData->set_dynamical_window_specification(spec, id);
+  dynamicalFrames.at(id)->refresh_gl_canvas();
+}
+
+void app::set_dynamical_window(const window2d& window, dynamical_window_id id) {
+  modelData->set_dynamical_window(window, id);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 

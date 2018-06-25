@@ -227,6 +227,7 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( dynamical_frame_base::dynamical_frame_on_close ) );
+	this->Connect( wxEVT_ICONIZE, wxIconizeEventHandler( dynamical_frame_base::dynamical_frame_on_iconize ) );
 	this->Connect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
 	this->Connect( solutionMenu->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_on_menu_selection ) );
 	this->Connect( isoclineMenu->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_on_menu_selection ) );
@@ -238,6 +239,7 @@ dynamical_frame_base::~dynamical_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( dynamical_frame_base::dynamical_frame_on_close ) );
+	this->Disconnect( wxEVT_ICONIZE, wxIconizeEventHandler( dynamical_frame_base::dynamical_frame_on_iconize ) );
 	this->Disconnect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_on_menu_selection ) );

@@ -19,7 +19,6 @@
 class wxGLCanvas;
 class wxGLContext;
 
-
 namespace dynsolver {
 namespace math {
 class square_matrix;
@@ -48,7 +47,9 @@ class point2d : public math::vector {
 };
 
 // Represents a window into a 2d plane that has both a size in pixels
-// a spanning size of the plane and a centered location.
+// a spanning size of the plane and a location.
+// Note that pixels are given realative to the bottom left corner
+// of the plane. In particular, upwards is the POSITIVE y direction.
 class window2d {
  private:
   // The size in pixels of window. The x coordinate of size is the width,
@@ -59,18 +60,13 @@ class window2d {
   // the window in the x and y directions.
   point2d span;
 
-  // This is the position of the top left corner of the window in the plane.
+  // This is the position of the bottom right corner of the window in the plane.
   point2d position;
 
  public:
   // Constructs a window with the given information.
   window2d(point2d size, point2d span, point2d position);
   
-  // The following functions assume that the pixel in the top left corner of
-  // the window has pixel coordinate (0, 0). The positive x direction grows
-  // to the right and the positive y direction grows moving down.
-  // Pixel refers to a point in this coordinate system while real refers
-  // to the corrdinate that a pixel is mapped to by this window.
   // Returns the pixel associated with the real coordinate provided.
   point2d pixel_coordinate_of(point2d real) const;
   
@@ -91,6 +87,8 @@ class window2d {
 
   // Translates the window by the real value provided.
   void move_real(point2d real);
+
+  void set_span(const point2d& newSpan);
 
   // Scales the window by scale about the real point provided.
   // The resulting window has a the same size as before, but the
@@ -224,7 +222,17 @@ public:
     };
   
     std::unordered_map<dynamical_window_id, solution_render_data> solutionRenderData;
-  
+
+    // The maximal distance between two axis ticks in pixels. If the number of
+    // axis tickets jumps above the maximum, then the number of tickets are doubled,
+    // and the real distance between each tick is halved. If it falls below the minimum,
+    // the distance between each tick is doubled.
+    const int maximumPixelTickDistance;
+    const int minimumPixelTickDistance;
+
+    // The current tick distance in real coordnate values.
+    double realTickDistanceX;
+    double realTickDistanceY;
   public:
     dynamical_window(model&,
 		     const window2d& window,
@@ -254,6 +262,9 @@ public:
     const window2d& get_window() const;
 
     void clear();
+
+    bool on_vertical_axis(double, double) const;
+    bool on_horizontal_axis(double, double) const;
   };
   
   gl::font font;
@@ -368,6 +379,13 @@ public:
   void scale_dynamical_window(double scale, int x, int y, int dynamicalId);
 
   const dynamical_window& get_dynamical_window(dynamical_window_id) const;
+
+  void set_dynamical_window(const window2d& window, dynamical_window_id id);
+
+  // True if the given position in pixels lies on the vertical or horizontal axes
+  // respectively for the given dynamical_window
+  bool on_vertical_axis(double, double, dynamical_window_id id) const;
+  bool on_horizontal_axis(double, double, dynamical_window_id id) const;
 };
 } // namespace gui
 } // namespace dynsolver

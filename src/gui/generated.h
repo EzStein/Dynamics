@@ -98,6 +98,7 @@ class dynamical_frame_base : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void dynamical_frame_on_close( wxCloseEvent& event ) = 0;
+		virtual void dynamical_frame_on_iconize( wxIconizeEvent& event ) = 0;
 		virtual void dynamical_frame_on_set_focus( wxFocusEvent& event ) = 0;
 		virtual void solution_menu_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_on_menu_selection( wxCommandEvent& event ) = 0;

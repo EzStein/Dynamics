@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <sstream>
+#include <iomanip>
 #include "util.h"
 namespace dynsolver {
 namespace util {
@@ -79,6 +81,14 @@ std::string read_file(const std::string& path) {
 
 bool has_only_digits(const std::string& str) {
   return str.find_first_not_of("0123456789") == std::string::npos;
+}
+
+// taken from stack overflow
+// https://stackoverflow.com/questions/29200635/convert-float-to-string-with-set-precision-number-of-decimal-digits
+std::string double_to_string(double x, int precision) {
+  std::stringstream sstream;
+  sstream << std::fixed << std::setprecision(precision) << x;
+  return sstream.str();
 }
 } // namespace util
 } // dynsolver

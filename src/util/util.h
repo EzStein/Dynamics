@@ -28,6 +28,9 @@ bool has_only_digits(const std::string&);
 // as a string. Throws an exception on failure.
 std::string read_file(const std::string& path);
 
+// Creates a string of the double with the given number of decimal points.
+std::string double_to_string(double x, int precision);
+
 }
 }
 #endif

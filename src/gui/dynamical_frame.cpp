@@ -10,12 +10,21 @@
 namespace dynsolver {
 namespace gui {
 
+const int dynamical_frame::kMagnificationTimerEventId = 0;
+
 dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
-  dynamical_frame_base(nullptr, wxID_ANY, "Dynamical Space", wxPoint(500,0)), appl(app), id(id) {
+  dynamical_frame_base(nullptr, wxID_ANY, "Dynamical Space"),
+  appl(app), id(id),
+  magnificationTimer(this, kMagnificationTimerEventId),
+  magnificationViewport(point2d(0,0), point2d(0,0), point2d(0,0)),
+  firstWheelEvent(true),
+  horizontalScaling(false),
+  verticalScaling(false) {
   // Setup events and widgets not already done in dynamical_frame_base
   glCanvas = new wxGLCanvas(this, appl.getGlAttributes(), wxID_ANY,
 			    wxDefaultPosition, wxSize(width, height));
   dynamicalWindowBox->Add(glCanvas, 1, wxEXPAND);
+  Fit();
   glCanvas->Bind(wxEVT_PAINT, &dynamical_frame::gl_canvas_on_paint, this);
   glCanvas->Bind(wxEVT_KEY_DOWN, &dynamical_frame::gl_canvas_on_key_down, this);
   glCanvas->Bind(wxEVT_KEY_UP, &dynamical_frame::gl_canvas_on_key_up, this);
@@ -26,6 +35,8 @@ dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
   glCanvas->Bind(wxEVT_RIGHT_DOWN, &dynamical_frame::gl_canvas_on_right_down, this);
   glCanvas->Bind(wxEVT_RIGHT_UP, &dynamical_frame::gl_canvas_on_right_up, this);
   glCanvas->Bind(wxEVT_SIZE, &dynamical_frame::gl_canvas_on_size, this);
+  Bind(wxEVT_TIMER, &dynamical_frame::gl_canvas_on_mouse_wheel_end, this,
+       kMagnificationTimerEventId);
 }
 
 dynamical_frame::~dynamical_frame() {
@@ -50,10 +61,10 @@ void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
   spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
   window2d window(appl.get_model().get_dynamical_window(id).get_window());
   spec.horizontalAxisMin = window.get_position().x();
-  spec.verticalAxisMax = window.get_position().y();
+  spec.verticalAxisMin = window.get_position().y();
 
   spec.horizontalAxisMax = window.get_position().x() + window.get_span().x();
-  spec.verticalAxisMin = window.get_position().y() - window.get_span().y();
+  spec.verticalAxisMax = window.get_position().y() + window.get_span().y();
 
   spec.horizontalAxisVariable = appl.get_model().get_dynamical_window(id)
     .get_horizontal_axis_variable();
@@ -104,21 +115,107 @@ void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt)
 
 void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) { }
 void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
+
 void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
+  evt.GetPosition(&leftClickMouseX, &leftClickMouseY);
+  int width, height;
+  glCanvas->GetSize(&width, &height);
+  leftClickMouseY = height - leftClickMouseY;
+  
+  realDragPosition = point2d(appl.get_model().get_dynamical_window(id)
+			     .get_window().get_position());
+
+  if(appl.get_model().on_vertical_axis(leftClickMouseX, leftClickMouseY, id)) {
+    verticalScaling = true;
+  } else if(appl.get_model().on_horizontal_axis(leftClickMouseX, leftClickMouseY, id)) {
+    horizontalScaling = true;
+  }
 }
 
 void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
+  evt.GetPosition(&leftClickMouseX, &leftClickMouseY);
+  int width, height;
+  glCanvas->GetSize(&width, &height);
+  leftClickMouseY = height - leftClickMouseY;
+  
+  realDragPosition = point2d(appl.get_model().get_dynamical_window(id)
+			     .get_window().get_position());
+  verticalScaling = false;
+  horizontalScaling = false;
+  SetCursor(wxCURSOR_DEFAULT);
 }
 
 void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
+  int posX, posY;
+  evt.GetPosition(&posX, &posY);
+  int width, height;
+  glCanvas->GetSize(&width, &height);
+  posY = height - posY;
+  
   if(evt.LeftIsDown()) {
-    // We are left dragging the mouse.
+    // Yes dragging
+    if(verticalScaling) {
+      SetCursor(wxCURSOR_SIZENS);
+    } else if(horizontalScaling) {
+      SetCursor(wxCURSOR_SIZEWE);
+    } else {
+      window2d window(appl.get_model().get_dynamical_window(id).get_window());
+      double changeX = leftClickMouseX - posX;
+      double changeY = leftClickMouseY - posY;
+      point2d newPosition(window.get_span().x()*changeX/window.get_size().x()
+			  + realDragPosition.x(),
+			  window.get_span().y()*changeY/window.get_size().y()
+			  + realDragPosition.y());
+      window2d newViewport(window.get_size(), window.get_span(), newPosition);
+      appl.set_dynamical_window(newViewport, id);
+    }
+  } else {
+    // Not dragging
+    if(appl.get_model().on_vertical_axis(posX, posY, id)) {
+      SetCursor(wxCURSOR_SIZENS);
+    } else if(appl.get_model().on_horizontal_axis(posX, posY, id)) {
+      SetCursor(wxCURSOR_SIZEWE);
+    } else {
+      SetCursor(wxCURSOR_DEFAULT);
+    }
   }
 }
-void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) { }
+
+void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
+  totalMagnification = 1.0;
+  magnificationX = posX;
+  magnificationY = posY;
+  magnificationViewport = appl.get_model().get_dynamical_window(id).get_window();
+}
+
+void dynamical_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
+  firstWheelEvent = true;
+}
+
+void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
+  int posX, posY;
+  evt.GetPosition(&posX, &posY);
+  int width, height;
+  glCanvas->GetSize(&width, &height);
+  posY = height - posY;
+  if(firstWheelEvent) {
+    gl_canvas_on_mouse_wheel_start(posX, posY);
+    firstWheelEvent = false;
+  }
+  double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());
+  totalMagnification *= magnificationUnit;
+  window2d tmp(magnificationViewport);
+  tmp.scale_pixel(point2d(totalMagnification, totalMagnification),
+		  point2d(magnificationX, magnificationY));
+  appl.set_dynamical_window(tmp, id);
+  magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
+}
 
 void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
   evt.GetPosition(&rightClickMouseX, &rightClickMouseY);
+  int width, height;
+  glCanvas->GetSize(&width, &height);
+  rightClickMouseY = height - rightClickMouseY;
   PopupMenu(popupMenu);
 }
 void dynamical_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
@@ -139,6 +236,11 @@ void dynamical_frame::gl_canvas_on_paint(wxPaintEvent& evt) {
     appl.paint_dynamical_window(id);
     glCanvas->SwapBuffers();
   }
+}
+
+void dynamical_frame::dynamical_frame_on_iconize(wxIconizeEvent& evt) {
+  std::cout << "ICONIZE" << std::endl;
+  Layout();
 }
 } // namespace dynslover
 } // namespace gui

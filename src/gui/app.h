@@ -99,6 +99,9 @@ class app : public wxApp {
   void set_dynamical_window_specification(const dynamical_window_specification&,
 					  dynamical_window_id id);
 
+    // Changes the specification of the dynamical window.
+  void set_dynamical_window(const window2d&, dynamical_window_id id);
+
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model();

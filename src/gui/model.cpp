@@ -50,14 +50,14 @@ window2d::window2d(point2d size, point2d span, point2d position) :
 point2d window2d::pixel_coordinate_of(point2d real) const {
   point2d pixel;
   pixel.x() = (real.x() - position.x()) * size.x() / span.x();
-  pixel.y() = (position.y() - real.y()) * size.y() / span.y();
+  pixel.y() = (real.y() - position.y()) * size.y() / span.y();
   return pixel;
 }
 
 point2d window2d::real_coordinate_of(point2d pixel) const {
   point2d real;
   real.x() = pixel.x() * span.x() / size.x() + position.x();
-  real.y() = position.y() - pixel.y() * span.y() / size.y();
+  real.y() = pixel.y() * span.y() / size.y() + position.y();
   return real;
 }
 
@@ -71,6 +71,10 @@ const point2d& window2d::get_span() const {
 
 void window2d::set_size(const point2d& newSize) {
   size = newSize;
+}
+
+void window2d::set_span(const point2d& newSpan) {
+  span = newSpan;
 }
 
 const point2d& window2d::get_position() const{
@@ -88,7 +92,7 @@ bool window2d::contains_real(point2d real) const {
 
 void window2d::move_pixel(point2d pixel) {
   position.x() += pixel.x() * span.x() / size.x();
-  position.y() += -pixel.y() * span.y() / size.y();
+  position.y() += pixel.y() * span.y() / size.y();
 }
 
 void window2d::move_real(point2d real) {
@@ -97,22 +101,20 @@ void window2d::move_real(point2d real) {
 }
 
 void window2d::scale_pixel(point2d scale, point2d pixel) {
-  -pixel;
-  move_pixel(pixel);
-  span.x() *= scale.x();
-  span.y() *= scale.y();
-  -pixel;
-  move_pixel(pixel);
+  scale_real(scale, real_coordinate_of(pixel));
 }
 
 void window2d::scale_real(point2d scale, point2d real) {
-  scale_pixel(scale, pixel_coordinate_of(real));
+  span.x() *= scale.x();
+  span.y() *= scale.y();
+  position.x() = (position.x() - real.x()) * scale.x() + real.x();
+  position.y() = (position.y() - real.y()) * scale.y() + real.y();
 }
 
 point2d window2d::get_center() const {
   point2d center;
   center.x() = position.x() + span.x()/2;
-  center.y() = position.y() - span.y()/2;
+  center.y() = position.y() + span.y()/2;
   return center;
 }
 
@@ -151,7 +153,11 @@ model::dynamical_window::dynamical_window(model& model,
   horizontalAxisVariable(horizontalAxisVariable),
   verticalAxisVariable(verticalAxisVariable),
   axesVbo(nullptr, 8 * sizeof(float), GL_DYNAMIC_DRAW),
-  axesVboVertexCount(4) {
+  axesVboVertexCount(4),
+  minimumPixelTickDistance(15),
+  maximumPixelTickDistance(250),
+  realTickDistanceX(0.5),
+  realTickDistanceY(0.5) {
   for(std::unordered_map<solution_id, solution>::const_iterator iter = modelData.solutions.begin();
       iter != modelData.solutions.end(); ++iter) {
     // Foreach solution
@@ -167,14 +173,6 @@ model::dynamical_window::dynamical_window(model& model,
     solution_render_data val{vbo, points};
     solutionRenderData.insert(std::make_pair(iter->first, val));
   }
-
-  // Set up axes vbo. This VBO is organized in pixel coordinates.
-  float tmpData[8] = {
-    10, 0, 10, window.get_size().y(),
-    0, 10, window.get_size().x(), 10
-  };
-  axesVbo.set_data(reinterpret_cast<unsigned char*>(tmpData), 8 * sizeof(float));
-  
 }
 
 void model::dynamical_window::set_specification
@@ -182,7 +180,7 @@ void model::dynamical_window::set_specification
   window = window2d(window.get_size(),
 		    point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
 			  spec.verticalAxisMax - spec.verticalAxisMin),
-		    point2d(spec.horizontalAxisMin, spec.verticalAxisMax));
+		    point2d(spec.horizontalAxisMin, spec.verticalAxisMin));
   
   if(horizontalAxisVariable != spec.horizontalAxisVariable ||
      verticalAxisVariable != spec.verticalAxisVariable) {
@@ -274,6 +272,79 @@ void model::dynamical_window::paint() {
     glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
 
+  // Compute the distance between each tick.
+  int numberOfTicksX = window.get_span().x()/realTickDistanceX;
+  int pixelTickDistanceX = window.get_size().x()/static_cast<double>(numberOfTicksX);
+  if(pixelTickDistanceX < minimumPixelTickDistance) {
+    realTickDistanceX *= 10;
+  } else if(pixelTickDistanceX > maximumPixelTickDistance) {
+    realTickDistanceX /= 10;
+  }
+  int numberOfTicksY = window.get_span().y()/realTickDistanceY;
+  int pixelTickDistanceY = window.get_size().y()/static_cast<double>(numberOfTicksY);
+  if(pixelTickDistanceY < minimumPixelTickDistance) {
+    realTickDistanceY *= 10;
+  } else if(pixelTickDistanceY > maximumPixelTickDistance) {
+    realTickDistanceY /= 10;
+  }
+
+  // The x and y values in pixels for where the x and y axes should cross.
+  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  if(axesPixel.x() < 0.0)
+    axesPixel.x() = 0.0;
+  if(axesPixel.x() > window.get_size().x())
+    axesPixel.x() = window.get_size().x();
+  if(axesPixel.y() < 0.0)
+    axesPixel.y() = 0.0;
+  if(axesPixel.y() > window.get_size().y())
+    axesPixel.y() = window.get_size().y();
+  
+  // Set up tick data in pixel coordinates.
+  std::vector<float> axesVboData;
+  double xStart = realTickDistanceX *
+    static_cast<int>(window.get_position().x() / realTickDistanceX);
+  double yStart = realTickDistanceY *
+    static_cast<int>(window.get_position().y() / realTickDistanceY);
+  for(double x = xStart;
+      x < window.get_position().x() + window.get_span().x(); x += realTickDistanceX) {
+    float realCoordinate = window.pixel_coordinate_of(point2d(x, 0)).x();
+    // First vertex
+    axesVboData.push_back(realCoordinate); // X
+    axesVboData.push_back(axesPixel.y() - 5); // Y
+
+    // Second vertex
+    axesVboData.push_back(realCoordinate); // X
+    axesVboData.push_back(axesPixel.y() + 5); // Y
+  }
+  for(double y = yStart; y < window.get_position().y() + window.get_span().y();
+      y += realTickDistanceY) {
+    float realCoordinate = window.pixel_coordinate_of(point2d(0, y)).y();
+    // First vertex
+    axesVboData.push_back(axesPixel.x() - 5); // X
+    axesVboData.push_back(realCoordinate); // Y
+    
+    // Second vertex
+    axesVboData.push_back(axesPixel.x() + 5); // X
+    axesVboData.push_back(realCoordinate); // Y
+  }
+
+  // Add in the actual axes
+  axesVboData.push_back(0);
+  axesVboData.push_back(axesPixel.y());
+  
+  axesVboData.push_back(window.get_size().x());
+  axesVboData.push_back(axesPixel.y());
+
+  axesVboData.push_back(axesPixel.x());
+  axesVboData.push_back(0);
+  
+  axesVboData.push_back(axesPixel.x());
+  axesVboData.push_back(window.get_size().y());
+  
+  axesVbo.set_data(reinterpret_cast<unsigned char*>(axesVboData.data()),
+		   axesVboData.size()*sizeof(float));
+
+  // Generate pixel to ndc transform
   mat = window.pixel_to_ndc();
   for(int i = 0; i != 4; ++i) {
     for(int j = 0; j != 4; ++j) {
@@ -287,19 +358,43 @@ void model::dynamical_window::paint() {
   glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
   glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
 		     0, 2 * sizeof(float));
-  glDrawArrays(GL_LINES, 0, axesVboVertexCount);
+  glDrawArrays(GL_LINES, 0, axesVboData.size() / 2);
   
-  //  modelData.textRenderer.render_text("Hello World", 100, 100, modelData.font, fontSize);
+
+  // Draw Axes text
+  point2d axesReal(window.real_coordinate_of(axesPixel));
+  dou
+  for(double x = xStart; x > window.get_position().x();
+      x -= 5 * realTickDistanceX) {
+    point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
+    std::string text = util::double_to_string(x, 2);
+    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3, pixel.y() + 10,
+				       modelData.font, 12);
+  }
+  for(double x = xStart; x < window.get_position().x() + window.get_span().x();
+      x += 5 * realTickDistanceX) {
+    point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
+    std::string text = util::double_to_string(x, 2);
+    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
+				       pixel.y() + 10, modelData.font, 12);
+  }
 }
   
 void model::dynamical_window::resize(double width, double height) {
+  double changeWidth = (width - window.get_size().x())
+    * window.get_span().x() / window.get_size().x();
+  double changeHeight = (height - window.get_size().y())
+    * window.get_span().y() / window.get_size().y();
   window.set_size(point2d(width, height));
-  // Set up axes vbo. This VBO is organized in pixel coordinates.
-  float tmpData[8] = {
-    10, 0, 10, window.get_size().y(),
-    0, 10, window.get_size().x(), 10
-  };
-  axesVbo.set_data(reinterpret_cast<unsigned char*>(tmpData), 8 * sizeof(float));
+  window.set_span(point2d(changeWidth + window.get_span().x(),
+			  changeHeight + window.get_span().y()));
+}
+
+bool model::dynamical_window::on_vertical_axis(double x, double y) const {
+  return 5 < x && x < 15;
+}
+bool model::dynamical_window::on_horizontal_axis(double x, double y) const {
+  return 5 < y && y < 15;
 }
 
 const std::string model::k2dVertexShaderFilePath
@@ -326,7 +421,7 @@ model::model() : parameterVariables(0),
 		 uniqueDynamicalId(0),
                  defaultWindow(window2d(point2d(500, 500),
                                         point2d(10, 10),
-                                        point2d(-5, 5))),
+                                        point2d(-5, -5))),
 
 		 font(constants::kDefaultFontFilePath),
 		 dynamicalDimension(0),
@@ -458,7 +553,7 @@ int model::add_dynamical_window(const dynamical_window_specification& spec,
   window2d window(point2d(width, height),
 		  point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
 			  spec.verticalAxisMax - spec.verticalAxisMin),
-		  point2d(spec.horizontalAxisMin, spec.verticalAxisMax));
+		  point2d(spec.horizontalAxisMin, spec.verticalAxisMin));
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
@@ -498,9 +593,20 @@ void model::resize_dynamical_window(dynamical_window_id id, double width, double
   dynamicalWindows.at(id).resize(width, height);
 }
 
+void model::set_dynamical_window(const window2d& window, dynamical_window_id id) {
+  dynamicalWindows.at(id).set_window(window);
+}
+
 const model::dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
   // Dangerous if another window is added after returning!!
   return dynamicalWindows.at(id);
+}
+
+bool model::on_vertical_axis(double x, double y, dynamical_window_id id) const {
+  dynamicalWindows.at(id).on_vertical_axis(x, y);
+}
+bool model::on_horizontal_axis(double x, double y, dynamical_window_id id) const {
+  dynamicalWindows.at(id).on_horizontal_axis(x, y);
 }
 } // namespace gui
 } // namespace dynslover
