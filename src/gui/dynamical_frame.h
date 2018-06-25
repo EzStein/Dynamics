@@ -61,8 +61,10 @@ class dynamical_frame : public dynamical_frame_base {
   static const int kMagnificationTimerEventId;
 
   // Set to true when we are dragging is meant to cause a scaling on,
-  // the vertical or horizontal axes.
+  // the vertical or horizontal axes. We lock these values in along with
+  // the axesScalingViewport when we left click on an axis.
   bool verticalScaling, horizontalScaling;
+  window2d axesScalingViewport;
  public:
   dynamical_frame(app&, dynamical_window_id id, int width, int height);
   ~dynamical_frame();

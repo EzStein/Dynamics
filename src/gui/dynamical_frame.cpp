@@ -17,6 +17,7 @@ dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
   appl(app), id(id),
   magnificationTimer(this, kMagnificationTimerEventId),
   magnificationViewport(point2d(0,0), point2d(0,0), point2d(0,0)),
+  axesScalingViewport(point2d(0,0), point2d(0,0), point2d(0,0)),
   firstWheelEvent(true),
   horizontalScaling(false),
   verticalScaling(false) {
@@ -124,12 +125,13 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   
   realDragPosition = point2d(appl.get_model().get_dynamical_window(id)
 			     .get_window().get_position());
-
+  
   if(appl.get_model().on_vertical_axis(leftClickMouseX, leftClickMouseY, id)) {
     verticalScaling = true;
   } else if(appl.get_model().on_horizontal_axis(leftClickMouseX, leftClickMouseY, id)) {
     horizontalScaling = true;
   }
+  axesScalingViewport = appl.get_model().get_dynamical_window(id).get_window();
 }
 
 void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
@@ -156,8 +158,34 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
     // Yes dragging
     if(verticalScaling) {
       SetCursor(wxCURSOR_SIZENS);
+      double realLeftClickMouseY =
+	axesScalingViewport.real_coordinate_of(point2d(0, leftClickMouseY)).y();
+      double realPosY =
+	axesScalingViewport.real_coordinate_of(point2d(0, posY)).y();
+
+      double scale = std::abs(realLeftClickMouseY / realPosY);
+      double maxScale = 100;
+      if(std::abs(scale) > maxScale) {
+	scale = maxScale;
+      }
+      window2d tmp(axesScalingViewport);
+      tmp.scale_real(point2d(1.0, scale), point2d(0,0));
+      appl.set_dynamical_window(tmp, id);
     } else if(horizontalScaling) {
       SetCursor(wxCURSOR_SIZEWE);
+      double realLeftClickMouseX =
+	axesScalingViewport.real_coordinate_of(point2d(leftClickMouseX,0)).x();
+      double realPosX =
+	axesScalingViewport.real_coordinate_of(point2d(posX,0)).x();
+
+      double scale = std::abs(realLeftClickMouseX / realPosX);
+      double maxScale = 100;
+      if(std::abs(scale) > maxScale) {
+	scale = maxScale;
+      }
+      window2d tmp(axesScalingViewport);
+      tmp.scale_real(point2d(scale, 1.0), point2d(0,0));
+      appl.set_dynamical_window(tmp, id);
     } else {
       window2d window(appl.get_model().get_dynamical_window(id).get_window());
       double changeX = leftClickMouseX - posX;

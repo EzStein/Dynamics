@@ -223,12 +223,19 @@ public:
   
     std::unordered_map<dynamical_window_id, solution_render_data> solutionRenderData;
 
+    // The number of ticks between each labeled tick.
+    int ticksPerLabel;
+
+    // The font size of the labeled tick.
+    double tickFontSize;
+
     // The maximal distance between two axis ticks in pixels. If the number of
     // axis tickets jumps above the maximum, then the number of tickets are doubled,
     // and the real distance between each tick is halved. If it falls below the minimum,
     // the distance between each tick is doubled.
-    const int maximumPixelTickDistance;
     const int minimumPixelTickDistance;
+    const int maximumPixelTickDistance;
+
 
     // The current tick distance in real coordnate values.
     double realTickDistanceX;

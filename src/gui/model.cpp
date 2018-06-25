@@ -154,8 +154,10 @@ model::dynamical_window::dynamical_window(model& model,
   verticalAxisVariable(verticalAxisVariable),
   axesVbo(nullptr, 8 * sizeof(float), GL_DYNAMIC_DRAW),
   axesVboVertexCount(4),
+  ticksPerLabel(5),
+  tickFontSize(12),
   minimumPixelTickDistance(15),
-  maximumPixelTickDistance(250),
+  maximumPixelTickDistance(minimumPixelTickDistance * ticksPerLabel * 2),
   realTickDistanceX(0.5),
   realTickDistanceY(0.5) {
   for(std::unordered_map<solution_id, solution>::const_iterator iter = modelData.solutions.begin();
@@ -276,16 +278,16 @@ void model::dynamical_window::paint() {
   int numberOfTicksX = window.get_span().x()/realTickDistanceX;
   int pixelTickDistanceX = window.get_size().x()/static_cast<double>(numberOfTicksX);
   if(pixelTickDistanceX < minimumPixelTickDistance) {
-    realTickDistanceX *= 10;
+    realTickDistanceX *= ticksPerLabel;
   } else if(pixelTickDistanceX > maximumPixelTickDistance) {
-    realTickDistanceX /= 10;
+    realTickDistanceX /= ticksPerLabel;
   }
   int numberOfTicksY = window.get_span().y()/realTickDistanceY;
   int pixelTickDistanceY = window.get_size().y()/static_cast<double>(numberOfTicksY);
   if(pixelTickDistanceY < minimumPixelTickDistance) {
-    realTickDistanceY *= 10;
+    realTickDistanceY *= ticksPerLabel;
   } else if(pixelTickDistanceY > maximumPixelTickDistance) {
-    realTickDistanceY /= 10;
+    realTickDistanceY /= ticksPerLabel;
   }
 
   // The x and y values in pixels for where the x and y axes should cross.
@@ -360,23 +362,45 @@ void model::dynamical_window::paint() {
 		     0, 2 * sizeof(float));
   glDrawArrays(GL_LINES, 0, axesVboData.size() / 2);
   
-
+  const double tolerance = 0.001;
   // Draw Axes text
   point2d axesReal(window.real_coordinate_of(axesPixel));
-  dou
+  xStart = realTickDistanceX * ticksPerLabel *
+    static_cast<int>(window.get_position().x() / (realTickDistanceX * ticksPerLabel));
+  yStart = realTickDistanceY * ticksPerLabel *
+    static_cast<int>(window.get_position().y() / (realTickDistanceY * ticksPerLabel));
   for(double x = xStart; x > window.get_position().x();
-      x -= 5 * realTickDistanceX) {
+      x -= ticksPerLabel * realTickDistanceX) {
+    if(std::abs(x) < tolerance) continue;
     point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
     std::string text = util::double_to_string(x, 2);
     modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3, pixel.y() + 10,
-				       modelData.font, 12);
+				       modelData.font, tickFontSize);
   }
   for(double x = xStart; x < window.get_position().x() + window.get_span().x();
-      x += 5 * realTickDistanceX) {
+      x += ticksPerLabel * realTickDistanceX) {
+    if(std::abs(x) < tolerance) continue;
     point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
     std::string text = util::double_to_string(x, 2);
     modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
-				       pixel.y() + 10, modelData.font, 12);
+				       pixel.y() + 10, modelData.font, tickFontSize);
+  }
+
+  for(double y = yStart; y > window.get_position().y();
+      y -= ticksPerLabel * realTickDistanceY) {
+    if(std::abs(y) < tolerance) continue;
+    point2d pixel(window.pixel_coordinate_of(point2d(axesReal.x(),y)));
+    std::string text = util::double_to_string(y, 2);
+    modelData.textRenderer.render_text(text, pixel.x() + 10, pixel.y(),
+				       modelData.font, tickFontSize);
+  }
+  for(double y = yStart; y < window.get_position().y() + window.get_span().y();
+      y += ticksPerLabel * realTickDistanceY) {
+    if(std::abs(y) < tolerance) continue;
+    point2d pixel(window.pixel_coordinate_of(point2d(axesReal.x(),y)));
+    std::string text = util::double_to_string(y, 2);
+    modelData.textRenderer.render_text(text, pixel.x() + 10,
+				       pixel.y(), modelData.font, tickFontSize);
   }
 }
   
@@ -391,10 +415,30 @@ void model::dynamical_window::resize(double width, double height) {
 }
 
 bool model::dynamical_window::on_vertical_axis(double x, double y) const {
-  return 5 < x && x < 15;
+  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  if(axesPixel.x() < 0.0)
+    axesPixel.x() = 0.0;
+  if(axesPixel.x() > window.get_size().x())
+    axesPixel.x() = window.get_size().x();
+  if(axesPixel.y() < 0.0)
+    axesPixel.y() = 0.0;
+  if(axesPixel.y() > window.get_size().y())
+    axesPixel.y() = window.get_size().y();
+  double axis = axesPixel.x();
+  return axis - 5 < x && x < axis + 5;
 }
 bool model::dynamical_window::on_horizontal_axis(double x, double y) const {
-  return 5 < y && y < 15;
+  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  if(axesPixel.x() < 0.0)
+    axesPixel.x() = 0.0;
+  if(axesPixel.x() > window.get_size().x())
+    axesPixel.x() = window.get_size().x();
+  if(axesPixel.y() < 0.0)
+    axesPixel.y() = 0.0;
+  if(axesPixel.y() > window.get_size().y())
+    axesPixel.y() = window.get_size().y();
+  double axis = axesPixel.y();
+  return axis - 5 < y && y < axis + 5;
 }
 
 const std::string model::k2dVertexShaderFilePath
