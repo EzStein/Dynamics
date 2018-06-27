@@ -18,6 +18,18 @@ class dynamical_dialog : public dynamical_dialog_base {
   wxPGProperty* verticalAxisVariablePropertyGridItem;
   wxPGProperty* verticalAxisMinPropertyGridItem;
   wxPGProperty* verticalAxisMaxPropertyGridItem;
+  wxPGProperty* cameraPositionXPropertyGridItem;
+  wxPGProperty* cameraPositionYPropertyGridItem;
+  wxPGProperty* cameraPositionZPropertyGridItem;
+  wxPGProperty* cameraDirectionXPropertyGridItem;
+  wxPGProperty* cameraDirectionYPropertyGridItem;
+  wxPGProperty* cameraDirectionZPropertyGridItem;
+  wxPGProperty* upDirectionXPropertyGridItem;
+  wxPGProperty* upDirectionYPropertyGridItem;
+  wxPGProperty* upDirectionZPropertyGridItem;
+  wxPGProperty* zNearPropertyGridItem;
+  wxPGProperty* zFarPropertyGridItem;
+  
   
  public:
   dynamical_dialog();
@@ -31,6 +43,7 @@ class dynamical_dialog : public dynamical_dialog_base {
   bool show_dialog(const dynamical_window_specification&, dynamical_window_specification*);
   virtual void cancel_button_on_button_click(wxCommandEvent&) override;
   virtual void ok_button_on_button_click(wxCommandEvent&) override;
+  virtual void viewport_radio_box_on_radio_box(wxCommandEvent&) override;
   
 private:
   // Set's the UI according to the specification variable.

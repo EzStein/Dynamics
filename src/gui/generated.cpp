@@ -345,58 +345,6 @@ dynamical_frame_base::~dynamical_frame_base()
 	delete objectsPopupMenu; 
 }
 
-parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
-{
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
-	wxBoxSizer* bSizer35;
-	bSizer35 = new wxBoxSizer( wxVERTICAL );
-	
-	parameterWindowBox = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	bSizer35->Add( parameterWindowBox, 1, wxEXPAND | wxALL, 5 );
-	
-	
-	this->SetSizer( bSizer35 );
-	this->Layout();
-	m_statusBar3 = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
-	m_menu22 = new wxMenu();
-	wxMenuItem* m_menuItem52;
-	m_menuItem52 = new wxMenuItem( m_menu22, wxID_ANY, wxString( wxT("MyMenuItem") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu22->Append( m_menuItem52 );
-	
-	wxMenuItem* m_menuItem53;
-	m_menuItem53 = new wxMenuItem( m_menu22, wxID_ANY, wxString( wxT("MyMenuItem") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu22->Append( m_menuItem53 );
-	
-	wxMenuItem* m_menuItem54;
-	m_menuItem54 = new wxMenuItem( m_menu22, wxID_ANY, wxString( wxT("MyMenuItem") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu22->Append( m_menuItem54 );
-	
-	wxMenuItem* m_menuItem55;
-	m_menuItem55 = new wxMenuItem( m_menu22, wxID_ANY, wxString( wxT("MyMenuItem") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu22->Append( m_menuItem55 );
-	
-	this->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::parameter_frame_baseOnContextMenu ), NULL, this ); 
-	
-	m_menubar1 = new wxMenuBar( 0 );
-	m_menu4 = new wxMenu();
-	wxMenuItem* m_menuItem7;
-	m_menuItem7 = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Edit...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu4->Append( m_menuItem7 );
-	
-	m_menubar1->Append( m_menu4, wxT("View") ); 
-	
-	this->SetMenuBar( m_menubar1 );
-	
-	
-	this->Centre( wxBOTH );
-}
-
-parameter_frame_base::~parameter_frame_base()
-{
-	delete m_menu22; 
-}
-
 solution_dialog_base::solution_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -466,77 +414,6 @@ solution_dialog_base::~solution_dialog_base()
 	
 }
 
-preferences_dialog_base::preferences_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
-{
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
-	wxBoxSizer* bSizer31;
-	bSizer31 = new wxBoxSizer( wxVERTICAL );
-	
-	m_notebook3 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_panel11 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_notebook3->AddPage( m_panel11, wxT("General"), false );
-	m_panel9 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_notebook3->AddPage( m_panel9, wxT("Parameter Plane"), false );
-	m_panel10 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_notebook3->AddPage( m_panel10, wxT("Dynamical Plane"), false );
-	m_panel12 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_notebook3->AddPage( m_panel12, wxT("Advanced"), true );
-	
-	bSizer31->Add( m_notebook3, 1, wxEXPAND | wxALL, 5 );
-	
-	
-	this->SetSizer( bSizer31 );
-	this->Layout();
-	
-	this->Centre( wxBOTH );
-}
-
-preferences_dialog_base::~preferences_dialog_base()
-{
-}
-
-parameter_dialog_base::parameter_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
-{
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
-	wxBoxSizer* bSizer7;
-	bSizer7 = new wxBoxSizer( wxVERTICAL );
-	
-	m_propertyGrid1 = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
-	m_propertyGridItem5 = m_propertyGrid1->Append( new wxPropertyCategory( wxT("X Axis"), wxT("X Axis") ) ); 
-	m_propertyGridItem7 = m_propertyGrid1->Append( new wxEnumProperty( wxT("Variable"), wxT("Variable") ) ); 
-	m_propertyGridItem91 = m_propertyGrid1->Append( new wxFloatProperty( wxT("Minimum"), wxT("Minimum") ) ); 
-	m_propertyGridItem92 = m_propertyGrid1->Append( new wxFloatProperty( wxT("Maximum"), wxT("Maximum") ) ); 
-	m_propertyGridItem6 = m_propertyGrid1->Append( new wxPropertyCategory( wxT("Y Axis"), wxT("Y Axis") ) ); 
-	m_propertyGridItem8 = m_propertyGrid1->Append( new wxEnumProperty( wxT("Variable"), wxT("Variable") ) ); 
-	m_propertyGridItem9 = m_propertyGrid1->Append( new wxFloatProperty( wxT("Minimum"), wxT("Minimum") ) ); 
-	m_propertyGridItem10 = m_propertyGrid1->Append( new wxFloatProperty( wxT("Maximum"), wxT("Maximum") ) ); 
-	bSizer7->Add( m_propertyGrid1, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizer17;
-	bSizer17 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_button8 = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer17->Add( m_button8, 0, wxALL, 5 );
-	
-	m_button9 = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer17->Add( m_button9, 0, wxALL, 5 );
-	
-	
-	bSizer7->Add( bSizer17, 0, wxEXPAND, 5 );
-	
-	
-	this->SetSizer( bSizer7 );
-	this->Layout();
-	
-	this->Centre( wxBOTH );
-}
-
-parameter_dialog_base::~parameter_dialog_base()
-{
-}
-
 dynamical_dialog_base::dynamical_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -544,8 +421,19 @@ dynamical_dialog_base::dynamical_dialog_base( wxWindow* parent, wxWindowID id, c
 	wxBoxSizer* bSizer7;
 	bSizer7 = new wxBoxSizer( wxVERTICAL );
 	
-	dynamicalPropertyGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
-	bSizer7->Add( dynamicalPropertyGrid, 1, wxEXPAND, 5 );
+	wxString viewportRadioBoxChoices[] = { wxT("2D"), wxT("3D") };
+	int viewportRadioBoxNChoices = sizeof( viewportRadioBoxChoices ) / sizeof( wxString );
+	viewportRadioBox = new wxRadioBox( this, wxID_ANY, wxT("Viewport"), wxDefaultPosition, wxDefaultSize, viewportRadioBoxNChoices, viewportRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	viewportRadioBox->SetSelection( 0 );
+	bSizer7->Add( viewportRadioBox, 0, wxEXPAND, 5 );
+	
+	dynamical2dPropertyGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
+	bSizer7->Add( dynamical2dPropertyGrid, 1, wxEXPAND, 5 );
+	
+	dynamical3dPropertyGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
+	dynamical3dPropertyGrid->Hide();
+	
+	bSizer7->Add( dynamical3dPropertyGrid, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* bSizer17;
 	bSizer17 = new wxBoxSizer( wxHORIZONTAL );
@@ -566,6 +454,7 @@ dynamical_dialog_base::dynamical_dialog_base( wxWindow* parent, wxWindowID id, c
 	this->Centre( wxBOTH );
 	
 	// Connect Events
+	viewportRadioBox->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( dynamical_dialog_base::viewport_radio_box_on_radio_box ), NULL, this );
 	okButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::ok_button_on_button_click ), NULL, this );
 	cancelButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::cancel_button_on_button_click ), NULL, this );
 }
@@ -573,6 +462,7 @@ dynamical_dialog_base::dynamical_dialog_base( wxWindow* parent, wxWindowID id, c
 dynamical_dialog_base::~dynamical_dialog_base()
 {
 	// Disconnect Events
+	viewportRadioBox->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( dynamical_dialog_base::viewport_radio_box_on_radio_box ), NULL, this );
 	okButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::ok_button_on_button_click ), NULL, this );
 	cancelButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::cancel_button_on_button_click ), NULL, this );
 	

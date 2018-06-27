@@ -7,22 +7,53 @@ namespace gui {
 
 dynamical_dialog::dynamical_dialog() :
   dynamical_dialog_base(nullptr) {
-  dynamicalPropertyGrid->Append
+  dynamical2dPropertyGrid->Append
     (new wxPropertyCategory( wxT("Horizontal Axis"), wxT("Horizontal Axis") ) ); 
-  horizontalAxisVariablePropertyGridItem = dynamicalPropertyGrid->
+  horizontalAxisVariablePropertyGridItem = dynamical2dPropertyGrid->
     Append( new wxEnumProperty( wxT("Variable"), wxT("VariableH") ) ); 
-  horizontalAxisMinPropertyGridItem = dynamicalPropertyGrid->
+  horizontalAxisMinPropertyGridItem = dynamical2dPropertyGrid->
     Append( new wxFloatProperty( wxT("Minimum"), wxT("MinimumH") ) ); 
-  horizontalAxisMaxPropertyGridItem = dynamicalPropertyGrid->
+  horizontalAxisMaxPropertyGridItem = dynamical2dPropertyGrid->
     Append( new wxFloatProperty( wxT("Maximum"), wxT("MaximumH") ) ); 
-  dynamicalPropertyGrid->
+  dynamical2dPropertyGrid->
     Append( new wxPropertyCategory( wxT("Vertical Axis"), wxT("Vertical Axis") ) ); 
-  verticalAxisVariablePropertyGridItem = dynamicalPropertyGrid->
+  verticalAxisVariablePropertyGridItem = dynamical2dPropertyGrid->
     Append( new wxEnumProperty( wxT("Variable"), wxT("VariableV") ) ); 
-  verticalAxisMinPropertyGridItem = dynamicalPropertyGrid->
+  verticalAxisMinPropertyGridItem = dynamical2dPropertyGrid->
     Append( new wxFloatProperty( wxT("Minimum"), wxT("MinimumV") ) ); 
-  verticalAxisMaxPropertyGridItem = dynamicalPropertyGrid->
-    Append( new wxFloatProperty( wxT("Maximum"), wxT("MaximumV") ) ); 
+  verticalAxisMaxPropertyGridItem = dynamical2dPropertyGrid->
+    Append( new wxFloatProperty( wxT("Maximum"), wxT("MaximumV") ) );
+
+  dynamical3dPropertyGrid->
+    Append(new wxPropertyCategory( wxT("Camera Position"), wxT("Camera Position") ) ); 
+  cameraPositionXPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("X"), wxT("XCP") ) ); 
+  cameraPositionYPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Y"), wxT("YCP") ) ); 
+  cameraPositionZPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Z"), wxT("ZCP") ) ); 
+  dynamical3dPropertyGrid->
+    Append( new wxPropertyCategory( wxT("Camera Direction"), wxT("Camera Direction") ) ); 
+  cameraDirectionXPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("X"), wxT("XCD") ) ); 
+  cameraDirectionYPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Y"), wxT("YCD") ) ); 
+  cameraDirectionZPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Z"), wxT("ZCD") ) ); 
+  dynamical3dPropertyGrid->
+    Append( new wxPropertyCategory( wxT("Up Direction"), wxT("Up Direction") ) ); 
+  upDirectionXPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("X"), wxT("XUD") ) ); 
+  upDirectionYPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Y"), wxT("YUD") ) ); 
+  upDirectionZPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Z"), wxT("ZUD") ) ); 
+  dynamical3dPropertyGrid->
+    Append( new wxPropertyCategory( wxT("Clip Distance"), wxT("Clip Distance") ) ); 
+  zNearPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Near"), wxT("Near") ) );
+  zFarPropertyGridItem =
+    dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Far"), wxT("Far") ) ); 
 }
 
 bool dynamical_dialog::show_dialog(const dynamical_window_specification& spec,
@@ -48,14 +79,14 @@ void dynamical_dialog::ok_button_on_button_click(wxCommandEvent& evt) {
 }
 
 void dynamical_dialog::set_ui() {
-  dynamicalPropertyGrid->SetPropertyValue(horizontalAxisMinPropertyGridItem,
+  dynamical2dPropertyGrid->SetPropertyValue(horizontalAxisMinPropertyGridItem,
 					 dynamicalSpecification.horizontalAxisMin);
-  dynamicalPropertyGrid->SetPropertyValue(horizontalAxisMaxPropertyGridItem,
+  dynamical2dPropertyGrid->SetPropertyValue(horizontalAxisMaxPropertyGridItem,
 					  dynamicalSpecification.horizontalAxisMax);
   
-  dynamicalPropertyGrid->SetPropertyValue(verticalAxisMinPropertyGridItem,
+  dynamical2dPropertyGrid->SetPropertyValue(verticalAxisMinPropertyGridItem,
 					 dynamicalSpecification.verticalAxisMin);
-  dynamicalPropertyGrid->SetPropertyValue(verticalAxisMaxPropertyGridItem,
+  dynamical2dPropertyGrid->SetPropertyValue(verticalAxisMaxPropertyGridItem,
 					  dynamicalSpecification.verticalAxisMax);
   assert(dynamicalSpecification.dynamicalVariables >= 2);
   wxPGChoices list;
@@ -73,17 +104,17 @@ void dynamical_dialog::set_ui() {
 
 bool dynamical_dialog::validate_and_set_specification() {
   dynamicalSpecification.horizontalAxisMax =
-    dynamicalPropertyGrid->
+    dynamical2dPropertyGrid->
     GetPropertyValue(horizontalAxisMaxPropertyGridItem).GetDouble();
   dynamicalSpecification.horizontalAxisMin =
-    dynamicalPropertyGrid->
+    dynamical2dPropertyGrid->
     GetPropertyValue(horizontalAxisMinPropertyGridItem).GetDouble();
 
   dynamicalSpecification.verticalAxisMax =
-    dynamicalPropertyGrid->
+    dynamical2dPropertyGrid->
     GetPropertyValue(verticalAxisMaxPropertyGridItem).GetDouble();
   dynamicalSpecification.verticalAxisMin =
-    dynamicalPropertyGrid->
+    dynamical2dPropertyGrid->
     GetPropertyValue(verticalAxisMinPropertyGridItem).GetDouble();
   if(dynamicalSpecification.horizontalAxisMax
      <= dynamicalSpecification.horizontalAxisMin ||
@@ -96,6 +127,10 @@ bool dynamical_dialog::validate_and_set_specification() {
   dynamicalSpecification.verticalAxisVariable
     = verticalAxisVariablePropertyGridItem->GetChoiceSelection();
   return true;
+}
+
+void dynamical_dialog::viewport_radio_box_on_radio_box(wxCommandEvent&) {
+  
 }
 } // namespace gui
 } // namespace dynslover

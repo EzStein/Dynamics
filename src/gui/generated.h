@@ -32,6 +32,7 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/notebook.h>
 #include <wx/dialog.h>
+#include <wx/radiobox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -148,33 +149,6 @@ class dynamical_frame_base : public wxFrame
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class parameter_frame_base
-///////////////////////////////////////////////////////////////////////////////
-class parameter_frame_base : public wxFrame 
-{
-	private:
-	
-	protected:
-		wxPanel* parameterWindowBox;
-		wxStatusBar* m_statusBar3;
-		wxMenu* m_menu22;
-		wxMenuBar* m_menubar1;
-		wxMenu* m_menu4;
-	
-	public:
-		
-		parameter_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter Space"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 900,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
-		~parameter_frame_base();
-		
-		void parameter_frame_baseOnContextMenu( wxMouseEvent &event )
-		{
-			this->PopupMenu( m_menu22, event.GetPosition() );
-		}
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
 /// Class solution_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
 class solution_dialog_base : public wxDialog 
@@ -206,54 +180,6 @@ class solution_dialog_base : public wxDialog
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class preferences_dialog_base
-///////////////////////////////////////////////////////////////////////////////
-class preferences_dialog_base : public wxDialog 
-{
-	private:
-	
-	protected:
-		wxNotebook* m_notebook3;
-		wxPanel* m_panel11;
-		wxPanel* m_panel9;
-		wxPanel* m_panel10;
-		wxPanel* m_panel12;
-	
-	public:
-		
-		preferences_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Preferences"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 569,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
-		~preferences_dialog_base();
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class parameter_dialog_base
-///////////////////////////////////////////////////////////////////////////////
-class parameter_dialog_base : public wxDialog 
-{
-	private:
-	
-	protected:
-		wxPropertyGrid* m_propertyGrid1;
-		wxPGProperty* m_propertyGridItem5;
-		wxPGProperty* m_propertyGridItem7;
-		wxPGProperty* m_propertyGridItem91;
-		wxPGProperty* m_propertyGridItem92;
-		wxPGProperty* m_propertyGridItem6;
-		wxPGProperty* m_propertyGridItem8;
-		wxPGProperty* m_propertyGridItem9;
-		wxPGProperty* m_propertyGridItem10;
-		wxButton* m_button8;
-		wxButton* m_button9;
-	
-	public:
-		
-		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 509,312 ), long style = wxDEFAULT_DIALOG_STYLE ); 
-		~parameter_dialog_base();
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
 /// Class dynamical_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
 class dynamical_dialog_base : public wxDialog 
@@ -261,11 +187,14 @@ class dynamical_dialog_base : public wxDialog
 	private:
 	
 	protected:
-		wxPropertyGrid* dynamicalPropertyGrid;
+		wxRadioBox* viewportRadioBox;
+		wxPropertyGrid* dynamical2dPropertyGrid;
+		wxPropertyGrid* dynamical3dPropertyGrid;
 		wxButton* okButton;
 		wxButton* cancelButton;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void viewport_radio_box_on_radio_box( wxCommandEvent& event ) = 0;
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
 		
