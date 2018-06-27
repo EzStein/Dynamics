@@ -164,7 +164,7 @@ void app::set_dynamical_window_specification(const dynamical_window_specificatio
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
-void app::set_dynamical_window(const window2d& window, dynamical_window_id id) {
+void app::set_dynamical_window(const math::window2d& window, dynamical_window_id id) {
   modelData->set_dynamical_window(window, id);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
@@ -242,6 +242,7 @@ wxGLAttributes app::getGlAttributes() {
 void app::add_solution(const solution_specification& spec) {
   modelData->add_solution(spec);
   refresh_dynamical_windows();
+  consoleFrame->update_solutions_list();
 }
 
 bool app::compile(const std::vector<std::string> system) {
@@ -258,6 +259,39 @@ void app::refresh_dynamical_windows() {
   for(std::unordered_map<dynamical_window_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
+  }
+}
+
+void app::set_solution_color(solution_id id, const color& color) {
+  modelData->set_solution_color(id, color);
+  refresh_dynamical_windows();
+}
+
+void app::clear_solution_color() {
+  modelData->clear_solution_color();
+  refresh_dynamical_windows();
+}
+
+void app::edit_solution(solution_id id, solution_specification spec) {
+  modelData->edit_solution(id, spec);
+  refresh_dynamical_windows();
+  consoleFrame->update_solutions_list();
+}
+
+void app::delete_solution(solution_id id) {
+  modelData->delete_solution(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_solutions_list();
+}
+
+bool app::select_solution(int x, int y, dynamical_window_id id) {
+  solution_id solutionId;
+  if(modelData->select_solution(x, y, id, solutionId)) {
+    consoleFrame->select_solution(solutionId);
+    return true;
+  } else {
+    consoleFrame->unselect_solution();
+    return false;
   }
 }
 

@@ -65,6 +65,10 @@ class matrix {
   // Returns the a const pointer to the data contained in this matrix.
   const double* data() const;
 
+  // Converts this matrix into a float array in ROW major fasion.
+  // To get a double array version simply use data().
+  void as_float_array(float* arr) const;
+
   // Returns a pointer to the start of the row.
   double* operator[](int);
   const double* operator[](int) const;

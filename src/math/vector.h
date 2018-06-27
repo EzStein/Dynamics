@@ -31,6 +31,12 @@ vector operator*(matrix, const vector&);
 vector operator*(double, vector);
 vector operator*(vector, double);
 vector operator/(vector, double);
+
+// Returns the angle between the two vectors.
+double angle(const vector&, const vector&);
+
+// returns the dot product between both vectors.
+double dot(const vector&, const vector&);
 } // namespace math
 } // namespace dynsolver
 #endif

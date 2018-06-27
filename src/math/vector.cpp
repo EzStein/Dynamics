@@ -1,6 +1,7 @@
 #include "math/vector.h"
 
 #include <cassert>
+#include <cmath>
 
 namespace dynsolver {
 namespace math {
@@ -47,6 +48,20 @@ vector operator*(vector mat, double scalar) {
 vector operator/(vector mat, double scalar) {
   mat /= scalar;
   return mat;
+}
+
+double angle(const vector& v1, const vector& v2) {
+  assert(v1.size() == v2.size());
+  return std::acos(dot(v1, v2) / (v1.norm() * v2.norm()));
+}
+
+double dot(const vector& v1, const vector& v2) {
+  assert(v1.size() == v2.size());
+  double acc = 0;
+  for(int i = 0; i != v1.size(); ++i) {
+    acc += v1[i] * v2[i];
+  }
+  return acc;
 }
 } // namespace math
 } // namespace dynslover

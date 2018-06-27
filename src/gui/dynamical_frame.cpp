@@ -16,8 +16,9 @@ dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
   dynamical_frame_base(nullptr, wxID_ANY, "Dynamical Space"),
   appl(app), id(id),
   magnificationTimer(this, kMagnificationTimerEventId),
-  magnificationViewport(point2d(0,0), point2d(0,0), point2d(0,0)),
-  axesScalingViewport(point2d(0,0), point2d(0,0), point2d(0,0)),
+  magnificationViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
+  axesScalingViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
+  moveViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
   firstWheelEvent(true),
   horizontalScaling(false),
   verticalScaling(false) {
@@ -60,7 +61,7 @@ void dynamical_frame::dynamical_frame_on_close(wxCloseEvent&) {
 void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
   dynamical_window_specification spec;
   spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
-  window2d window(appl.get_model().get_dynamical_window(id).get_window());
+  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
   spec.horizontalAxisMin = window.get_position().x();
   spec.verticalAxisMin = window.get_position().y();
 
@@ -79,8 +80,8 @@ void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
 void dynamical_frame::dynamical_frame_on_set_focus(wxFocusEvent& evt) { }
 
 void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
-  window2d window(appl.get_model().get_dynamical_window(id).get_window());
-  point2d initialPoint(window.real_coordinate_of(point2d(rightClickMouseX, rightClickMouseY)));
+  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
+  math::vector2d initialPoint(window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
   math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
   int horz = appl.get_model().get_dynamical_window(id).get_horizontal_axis_variable();
   int vert = appl.get_model().get_dynamical_window(id).get_vertical_axis_variable();
@@ -99,8 +100,8 @@ void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
 }
 void dynamical_frame::isocline_menu_on_menu_selection(wxCommandEvent& evt) { }
 void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt) {
-  window2d window(appl.get_model().get_dynamical_window(id).get_window());
-  point2d initialPoint(window.real_coordinate_of(point2d(rightClickMouseX, rightClickMouseY)));
+  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
+  math::vector2d initialPoint(window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
   math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
   int horz = appl.get_model().get_dynamical_window(id).get_horizontal_axis_variable();
   int vert = appl.get_model().get_dynamical_window(id).get_vertical_axis_variable();
@@ -123,28 +124,47 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   leftClickMouseY = height - leftClickMouseY;
   
-  realDragPosition = point2d(appl.get_model().get_dynamical_window(id)
-			     .get_window().get_position());
-  
   if(appl.get_model().on_vertical_axis(leftClickMouseX, leftClickMouseY, id)) {
     verticalScaling = true;
   } else if(appl.get_model().on_horizontal_axis(leftClickMouseX, leftClickMouseY, id)) {
     horizontalScaling = true;
   }
   axesScalingViewport = appl.get_model().get_dynamical_window(id).get_window();
+  moveViewport = appl.get_model().get_dynamical_window(id).get_window();
+}
+
+void dynamical_frame::set_cursor(int x, int y) {
+  if(appl.get_model().on_vertical_axis(x, y, id)) {
+    SetCursor(wxCURSOR_SIZENS);
+  } else if(appl.get_model().on_horizontal_axis(x, y, id)) {
+    SetCursor(wxCURSOR_SIZEWE);
+  } else {
+    SetCursor(wxCURSOR_DEFAULT);
+  }
 }
 
 void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
-  evt.GetPosition(&leftClickMouseX, &leftClickMouseY);
+  int posX, posY;
+  evt.GetPosition(&posX, &posY);
   int width, height;
   glCanvas->GetSize(&width, &height);
-  leftClickMouseY = height - leftClickMouseY;
-  
-  realDragPosition = point2d(appl.get_model().get_dynamical_window(id)
-			     .get_window().get_position());
+  posY = height - posY;
+
+  const int tolerance = 2;
+  if(std::abs(leftClickMouseX - posX) <= tolerance
+     && std::abs(leftClickMouseY - posY) <= tolerance) {
+    // A mouse click occured. We now attempt to find and select
+    // an object.
+    appl.select_solution(posX, posY, id);
+  }
+
+  leftClickMouseX = posX;
+  leftClickMouseY = posY;
+  moveViewport = appl.get_model().get_dynamical_window(id).get_window();
   verticalScaling = false;
   horizontalScaling = false;
-  SetCursor(wxCURSOR_DEFAULT);
+
+  set_cursor(leftClickMouseX, leftClickMouseY);
 }
 
 void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
@@ -154,58 +174,43 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
   
-  if(evt.LeftIsDown()) {
-    // Yes dragging
-    if(verticalScaling) {
-      SetCursor(wxCURSOR_SIZENS);
-      double realLeftClickMouseY =
-	axesScalingViewport.real_coordinate_of(point2d(0, leftClickMouseY)).y();
-      double realPosY =
-	axesScalingViewport.real_coordinate_of(point2d(0, posY)).y();
-
-      double scale = std::abs(realLeftClickMouseY / realPosY);
-      double maxScale = 100;
-      if(std::abs(scale) > maxScale) {
-	scale = maxScale;
-      }
-      window2d tmp(axesScalingViewport);
-      tmp.scale_real(point2d(1.0, scale), point2d(0,0));
-      appl.set_dynamical_window(tmp, id);
-    } else if(horizontalScaling) {
-      SetCursor(wxCURSOR_SIZEWE);
-      double realLeftClickMouseX =
-	axesScalingViewport.real_coordinate_of(point2d(leftClickMouseX,0)).x();
-      double realPosX =
-	axesScalingViewport.real_coordinate_of(point2d(posX,0)).x();
-
-      double scale = std::abs(realLeftClickMouseX / realPosX);
-      double maxScale = 100;
-      if(std::abs(scale) > maxScale) {
-	scale = maxScale;
-      }
-      window2d tmp(axesScalingViewport);
-      tmp.scale_real(point2d(scale, 1.0), point2d(0,0));
-      appl.set_dynamical_window(tmp, id);
-    } else {
-      window2d window(appl.get_model().get_dynamical_window(id).get_window());
-      double changeX = leftClickMouseX - posX;
-      double changeY = leftClickMouseY - posY;
-      point2d newPosition(window.get_span().x()*changeX/window.get_size().x()
-			  + realDragPosition.x(),
-			  window.get_span().y()*changeY/window.get_size().y()
-			  + realDragPosition.y());
-      window2d newViewport(window.get_size(), window.get_span(), newPosition);
-      appl.set_dynamical_window(newViewport, id);
+  if(verticalScaling && evt.LeftIsDown()) {
+    SetCursor(wxCURSOR_SIZENS);
+    double realLeftClickMouseY =
+      axesScalingViewport.real_coordinate_of(math::vector2d(0, leftClickMouseY)).y();
+    double realPosY =
+      axesScalingViewport.real_coordinate_of(math::vector2d(0, posY)).y();
+    double scale = std::abs(realLeftClickMouseY / realPosY);
+    double maxScale = 100;
+    if(std::abs(scale) > maxScale) {
+      scale = maxScale;
     }
+    math::window2d tmp(axesScalingViewport);
+    tmp.scale_real(math::vector2d(1.0, scale), math::vector2d(0,0));
+    appl.set_dynamical_window(tmp, id);
+  } else if(horizontalScaling && evt.LeftIsDown()) {
+    SetCursor(wxCURSOR_SIZEWE);
+    double realLeftClickMouseX =
+      axesScalingViewport.real_coordinate_of(math::vector2d(leftClickMouseX,0)).x();
+    double realPosX =
+      axesScalingViewport.real_coordinate_of(math::vector2d(posX,0)).x();
+
+    double scale = std::abs(realLeftClickMouseX / realPosX);
+    double maxScale = 100;
+    if(std::abs(scale) > maxScale) {
+      scale = maxScale;
+    }
+    math::window2d tmp(axesScalingViewport);
+    tmp.scale_real(math::vector2d(scale, 1.0), math::vector2d(0,0));
+    appl.set_dynamical_window(tmp, id);
+  } else if(evt.LeftIsDown()) {
+    math::window2d newViewport(moveViewport);
+    double changeX = leftClickMouseX - posX;
+    double changeY = leftClickMouseY - posY;
+    newViewport.move_pixel(math::vector2d(changeX, changeY));
+    appl.set_dynamical_window(newViewport, id);
   } else {
-    // Not dragging
-    if(appl.get_model().on_vertical_axis(posX, posY, id)) {
-      SetCursor(wxCURSOR_SIZENS);
-    } else if(appl.get_model().on_horizontal_axis(posX, posY, id)) {
-      SetCursor(wxCURSOR_SIZEWE);
-    } else {
-      SetCursor(wxCURSOR_DEFAULT);
-    }
+    set_cursor(posX, posY);
   }
 }
 
@@ -232,9 +237,9 @@ void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   }
   double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());
   totalMagnification *= magnificationUnit;
-  window2d tmp(magnificationViewport);
-  tmp.scale_pixel(point2d(totalMagnification, totalMagnification),
-		  point2d(magnificationX, magnificationY));
+  math::window2d tmp(magnificationViewport);
+  tmp.scale_pixel(math::vector2d(totalMagnification, totalMagnification),
+		  math::vector2d(magnificationX, magnificationY));
   appl.set_dynamical_window(tmp, id);
   magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
 }
@@ -244,7 +249,7 @@ void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   rightClickMouseY = height - rightClickMouseY;
-  PopupMenu(popupMenu);
+  PopupMenu(objectsPopupMenu);
 }
 void dynamical_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
 }
@@ -269,6 +274,13 @@ void dynamical_frame::gl_canvas_on_paint(wxPaintEvent& evt) {
 void dynamical_frame::dynamical_frame_on_iconize(wxIconizeEvent& evt) {
   std::cout << "ICONIZE" << std::endl;
   Layout();
+}
+
+void dynamical_frame::selection_delete_menu_item_on_menu_selection(wxCommandEvent& evt) {
+}
+void dynamical_frame::selection_edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
+}
+void dynamical_frame::selection_select_menu_item_on_menu_selection(wxCommandEvent& evt) {
 }
 } // namespace dynslover
 } // namespace gui

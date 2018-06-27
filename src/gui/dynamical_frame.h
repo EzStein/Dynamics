@@ -41,14 +41,12 @@ class dynamical_frame : public dynamical_frame_base {
   double magnificationX, magnificationY;
 
   // The viewport as it exists when magnifcation starts.
-  // Locked in on magnification end.
-  window2d magnificationViewport;
+  // Locked in on magnification start and end.
+  math::window2d magnificationViewport;
 
-  // These values are the real x and y positions associated with the
-  // top left corner of the window. They are locked in when the left
-  // mouse button is depressed and when it is released but not when
-  // it is dragged.
-  point2d realDragPosition;
+  // The window as it exists before a move is initiated.
+  // Locked in when the left mouse is dpressed and released.
+  math::window2d moveViewport;
 
   // True when the first wheel event has note yet been processed. False
   // after the first wheel event has been processed and the wheel event
@@ -64,7 +62,7 @@ class dynamical_frame : public dynamical_frame_base {
   // the vertical or horizontal axes. We lock these values in along with
   // the axesScalingViewport when we left click on an axis.
   bool verticalScaling, horizontalScaling;
-  window2d axesScalingViewport;
+  math::window2d axesScalingViewport;
  public:
   dynamical_frame(app&, dynamical_window_id id, int width, int height);
   ~dynamical_frame();
@@ -76,6 +74,9 @@ class dynamical_frame : public dynamical_frame_base {
   virtual void dynamical_frame_on_close(wxCloseEvent&) override;
   virtual void edit_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void dynamical_frame_on_iconize(wxIconizeEvent& evt) override;
+  virtual void selection_delete_menu_item_on_menu_selection(wxCommandEvent& evt) override;
+  virtual void selection_edit_menu_item_on_menu_selection(wxCommandEvent& evt) override;
+  virtual void selection_select_menu_item_on_menu_selection(wxCommandEvent& evt) override;
   void gl_canvas_on_key_down(wxKeyEvent&);
   void gl_canvas_on_key_up(wxKeyEvent&);
   void gl_canvas_on_left_down(wxMouseEvent&);
@@ -87,6 +88,10 @@ class dynamical_frame : public dynamical_frame_base {
   void gl_canvas_on_paint(wxPaintEvent&);
   void gl_canvas_on_size(wxSizeEvent&);
   void refresh_gl_canvas();
+
+  // Sets the cursor according to the position provided.
+  // If the cursor lies near an axes it is given a non default icon.
+  void set_cursor(int x, int y);
 
   // Called each once before mouse wheel events starto and end.
   void gl_canvas_on_mouse_wheel_start(int, int);

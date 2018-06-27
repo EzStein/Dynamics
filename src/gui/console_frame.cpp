@@ -8,6 +8,8 @@
 #include "gui/app.h"
 #include "gui/dynamical_dialog.h"
 
+#include "gui/solution_dialog.h"
+
 #include "util/util.h"
 
 namespace dynsolver {
@@ -18,7 +20,14 @@ console_frame::console_frame(app& app) : console_frame_base(nullptr, wxID_ANY, "
   // Add in widgets and setup events not already done in console_frame_base.
   equationsDataViewCtrl->AppendTextColumn("Variable");
   equationsDataViewCtrl->AppendTextColumn("Expression", wxDATAVIEW_CELL_EDITABLE);
+
+  solutionsDataViewCtrl->AppendTextColumn("ID");
+  solutionsDataViewCtrl->AppendTextColumn("Increment");
+  solutionsDataViewCtrl->AppendTextColumn("T Min");
+  solutionsDataViewCtrl->AppendTextColumn("T Max");
   set_no_compile();
+  solutionsEditButton->Disable();
+  solutionsDeleteButton->Disable();
 }
 
 console_frame::~console_frame() { }
@@ -154,6 +163,83 @@ void console_frame::update_equations_data_view_ctrl(int variables) {
     data.clear();
   }
   compileButton->Enable();
+}
+
+void console_frame::solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent& evt) {
+  process_select_row();
+}
+
+void console_frame::update_solutions_list() {
+  solutionsDataViewCtrl->DeleteAllItems();
+  for(std::unordered_map<solution_id, solution>::const_iterator
+	iter = appl.get_model().get_solutions().begin();
+      iter != appl.get_model().get_solutions().end(); ++iter) {
+    wxVector<wxVariant> data;
+    data.push_back(wxVariant(std::to_string(iter->first)));
+    data.push_back(wxVariant(std::to_string(iter->second.specification.increment)));
+    data.push_back(wxVariant(std::to_string(iter->second.specification.tMin)));
+    data.push_back(wxVariant(std::to_string(iter->second.specification.tMax)));
+    solutionsDataViewCtrl->AppendItem(data);
+  }
+}
+
+void console_frame::select_solution(solution_id id) {
+  wxVariant value;
+  for(int i = 0; i != solutionsDataViewCtrl->GetItemCount(); ++i) {
+    solutionsDataViewCtrl->GetValue(value, i, 0);
+    int rowId = std::stoi(value.GetString().ToStdString());
+    if(rowId == id) {
+      solutionsDataViewCtrl->SelectRow(i);
+      process_select_row();
+      return;
+    }
+  }
+  assert(false);
+}
+
+void console_frame::process_select_row() {
+  if(solutionsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    color color(1.0, 0.0,0.0,1.0);
+    appl.clear_solution_color();
+    appl.set_solution_color(get_selected_solution_id(), color);
+    solutionsEditButton->Enable();
+    solutionsDeleteButton->Enable();
+  } else {
+    // Unselect
+    solutionsEditButton->Disable();
+    solutionsDeleteButton->Disable();
+    appl.clear_solution_color();
+  }
+}
+
+void console_frame::unselect_solution() {
+  int row = solutionsDataViewCtrl->GetSelectedRow();
+  if(row != wxNOT_FOUND) {
+    solutionsDataViewCtrl->UnselectRow(row);
+    process_select_row();
+  }
+  
+}
+
+void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
+  solution_id solutionId(get_selected_solution_id());
+  solution_specification spec(appl.get_model().get_solutions().at(solutionId).specification);
+  if(appl.get_solution_dialog()->show_dialog(spec, &spec)) {
+    appl.edit_solution(solutionId, spec);
+  }
+}
+void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {
+  appl.delete_solution(get_selected_solution_id());
+}
+
+solution_id console_frame::get_selected_solution_id() {
+  wxVariant value;
+  solutionsDataViewCtrl->GetValue(value, solutionsDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+void console_frame::singular_points_edit_button_on_button_click(wxCommandEvent&) {
+}
+void console_frame::singular_points_delete_button_on_button_click(wxCommandEvent&) {
 }
 } // namespace gui
 } // namespace dynsolver

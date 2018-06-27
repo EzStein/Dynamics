@@ -9,7 +9,7 @@
 #include "common.h"
 #include "compiler/ast/AST.h"
 #include "compiler/function.h"
-#include "math/vector.h"
+#include "math/window2d.h"
 #include "gl/buffer.h"
 #include "gl/program.h"
 #include "gl/vertex_array.h"
@@ -22,106 +22,33 @@ class wxGLContext;
 namespace dynsolver {
 namespace math {
 class square_matrix;
+class vector2d;
+class window2d;
 }
 namespace gui {
 
 class app;
 
-// Contains helper classes
-// Represents a point in 2 dimensions.
-class point2d : public math::vector {
- public:
-  // Constructs a point2d without initializing its element.
-  point2d();
-  
-  // Constructs a point at position (x, y).
-  // May also be used to represent a scaling vector, etc.
-  point2d(double x, double y);
+class color {
+private:
+  double r, g, b, a;
+public:
+  // Constructs a color from RGBA values given in the range,
+  // 0 to 1.
+  color(double, double, double, double);
 
-  // Allows for mutable access of x and y.
-  const double& x() const;
-  double& x();
-    
-  const double& y() const;
-  double& y();
-};
-
-// Represents a window into a 2d plane that has both a size in pixels
-// a spanning size of the plane and a location.
-// Note that pixels are given realative to the bottom left corner
-// of the plane. In particular, upwards is the POSITIVE y direction.
-class window2d {
- private:
-  // The size in pixels of window. The x coordinate of size is the width,
-  // and the y coordinate of size is the height.
-  point2d size;
-
-  // The real spanning distance of this window. The distance spanned by
-  // the window in the x and y directions.
-  point2d span;
-
-  // This is the position of the bottom right corner of the window in the plane.
-  point2d position;
-
- public:
-  // Constructs a window with the given information.
-  window2d(point2d size, point2d span, point2d position);
-  
-  // Returns the pixel associated with the real coordinate provided.
-  point2d pixel_coordinate_of(point2d real) const;
-  
-  // Returns the real cordinated associated with the given pixel.
-  point2d real_coordinate_of(point2d pixel) const;
-
-  // True if the pixel corrdinates are nonnegative and are
-  // within the bounds of size exclusive.
-  bool contains_pixel(point2d pixel) const;
-
-  // Returns true if the real coordinate provided is within the span
-  // of the window.
-  bool contains_real(point2d real) const;
-
-  // Translates the window by the number of pixels specified in pixel.
-  // Note that upwards movement is in the negative y direction.
-  void move_pixel(point2d pixel);
-
-  // Translates the window by the real value provided.
-  void move_real(point2d real);
-
-  void set_span(const point2d& newSpan);
-
-  // Scales the window by scale about the real point provided.
-  // The resulting window has a the same size as before, but the
-  // new x span is scale.x() * span.x()
-  // and new y span of scale.y() * span.y().
-  // The point real remains fixed in the new window. That is, it is
-  // associated with the same pixel as before.
-  void scale_real(point2d scale, point2d real);
-
-  // Scales the window by scale about the pixel point provided.
-  void scale_pixel(point2d scale, point2d pixel);
-
-  const point2d& get_size() const;
-  void set_size(const point2d&);
-  
-  const point2d& get_position() const;
-  const point2d& get_span() const;
-
-  // Returns the center of the this window in real coordinates.
-  point2d get_center() const;
-
-  // This transformation matrix is a 4x4 matrix which maps
-  // real coordinates to normalized device coordinates for use in opengl.
-  math::square_matrix real_to_ndc();
-
-  // This transformation matrix is a 4x4 matrix which maps
-  // pixel coordinate to normalized device coordinates for use in opengl.
-  // In pixel coordinates, the origin is the lower left corner of the screen.
-  math::square_matrix pixel_to_ndc();
+  // Retrieve the r g b and a values.
+  double get_red() const;
+  double get_green() const;
+  double get_blue() const;
+  double get_alpha() const;
 };
 
 struct solution_specification {
   solution_specification();
+
+  // The color that should be used to render this solution.
+  color glColor;
   
   // The starting point of the solution including the initial value of t.
   math::vector initialValue;
@@ -138,6 +65,7 @@ struct solution_specification {
   // Currently we use standard euler's method. This indicates the standard
   // increment.
   double increment;
+  
 };
 
 // A specification for drawing a solution through an initial point.
@@ -205,7 +133,7 @@ public:
     
     // This represents the viewport area of the dynamical plane visible
     // in this window.
-    window2d window;
+    math::window2d window;
   
     // An integer representing which variable corresponds to which axis.
     // A 0 indicates the variable of differentiation t. 1 indicates x (x1),
@@ -221,13 +149,16 @@ public:
       unsigned int vertices;
     };
   
-    std::unordered_map<dynamical_window_id, solution_render_data> solutionRenderData;
+    std::unordered_map<solution_id, solution_render_data> solutionRenderData;
 
     // The number of ticks between each labeled tick.
     int ticksPerLabel;
 
     // The font size of the labeled tick.
     double tickFontSize;
+
+    // The number of vertices in the axes vbo.
+    int axesVboVertices;
 
     // The maximal distance between two axis ticks in pixels. If the number of
     // axis tickets jumps above the maximum, then the number of tickets are doubled,
@@ -242,7 +173,7 @@ public:
     double realTickDistanceY;
   public:
     dynamical_window(model&,
-		     const window2d& window,
+		     const math::window2d& window,
 		     int horizontalAxisVariable,
 		     int verticalAxisVariable);
 
@@ -251,7 +182,11 @@ public:
     int get_horizontal_axis_variable() const;
 
     int get_vertical_axis_variable() const;
-    void set_window(const window2d&);
+    void set_window(const math::window2d&);
+
+    // Performs the same thing as model::select_solution except,
+    // the cursor values are given as a math::vector2d.
+    bool select_solution(const math::vector2d& cursor, solution_id& id);
 
     // Renders the window to the currently bound context.
     void paint();
@@ -261,14 +196,19 @@ public:
     void resize(double width, double height);
 
     // Generates a VBo for the corresponding solution data and id.
-    void generate_vbo(solution_id, const std::list<math::vector>&);
-    
-    // Generates a VBo for the corresponding solution data and id.
-    void update_vbo(solution_id);
+    // Replaces the VBO for that ID if it already exists.
+    void generate_vbo(solution_id);
 
-    const window2d& get_window() const;
+    const math::window2d& get_window() const;
 
     void clear();
+
+    // Updates the axes vbo. This should be called whenever the axes
+    // or the ticks on the axes are altered.
+    void update_axes_vbo();
+
+    // Deletes the VBO associated with the given solution.
+    void delete_vbo(solution_id);
 
     bool on_vertical_axis(double, double) const;
     bool on_horizontal_axis(double, double) const;
@@ -325,7 +265,7 @@ public:
   // All solutions mapped have id's strictly less than this number.
   solution_id uniqueSolutionId;
 
-  window2d defaultWindow;
+  math::window2d defaultWindow;
 
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
@@ -387,12 +327,30 @@ public:
 
   const dynamical_window& get_dynamical_window(dynamical_window_id) const;
 
-  void set_dynamical_window(const window2d& window, dynamical_window_id id);
+  void set_dynamical_window(const math::window2d& window, dynamical_window_id id);
+  void set_solution_color(solution_id id, const color& color);
 
   // True if the given position in pixels lies on the vertical or horizontal axes
   // respectively for the given dynamical_window
   bool on_vertical_axis(double, double, dynamical_window_id id) const;
   bool on_horizontal_axis(double, double, dynamical_window_id id) const;
+
+  const std::unordered_map<solution_id, solution>& get_solutions() const;
+
+  void clear_solution_color();
+
+  void edit_solution(solution_id id, solution_specification spec);
+
+  void delete_solution(solution_id id);
+
+  // (Re)Generates the solution data for the given id using the
+  // specification associated with that solution.
+  void generate_solution_data(solution_id id);
+
+  // Attempts to select the solution below the cursor at x, y in the dynamical
+  // window given by id. On success, returns true and stores the found solution
+  // in the reference provided.
+  bool select_solution(int x, int y, dynamical_window_id id, solution_id&);
 };
 } // namespace gui
 } // namespace dynsolver

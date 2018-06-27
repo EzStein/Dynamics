@@ -14,140 +14,34 @@
 #include "gl/shader.h"
 #include "util/util.h"
 #include "../app.h"
+#include "math/window2d.h"
+#include "math/vector2d.h"
 
 namespace dynsolver {
 namespace gui {
 
-point2d::point2d() : math::vector(2) { }
-point2d::point2d(double x, double y) : math::vector(2) {
-  (*this)[0] = x;
-  (*this)[1] = y;
+color::color(double r, double g, double b, double a) : r(r), g(g), b(b), a(a) { }
+
+double color::get_red() const {
+  return r;
+}
+double color::get_green() const {
+  return g;
+}
+double color::get_blue() const {
+  return b;
+}
+double color::get_alpha() const {
+  return a;
 }
 
-double& point2d::x() {
-  return (*this)[0];
-}
-
-const double& point2d::x() const {
-  return (*this)[0];
-}
-
-double& point2d::y() {
-  return (*this)[1];
-}
-
-const double& point2d::y() const {
-  return (*this)[1];
-}
-
-solution_specification::solution_specification() : initialValue(1) { }
+solution_specification::solution_specification() : initialValue(1),
+						   glColor(0,0,0,1) { }
 
 singular_point_specification::singular_point_specification() : initialValue(1) { }
 
-window2d::window2d(point2d size, point2d span, point2d position) :
-    size(size), span(span), position(position) { }
-
-point2d window2d::pixel_coordinate_of(point2d real) const {
-  point2d pixel;
-  pixel.x() = (real.x() - position.x()) * size.x() / span.x();
-  pixel.y() = (real.y() - position.y()) * size.y() / span.y();
-  return pixel;
-}
-
-point2d window2d::real_coordinate_of(point2d pixel) const {
-  point2d real;
-  real.x() = pixel.x() * span.x() / size.x() + position.x();
-  real.y() = pixel.y() * span.y() / size.y() + position.y();
-  return real;
-}
-
-const point2d& window2d::get_size() const {
-  return size;
-}
-
-const point2d& window2d::get_span() const {
-  return span;
-}
-
-void window2d::set_size(const point2d& newSize) {
-  size = newSize;
-}
-
-void window2d::set_span(const point2d& newSpan) {
-  span = newSpan;
-}
-
-const point2d& window2d::get_position() const{
-  return position;
-}
-
-bool window2d::contains_pixel(point2d pixel) const {
-  return (pixel.x() >= 0 && pixel.x() < size.x()
-          && pixel.y() >= 0 && pixel.y() < size.y());
-}
-
-bool window2d::contains_real(point2d real) const {
-  return contains_pixel(pixel_coordinate_of(real));
-}
-
-void window2d::move_pixel(point2d pixel) {
-  position.x() += pixel.x() * span.x() / size.x();
-  position.y() += pixel.y() * span.y() / size.y();
-}
-
-void window2d::move_real(point2d real) {
-  position.x() += real.x();
-  position.y() += real.y();
-}
-
-void window2d::scale_pixel(point2d scale, point2d pixel) {
-  scale_real(scale, real_coordinate_of(pixel));
-}
-
-void window2d::scale_real(point2d scale, point2d real) {
-  span.x() *= scale.x();
-  span.y() *= scale.y();
-  position.x() = (position.x() - real.x()) * scale.x() + real.x();
-  position.y() = (position.y() - real.y()) * scale.y() + real.y();
-}
-
-point2d window2d::get_center() const {
-  point2d center;
-  center.x() = position.x() + span.x()/2;
-  center.y() = position.y() + span.y()/2;
-  return center;
-}
-
-math::square_matrix window2d::real_to_ndc() {
-  point2d center(get_center());
-  math::square_matrix mat(4, 0.0);
-  mat[0][0] = 2.0/span.x();
-  mat[0][3] = -center.x()*mat[0][0];
-
-  mat[1][1] = 2.0/span.y();
-  mat[1][3] = -center.y()*mat[1][1];
-
-  mat[2][2] = 1;
-  mat[3][3] = 1;
-  return mat;
-}
-
-math::square_matrix window2d::pixel_to_ndc() {
-  point2d center(get_center());
-  math::square_matrix mat(4, 0.0);
-  mat[0][0] = 2.0/size.x();
-  mat[0][3] = -1;
-
-  mat[1][1] = 2.0/size.y();
-  mat[1][3] = -1;
-
-  mat[2][2] = 1;
-  mat[3][3] = 1;
-  return mat;
-}
-
 model::dynamical_window::dynamical_window(model& model,
-					  const window2d& window, int horizontalAxisVariable,
+					  const math::window2d& window, int horizontalAxisVariable,
 					  int verticalAxisVariable) :
   modelData(model), window(window),
   horizontalAxisVariable(horizontalAxisVariable),
@@ -160,29 +54,20 @@ model::dynamical_window::dynamical_window(model& model,
   maximumPixelTickDistance(minimumPixelTickDistance * ticksPerLabel * 2),
   realTickDistanceX(0.5),
   realTickDistanceY(0.5) {
-  for(std::unordered_map<solution_id, solution>::const_iterator iter = modelData.solutions.begin();
-      iter != modelData.solutions.end(); ++iter) {
-    // Foreach solution
-    std::vector<float> data;
-    unsigned int points = iter->second.data.size();
-    unsigned int size = points * 2 * sizeof(float);
-    for(std::list<math::vector>::const_iterator point = iter->second.data.begin();
-	point != iter->second.data.end(); ++point) {
-      data.push_back((*point)[horizontalAxisVariable]);
-      data.push_back((*point)[verticalAxisVariable]);
-    }
-    gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
-    solution_render_data val{vbo, points};
-    solutionRenderData.insert(std::make_pair(iter->first, val));
+  
+  for(std::unordered_map<solution_id, solution>::const_iterator iter
+	= modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+    generate_vbo(iter->first);
   }
+  update_axes_vbo();
 }
 
 void model::dynamical_window::set_specification
 (const dynamical_window_specification& spec) {
-  window = window2d(window.get_size(),
-		    point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
+  window = math::window2d(window.get_size(),
+		    math::vector2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
 			  spec.verticalAxisMax - spec.verticalAxisMin),
-		    point2d(spec.horizontalAxisMin, spec.verticalAxisMin));
+		    math::vector2d(spec.horizontalAxisMin, spec.verticalAxisMin));
   
   if(horizontalAxisVariable != spec.horizontalAxisVariable ||
      verticalAxisVariable != spec.verticalAxisVariable) {
@@ -192,7 +77,7 @@ void model::dynamical_window::set_specification
     // Update VBO's
     for(std::unordered_map<solution_id, solution>::const_iterator iter
 	  = modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
-      update_vbo(iter->first);
+      generate_vbo(iter->first);
     }
   }
 
@@ -205,11 +90,11 @@ int model::dynamical_window::get_horizontal_axis_variable() const {
 int model::dynamical_window::get_vertical_axis_variable() const {
   return verticalAxisVariable;
 }
-void model::dynamical_window::set_window(const window2d& val) {
+void model::dynamical_window::set_window(const math::window2d& val) {
   window = val;
 }
 
-const window2d& model::dynamical_window::get_window() const {
+const math::window2d& model::dynamical_window::get_window() const {
   return window;
 }
 
@@ -217,8 +102,8 @@ void model::dynamical_window::clear() {
   solutionRenderData.clear();
 }
 
-void model::dynamical_window::generate_vbo(solution_id id,
-					   const std::list<math::vector>& solution) {
+void model::dynamical_window::generate_vbo(solution_id id) {
+  const std::list<math::vector>& solution(modelData.solutions.at(id).data);
   std::vector<float> data;
   size_t points = solution.size();
   size_t size = points * 2 * sizeof(float);
@@ -227,53 +112,19 @@ void model::dynamical_window::generate_vbo(solution_id id,
     data.push_back((*point)[horizontalAxisVariable]);
     data.push_back((*point)[verticalAxisVariable]);
   }
-  gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
-  solution_render_data val{vbo, points};
-  solutionRenderData.insert(std::make_pair(id, val));
+  if(solutionRenderData.find(id) != solutionRenderData.end()) {
+      solutionRenderData.at(id).vertices = points;
+      solutionRenderData.at(id)
+	.vbo.set_data(reinterpret_cast<unsigned char *>(data.data()), size);
+  } else {
+    gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
+    solution_render_data val{vbo, points};
+    solutionRenderData.insert(std::make_pair(id, val));
+  }
 }
 
-void model::dynamical_window::update_vbo(solution_id id) {
-  std::vector<float> data;
-  std::list<math::vector> solution = modelData.solutions.at(id).data;
-  size_t points = solution.size();
-  size_t size = points * 2 * sizeof(float);
-  for(std::list<math::vector>::const_iterator point = solution.begin();
-      point != solution.end(); ++point) {
-    data.push_back((*point)[horizontalAxisVariable]);
-    data.push_back((*point)[verticalAxisVariable]);
-  }
-  solutionRenderData.at(id).vertices = points;
-  solutionRenderData.at(id).vbo.set_data(reinterpret_cast<unsigned char *>(data.data()), size);
-}
-
-void model::dynamical_window::paint() {
-  glViewport(0, 0, window.get_size().x(), window.get_size().y());
-  glUseProgram(modelData.program2d.get_handle());
-  glBindVertexArray(modelData.vao2d.get_handle());
-  math::square_matrix mat(window.real_to_ndc());
-  float transformationMatrix[16];
-  
-  for(int i = 0; i != 4; ++i) {
-    for(int j = 0; j != 4; ++j) {
-      transformationMatrix[4*i+j] =
-	mat[i][j];
-    }
-  }
-
-  // Set color to Red
-  glUniform4f(modelData.k2dColorUniformLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
-		     1, true, transformationMatrix);
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-  for(std::unordered_map<solution_id, solution_render_data>::const_iterator iter
-	= solutionRenderData.begin();
-      iter != solutionRenderData.end(); ++iter) {
-    glBindVertexBuffer(model::k2dVertexBinding,
-		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
-    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
-  }
-
+void model::dynamical_window::update_axes_vbo() {
+  // Render the axes
   // Compute the distance between each tick.
   int numberOfTicksX = window.get_span().x()/realTickDistanceX;
   int pixelTickDistanceX = window.get_size().x()/static_cast<double>(numberOfTicksX);
@@ -291,7 +142,7 @@ void model::dynamical_window::paint() {
   }
 
   // The x and y values in pixels for where the x and y axes should cross.
-  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > window.get_size().x())
@@ -309,7 +160,7 @@ void model::dynamical_window::paint() {
     static_cast<int>(window.get_position().y() / realTickDistanceY);
   for(double x = xStart;
       x < window.get_position().x() + window.get_span().x(); x += realTickDistanceX) {
-    float realCoordinate = window.pixel_coordinate_of(point2d(x, 0)).x();
+    float realCoordinate = window.pixel_coordinate_of(math::vector2d(x, 0)).x();
     // First vertex
     axesVboData.push_back(realCoordinate); // X
     axesVboData.push_back(axesPixel.y() - 5); // Y
@@ -320,7 +171,7 @@ void model::dynamical_window::paint() {
   }
   for(double y = yStart; y < window.get_position().y() + window.get_span().y();
       y += realTickDistanceY) {
-    float realCoordinate = window.pixel_coordinate_of(point2d(0, y)).y();
+    float realCoordinate = window.pixel_coordinate_of(math::vector2d(0, y)).y();
     // First vertex
     axesVboData.push_back(axesPixel.x() - 5); // X
     axesVboData.push_back(realCoordinate); // Y
@@ -345,62 +196,101 @@ void model::dynamical_window::paint() {
   
   axesVbo.set_data(reinterpret_cast<unsigned char*>(axesVboData.data()),
 		   axesVboData.size()*sizeof(float));
+  axesVboVertices = axesVboData.size() / 2;
+}
 
-  // Generate pixel to ndc transform
-  mat = window.pixel_to_ndc();
-  for(int i = 0; i != 4; ++i) {
-    for(int j = 0; j != 4; ++j) {
-      transformationMatrix[4*i+j] =
-	mat[i][j];
-    }
+void model::dynamical_window::paint() {
+  glViewport(0, 0, window.get_size().x(), window.get_size().y());
+  glUseProgram(modelData.program2d.get_handle());
+  glBindVertexArray(modelData.vao2d.get_handle());
+  float transformationMatrix[16];
+  window.real_to_ndc().as_float_array(transformationMatrix);
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		     1, true, transformationMatrix);
+
+  // Clear to white
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  // Render each solution
+  for(std::unordered_map<solution_id, solution_render_data>::const_iterator iter
+	= solutionRenderData.begin();
+      iter != solutionRenderData.end(); ++iter) {
+    color glColor(modelData.solutions.at(iter->first).specification.glColor);
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
-  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation, 1, true, transformationMatrix);
 
+  update_axes_vbo();
+  // Generate pixel to ndc transform
+  window.pixel_to_ndc().as_float_array(transformationMatrix);
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation, 1, true, transformationMatrix);
   // Set color to Black
   glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
   glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
 		     0, 2 * sizeof(float));
-  glDrawArrays(GL_LINES, 0, axesVboData.size() / 2);
-  
+  glDrawArrays(GL_LINES, 0, axesVboVertices);
+
+
+  // Render Axes text
   const double tolerance = 0.001;
-  // Draw Axes text
-  point2d axesReal(window.real_coordinate_of(axesPixel));
-  xStart = realTickDistanceX * ticksPerLabel *
+  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
+  int yTextOffset(10);
+  int xTextOffset(10);
+  if(axesPixel.x() < 0.0) {
+    axesPixel.x() = 0.0;
+  }
+  if(axesPixel.x() > window.get_size().x()) {
+    axesPixel.x() = window.get_size().x();
+    xTextOffset = -40;
+  }
+  if(axesPixel.y() < 0.0) {
+    axesPixel.y() = 0.0;
+  }
+  if(axesPixel.y() > window.get_size().y()) {
+    axesPixel.y() = window.get_size().y();
+    yTextOffset = -20;
+  }
+  math::vector2d axesReal(window.real_coordinate_of(axesPixel));
+  double xStart = realTickDistanceX * ticksPerLabel *
     static_cast<int>(window.get_position().x() / (realTickDistanceX * ticksPerLabel));
-  yStart = realTickDistanceY * ticksPerLabel *
+  double yStart = realTickDistanceY * ticksPerLabel *
     static_cast<int>(window.get_position().y() / (realTickDistanceY * ticksPerLabel));
   for(double x = xStart; x > window.get_position().x();
       x -= ticksPerLabel * realTickDistanceX) {
     if(std::abs(x) < tolerance) continue;
-    point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
+    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(x, axesReal.y())));
     std::string text = util::double_to_string(x, 2);
-    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3, pixel.y() + 10,
+    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3, pixel.y() + yTextOffset,
 				       modelData.font, tickFontSize);
   }
   for(double x = xStart; x < window.get_position().x() + window.get_span().x();
       x += ticksPerLabel * realTickDistanceX) {
     if(std::abs(x) < tolerance) continue;
-    point2d pixel(window.pixel_coordinate_of(point2d(x, axesReal.y())));
+    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(x, axesReal.y())));
     std::string text = util::double_to_string(x, 2);
     modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
-				       pixel.y() + 10, modelData.font, tickFontSize);
+				       pixel.y() + yTextOffset,
+				       modelData.font, tickFontSize);
   }
-
   for(double y = yStart; y > window.get_position().y();
       y -= ticksPerLabel * realTickDistanceY) {
     if(std::abs(y) < tolerance) continue;
-    point2d pixel(window.pixel_coordinate_of(point2d(axesReal.x(),y)));
+    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
     std::string text = util::double_to_string(y, 2);
-    modelData.textRenderer.render_text(text, pixel.x() + 10, pixel.y(),
+    modelData.textRenderer.render_text(text, pixel.x() + xTextOffset, pixel.y() - 5,
 				       modelData.font, tickFontSize);
   }
   for(double y = yStart; y < window.get_position().y() + window.get_span().y();
       y += ticksPerLabel * realTickDistanceY) {
     if(std::abs(y) < tolerance) continue;
-    point2d pixel(window.pixel_coordinate_of(point2d(axesReal.x(),y)));
+    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
     std::string text = util::double_to_string(y, 2);
-    modelData.textRenderer.render_text(text, pixel.x() + 10,
-				       pixel.y(), modelData.font, tickFontSize);
+    modelData.textRenderer.render_text(text, pixel.x() + xTextOffset,
+				       pixel.y() - 5, modelData.font, tickFontSize);
   }
 }
   
@@ -409,13 +299,13 @@ void model::dynamical_window::resize(double width, double height) {
     * window.get_span().x() / window.get_size().x();
   double changeHeight = (height - window.get_size().y())
     * window.get_span().y() / window.get_size().y();
-  window.set_size(point2d(width, height));
-  window.set_span(point2d(changeWidth + window.get_span().x(),
+  window.set_size(math::vector2d(width, height));
+  window.set_span(math::vector2d(changeWidth + window.get_span().x(),
 			  changeHeight + window.get_span().y()));
 }
 
 bool model::dynamical_window::on_vertical_axis(double x, double y) const {
-  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > window.get_size().x())
@@ -428,7 +318,7 @@ bool model::dynamical_window::on_vertical_axis(double x, double y) const {
   return axis - 5 < x && x < axis + 5;
 }
 bool model::dynamical_window::on_horizontal_axis(double x, double y) const {
-  point2d axesPixel(window.pixel_coordinate_of(point2d(0.0, 0.0)));
+  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > window.get_size().x())
@@ -439,6 +329,32 @@ bool model::dynamical_window::on_horizontal_axis(double x, double y) const {
     axesPixel.y() = window.get_size().y();
   double axis = axesPixel.y();
   return axis - 5 < y && y < axis + 5;
+}
+
+void model::dynamical_window::delete_vbo(solution_id id) {
+  solutionRenderData.erase(id);
+}
+
+bool model::dynamical_window::select_solution(const math::vector2d& cursor, solution_id& id) {
+  for(std::unordered_map<solution_id, solution>::const_iterator iter =
+	modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+    if(iter->second.data.size() <= 2) continue;
+    std::list<math::vector>::const_iterator point = iter->second.data.begin();
+    ++point;
+    std::list<math::vector>::const_iterator prevPoint = iter->second.data.begin();
+    for(; point != iter->second.data.end(); ++point, ++prevPoint) {
+      math::vector2d real((*point)[horizontalAxisVariable], (*point)[verticalAxisVariable]);
+      math::vector2d pixel(window.pixel_coordinate_of(real));
+      math::vector2d realPrev((*prevPoint)[horizontalAxisVariable], (*prevPoint)[verticalAxisVariable]);
+      math::vector2d pixelPrev(window.pixel_coordinate_of(realPrev));
+      const int tolerance(5);
+      if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
+	id = iter->first;
+	return true;
+      }
+    }
+  }
+  return false;
 }
 
 const std::string model::k2dVertexShaderFilePath
@@ -463,9 +379,9 @@ std::vector<gl::shader> model::build_shaders() {
 model::model() : parameterVariables(0),
 		 parameterPosition(1, 0.0),
 		 uniqueDynamicalId(0),
-                 defaultWindow(window2d(point2d(500, 500),
-                                        point2d(10, 10),
-                                        point2d(-5, -5))),
+                 defaultWindow(math::window2d(math::vector2d(500, 500),
+                                        math::vector2d(10, 10),
+                                        math::vector2d(-5, -5))),
 
 		 font(constants::kDefaultFontFilePath),
 		 dynamicalDimension(0),
@@ -494,35 +410,15 @@ void model::add_solution(const solution_specification& spec) {
   assert(spec.initialValue[0] > spec.tMin && spec.initialValue[0] < spec.tMax && spec.increment > 0);
   assert(compiled);
   
-  std::list<math::vector> points;
-  std::vector<compiler::function<double, const double*>> systemFunctions;
 
-  for(std::vector<expression>::const_iterator iter = system.begin();
-      iter != system.end(); ++iter) {
-    systemFunctions.push_back(iter->function);
-  }
-  
-  math::vector tmp(spec.initialValue);
-  // Fill in forwards
-  while(tmp[0] <= spec.tMax) {
-    points.push_back(tmp);
-    math::euler(tmp, systemFunctions, parameterPosition, spec.increment);
-  }
-  
-  tmp = spec.initialValue;
-  // Fill in backwards
-  while(tmp[0] >= spec.tMin) {
-    points.push_front(tmp);
-    math::euler(tmp, systemFunctions, parameterPosition, -spec.increment);
-  }
-  
   int solutionId = ++uniqueSolutionId;
-  solutions.insert(std::make_pair(solutionId,
-                                  solution{spec, points}));
+  solutions.insert(std::make_pair(solutionId, solution{spec, std::list<math::vector>()}));
+  generate_solution_data(solutionId);
+  
   // We now need to update the VBO's of each window.
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.generate_vbo(solutionId, solutions.at(solutionId).data);
+    iter->second.generate_vbo(solutionId);
   }
 }
                     
@@ -594,10 +490,10 @@ int model::add_dynamical_window(const dynamical_window_specification& spec,
 				int width, int height) {
   assert(spec.horizontalAxisVariable < get_dynamical_variables() || !compiled);
   assert(spec.verticalAxisVariable < get_dynamical_variables() || !compiled);
-  window2d window(point2d(width, height),
-		  point2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
+  math::window2d window(math::vector2d(width, height),
+		  math::vector2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
 			  spec.verticalAxisMax - spec.verticalAxisMin),
-		  point2d(spec.horizontalAxisMin, spec.verticalAxisMin));
+		  math::vector2d(spec.horizontalAxisMin, spec.verticalAxisMin));
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
@@ -637,8 +533,12 @@ void model::resize_dynamical_window(dynamical_window_id id, double width, double
   dynamicalWindows.at(id).resize(width, height);
 }
 
-void model::set_dynamical_window(const window2d& window, dynamical_window_id id) {
+void model::set_dynamical_window(const math::window2d& window, dynamical_window_id id) {
   dynamicalWindows.at(id).set_window(window);
+}
+
+void model::set_solution_color(solution_id id, const color& color) {
+  solutions.at(id).specification.glColor = color;
 }
 
 const model::dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
@@ -651,6 +551,66 @@ bool model::on_vertical_axis(double x, double y, dynamical_window_id id) const {
 }
 bool model::on_horizontal_axis(double x, double y, dynamical_window_id id) const {
   dynamicalWindows.at(id).on_horizontal_axis(x, y);
+}
+const std::unordered_map<solution_id, solution>& model::get_solutions() const {
+  return solutions;
+}
+
+void model::clear_solution_color() {
+  for(std::unordered_map<solution_id, solution>::iterator iter = solutions.begin();
+      iter != solutions.end(); ++iter) {
+    iter->second.specification.glColor = color(0,0,0,1);
+  }
+}
+
+void model::edit_solution(solution_id id, solution_specification spec) {
+  solutions.at(id).specification = spec;
+  generate_solution_data(id);
+  for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
+	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
+    iter->second.generate_vbo(id);
+  }
+}
+
+void model::delete_solution(solution_id id) {
+  solutions.erase(id);
+  for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
+	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
+    iter->second.delete_vbo(id);
+  }
+}
+
+void model::generate_solution_data(solution_id id) {
+  solution_specification spec(solutions.at(id).specification);
+
+  std::vector<compiler::function<double, const double*>> systemFunctions;
+  for(std::vector<expression>::const_iterator iter = system.begin();
+      iter != system.end(); ++iter) {
+    systemFunctions.push_back(iter->function);
+  }
+  
+  std::list<math::vector> points;
+  math::vector tmp(spec.initialValue);
+  
+  // Fill in forwards
+  while(tmp[0] <= spec.tMax) {
+    points.push_back(tmp);
+    math::euler(tmp, systemFunctions, parameterPosition, spec.increment);
+  }
+  
+  tmp = spec.initialValue;
+  // Fill in backwards
+  while(tmp[0] >= spec.tMin) {
+    points.push_front(tmp);
+    math::euler(tmp, systemFunctions, parameterPosition, -spec.increment);
+  }
+
+  // Set the data
+  solutions.at(id).data = points;
+}
+
+bool model::select_solution(int x, int y, dynamical_window_id windowId, solution_id& id) {
+  return dynamicalWindows.at(windowId).select_solution(math::vector2d(x, y), id);
 }
 } // namespace gui
 } // namespace dynslover

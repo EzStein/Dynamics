@@ -63,6 +63,12 @@ int matrix::get_cols() const {
   return cols;
 }
 
+void matrix::as_float_array(float* arr) const {
+  for(int i = 0; i != rows * cols; ++i) {
+    arr[i] = static_cast<float>(array[i]);
+  }
+}
+
 // NOTE: this may be inefficient for large arrays do to caching problems.
 void matrix::transpose() {
   std::swap(rows, cols);

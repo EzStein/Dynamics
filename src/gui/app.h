@@ -11,6 +11,8 @@
 #include "gui/common.h"
 #include "gui/model.h"
 
+#include "math/window2d.h"
+
 class wxDialog;
 
 namespace dynsolver {
@@ -100,7 +102,7 @@ class app : public wxApp {
 					  dynamical_window_id id);
 
     // Changes the specification of the dynamical window.
-  void set_dynamical_window(const window2d&, dynamical_window_id id);
+  void set_dynamical_window(const math::window2d&, dynamical_window_id id);
 
   // Returns a const model that the GUI's will use to update their
   // displays.
@@ -121,6 +123,16 @@ class app : public wxApp {
 
   void add_solution(const solution_specification&);
 
+  void set_solution_color(solution_id id, const color&);
+
+  void clear_solution_color();
+
+  // Changes the existing solution.
+  void edit_solution(solution_id, solution_specification);
+
+  // Deletes the existing solution.
+  void delete_solution(solution_id);
+
   // Compiles the provided system and updates the UI. Returns true
   // on success.
   bool compile(const std::vector<std::string>);
@@ -130,6 +142,11 @@ class app : public wxApp {
   singular_point_dialog* get_singular_point_dialog();
 
   dynamical_dialog* get_dynamical_window_dialog();
+
+  // Attempts to selects the solution under the mouse cursor specified
+  // by the coordnates x, y and the dynamical window given by id.
+  // Returns true on success.
+  bool select_solution(int x, int y, dynamical_window_id id);
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

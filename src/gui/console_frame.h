@@ -3,6 +3,7 @@
 
 #include "gui/generated.h"
 
+#include "gui/model.h"
 
 namespace dynsolver {
 namespace gui {
@@ -28,10 +29,22 @@ class console_frame : public console_frame_base {
   virtual void new_dynamical_window_menu_item_on_selection(wxCommandEvent&) override;
   virtual void close_dynamical_windows_menu_item_on_selection(wxCommandEvent&) override;
   virtual void lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  virtual void solutions_edit_button_on_button_click(wxCommandEvent&) override;
+  virtual void solutions_delete_button_on_button_click(wxCommandEvent&) override;
+  virtual void singular_points_edit_button_on_button_click(wxCommandEvent&) override;
+  virtual void singular_points_delete_button_on_button_click(wxCommandEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();
   void set_yes_compile();
+
+  void update_solutions_list();
+    // Selects the solution in the list of available solutions.
+  void select_solution(solution_id id);
+
+  // deselects all solutions.
+  void unselect_solution();
   
 private:
   // Clears the list of equations in the data view ctrl and adds
@@ -40,6 +53,13 @@ private:
   void update_equations_data_view_ctrl(int variables);
 
   void read_variables_combo_box_input();
+
+  // Returns the id of the selected solution.
+  solution_id get_selected_solution_id();
+
+  // Called by the selection changed event handler.
+  void process_select_row();
+
 };
 } // namespace gui
 } // namespace dynsolver
