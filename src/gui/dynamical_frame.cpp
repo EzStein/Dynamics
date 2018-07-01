@@ -59,32 +59,25 @@ void dynamical_frame::dynamical_frame_on_close(wxCloseEvent&) {
 }
 
 void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  dynamical_window_specification spec;
-  spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
-  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
-  spec.horizontalAxisMin = window.get_position().x();
-  spec.verticalAxisMin = window.get_position().y();
-
-  spec.horizontalAxisMax = window.get_position().x() + window.get_span().x();
-  spec.verticalAxisMax = window.get_position().y() + window.get_span().y();
-
-  spec.horizontalAxisVariable = appl.get_model().get_dynamical_window(id)
-    .get_horizontal_axis_variable();
-  spec.verticalAxisVariable = appl.get_model().get_dynamical_window(id)
-    .get_vertical_axis_variable();
+  dynamical_window_specification
+    spec(appl.get_model().get_dynamical_window_specification(id));
   if(appl.get_dynamical_window_dialog()->show_dialog(spec, &spec)) {
-    appl.set_dynamical_window_specification(spec, id);
+    appl.set_dynamical_window_specification(id, spec);
   }
 }
 
 void dynamical_frame::dynamical_frame_on_set_focus(wxFocusEvent& evt) { }
 
 void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
-  math::vector2d initialPoint(window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
+  math::window2d window(appl.get_model().get_dynamical_window_specification(id)
+			.viewport2d);
+  math::vector2d initialPoint
+    (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
   math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
-  int horz = appl.get_model().get_dynamical_window(id).get_horizontal_axis_variable();
-  int vert = appl.get_model().get_dynamical_window(id).get_vertical_axis_variable();
+  int horz = appl.get_model().get_dynamical_window_specification(id)
+    .horizontalAxisVariable;
+  int vert = appl.get_model().get_dynamical_window_specification(id)
+    .verticalAxisVariable;
   initialValue[horz] = initialPoint[0];
   initialValue[vert] = initialPoint[1];
   
@@ -98,13 +91,42 @@ void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
     appl.add_solution(newSpec);
   }
 }
+void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
+void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+    math::window3d
+      viewport(appl.get_model().get_dynamical_window_specification(id).viewport3d);
+    math::vector3d position(viewport.get_position());
+    if(evt.GetUnicodeKey() == WXK_CONTROL_W + 64) {
+      position.z() += 0.1;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_S + 64) {
+      position.z() -= 0.1;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_A + 64) {
+      position.x() -= 0.1;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_D + 64) {
+      position.x() += 0.1;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_E + 64) {
+      position.y() -= 0.1;
+    } else if(evt.GetUnicodeKey() == WXK_CONTROL_C + 64) {
+      position.y() += 0.1;
+    }
+    viewport.set_position(position);
+    appl.set_dynamical_viewport_3d(id, viewport);
+    std::cout << position.x() << std::endl;
+  } else {
+    
+  }
+}
 void dynamical_frame::isocline_menu_on_menu_selection(wxCommandEvent& evt) { }
 void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_window(id).get_window());
+  math::window2d window(appl.get_model().get_dynamical_window_specification(id)
+			.viewport2d);
   math::vector2d initialPoint(window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
   math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
-  int horz = appl.get_model().get_dynamical_window(id).get_horizontal_axis_variable();
-  int vert = appl.get_model().get_dynamical_window(id).get_vertical_axis_variable();
+  int horz = appl.get_model().get_dynamical_window_specification(id)
+    .horizontalAxisVariable;
+  int vert = appl.get_model().get_dynamical_window_specification(id)
+    .verticalAxisVariable;
   initialValue[horz] = initialPoint[0];
   initialValue[vert] = initialPoint[1];
   
@@ -115,28 +137,26 @@ void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt)
   }
 }
 
-void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) { }
-void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
-
 void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   evt.GetPosition(&leftClickMouseX, &leftClickMouseY);
   int width, height;
   glCanvas->GetSize(&width, &height);
   leftClickMouseY = height - leftClickMouseY;
   
-  if(appl.get_model().on_vertical_axis(leftClickMouseX, leftClickMouseY, id)) {
+  if(appl.get_model().on_dynamical_vertical_axis(id, leftClickMouseX, leftClickMouseY)) {
     verticalScaling = true;
-  } else if(appl.get_model().on_horizontal_axis(leftClickMouseX, leftClickMouseY, id)) {
+  } else if(appl.get_model().on_dynamical_horizontal_axis(id, leftClickMouseX, leftClickMouseY)) {
     horizontalScaling = true;
   }
-  axesScalingViewport = appl.get_model().get_dynamical_window(id).get_window();
-  moveViewport = appl.get_model().get_dynamical_window(id).get_window();
+  axesScalingViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+  moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+  rotationViewport = appl.get_model().get_dynamical_window_specification(id).viewport3d;
 }
 
 void dynamical_frame::set_cursor(int x, int y) {
-  if(appl.get_model().on_vertical_axis(x, y, id)) {
+  if(appl.get_model().on_dynamical_vertical_axis(id, x, y)) {
     SetCursor(wxCURSOR_SIZENS);
-  } else if(appl.get_model().on_horizontal_axis(x, y, id)) {
+  } else if(appl.get_model().on_dynamical_horizontal_axis(id, x, y)) {
     SetCursor(wxCURSOR_SIZEWE);
   } else {
     SetCursor(wxCURSOR_DEFAULT);
@@ -160,7 +180,7 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 
   leftClickMouseX = posX;
   leftClickMouseY = posY;
-  moveViewport = appl.get_model().get_dynamical_window(id).get_window();
+  moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
   verticalScaling = false;
   horizontalScaling = false;
 
@@ -173,44 +193,53 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
-  
-  if(verticalScaling && evt.LeftIsDown()) {
-    SetCursor(wxCURSOR_SIZENS);
-    double realLeftClickMouseY =
-      axesScalingViewport.real_coordinate_of(math::vector2d(0, leftClickMouseY)).y();
-    double realPosY =
-      axesScalingViewport.real_coordinate_of(math::vector2d(0, posY)).y();
-    double scale = std::abs(realLeftClickMouseY / realPosY);
-    double maxScale = 100;
-    if(std::abs(scale) > maxScale) {
-      scale = maxScale;
-    }
-    math::window2d tmp(axesScalingViewport);
-    tmp.scale_real(math::vector2d(1.0, scale), math::vector2d(0,0));
-    appl.set_dynamical_window(tmp, id);
-  } else if(horizontalScaling && evt.LeftIsDown()) {
-    SetCursor(wxCURSOR_SIZEWE);
-    double realLeftClickMouseX =
-      axesScalingViewport.real_coordinate_of(math::vector2d(leftClickMouseX,0)).x();
-    double realPosX =
-      axesScalingViewport.real_coordinate_of(math::vector2d(posX,0)).x();
 
-    double scale = std::abs(realLeftClickMouseX / realPosX);
-    double maxScale = 100;
-    if(std::abs(scale) > maxScale) {
-      scale = maxScale;
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+    if(evt.LeftIsDown()) {
+      math::window3d tmp(rotationViewport);
+      tmp.rotate(math::vector2d(leftClickMouseX, leftClickMouseY),
+			 math::vector2d(posX, posY));
+      appl.set_dynamical_viewport_3d(id, tmp);
     }
-    math::window2d tmp(axesScalingViewport);
-    tmp.scale_real(math::vector2d(scale, 1.0), math::vector2d(0,0));
-    appl.set_dynamical_window(tmp, id);
-  } else if(evt.LeftIsDown()) {
-    math::window2d newViewport(moveViewport);
-    double changeX = leftClickMouseX - posX;
-    double changeY = leftClickMouseY - posY;
-    newViewport.move_pixel(math::vector2d(changeX, changeY));
-    appl.set_dynamical_window(newViewport, id);
   } else {
-    set_cursor(posX, posY);
+    if(verticalScaling && evt.LeftIsDown()) {
+      SetCursor(wxCURSOR_SIZENS);
+      double realLeftClickMouseY =
+	axesScalingViewport.real_coordinate_of(math::vector2d(0, leftClickMouseY)).y();
+      double realPosY =
+	axesScalingViewport.real_coordinate_of(math::vector2d(0, posY)).y();
+      double scale = std::abs(realLeftClickMouseY / realPosY);
+      double maxScale = 100;
+      if(std::abs(scale) > maxScale) {
+	scale = maxScale;
+      }
+      math::window2d tmp(axesScalingViewport);
+      tmp.scale_real(math::vector2d(1.0, scale), math::vector2d(0,0));
+      appl.set_dynamical_viewport_2d(id, tmp);
+    } else if(horizontalScaling && evt.LeftIsDown()) {
+      SetCursor(wxCURSOR_SIZEWE);
+      double realLeftClickMouseX =
+	axesScalingViewport.real_coordinate_of(math::vector2d(leftClickMouseX,0)).x();
+      double realPosX =
+	axesScalingViewport.real_coordinate_of(math::vector2d(posX,0)).x();
+
+      double scale = std::abs(realLeftClickMouseX / realPosX);
+      double maxScale = 100;
+      if(std::abs(scale) > maxScale) {
+	scale = maxScale;
+      }
+      math::window2d tmp(axesScalingViewport);
+      tmp.scale_real(math::vector2d(scale, 1.0), math::vector2d(0,0));
+      appl.set_dynamical_viewport_2d(id, tmp);
+    } else if(evt.LeftIsDown()) {
+      math::window2d newViewport(moveViewport);
+      double changeX = leftClickMouseX - posX;
+      double changeY = leftClickMouseY - posY;
+      newViewport.move_pixel(math::vector2d(changeX, changeY));
+      appl.set_dynamical_viewport_2d(id, newViewport);
+    } else {
+      set_cursor(posX, posY);
+    }
   }
 }
 
@@ -218,7 +247,7 @@ void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
   totalMagnification = 1.0;
   magnificationX = posX;
   magnificationY = posY;
-  magnificationViewport = appl.get_model().get_dynamical_window(id).get_window();
+  magnificationViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
@@ -240,7 +269,7 @@ void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   math::window2d tmp(magnificationViewport);
   tmp.scale_pixel(math::vector2d(totalMagnification, totalMagnification),
 		  math::vector2d(magnificationX, magnificationY));
-  appl.set_dynamical_window(tmp, id);
+  appl.set_dynamical_viewport_2d(id, tmp);
   magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
 }
 

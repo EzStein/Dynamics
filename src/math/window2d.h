@@ -21,32 +21,37 @@ class window2d {
   // the window in the x and y directions.
   vector2d span;
 
-  // This is the position of the bottom right corner of the window in the plane.
+  // This is the position of the bottom left corner of the window in the plane.
   vector2d position;
 
  public:
+  // Constructs a window viewing into the -1 to 1 range in both the x and
+  // y axes. The pixel range is 100 by 100.
+  window2d();
+  
   // Constructs a window with the given information.
-  window2d(vector2d size, vector2d span, vector2d position);
+  window2d(const vector2d& size, const vector2d& span,
+	   const vector2d& position);
   
   // Returns the pixel associated with the real coordinate provided.
-  vector2d pixel_coordinate_of(vector2d real) const;
+  vector2d pixel_coordinate_of(const vector2d& real) const;
   
   // Returns the real cordinated associated with the given pixel.
-  vector2d real_coordinate_of(vector2d pixel) const;
+  vector2d real_coordinate_of(const vector2d& pixel) const;
 
   // True if the pixel corrdinates are nonnegative and are
   // within the bounds of size exclusive.
-  bool contains_pixel(vector2d pixel) const;
+  bool contains_pixel(const vector2d& pixel) const;
 
   // Returns true if the real coordinate provided is within the span
   // of the window.
-  bool contains_real(vector2d real) const;
+  bool contains_real(const vector2d& real) const;
 
   // Translates the window by the number of pixels specified in pixel.
-  void move_pixel(vector2d pixel);
+  void move_pixel(const vector2d& pixel);
 
   // Translates the window by the real value provided.
-  void move_real(vector2d real);
+  void move_real(const vector2d& real);
 
   void set_span(const vector2d& newSpan);
 
@@ -56,13 +61,15 @@ class window2d {
   // and new y span of scale.y() * span.y().
   // The point real remains fixed in the new window. That is, it is
   // associated with the same pixel as before.
-  void scale_real(vector2d scale, vector2d real);
+  void scale_real(const vector2d& scale, const vector2d& real);
 
   // Scales the window by scale about the pixel point provided.
-  void scale_pixel(vector2d scale, vector2d pixel);
+  void scale_pixel(const vector2d& scale, const vector2d& pixel);
 
   const vector2d& get_size() const;
   void set_size(const vector2d&);
+
+  void set_position(const vector2d&);
   
   const vector2d& get_position() const;
   const vector2d& get_span() const;

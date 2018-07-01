@@ -98,11 +98,16 @@ class app : public wxApp {
   void new_dynamical_window(const dynamical_window_specification&);
 
   // Changes the specification of the dynamical window.
-  void set_dynamical_window_specification(const dynamical_window_specification&,
-					  dynamical_window_id id);
+  void set_dynamical_window_specification(dynamical_window_id id,
+					  const dynamical_window_specification&);
 
-    // Changes the specification of the dynamical window.
-  void set_dynamical_window(const math::window2d&, dynamical_window_id id);
+  // Changes the specification of the dynamical window.
+  void set_dynamical_viewport_2d(dynamical_window_id id,
+				 const math::window2d&);
+  
+  // Changes the specification of the dynamical window.
+  void set_dynamical_viewport_3d(dynamical_window_id id,
+				 const math::window3d&);
 
   // Returns a const model that the GUI's will use to update their
   // displays.
@@ -125,10 +130,8 @@ class app : public wxApp {
 
   void set_solution_color(solution_id id, const color&);
 
-  void clear_solution_color();
-
   // Changes the existing solution.
-  void edit_solution(solution_id, solution_specification);
+  void set_solution_specification(solution_id, const solution_specification&);
 
   // Deletes the existing solution.
   void delete_solution(solution_id);
@@ -146,7 +149,7 @@ class app : public wxApp {
   // Attempts to selects the solution under the mouse cursor specified
   // by the coordnates x, y and the dynamical window given by id.
   // Returns true on success.
-  bool select_solution(int x, int y, dynamical_window_id id);
+  bool select_solution(dynamical_window_id id, int x, int y);
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

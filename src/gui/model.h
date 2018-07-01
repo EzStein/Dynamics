@@ -1,3 +1,4 @@
+
 #ifndef DYNSOLVER_GUI_MODEL_H_
 #define DYNSOLVER_GUI_MODEL_H_
 
@@ -10,6 +11,7 @@
 #include "compiler/ast/AST.h"
 #include "compiler/function.h"
 #include "math/window2d.h"
+#include "math/window3d.h"
 #include "gl/buffer.h"
 #include "gl/program.h"
 #include "gl/vertex_array.h"
@@ -22,8 +24,6 @@ class wxGLContext;
 namespace dynsolver {
 namespace math {
 class square_matrix;
-class vector2d;
-class window2d;
 }
 namespace gui {
 
@@ -65,7 +65,6 @@ struct solution_specification {
   // Currently we use standard euler's method. This indicates the standard
   // increment.
   double increment;
-  
 };
 
 // A specification for drawing a solution through an initial point.
@@ -84,36 +83,140 @@ struct singular_point_specification {
 // imformation on the viewport and axes for generating or changing a dynamical
 // window.
 struct dynamical_window_specification {
-  unsigned int dynamicalVariables;
+  bool is3d;
   
+  unsigned int dynamicalVariables;
+
+  // 2d
   int horizontalAxisVariable;
   int verticalAxisVariable;
+  math::window2d viewport2d;
 
-  // The real minimum and maximum viewport bounds.
-  double horizontalAxisMin;
-  double horizontalAxisMax;
-  double verticalAxisMin;
-  double verticalAxisMax;
-};
-
-// A tuple which associates an abstract syntax tree with its compiled
-// function.
-struct expression {
-  AST ast;
-  compiler::function<double, const double*> function;
+  // 3d
+  math::window3d viewport3d;
+  int xAxisVariable;
+  int yAxisVariable;
+  int zAxisVariable;
 };
 
 // This class is used to hold all the data behind the GUI system.
 // In general, the data can only be accessed using getters and setters.
-// This class almost completely decoupled from the view. It is the responsibility of
-// the view to update the user interface when it expects that a value in the
-// model has changed. The exception is that all opengl work occurs in this
-// file.
+// This class almost completely decoupled from the view. It is the
+// responsibility of the view to update the user interface when it expects that
+// a value in the model has changed. The exception is that all opengl work
+// occurs in this file.
 //
-// NOTE: The model may NOT be constructed until an opengl context is set current,
-// and the opengl function pointers are loaded.
+// NOTE: The model may NOT be constructed until an opengl context is set
+// current, and the opengl function pointers are loaded.
 class model {
-public:
+ private:
+  // Nested Inner classes
+  // A tuple which associates an abstract syntax tree with its compiled
+  // function.
+  struct expression {
+    AST ast;
+    compiler::function<double, const double*> function;
+  };
+  
+  // Represents information associated with an instance of a dynamical window.
+  // Multiple dynamical windows may be open at any given time.
+  class dynamical_window {
+  private:
+    // A reference to the containing model. Since this is an inner class of
+    // model, it may access all of its private variables.
+    model& modelData;
+
+    // The specification from which VBO's and other data is generated.
+    dynamical_window_specification specification;
+
+    // The VBO for storing the axes vertex info.
+    gl::buffer axesVbo;
+    GLsizei axesVboVertices;
+
+    // Each solution is associated with render data containing a VBO each for
+    // its 2d and 3d rendering.
+    struct solution_render_data {
+      // The 2d vbo is stores the projection of a solution onto the plane that
+      // is currently being viewed. Each vertex contains one attribute of 2
+      // floats. Thus the stride is also 2 floats.
+      gl::buffer vbo2d;
+
+      // Contains the projection onto the 3d space currently associated with
+      // this window. Each vertex contains one attribute of 3 floats. The
+      // stride is 3 floats.
+      gl::buffer vbo3d;
+
+      // The number of vertices is the same for both VBO's
+      size_t vertices;
+    };
+
+    // Maps each solution to its render data.
+    std::unordered_map<solution_id, solution_render_data> solutionRenderData;
+
+    // The number of ticks between each labeled tick.
+    int ticksPerLabel;
+
+    // The font size of the labels on the ticks.
+    double tickFontSize;
+
+    // The maximal distance between two axis ticks in pixels. If the number of
+    // axis tickets jumps above the maximum, then the number of tickets are
+    // doubled, and the real distance between each tick is halved. If it falls
+    // below the minimum, the distance between each tick is doubled.
+    const int minimumPixelTickDistance;
+    const int maximumPixelTickDistance;
+
+    // The current tick distance in real coordnate values.
+    double realTickDistanceX;
+    double realTickDistanceY;
+    
+  public:
+    dynamical_window(model&, const dynamical_window_specification& spec);
+
+    // Gets and sets the specifications.
+    const dynamical_window_specification& get_specification() const;
+    void set_specification(const dynamical_window_specification& spec);
+
+    // Sets the 2d viewport.
+    void set_viewport_2d(const math::window2d&);
+
+    // Sets the 3d viewport.
+    void set_viewport_3d(const math::window3d&);
+
+    // Performs the same thing as model::select_solution except,
+    bool select_solution(int x, int y, solution_id* id);
+
+    // Renders the window to the currently bound context.
+    void paint();
+
+    // Called when the dynamical window is resized. The new
+    // width and height is given.
+    void resize(int width, int height);
+
+    // Returns true if the point given in pixels is on the vertical/horizontal
+    // axis.
+    bool on_vertical_axis(int x, int y) const;
+    bool on_horizontal_axis(int x, int y) const;
+
+    // Deletes the VBO associated with the given solution.
+    void delete_solution(solution_id);
+    void add_solution(solution_id);
+    
+  private:
+    // Generates a VBo for the corresponding solution data and id.
+    // Replaces the VBO for that ID if it already exists.
+    void generate_vbo(solution_id);
+    
+    // Updates the axes vbo. This should be called whenever the axes
+    // or the ticks on the axes are altered.
+    void update_axes_vbo();
+    
+    typedef std::unordered_map<solution_id, solution_render_data>::
+    const_iterator solution_render_data_const_iter;
+  };
+
+  // Model Class
+  // Static constants used for opengl shaders.
   static const std::string k2dVertexShaderFilePath;
   static const GLuint k2dPositionAttribute;
   static const GLuint k2dVertexBinding;
@@ -121,110 +224,23 @@ public:
   
   static const std::string k2dFragmentShaderFilePath;
   static const std::string k2dColorUniform;
+
+  static const std::string kPath3dVertexShaderFilePath;
+  static const GLuint kPath3dPositionAttribute;
+  static const GLuint kPath3dVertexBinding;
+  static const std::string kPath3dTransformationUniform;
   
- private:
-    // Represents information associated with an instance of a dynamical window.
-  // Multiple dynamical windows may be open at any given time.
-  class dynamical_window {
-  private:
-    // A reference to the containing model. Since this is an inner class of model,
-    // it may access all of its private variables.
-    model& modelData;
-    
-    // This represents the viewport area of the dynamical plane visible
-    // in this window.
-    math::window2d window;
-  
-    // An integer representing which variable corresponds to which axis.
-    // A 0 indicates the variable of differentiation t. 1 indicates x (x1),
-    // 2 indicates y (x2), etc.. -1 indicates that no axes have been selected.
-    int horizontalAxisVariable;
-    int verticalAxisVariable;
+  static const std::string kPath3dFragmentShaderFilePath;
+  static const std::string kPath3dColorUniform;
 
-    gl::buffer axesVbo;
-    GLsizei axesVboVertexCount;
-
-    struct solution_render_data {
-      gl::buffer vbo;
-      unsigned int vertices;
-    };
-  
-    std::unordered_map<solution_id, solution_render_data> solutionRenderData;
-
-    // The number of ticks between each labeled tick.
-    int ticksPerLabel;
-
-    // The font size of the labeled tick.
-    double tickFontSize;
-
-    // The number of vertices in the axes vbo.
-    int axesVboVertices;
-
-    // The maximal distance between two axis ticks in pixels. If the number of
-    // axis tickets jumps above the maximum, then the number of tickets are doubled,
-    // and the real distance between each tick is halved. If it falls below the minimum,
-    // the distance between each tick is doubled.
-    const int minimumPixelTickDistance;
-    const int maximumPixelTickDistance;
-
-
-    // The current tick distance in real coordnate values.
-    double realTickDistanceX;
-    double realTickDistanceY;
-  public:
-    dynamical_window(model&,
-		     const math::window2d& window,
-		     int horizontalAxisVariable,
-		     int verticalAxisVariable);
-
-    void set_specification(const dynamical_window_specification& spec);
-
-    int get_horizontal_axis_variable() const;
-
-    int get_vertical_axis_variable() const;
-    void set_window(const math::window2d&);
-
-    // Performs the same thing as model::select_solution except,
-    // the cursor values are given as a math::vector2d.
-    bool select_solution(const math::vector2d& cursor, solution_id& id);
-
-    // Renders the window to the currently bound context.
-    void paint();
-
-    // Called when the dynamical window is resized. The new
-    // width and height is given.
-    void resize(double width, double height);
-
-    // Generates a VBo for the corresponding solution data and id.
-    // Replaces the VBO for that ID if it already exists.
-    void generate_vbo(solution_id);
-
-    const math::window2d& get_window() const;
-
-    void clear();
-
-    // Updates the axes vbo. This should be called whenever the axes
-    // or the ticks on the axes are altered.
-    void update_axes_vbo();
-
-    // Deletes the VBO associated with the given solution.
-    void delete_vbo(solution_id);
-
-    bool on_vertical_axis(double, double) const;
-    bool on_horizontal_axis(double, double) const;
-  };
-  
+  // A font and text renderer
   gl::font font;
   gl::text_renderer textRenderer;
   
-  // The number of variables involved including the variable of differentiation, t.
-  // Should always be 2 or greater. This number shall be denoted as n, and the dimension
-  // of the vector field shall be denoted as d = n - 1.
-  // We only store the dimension of the vector field.
+  // The number of variables involved excludin gthe variable of
+  // differentiation, t. Should always be 1 or greater. This number shall be
+  // denoted as d, and the number  of dynamical variables will be denoted as n.
   int dynamicalDimension;
-
-  int parameterVariables;
-  math::vector parameterPosition;
 
   // A list of expressions corresponding to the abstract syntax trees.
   // The size is d.
@@ -265,92 +281,113 @@ public:
   // All solutions mapped have id's strictly less than this number.
   solution_id uniqueSolutionId;
 
-  math::window2d defaultWindow;
-
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
   bool compiled;
 
-  // These two variables represent the opengl program and VAO.
+  // Opengl variables. There are two programs, the 2d and Path3d.
   gl::vertex_array vao2d;
   gl::program program2d;
+
+  gl::vertex_array vaoPath3d;
+  gl::program programPath3d;
+  
   const GLuint k2dTransformationUniformLocation;
   const GLuint k2dColorUniformLocation;
-  
-  std::vector<gl::shader> build_shaders();
 
+  const GLuint kPath3dTransformationUniformLocation;
+  const GLuint kPath3dColorUniformLocation;
+
+  // Private functions.
+  std::vector<gl::shader> build_shaders_2d();
+  std::vector<gl::shader> build_shaders_path_3d();
+
+  // (Re)Generates the solution data for the given id using the
+  // specification associated with that solution.
+  void generate_solution_data(solution_id id);
+
+  typedef std::unordered_map<solution_id, solution>::const_iterator
+  solution_const_iter;
 public:
   model();
 
+  // Tells opengl to paint the given dynamical window according to the state
+  // contained in this model. Note the the opengl context must be bound to the
+  // appropriate window before calling this method, and the buffers must
+  // be swapped after calling this method.
   void paint_dynamical_window(dynamical_window_id id);
-  void resize_dynamical_window(dynamical_window_id id, double width, double height);
-  
+
+  // Resizes the dynamical window so that the width and height are given by
+  // the new values in pixels.
+  void resize_dynamical_window(dynamical_window_id id, int width, int height);
+
+  // Returns the dynamical dimension.
   // The dynamical dimension is one less than the number of dynamical variables.
   int get_dynamical_dimension() const;
 
   // Returns the number of dynamical variables including the variable of
   // integration t.
   int get_dynamical_variables() const;
-  
-  // Adds the initial value solution. Init, is the initial point
-  // whose first entry is the time component, second entry is the first
-  // variable etc... Requires the size of init to be equal to n. Requires,
-  // that init[0] is strictly between tMin and tMax and that tMin
-  // is strictly less than tMax. Requires that increment is positive.
-  void add_solution(const solution_specification&);
 
   // Resets most variables and compiles the array of strings into a vector
-  // field system of ODE's. Sets the dimension etc... Returns true
-  // on success.
+  // field system of ODE's.  Returns true
+  // on success. In the future, this function will return information
+  // on why the compilation failed if it does fail.
   // Requires that the vector has size 1 or more.
   bool compile(std::vector<std::string>);
 
-  // These functions add dynamical and parameter windows. They return the id,
-  // of the newly added window. The width and height of the window are specified,
-  // in pixels.
-  int add_dynamical_window(const dynamical_window_specification&, int width, int height);
+  // Adds the dynamical window according to the specification provided.
+  dynamical_window_id add_dynamical_window
+  (const dynamical_window_specification&);
 
-  void set_dynamical_window_specification(const dynamical_window_specification& spec,
-					  dynamical_window_id id);
+  // Sets the dynamical window specification. This will update the
+  // necessary VBO's if that is needed.
+  void set_dynamical_window_specification
+  (dynamical_window_id id, const dynamical_window_specification& spec);
+  const dynamical_window_specification&
+  get_dynamical_window_specification(dynamical_window_id id) const;
 
-  // Deletes all the data associated with the given window.
+  // Deletes all the data associated with the given window and removes
+  // it from the model.
   void delete_dynamical_window(dynamical_window_id id);
 
-  // Deletes all the data associated with all dynamical windows.
-  void delete_all_dynamical_windows();
-  
-  // Adjusts the position/scale of the dynamical/parameter
-  // window according to the number of pixels shown and/or the scale.
-  void move_dynamical_window(int x, int y, int dynamicalId);
-  void scale_dynamical_window(double scale, int x, int y, int dynamicalId);
+  // Sets the 2d viewport of the dynamical window without altering the rest
+  // of the specification.
+  void set_dynamical_viewport_2d(dynamical_window_id id,
+					const math::window2d& window);
 
-  const dynamical_window& get_dynamical_window(dynamical_window_id) const;
+  // Sets the 2d viewport of the dynamical window without altering the rest of
+  // the specification.
+  void set_dynamical_viewport_3d(dynamical_window_id id,
+					const math::window3d& window);
 
-  void set_dynamical_window(const math::window2d& window, dynamical_window_id id);
+  // Sets the color of the solution provided without altering the rest of
+  // the specification.
   void set_solution_color(solution_id id, const color& color);
 
-  // True if the given position in pixels lies on the vertical or horizontal axes
-  // respectively for the given dynamical_window
-  bool on_vertical_axis(double, double, dynamical_window_id id) const;
-  bool on_horizontal_axis(double, double, dynamical_window_id id) const;
+  // Sets the solution specification. Updates VBO's if necessary.
+  void set_solution_specification(solution_id id,
+				  const solution_specification& spec);
 
-  const std::unordered_map<solution_id, solution>& get_solutions() const;
-
-  void clear_solution_color();
-
-  void edit_solution(solution_id id, solution_specification spec);
-
+  // Deletes the solution.
   void delete_solution(solution_id id);
 
-  // (Re)Generates the solution data for the given id using the
-  // specification associated with that solution.
-  void generate_solution_data(solution_id id);
+  // Adds the initial value solution. The solution is added according to the
+  // specification provided.
+  void add_solution(const solution_specification&);
+
+  const std::unordered_map<solution_id, solution>& get_solutions() const;
 
   // Attempts to select the solution below the cursor at x, y in the dynamical
   // window given by id. On success, returns true and stores the found solution
   // in the reference provided.
-  bool select_solution(int x, int y, dynamical_window_id id, solution_id&);
+  bool select_solution(dynamical_window_id id, int x, int y, solution_id*);
+
+  // True if the given position in pixels lies on the vertical or horizontal
+  // axes respectively for the given dynamical_window
+  bool on_dynamical_vertical_axis(dynamical_window_id id, int x, int y) const;
+  bool on_dynamical_horizontal_axis(dynamical_window_id id, int x, int y) const;
 };
 } // namespace gui
 } // namespace dynsolver

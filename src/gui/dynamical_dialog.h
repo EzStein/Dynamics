@@ -29,6 +29,9 @@ class dynamical_dialog : public dynamical_dialog_base {
   wxPGProperty* upDirectionZPropertyGridItem;
   wxPGProperty* zNearPropertyGridItem;
   wxPGProperty* zFarPropertyGridItem;
+  wxPGProperty* xAxisVariablePropertyGridItem;
+  wxPGProperty* yAxisVariablePropertyGridItem;
+  wxPGProperty* zAxisVariablePropertyGridItem;
   
   
  public:

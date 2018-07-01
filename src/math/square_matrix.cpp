@@ -66,7 +66,7 @@ square_matrix square_matrix::identity_matrix(int size) {
   }
   return retMat;
 }
-
+namespace square_matrix_ops {
 // These functions perform the arithmatic in the expected way on square matrices.
 square_matrix operator+(square_matrix lhs, const square_matrix& rhs) {
   lhs += rhs;
@@ -92,5 +92,6 @@ square_matrix operator/(square_matrix mat, double scalar) {
   mat /= scalar;
   return mat;
 }
-} //namespace math
-} //namespace dynslover
+} // namespace square_matrix_ops
+} // namespace math
+} // namespace dynslover

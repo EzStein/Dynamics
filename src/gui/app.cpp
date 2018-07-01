@@ -133,9 +133,9 @@ void app::delete_dynamical_window(dynamical_window_id id) {
 // Does not assume that the dynamical frames have been destroyed,
 // so it destroys them
 void app::delete_all_dynamical_windows() {
-  modelData->delete_all_dynamical_windows();
   for(std::unordered_map<dynamical_window_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
+    modelData->delete_dynamical_window(iter->first);
     iter->second->Destroy();
   }
   dynamicalFrames.clear();
@@ -150,22 +150,29 @@ void app::close_application() {
 }
 
 void app::new_dynamical_window(const dynamical_window_specification& spec) {
-  int width = 600;
-  int height = 600;
-  dynamical_window_id id = modelData->add_dynamical_window(spec, width, height);
+  int width = spec.viewport2d.get_size().x();
+  int height = spec.viewport2d.get_size().y();
+  dynamical_window_id id = modelData->add_dynamical_window(spec);
   dynamical_frame* frame = new dynamical_frame(*this, id, width, height);
   dynamicalFrames.insert(std::make_pair(id, frame));
   frame->Show();
 }
 
-void app::set_dynamical_window_specification(const dynamical_window_specification& spec,
-					dynamical_window_id id) {
-  modelData->set_dynamical_window_specification(spec, id);
+void app::set_dynamical_window_specification(dynamical_window_id id,
+					     const dynamical_window_specification& spec) {
+  modelData->set_dynamical_window_specification(id, spec);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
-void app::set_dynamical_window(const math::window2d& window, dynamical_window_id id) {
-  modelData->set_dynamical_window(window, id);
+void app::set_dynamical_viewport_2d(dynamical_window_id id,
+				    const math::window2d& window) {
+  modelData->set_dynamical_viewport_2d(id, window);
+  dynamicalFrames.at(id)->refresh_gl_canvas();
+}
+
+void app::set_dynamical_viewport_3d(dynamical_window_id id,
+				    const math::window3d& window) {
+  modelData->set_dynamical_viewport_3d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
@@ -267,13 +274,9 @@ void app::set_solution_color(solution_id id, const color& color) {
   refresh_dynamical_windows();
 }
 
-void app::clear_solution_color() {
-  modelData->clear_solution_color();
-  refresh_dynamical_windows();
-}
-
-void app::edit_solution(solution_id id, solution_specification spec) {
-  modelData->edit_solution(id, spec);
+void app::set_solution_specification(solution_id id,
+				     const solution_specification& spec) {
+  modelData->set_solution_specification(id, spec);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
 }
@@ -286,7 +289,7 @@ void app::delete_solution(solution_id id) {
 
 bool app::select_solution(int x, int y, dynamical_window_id id) {
   solution_id solutionId;
-  if(modelData->select_solution(x, y, id, solutionId)) {
+  if(modelData->select_solution(id, x, y, &solutionId)) {
     consoleFrame->select_solution(solutionId);
     return true;
   } else {

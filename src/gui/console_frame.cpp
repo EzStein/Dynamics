@@ -54,14 +54,42 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
 }
 
 void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&) {
+  double width = 800;
+  double height = 800;
   dynamical_window_specification spec;
-  spec.horizontalAxisMin = -5;
-  spec.horizontalAxisMax = 5;
-  spec.verticalAxisMin = -5;
-  spec.verticalAxisMax = 5;
-  spec.horizontalAxisVariable = 0;
-  spec.verticalAxisVariable = 1;
+  spec.viewport2d = math::window2d(math::vector2d(width, height),
+				   math::vector2d(10, 10),
+				   math::vector2d(-5, -5));
+  
+  spec.viewport3d = math::window3d(math::vector3d(0,0,0),
+				   math::vector3d(0,0,-1),
+				   math::vector3d(0,1,0),
+				   1, 10, width, height);
   spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
+  if(spec.dynamicalVariables == 2) {
+    spec.xAxisVariable = 0;
+    spec.yAxisVariable = 1;
+    spec.zAxisVariable = 1;
+    spec.horizontalAxisVariable = 0;
+    spec.verticalAxisVariable = 1;
+  } else if(spec.dynamicalVariables == 3) {
+    spec.xAxisVariable = 0;
+    spec.yAxisVariable = 1;
+    spec.zAxisVariable = 2;
+    spec.horizontalAxisVariable = 1;
+    spec.verticalAxisVariable = 2;
+  } else if(spec.dynamicalVariables >= 4) {
+    spec.xAxisVariable = 1;
+    spec.yAxisVariable = 2;
+    spec.zAxisVariable = 3;
+    spec.horizontalAxisVariable = 1;
+    spec.verticalAxisVariable = 2;
+  } else {
+    assert(false);
+  }
+
+  
+  spec.is3d = false;
   if(appl.get_dynamical_window_dialog()->show_dialog(spec, &spec)) {
     appl.new_dynamical_window(spec);
   }
@@ -200,7 +228,7 @@ void console_frame::select_solution(solution_id id) {
 void console_frame::process_select_row() {
   if(solutionsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
     color color(1.0, 0.0,0.0,1.0);
-    appl.clear_solution_color();
+    clear_solution_color();
     appl.set_solution_color(get_selected_solution_id(), color);
     solutionsEditButton->Enable();
     solutionsDeleteButton->Enable();
@@ -208,7 +236,16 @@ void console_frame::process_select_row() {
     // Unselect
     solutionsEditButton->Disable();
     solutionsDeleteButton->Disable();
-    appl.clear_solution_color();
+    clear_solution_color();
+  }
+}
+
+void console_frame::clear_solution_color() {
+  for(std::unordered_map<solution_id, solution>::const_iterator iter =
+	appl.get_model().get_solutions().begin();
+      iter != appl.get_model().get_solutions().end();
+      ++iter) {
+    appl.set_solution_color(iter->first, color(0.0,0.0,0.0,1.0));
   }
 }
 
@@ -225,7 +262,7 @@ void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
   solution_id solutionId(get_selected_solution_id());
   solution_specification spec(appl.get_model().get_solutions().at(solutionId).specification);
   if(appl.get_solution_dialog()->show_dialog(spec, &spec)) {
-    appl.edit_solution(solutionId, spec);
+    appl.set_solution_specification(solutionId, spec);
   }
 }
 void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {

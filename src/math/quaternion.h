@@ -5,7 +5,7 @@
 
 namespace dynsolver {
 namespace math {
-class square_matrix;
+class matrix_3x3;
 class vector3d;
 
 // Represents a quaternion viewed as a vector in 4 dimensions.
@@ -30,10 +30,10 @@ public:
   double& w();
   const double& w() const;
 
-  // Converts this quaternion to a 4x4 rotation matrix.
+  // Converts this quaternion to a 3x3 rotation matrix.
   // This is only meaningful if the quaternion was constructed using
   // an axis and an angle.
-  square_matrix as_rotation_matrix() const;
+  matrix_3x3 as_rotation_matrix() const;
 
   // Performs a quaternionic multiplication.
   void operator*=(const quaternion&);

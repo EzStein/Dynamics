@@ -60,6 +60,8 @@ private:
   // Called by the selection changed event handler.
   void process_select_row();
 
+  void clear_solution_color();
+
 };
 } // namespace gui
 } // namespace dynsolver

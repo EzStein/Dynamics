@@ -24,6 +24,7 @@ class vector : public matrix {
   // Returns the number of entries in this vector.
   int size() const;
 };
+namespace vector_ops {
 // More arithmatic overloads
 vector operator+(vector, const vector&);
 vector operator-(vector, const vector&);
@@ -31,6 +32,7 @@ vector operator*(matrix, const vector&);
 vector operator*(double, vector);
 vector operator*(vector, double);
 vector operator/(vector, double);
+}
 
 // Returns the angle between the two vectors.
 double angle(const vector&, const vector&);

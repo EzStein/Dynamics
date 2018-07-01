@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "math/square_matrix.h"
+#include "math/matrix_3x3.h"
 #include "math/vector3d.h"
 
 namespace dynsolver {
@@ -54,8 +54,8 @@ const double& quaternion::w() const {
   return (*this)[3];
 }
 
-square_matrix quaternion::as_rotation_matrix() const {
-  square_matrix rotation(4, 0.0);
+matrix_3x3 quaternion::as_rotation_matrix() const {
+  matrix_3x3 rotation;
   rotation[0][0] = 1 - 2*y()*y() - 2*z()*z();
   rotation[0][1] = 2*x()*y()-2*w()*z();
   rotation[0][2] = 2*x()*z()+2*w()*y();
@@ -67,8 +67,6 @@ square_matrix quaternion::as_rotation_matrix() const {
   rotation[2][0] = 2*x()*z()-2*w()*y();
   rotation[2][1] = 2*y()*z()+2*w()*x();
   rotation[2][2] = 1 - 2*x()*x() - 2*y()*y();
-
-  rotation[3][3] = 1.0;
   
   return rotation;
 }

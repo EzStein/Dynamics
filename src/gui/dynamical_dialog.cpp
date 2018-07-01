@@ -25,6 +25,14 @@ dynamical_dialog::dynamical_dialog() :
     Append( new wxFloatProperty( wxT("Maximum"), wxT("MaximumV") ) );
 
   dynamical3dPropertyGrid->
+    Append(new wxPropertyCategory( wxT("Axes Variables"), wxT("Axes Variables") ) );
+  xAxisVariablePropertyGridItem = dynamical3dPropertyGrid->
+    Append( new wxEnumProperty( wxT("X"), wxT("XV") ) );
+  yAxisVariablePropertyGridItem = dynamical3dPropertyGrid->
+    Append( new wxEnumProperty( wxT("Y"), wxT("YV") ) );
+  zAxisVariablePropertyGridItem = dynamical3dPropertyGrid->
+    Append( new wxEnumProperty( wxT("Z"), wxT("ZV") ) ); 
+  dynamical3dPropertyGrid->
     Append(new wxPropertyCategory( wxT("Camera Position"), wxT("Camera Position") ) ); 
   cameraPositionXPropertyGridItem =
     dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("X"), wxT("XCP") ) ); 
@@ -79,15 +87,58 @@ void dynamical_dialog::ok_button_on_button_click(wxCommandEvent& evt) {
 }
 
 void dynamical_dialog::set_ui() {
+  // 2d
+  double horizontalAxisMin, horizontalAxisMax, verticalAxisMin, verticalAxisMax;
+  horizontalAxisMin = dynamicalSpecification.viewport2d.get_position().x();
+  verticalAxisMin = dynamicalSpecification.viewport2d.get_position().y();
+  horizontalAxisMax = horizontalAxisMin
+    + dynamicalSpecification.viewport2d.get_span().x();
+  verticalAxisMax = verticalAxisMin
+    + dynamicalSpecification.viewport2d.get_span().y();
+  
   dynamical2dPropertyGrid->SetPropertyValue(horizontalAxisMinPropertyGridItem,
-					 dynamicalSpecification.horizontalAxisMin);
+					 horizontalAxisMin);
   dynamical2dPropertyGrid->SetPropertyValue(horizontalAxisMaxPropertyGridItem,
-					  dynamicalSpecification.horizontalAxisMax);
+					  horizontalAxisMax);
   
   dynamical2dPropertyGrid->SetPropertyValue(verticalAxisMinPropertyGridItem,
-					 dynamicalSpecification.verticalAxisMin);
+					 verticalAxisMin);
   dynamical2dPropertyGrid->SetPropertyValue(verticalAxisMaxPropertyGridItem,
-					  dynamicalSpecification.verticalAxisMax);
+					  verticalAxisMax);
+
+  // 3d
+  math::vector3d cameraPosition(dynamicalSpecification.viewport3d.get_position());
+  math::vector3d cameraDirection(dynamicalSpecification.viewport3d.get_view_direction());
+  math::vector3d upDirection(dynamicalSpecification.viewport3d.get_up_direction());
+  double zNear = dynamicalSpecification.viewport3d.get_near_z();
+  double zFar = dynamicalSpecification.viewport3d.get_far_z();
+  dynamical3dPropertyGrid->SetPropertyValue(cameraPositionXPropertyGridItem,
+					    cameraPosition.x());
+  dynamical3dPropertyGrid->SetPropertyValue(cameraPositionYPropertyGridItem,
+					    cameraPosition.y());
+  dynamical3dPropertyGrid->SetPropertyValue(cameraPositionZPropertyGridItem,
+					    cameraPosition.z());
+
+  dynamical3dPropertyGrid->SetPropertyValue(cameraDirectionXPropertyGridItem,
+					    cameraDirection.x());
+  dynamical3dPropertyGrid->SetPropertyValue(cameraDirectionYPropertyGridItem,
+					    cameraDirection.y());
+  dynamical3dPropertyGrid->SetPropertyValue(cameraDirectionZPropertyGridItem,
+					    cameraDirection.z());
+
+  dynamical3dPropertyGrid->SetPropertyValue(upDirectionXPropertyGridItem,
+					    upDirection.x());
+  dynamical3dPropertyGrid->SetPropertyValue(upDirectionYPropertyGridItem,
+					    upDirection.y());
+  dynamical3dPropertyGrid->SetPropertyValue(upDirectionZPropertyGridItem,
+					    upDirection.z());
+
+  dynamical3dPropertyGrid->SetPropertyValue(zNearPropertyGridItem,
+					    zNear);
+  dynamical3dPropertyGrid->SetPropertyValue(zFarPropertyGridItem,
+					    zFar);
+
+  // Set choices.
   assert(dynamicalSpecification.dynamicalVariables >= 2);
   wxPGChoices list;
   list.Add("t");
@@ -96,41 +147,95 @@ void dynamical_dialog::set_ui() {
   }
   horizontalAxisVariablePropertyGridItem->SetChoices(list);
   verticalAxisVariablePropertyGridItem->SetChoices(list);
+  xAxisVariablePropertyGridItem->SetChoices(list);
+  yAxisVariablePropertyGridItem->SetChoices(list);
+  zAxisVariablePropertyGridItem->SetChoices(list);
   horizontalAxisVariablePropertyGridItem
     ->SetChoiceSelection(dynamicalSpecification.horizontalAxisVariable);
   verticalAxisVariablePropertyGridItem
     ->SetChoiceSelection(dynamicalSpecification.verticalAxisVariable);
+  xAxisVariablePropertyGridItem->
+    SetChoiceSelection(dynamicalSpecification.xAxisVariable);
+  yAxisVariablePropertyGridItem->
+    SetChoiceSelection(dynamicalSpecification.yAxisVariable);
+  zAxisVariablePropertyGridItem->
+    SetChoiceSelection(dynamicalSpecification.zAxisVariable);
+
+  if(dynamicalSpecification.is3d) {
+    viewportRadioBox->SetSelection(1);
+  }
 }
 
 bool dynamical_dialog::validate_and_set_specification() {
-  dynamicalSpecification.horizontalAxisMax =
-    dynamical2dPropertyGrid->
-    GetPropertyValue(horizontalAxisMaxPropertyGridItem).GetDouble();
-  dynamicalSpecification.horizontalAxisMin =
-    dynamical2dPropertyGrid->
-    GetPropertyValue(horizontalAxisMinPropertyGridItem).GetDouble();
+  double horizontalAxisMax = horizontalAxisMaxPropertyGridItem->GetValue().GetDouble();
+  double horizontalAxisMin = horizontalAxisMinPropertyGridItem->GetValue().GetDouble();
 
-  dynamicalSpecification.verticalAxisMax =
-    dynamical2dPropertyGrid->
-    GetPropertyValue(verticalAxisMaxPropertyGridItem).GetDouble();
-  dynamicalSpecification.verticalAxisMin =
-    dynamical2dPropertyGrid->
-    GetPropertyValue(verticalAxisMinPropertyGridItem).GetDouble();
-  if(dynamicalSpecification.horizontalAxisMax
-     <= dynamicalSpecification.horizontalAxisMin ||
-     dynamicalSpecification.verticalAxisMax
-     <= dynamicalSpecification.verticalAxisMin) {
+  double verticalAxisMax = verticalAxisMaxPropertyGridItem->GetValue().GetDouble();
+  double verticalAxisMin = verticalAxisMinPropertyGridItem->GetValue().GetDouble();
+  if(horizontalAxisMax <= horizontalAxisMin ||  verticalAxisMax <= verticalAxisMin) {
     return false;
   }
+  dynamicalSpecification.viewport2d
+    .set_position(math::vector2d(horizontalAxisMin, verticalAxisMin));
+  dynamicalSpecification.viewport2d
+    .set_span(math::vector2d(horizontalAxisMax - horizontalAxisMin,
+			     verticalAxisMax - verticalAxisMin));
   dynamicalSpecification.horizontalAxisVariable
     = horizontalAxisVariablePropertyGridItem->GetChoiceSelection();
   dynamicalSpecification.verticalAxisVariable
     = verticalAxisVariablePropertyGridItem->GetChoiceSelection();
+
+  math::vector3d cameraPosition(cameraPositionXPropertyGridItem->GetValue().GetDouble(),
+			  cameraPositionYPropertyGridItem->GetValue().GetDouble(),
+			  cameraPositionZPropertyGridItem->GetValue().GetDouble());
+  math::vector3d cameraDirection(cameraDirectionXPropertyGridItem->GetValue().GetDouble(),
+			  cameraDirectionYPropertyGridItem->GetValue().GetDouble(),
+			  cameraDirectionZPropertyGridItem->GetValue().GetDouble());
+  math::vector3d upDirection(upDirectionXPropertyGridItem->GetValue().GetDouble(),
+		       upDirectionYPropertyGridItem->GetValue().GetDouble(),
+		       upDirectionZPropertyGridItem->GetValue().GetDouble());
+
+  // Verify that the upDriection and cameraDirection are not colinear.
+  math::vector3d up = math::cross(cameraDirection, upDirection);
+  const double tolerance = 0.001;
+  if(std::abs(up.x()) <= tolerance &&
+     std::abs(up.y()) <= tolerance &&
+     std::abs(up.z()) <= tolerance) {
+    return false;
+  }
+  double zNear = zNearPropertyGridItem->GetValue().GetDouble();
+  double zFar = zFarPropertyGridItem->GetValue().GetDouble();
+  if(zNear <= 0 || zNear >= zFar) return false;
+
+  dynamicalSpecification.viewport3d
+    = math::window3d(cameraPosition, cameraDirection, upDirection, zNear, zFar,
+		     dynamicalSpecification.viewport3d.get_width(),
+		     dynamicalSpecification.viewport3d.get_height());
+
+  dynamicalSpecification.xAxisVariable
+    = xAxisVariablePropertyGridItem->GetChoiceSelection();
+  dynamicalSpecification.yAxisVariable
+    = yAxisVariablePropertyGridItem->GetChoiceSelection();
+  dynamicalSpecification.zAxisVariable
+    = zAxisVariablePropertyGridItem->GetChoiceSelection();
+
+  dynamicalSpecification.is3d = viewportRadioBox->GetSelection() == 0?false:true;
   return true;
 }
 
 void dynamical_dialog::viewport_radio_box_on_radio_box(wxCommandEvent&) {
-  
+  int selection = viewportRadioBox->GetSelection();
+  if(selection == 0) {
+    dynamical2dPropertyGrid->Show();
+    dynamical3dPropertyGrid->Hide();
+    Layout();
+  } else if(selection == 1) {
+    dynamical3dPropertyGrid->Show();
+    dynamical2dPropertyGrid->Hide();
+    Layout();
+  } else {
+    assert(false);
+  }
 }
 } // namespace gui
 } // namespace dynslover

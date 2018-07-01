@@ -20,7 +20,13 @@ public:
 
   double& z();
   const double& z() const;
+
+  // Normalizes this vector
+  void normalize();
 };
+
+// Computes lhs - rhs
+vector3d operator-(const vector3d& lhs, const vector3d& rhs);
 
 // Returns the cross product of the two vectors.
 vector3d cross(const vector3d&, const vector3d&);

@@ -21,6 +21,7 @@ int vector::size() const {
   return rows;
 }
 
+namespace vector_ops {
 vector operator+(vector lhs, const vector& rhs) {
   lhs += rhs;
   return lhs;
@@ -49,6 +50,7 @@ vector operator/(vector mat, double scalar) {
   mat /= scalar;
   return mat;
 }
+} // namespace vector_ops
 
 double angle(const vector& v1, const vector& v2) {
   assert(v1.size() == v2.size());

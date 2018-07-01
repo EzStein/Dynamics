@@ -63,6 +63,11 @@ class dynamical_frame : public dynamical_frame_base {
   // the axesScalingViewport when we left click on an axis.
   bool verticalScaling, horizontalScaling;
   math::window2d axesScalingViewport;
+
+  // This is a viewport which is locked in
+  // when the left mouse button is clicked. It is used to compute the camera,
+  // rotation when dragging the mouse.
+  math::window3d rotationViewport;
  public:
   dynamical_frame(app&, dynamical_window_id id, int width, int height);
   ~dynamical_frame();

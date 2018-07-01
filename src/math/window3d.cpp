@@ -1,22 +1,28 @@
 #include "math/window3d.h"
 
 #include <cassert>
+#include <iostream>
 
-#include "math/square_matrix.h"
 #include "math/quaternion.h"
-#include "math/vector.h"
+#include "math/vector2d.h"
+#include "math/matrix_3x3.h"
+#include "math/matrix_4x4.h"
 
 namespace dynsolver {
 namespace math {
 
+window3d::window3d() : window3d(vector3d(0,0,0), vector3d(0,0,-1),
+				vector3d(0,1,0),
+				1, 10, 100, 100) {}
+
 window3d::window3d(const vector3d& position, const vector3d& viewDirection,
 		   const vector3d& up,
-		   double nearZ, double farZ, double aspectRatio) :
+		   double nearZ, double farZ, double width, double height) :
   position(position), viewDirection(viewDirection),
-  upDirection(cross(cross(up, viewDirection), viewDirection)),
-  nearZ(nearZ), farZ(farZ), aspectRatio(aspectRatio) {
-  viewDirection.norm();
-  upDirection.norm();
+  upDirection(cross(cross(viewDirection, up), viewDirection)),
+  nearZ(nearZ), farZ(farZ), width(width), height(height) {
+  this->viewDirection.normalize();
+  this->upDirection.normalize();
 }
 
 const vector3d& window3d::get_position() const {
@@ -45,52 +51,89 @@ void window3d::set_far_z(double val) {
   assert(val > nearZ);
   farZ = val;
 }
+
 double window3d::get_aspect_ratio() const {
-  return aspectRatio;
-}
-void window3d::set_aspect_ratio(double val) {
-  assert(val > 0);
-  aspectRatio = val;
+  return width / height;
 }
 
-square_matrix window3d::camera_to_clip() const {
-  const double scale = 1.0;
-  square_matrix matrix(4, 0.0);
-  matrix[0][0] = scale / aspectRatio;
-  matrix[1][1] = scale;
+double window3d::get_width() const {
+  return width;
+}
+
+double window3d::get_height() const {
+  return height;
+}
+
+void window3d::set_width(double newWidth) {
+  width = newWidth;
+}
+
+void window3d::set_height(double newHeight) {
+  height = newHeight;
+}
+
+void window3d::rotate(const vector2d& start, const vector2d& end) {
+  const vector3d negZ(0,0,-1);
+  vector2d startNdc(window_to_ndc(start));
+  vector2d endNdc(window_to_ndc(end));
+  vector3d startCamera(vector3d(startNdc.x(), startNdc.y(), -1));
+  vector3d endCamera(vector3d(endNdc.x(), endNdc.y(), -1));
+  double angle(-math::angle(endCamera, startCamera));
+  vector3d diff = (startCamera - endCamera);
+  diff.normalize();
+  quaternion rotation(cross(diff, negZ), angle);
+  matrix_3x3 cameraToWorldRot(world_to_camera_rotation());
+  cameraToWorldRot.invert();
+  matrix_3x3 transform(cameraToWorldRot * rotation.as_rotation_matrix());
+  viewDirection = transform * negZ;
+  upDirection = transform * upDirection;
+}
+
+vector2d window3d::window_to_ndc(const vector2d& window) const {
+  vector2d ndc(0,0);
+  ndc.x() = 2 * window.x() / width - 1;
+  ndc.y() = 2 * window.y() / height - 1;
+  return ndc;
+}
+
+matrix_3x3 window3d::world_to_camera_rotation() const {
+  const vector3d negZ(0,0,-1);
+  const vector3d posY(0,1,0);
+  vector3d rotation1Axis(cross(viewDirection, negZ));
+  double angle(math::angle(viewDirection, negZ));
+  quaternion rotation1(rotation1Axis, angle);
+  vector3d newUp(rotation1.as_rotation_matrix() * upDirection);
+  vector3d rotation2Axis(cross(newUp, posY));
+  angle = math::angle(newUp, posY);
+  quaternion rotation2(rotation2Axis, angle);
+  return (rotation2 * rotation1).as_rotation_matrix();
+}
+
+matrix_4x4 window3d::camera_to_clip() const {
+  const double scaleX = 1.0;
+  const double scaleY = 1.0;
+  matrix_4x4 matrix;
+  matrix[0][0] = (scaleX / width) * height;
+  matrix[1][1] = scaleY;
   matrix[2][2] = (farZ + nearZ) / (nearZ - farZ);
   matrix[2][3] = (2 * farZ * nearZ) / (nearZ - farZ);
   matrix[3][2] = -1;
+  matrix[3][3] = 0;
   return matrix;
 }
 
-square_matrix window3d::world_to_camera() const {
-  const vector3d negZ(0,0,-1);
-  const vector3d posY(0,1,0);
-  vector3d vector(cross(viewDirection, negZ));
-  double angle(math::angle(viewDirection, negZ));
-  quaternion rotation1(vector, angle);
-  math::vector upVec(4, 0.0);
-  upVec[0] = upDirection.x();
-  upVec[1] = upDirection.y();
-  upVec[2] = upDirection.z();
-  upVec[3] = 1;
-  math::vector newUpVec(rotation1.as_rotation_matrix() * upVec);
-  vector3d newUp(newUpVec[0], newUpVec[1], newUpVec[2]);
-  vector = cross(newUp, posY);
-  angle = math::angle(newUp, posY);
-  quaternion rotation2(vector, angle);
+matrix_4x4 window3d::world_to_camera_translation() const {
   vector3d translation(-position.x(), -position.y(), -position.z());
-  square_matrix translationMatrix(generate_translation_matrix(translation));
-  return (rotation2 * rotation1).as_rotation_matrix() * translationMatrix;
+  return generate_translation_matrix(translation);
 }
 
-square_matrix generate_translation_matrix(const vector3d& vec) {
-  square_matrix matrix(4, 0.0);
-  matrix[0][0] = 1;
-  matrix[1][1] = 1;
-  matrix[2][2] = 1;
-  matrix[3][3] = 1;
+matrix_4x4 window3d::world_to_camera() const {
+  return world_to_camera_rotation().augment_to_4x4()
+    * world_to_camera_translation();
+}
+
+matrix_4x4 generate_translation_matrix(const vector3d& vec) {
+  matrix_4x4 matrix;
   matrix[0][3] = vec.x();
   matrix[1][3] = vec.y();
   matrix[2][3] = vec.z();

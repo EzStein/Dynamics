@@ -16,6 +16,7 @@
 #include "../app.h"
 #include "math/window2d.h"
 #include "math/vector2d.h"
+#include "math/matrix_4x4.h"
 
 namespace dynsolver {
 namespace gui {
@@ -38,87 +39,318 @@ double color::get_alpha() const {
 solution_specification::solution_specification() : initialValue(1),
 						   glColor(0,0,0,1) { }
 
-singular_point_specification::singular_point_specification() : initialValue(1) { }
+singular_point_specification::singular_point_specification() :
+  initialValue(1) { }
 
-model::dynamical_window::dynamical_window(model& model,
-					  const math::window2d& window, int horizontalAxisVariable,
-					  int verticalAxisVariable) :
-  modelData(model), window(window),
-  horizontalAxisVariable(horizontalAxisVariable),
-  verticalAxisVariable(verticalAxisVariable),
-  axesVbo(nullptr, 8 * sizeof(float), GL_DYNAMIC_DRAW),
-  axesVboVertexCount(4),
+model::dynamical_window::
+dynamical_window(model& model,
+		 const dynamical_window_specification& spec) :
+  modelData(model), specification(spec),
+  axesVbo(nullptr, 0, GL_DYNAMIC_DRAW),
+  axesVboVertices(0),
   ticksPerLabel(5),
   tickFontSize(12),
   minimumPixelTickDistance(15),
   maximumPixelTickDistance(minimumPixelTickDistance * ticksPerLabel * 2),
   realTickDistanceX(0.5),
   realTickDistanceY(0.5) {
-  
-  for(std::unordered_map<solution_id, solution>::const_iterator iter
-	= modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+  // Generate VBO's for each solution and update the axes.
+  for(solution_const_iter iter = modelData.solutions.begin();
+      iter != modelData.solutions.end(); ++iter) {
     generate_vbo(iter->first);
   }
   update_axes_vbo();
 }
+const dynamical_window_specification&
+model::dynamical_window::get_specification() const {
+  return specification;
+}
 
 void model::dynamical_window::set_specification
 (const dynamical_window_specification& spec) {
-  window = math::window2d(window.get_size(),
-		    math::vector2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
-			  spec.verticalAxisMax - spec.verticalAxisMin),
-		    math::vector2d(spec.horizontalAxisMin, spec.verticalAxisMin));
-  
-  if(horizontalAxisVariable != spec.horizontalAxisVariable ||
-     verticalAxisVariable != spec.verticalAxisVariable) {
-    horizontalAxisVariable = spec.horizontalAxisVariable;
-    verticalAxisVariable = spec.verticalAxisVariable;
+  if(specification.horizontalAxisVariable != spec.horizontalAxisVariable ||
+     specification.verticalAxisVariable != spec.verticalAxisVariable) {
+    specification.horizontalAxisVariable = spec.horizontalAxisVariable;
+    specification.verticalAxisVariable = spec.verticalAxisVariable;
     
     // Update VBO's
-    for(std::unordered_map<solution_id, solution>::const_iterator iter
-	  = modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+    for(solution_const_iter iter = modelData.solutions.begin();
+	iter != modelData.solutions.end(); ++iter) {
       generate_vbo(iter->first);
     }
   }
-
+  specification = spec;
 }
 
-int model::dynamical_window::get_horizontal_axis_variable() const {
-  return horizontalAxisVariable;
+void model::dynamical_window::set_viewport_2d(const math::window2d& val) {
+  specification.viewport2d = val;
 }
 
-int model::dynamical_window::get_vertical_axis_variable() const {
-  return verticalAxisVariable;
-}
-void model::dynamical_window::set_window(const math::window2d& val) {
-  window = val;
+void model::dynamical_window::set_viewport_3d(const math::window3d& val) {
+  specification.viewport3d = val;
 }
 
-const math::window2d& model::dynamical_window::get_window() const {
-  return window;
+bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
+  for(std::unordered_map<solution_id, solution>::const_iterator iter =
+	modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
+    if(iter->second.data.size() <= 2) continue;
+    std::list<math::vector>::const_iterator point = iter->second.data.begin();
+    ++point;
+    std::list<math::vector>::const_iterator prevPoint = iter->second.data.begin();
+    for(; point != iter->second.data.end(); ++point, ++prevPoint) {
+      math::vector2d real((*point)[specification.horizontalAxisVariable],
+			  (*point)[specification.verticalAxisVariable]);
+      math::vector2d pixel(specification.viewport2d.pixel_coordinate_of(real));
+      math::vector2d realPrev((*prevPoint)[specification.horizontalAxisVariable],
+			      (*prevPoint)[specification.verticalAxisVariable]);
+      math::vector2d pixelPrev(specification.viewport2d.pixel_coordinate_of(realPrev));
+      const int tolerance(5);
+      math::vector2d cursor(x, y);
+      if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
+	*id = iter->first;
+	return true;
+      }
+    }
+  }
+  return false;
 }
 
-void model::dynamical_window::clear() {
-  solutionRenderData.clear();
+void model::dynamical_window::paint() {
+  glViewport(0, 0, specification.viewport2d.get_size().x(),
+	     specification.viewport2d.get_size().y());
+  if(specification.is3d) {
+    // Render 3d
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glDepthRange(0.0f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(modelData.programPath3d.get_handle());
+    glBindVertexArray(modelData.vaoPath3d.get_handle());
+    float transformationMatrix[16];
+    (specification.viewport3d.camera_to_clip() *
+     specification.viewport3d.world_to_camera())
+      .as_float_array(transformationMatrix);
+    glUniformMatrix4fv(modelData.kPath3dTransformationUniformLocation,
+		       1, true, transformationMatrix);
+    glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
+    GLfloat cube[8 * 3] = {
+      -1, -1, -5,
+      -1, 1, -5,
+      1, 1, -5,
+      1, -1, -5,
+      -1, -1, -4,
+      -1, 1, -4,
+      1, 1, -4,
+      1, -1, -4
+    };
+    GLuint elements[16] = {
+      0, 1, 2, 3, 0, 4, 5, 6, 7, 4, 5, 1, 2, 6, 7, 3
+    };
+    gl::buffer tmp(reinterpret_cast<unsigned char*>(cube),
+		   8 * 3 * sizeof(float), GL_STATIC_DRAW);
+    glBindVertexBuffer(model::kPath3dVertexBinding,
+		       tmp.get_handle(), 0, 3 * sizeof(float));
+    glDrawElements(GL_LINE_STRIP, 16, GL_UNSIGNED_INT, elements);
+  } else {
+    // Render 2d
+    
+    glUseProgram(modelData.program2d.get_handle());
+    glBindVertexArray(modelData.vao2d.get_handle());
+    float transformationMatrix[16];
+    specification.viewport2d.real_to_ndc().as_float_array(transformationMatrix);
+    glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		       1, true, transformationMatrix);
+
+    // Clear to white
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Render each solution
+    for(solution_render_data_const_iter iter = solutionRenderData.begin();
+	iter != solutionRenderData.end(); ++iter) {
+      color glColor(modelData.solutions.at(iter->first).specification.glColor);
+      glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      glBindVertexBuffer(model::k2dVertexBinding,
+			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
+      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+    }
+
+    update_axes_vbo();
+    // Generate pixel to ndc transform
+    specification.viewport2d.pixel_to_ndc()
+      .as_float_array(transformationMatrix);
+    glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		       1, true, transformationMatrix);
+    // Set color to Black
+    glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+    glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
+		       0, 2 * sizeof(float));
+    glDrawArrays(GL_LINES, 0, axesVboVertices);
+
+
+    // Render Axes text
+    const double tolerance = 0.001;
+    math::vector2d axesPixel(specification.viewport2d
+			     .pixel_coordinate_of(math::vector2d(0.0, 0.0)));
+    int yTextOffset(10);
+    int xTextOffset(10);
+    if(axesPixel.x() < 0.0) {
+      axesPixel.x() = 0.0;
+    }
+    if(axesPixel.x() > specification.viewport2d.get_size().x()) {
+      axesPixel.x() = specification.viewport2d.get_size().x();
+      xTextOffset = -40;
+    }
+    if(axesPixel.y() < 0.0) {
+      axesPixel.y() = 0.0;
+    }
+    if(axesPixel.y() > specification.viewport2d.get_size().y()) {
+      axesPixel.y() = specification.viewport2d.get_size().y();
+      yTextOffset = -20;
+    }
+    math::vector2d axesReal(specification.viewport2d
+			    .real_coordinate_of(axesPixel));
+    double xStart = realTickDistanceX * ticksPerLabel *
+      static_cast<int>(specification.viewport2d.get_position().x() /
+		       (realTickDistanceX * ticksPerLabel));
+    double yStart = realTickDistanceY * ticksPerLabel *
+      static_cast<int>(specification.viewport2d.get_position().y() /
+		       (realTickDistanceY * ticksPerLabel));
+    for(double x = xStart; x > specification.viewport2d.get_position().x();
+	x -= ticksPerLabel * realTickDistanceX) {
+      if(std::abs(x) < tolerance) continue;
+      math::vector2d pixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(x,
+							       axesReal.y())));
+      std::string text = util::double_to_string(x, 2);
+      modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
+					 pixel.y() + yTextOffset,
+					 modelData.font, tickFontSize);
+    }
+    for(double x = xStart; x < specification.viewport2d.get_position().x()
+	  + specification.viewport2d.get_span().x();
+	x += ticksPerLabel * realTickDistanceX) {
+      if(std::abs(x) < tolerance) continue;
+      math::vector2d pixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(x, axesReal.y())));
+      std::string text = util::double_to_string(x, 2);
+      modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
+					 pixel.y() + yTextOffset,
+					 modelData.font, tickFontSize);
+    }
+    for(double y = yStart; y > specification.viewport2d.get_position().y();
+	y -= ticksPerLabel * realTickDistanceY) {
+      if(std::abs(y) < tolerance) continue;
+      math::vector2d pixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
+      std::string text = util::double_to_string(y, 2);
+      modelData.textRenderer.render_text(text, pixel.x() + xTextOffset, pixel.y() - 5,
+					 modelData.font, tickFontSize);
+    }
+    for(double y = yStart; y < specification.viewport2d.get_position().y()
+	  + specification.viewport2d.get_span().y();
+	y += ticksPerLabel * realTickDistanceY) {
+      if(std::abs(y) < tolerance) continue;
+      math::vector2d pixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
+      std::string text = util::double_to_string(y, 2);
+      modelData.textRenderer.render_text(text, pixel.x() + xTextOffset,
+					 pixel.y() - 5, modelData.font,
+					 tickFontSize);
+    }
+  }
+}
+  
+void model::dynamical_window::resize(int width, int height) {
+  double changeWidth = (width - specification.viewport2d.get_size().x())
+    * specification.viewport2d.get_span().x() /
+    specification.viewport2d.get_size().x();
+  double changeHeight = (height - specification.viewport2d.get_size().y())
+    * specification.viewport2d.get_span().y() /
+    specification.viewport2d.get_size().y();
+  specification.viewport2d.set_size(math::vector2d(width, height));
+  specification.viewport2d
+    .set_span(math::vector2d(changeWidth +
+			     specification.viewport2d.get_span().x(),
+			     changeHeight +
+			     specification.viewport2d.get_span().y()));
+  specification.viewport3d.set_width(width);
+  specification.viewport3d.set_height(height);
+}
+
+bool model::dynamical_window::on_vertical_axis(int x, int y) const {
+  math::vector2d axesPixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(0.0, 0.0)));
+  if(axesPixel.x() < 0.0)
+    axesPixel.x() = 0.0;
+  if(axesPixel.x() > specification.viewport2d.get_size().x())
+    axesPixel.x() = specification.viewport2d.get_size().x();
+  if(axesPixel.y() < 0.0)
+    axesPixel.y() = 0.0;
+  if(axesPixel.y() > specification.viewport2d.get_size().y())
+    axesPixel.y() = specification.viewport2d.get_size().y();
+  double axis = axesPixel.x();
+  return axis - 5 < x && x < axis + 5;
+}
+bool model::dynamical_window::on_horizontal_axis(int x, int y) const {
+  math::vector2d axesPixel(specification.viewport2d
+			   .pixel_coordinate_of(math::vector2d(0.0, 0.0)));
+  if(axesPixel.x() < 0.0)
+    axesPixel.x() = 0.0;
+  if(axesPixel.x() > specification.viewport2d.get_size().x())
+    axesPixel.x() = specification.viewport2d.get_size().x();
+  if(axesPixel.y() < 0.0)
+    axesPixel.y() = 0.0;
+  if(axesPixel.y() > specification.viewport2d.get_size().y())
+    axesPixel.y() = specification.viewport2d.get_size().y();
+  double axis = axesPixel.y();
+  return axis - 5 < y && y < axis + 5;
+}
+
+void model::dynamical_window::delete_solution(solution_id id) {
+  solutionRenderData.erase(id);
+}
+
+void model::dynamical_window::add_solution(solution_id id) {
+  generate_vbo(id);
 }
 
 void model::dynamical_window::generate_vbo(solution_id id) {
   const std::list<math::vector>& solution(modelData.solutions.at(id).data);
-  std::vector<float> data;
+  std::vector<float> data2d;
+  std::vector<float> data3d;
   size_t points = solution.size();
-  size_t size = points * 2 * sizeof(float);
+  size_t size2d = points * 2 * sizeof(float);
+  size_t size3d = points * 3 * sizeof(float);
   for(std::list<math::vector>::const_iterator point = solution.begin();
       point != solution.end(); ++point) {
-    data.push_back((*point)[horizontalAxisVariable]);
-    data.push_back((*point)[verticalAxisVariable]);
+    data2d.push_back((*point)[specification.horizontalAxisVariable]);
+    data2d.push_back((*point)[specification.verticalAxisVariable]);
+
+    data3d.push_back((*point)[specification.xAxisVariable]);
+    data3d.push_back((*point)[specification.yAxisVariable]);
+    data3d.push_back((*point)[specification.zAxisVariable]);
   }
+
+  // If the render Data already exists.
   if(solutionRenderData.find(id) != solutionRenderData.end()) {
       solutionRenderData.at(id).vertices = points;
       solutionRenderData.at(id)
-	.vbo.set_data(reinterpret_cast<unsigned char *>(data.data()), size);
+	.vbo2d.set_data(reinterpret_cast<unsigned char *>(data2d.data()),
+			size2d);
+      solutionRenderData.at(id)
+	.vbo3d.set_data(reinterpret_cast<unsigned char *>(data3d.data()),
+			size3d);
   } else {
-    gl::buffer vbo(reinterpret_cast<unsigned char*>(data.data()), size, GL_DYNAMIC_DRAW);
-    solution_render_data val{vbo, points};
+    gl::buffer vbo2d(reinterpret_cast<unsigned char*>(data2d.data()),
+		     size2d, GL_DYNAMIC_DRAW);
+    gl::buffer vbo3d(reinterpret_cast<unsigned char*>(data3d.data()),
+		     size3d, GL_DYNAMIC_DRAW);
+    solution_render_data val{vbo2d, vbo3d, points};
     solutionRenderData.insert(std::make_pair(id, val));
   }
 }
@@ -126,15 +358,19 @@ void model::dynamical_window::generate_vbo(solution_id id) {
 void model::dynamical_window::update_axes_vbo() {
   // Render the axes
   // Compute the distance between each tick.
-  int numberOfTicksX = window.get_span().x()/realTickDistanceX;
-  int pixelTickDistanceX = window.get_size().x()/static_cast<double>(numberOfTicksX);
+  int numberOfTicksX =
+    specification.viewport2d.get_span().x()/realTickDistanceX;
+  int pixelTickDistanceX = specification.viewport2d.get_size().x()
+    /static_cast<double>(numberOfTicksX);
   if(pixelTickDistanceX < minimumPixelTickDistance) {
     realTickDistanceX *= ticksPerLabel;
   } else if(pixelTickDistanceX > maximumPixelTickDistance) {
     realTickDistanceX /= ticksPerLabel;
   }
-  int numberOfTicksY = window.get_span().y()/realTickDistanceY;
-  int pixelTickDistanceY = window.get_size().y()/static_cast<double>(numberOfTicksY);
+  int numberOfTicksY =
+    specification.viewport2d.get_span().y()/realTickDistanceY;
+  int pixelTickDistanceY =
+    specification.viewport2d.get_size().y()/static_cast<double>(numberOfTicksY);
   if(pixelTickDistanceY < minimumPixelTickDistance) {
     realTickDistanceY *= ticksPerLabel;
   } else if(pixelTickDistanceY > maximumPixelTickDistance) {
@@ -142,25 +378,30 @@ void model::dynamical_window::update_axes_vbo() {
   }
 
   // The x and y values in pixels for where the x and y axes should cross.
-  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
+  math::vector2d axesPixel
+    (specification.viewport2d.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
-  if(axesPixel.x() > window.get_size().x())
-    axesPixel.x() = window.get_size().x();
+  if(axesPixel.x() > specification.viewport2d.get_size().x())
+    axesPixel.x() = specification.viewport2d.get_size().x();
   if(axesPixel.y() < 0.0)
     axesPixel.y() = 0.0;
-  if(axesPixel.y() > window.get_size().y())
-    axesPixel.y() = window.get_size().y();
+  if(axesPixel.y() > specification.viewport2d.get_size().y())
+    axesPixel.y() = specification.viewport2d.get_size().y();
   
   // Set up tick data in pixel coordinates.
   std::vector<float> axesVboData;
   double xStart = realTickDistanceX *
-    static_cast<int>(window.get_position().x() / realTickDistanceX);
+    static_cast<int>(specification.viewport2d.get_position().x()
+		     / realTickDistanceX);
   double yStart = realTickDistanceY *
-    static_cast<int>(window.get_position().y() / realTickDistanceY);
+    static_cast<int>(specification.viewport2d.get_position().y()
+		     / realTickDistanceY);
   for(double x = xStart;
-      x < window.get_position().x() + window.get_span().x(); x += realTickDistanceX) {
-    float realCoordinate = window.pixel_coordinate_of(math::vector2d(x, 0)).x();
+      x < specification.viewport2d.get_position().x()
+	+ specification.viewport2d.get_span().x(); x += realTickDistanceX) {
+    float realCoordinate =
+      specification.viewport2d.pixel_coordinate_of(math::vector2d(x, 0)).x();
     // First vertex
     axesVboData.push_back(realCoordinate); // X
     axesVboData.push_back(axesPixel.y() - 5); // Y
@@ -169,9 +410,11 @@ void model::dynamical_window::update_axes_vbo() {
     axesVboData.push_back(realCoordinate); // X
     axesVboData.push_back(axesPixel.y() + 5); // Y
   }
-  for(double y = yStart; y < window.get_position().y() + window.get_span().y();
+  for(double y = yStart; y < specification.viewport2d.get_position().y()
+	+ specification.viewport2d.get_span().y();
       y += realTickDistanceY) {
-    float realCoordinate = window.pixel_coordinate_of(math::vector2d(0, y)).y();
+    float realCoordinate =
+      specification.viewport2d.pixel_coordinate_of(math::vector2d(0, y)).y();
     // First vertex
     axesVboData.push_back(axesPixel.x() - 5); // X
     axesVboData.push_back(realCoordinate); // Y
@@ -185,189 +428,45 @@ void model::dynamical_window::update_axes_vbo() {
   axesVboData.push_back(0);
   axesVboData.push_back(axesPixel.y());
   
-  axesVboData.push_back(window.get_size().x());
+  axesVboData.push_back(specification.viewport2d.get_size().x());
   axesVboData.push_back(axesPixel.y());
 
   axesVboData.push_back(axesPixel.x());
   axesVboData.push_back(0);
   
   axesVboData.push_back(axesPixel.x());
-  axesVboData.push_back(window.get_size().y());
+  axesVboData.push_back(specification.viewport2d.get_size().y());
   
   axesVbo.set_data(reinterpret_cast<unsigned char*>(axesVboData.data()),
 		   axesVboData.size()*sizeof(float));
   axesVboVertices = axesVboData.size() / 2;
 }
 
-void model::dynamical_window::paint() {
-  glViewport(0, 0, window.get_size().x(), window.get_size().y());
-  glUseProgram(modelData.program2d.get_handle());
-  glBindVertexArray(modelData.vao2d.get_handle());
-  float transformationMatrix[16];
-  window.real_to_ndc().as_float_array(transformationMatrix);
-  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
-		     1, true, transformationMatrix);
-
-  // Clear to white
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  // Render each solution
-  for(std::unordered_map<solution_id, solution_render_data>::const_iterator iter
-	= solutionRenderData.begin();
-      iter != solutionRenderData.end(); ++iter) {
-    color glColor(modelData.solutions.at(iter->first).specification.glColor);
-    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
-		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-    glBindVertexBuffer(model::k2dVertexBinding,
-		       iter->second.vbo.get_handle(), 0, 2 * sizeof(float));
-    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
-  }
-
-  update_axes_vbo();
-  // Generate pixel to ndc transform
-  window.pixel_to_ndc().as_float_array(transformationMatrix);
-  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation, 1, true, transformationMatrix);
-  // Set color to Black
-  glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-  glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
-		     0, 2 * sizeof(float));
-  glDrawArrays(GL_LINES, 0, axesVboVertices);
-
-
-  // Render Axes text
-  const double tolerance = 0.001;
-  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
-  int yTextOffset(10);
-  int xTextOffset(10);
-  if(axesPixel.x() < 0.0) {
-    axesPixel.x() = 0.0;
-  }
-  if(axesPixel.x() > window.get_size().x()) {
-    axesPixel.x() = window.get_size().x();
-    xTextOffset = -40;
-  }
-  if(axesPixel.y() < 0.0) {
-    axesPixel.y() = 0.0;
-  }
-  if(axesPixel.y() > window.get_size().y()) {
-    axesPixel.y() = window.get_size().y();
-    yTextOffset = -20;
-  }
-  math::vector2d axesReal(window.real_coordinate_of(axesPixel));
-  double xStart = realTickDistanceX * ticksPerLabel *
-    static_cast<int>(window.get_position().x() / (realTickDistanceX * ticksPerLabel));
-  double yStart = realTickDistanceY * ticksPerLabel *
-    static_cast<int>(window.get_position().y() / (realTickDistanceY * ticksPerLabel));
-  for(double x = xStart; x > window.get_position().x();
-      x -= ticksPerLabel * realTickDistanceX) {
-    if(std::abs(x) < tolerance) continue;
-    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(x, axesReal.y())));
-    std::string text = util::double_to_string(x, 2);
-    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3, pixel.y() + yTextOffset,
-				       modelData.font, tickFontSize);
-  }
-  for(double x = xStart; x < window.get_position().x() + window.get_span().x();
-      x += ticksPerLabel * realTickDistanceX) {
-    if(std::abs(x) < tolerance) continue;
-    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(x, axesReal.y())));
-    std::string text = util::double_to_string(x, 2);
-    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
-				       pixel.y() + yTextOffset,
-				       modelData.font, tickFontSize);
-  }
-  for(double y = yStart; y > window.get_position().y();
-      y -= ticksPerLabel * realTickDistanceY) {
-    if(std::abs(y) < tolerance) continue;
-    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
-    std::string text = util::double_to_string(y, 2);
-    modelData.textRenderer.render_text(text, pixel.x() + xTextOffset, pixel.y() - 5,
-				       modelData.font, tickFontSize);
-  }
-  for(double y = yStart; y < window.get_position().y() + window.get_span().y();
-      y += ticksPerLabel * realTickDistanceY) {
-    if(std::abs(y) < tolerance) continue;
-    math::vector2d pixel(window.pixel_coordinate_of(math::vector2d(axesReal.x(),y)));
-    std::string text = util::double_to_string(y, 2);
-    modelData.textRenderer.render_text(text, pixel.x() + xTextOffset,
-				       pixel.y() - 5, modelData.font, tickFontSize);
-  }
-}
-  
-void model::dynamical_window::resize(double width, double height) {
-  double changeWidth = (width - window.get_size().x())
-    * window.get_span().x() / window.get_size().x();
-  double changeHeight = (height - window.get_size().y())
-    * window.get_span().y() / window.get_size().y();
-  window.set_size(math::vector2d(width, height));
-  window.set_span(math::vector2d(changeWidth + window.get_span().x(),
-			  changeHeight + window.get_span().y()));
-}
-
-bool model::dynamical_window::on_vertical_axis(double x, double y) const {
-  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
-  if(axesPixel.x() < 0.0)
-    axesPixel.x() = 0.0;
-  if(axesPixel.x() > window.get_size().x())
-    axesPixel.x() = window.get_size().x();
-  if(axesPixel.y() < 0.0)
-    axesPixel.y() = 0.0;
-  if(axesPixel.y() > window.get_size().y())
-    axesPixel.y() = window.get_size().y();
-  double axis = axesPixel.x();
-  return axis - 5 < x && x < axis + 5;
-}
-bool model::dynamical_window::on_horizontal_axis(double x, double y) const {
-  math::vector2d axesPixel(window.pixel_coordinate_of(math::vector2d(0.0, 0.0)));
-  if(axesPixel.x() < 0.0)
-    axesPixel.x() = 0.0;
-  if(axesPixel.x() > window.get_size().x())
-    axesPixel.x() = window.get_size().x();
-  if(axesPixel.y() < 0.0)
-    axesPixel.y() = 0.0;
-  if(axesPixel.y() > window.get_size().y())
-    axesPixel.y() = window.get_size().y();
-  double axis = axesPixel.y();
-  return axis - 5 < y && y < axis + 5;
-}
-
-void model::dynamical_window::delete_vbo(solution_id id) {
-  solutionRenderData.erase(id);
-}
-
-bool model::dynamical_window::select_solution(const math::vector2d& cursor, solution_id& id) {
-  for(std::unordered_map<solution_id, solution>::const_iterator iter =
-	modelData.solutions.begin(); iter != modelData.solutions.end(); ++iter) {
-    if(iter->second.data.size() <= 2) continue;
-    std::list<math::vector>::const_iterator point = iter->second.data.begin();
-    ++point;
-    std::list<math::vector>::const_iterator prevPoint = iter->second.data.begin();
-    for(; point != iter->second.data.end(); ++point, ++prevPoint) {
-      math::vector2d real((*point)[horizontalAxisVariable], (*point)[verticalAxisVariable]);
-      math::vector2d pixel(window.pixel_coordinate_of(real));
-      math::vector2d realPrev((*prevPoint)[horizontalAxisVariable], (*prevPoint)[verticalAxisVariable]);
-      math::vector2d pixelPrev(window.pixel_coordinate_of(realPrev));
-      const int tolerance(5);
-      if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
-	id = iter->first;
-	return true;
-      }
-    }
-  }
-  return false;
-}
-
 const std::string model::k2dVertexShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"}, "2d_renderer.vert"));
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
+					  "2d_renderer.vert"));
 const GLuint model::k2dPositionAttribute(0);
 const GLuint model::k2dVertexBinding(0);
 const std::string model::k2dTransformationUniform("transformation");
 
 const std::string model::k2dFragmentShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"}, "2d_renderer.frag"));
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
+					  "2d_renderer.frag"));
 const std::string model::k2dColorUniform("inColor");
 
-std::vector<gl::shader> model::build_shaders() {
+const std::string model::kPath3dVertexShaderFilePath
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
+					  "path_3d.vert"));
+const GLuint model::kPath3dPositionAttribute(0);
+const GLuint model::kPath3dVertexBinding(0);
+const std::string model::kPath3dTransformationUniform("transformation");
+
+const std::string model::kPath3dFragmentShaderFilePath
+(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
+					  "path_3d.frag"));
+const std::string model::kPath3dColorUniform("inColor");
+
+std::vector<gl::shader> model::build_shaders_2d() {
   std::vector<gl::shader> shaders;
   shaders.push_back(gl::shader(util::read_file(model::k2dVertexShaderFilePath),
 			       GL_VERTEX_SHADER));
@@ -376,23 +475,33 @@ std::vector<gl::shader> model::build_shaders() {
   return shaders;
 }
 
-model::model() : parameterVariables(0),
-		 parameterPosition(1, 0.0),
-		 uniqueDynamicalId(0),
-                 defaultWindow(math::window2d(math::vector2d(500, 500),
-                                        math::vector2d(10, 10),
-                                        math::vector2d(-5, -5))),
+std::vector<gl::shader> model::build_shaders_path_3d() {
+  std::vector<gl::shader> shaders;
+  shaders.push_back(gl::shader(util::read_file(model::kPath3dVertexShaderFilePath),
+			       GL_VERTEX_SHADER));
+  shaders.push_back(gl::shader(util::read_file(model::kPath3dFragmentShaderFilePath),
+			       GL_FRAGMENT_SHADER));
+  return shaders;
+}
 
-		 font(constants::kDefaultFontFilePath),
+model::model() : font(constants::kDefaultFontFilePath),
+		 uniqueDynamicalId(0),
 		 dynamicalDimension(0),
 		 compiled(false),
-		 program2d(build_shaders()),
+		 program2d(build_shaders_2d()),
+		 programPath3d(build_shaders_path_3d()),
 		 k2dTransformationUniformLocation
 		 (glGetUniformLocation(program2d.get_handle(),
 				       k2dTransformationUniform.c_str())),
 		 k2dColorUniformLocation
 		 (glGetUniformLocation(program2d.get_handle(),
-				       k2dColorUniform.c_str())) {
+				       k2dColorUniform.c_str())),
+		 kPath3dTransformationUniformLocation
+		 (glGetUniformLocation(programPath3d.get_handle(),
+				       kPath3dTransformationUniform.c_str())),
+		 kPath3dColorUniformLocation
+		 (glGetUniformLocation(programPath3d.get_handle(),
+				       kPath3dColorUniform.c_str())) {
   glUseProgram(program2d.get_handle());
   glBindVertexArray(vao2d.get_handle());
   glEnableVertexAttribArray(k2dPositionAttribute);
@@ -400,14 +509,18 @@ model::model() : parameterVariables(0),
 		       2, GL_FLOAT, GL_FALSE, 0);
   glVertexAttribBinding(k2dPositionAttribute,
 			k2dVertexBinding);
-
-
+  glUseProgram(programPath3d.get_handle());
+  glBindVertexArray(vaoPath3d.get_handle());
+  glEnableVertexAttribArray(kPath3dPositionAttribute);
+  glVertexAttribFormat(kPath3dPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0);
+  glVertexAttribBinding(kPath3dPositionAttribute, kPath3dVertexBinding);
+  glBindVertexArray(0);
 }
-
 
 void model::add_solution(const solution_specification& spec) {
   assert(spec.initialValue.size() == get_dynamical_variables());
-  assert(spec.initialValue[0] > spec.tMin && spec.initialValue[0] < spec.tMax && spec.increment > 0);
+  assert(spec.initialValue[0] > spec.tMin && spec.initialValue[0] < spec.tMax
+	 && spec.increment > 0);
   assert(compiled);
   
 
@@ -418,7 +531,7 @@ void model::add_solution(const solution_specification& spec) {
   // We now need to update the VBO's of each window.
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.generate_vbo(solutionId);
+    iter->second.add_solution(solutionId);
   }
 }
                     
@@ -435,7 +548,7 @@ bool model::compile(std::vector<std::string> newExpressions) {
     symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
   }
 
-  for(int i = 0; i != parameterVariables; ++i) {
+  for(int i = 0; i != 5; ++i) {
     std::string str("a" + std::to_string(i + 1));
     symbolTable.push_back(symbol(str, newDynamicalDimension+1+i, newDynamicalDimension + 1 + i));
   }
@@ -478,7 +591,10 @@ bool model::compile(std::vector<std::string> newExpressions) {
 
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.clear();
+    for(std::unordered_map<solution_id, solution>::const_iterator sol =
+	  solutions.begin(); sol != solutions.end(); ++sol) {
+      iter->second.delete_solution(sol->first);
+    }
   }
 
   solutions.clear();
@@ -486,33 +602,21 @@ bool model::compile(std::vector<std::string> newExpressions) {
   return true;
 }
 
-int model::add_dynamical_window(const dynamical_window_specification& spec,
-				int width, int height) {
-  assert(spec.horizontalAxisVariable < get_dynamical_variables() || !compiled);
-  assert(spec.verticalAxisVariable < get_dynamical_variables() || !compiled);
-  math::window2d window(math::vector2d(width, height),
-		  math::vector2d(spec.horizontalAxisMax - spec.horizontalAxisMin,
-			  spec.verticalAxisMax - spec.verticalAxisMin),
-		  math::vector2d(spec.horizontalAxisMin, spec.verticalAxisMin));
+int model::add_dynamical_window(const dynamical_window_specification& spec) {
   dynamicalWindows.insert(
       std::make_pair(
           uniqueDynamicalId,
-          dynamical_window(*this, window, spec.horizontalAxisVariable,
-			   spec.verticalAxisVariable)));
+          dynamical_window(*this, spec)));
   return uniqueDynamicalId++;
 }
 
-void model::set_dynamical_window_specification(const dynamical_window_specification& spec,
-					       dynamical_window_id id) {
+void model::set_dynamical_window_specification(dynamical_window_id id,
+					       const dynamical_window_specification& spec) {
   dynamicalWindows.at(id).set_specification(spec);
 }
 
 void model::delete_dynamical_window(dynamical_window_id id) {
   dynamicalWindows.erase(id);
-}
-
-void model::delete_all_dynamical_windows() {
-  dynamicalWindows.clear();
 }
 
 int model::get_dynamical_variables() const {
@@ -523,52 +627,43 @@ int model::get_dynamical_dimension() const {
   return dynamicalDimension;
 }
 
-void model::move_dynamical_window(int x, int y, int) { assert(false); }
-void model::scale_dynamical_window(double scale, int x, int y, int) { assert(false); }
-
 void model::paint_dynamical_window(dynamical_window_id id) {
   dynamicalWindows.at(id).paint();
 }
-void model::resize_dynamical_window(dynamical_window_id id, double width, double height) {
+void model::resize_dynamical_window(dynamical_window_id id, int width, int height) {
   dynamicalWindows.at(id).resize(width, height);
 }
 
-void model::set_dynamical_window(const math::window2d& window, dynamical_window_id id) {
-  dynamicalWindows.at(id).set_window(window);
+void model::set_dynamical_viewport_2d(dynamical_window_id id,
+					     const math::window2d& window) {
+  dynamicalWindows.at(id).set_viewport_2d(window);
+}
+
+void model::set_dynamical_viewport_3d(dynamical_window_id id,
+					     const math::window3d& window) {
+  dynamicalWindows.at(id).set_viewport_3d(window);
 }
 
 void model::set_solution_color(solution_id id, const color& color) {
   solutions.at(id).specification.glColor = color;
 }
 
-const model::dynamical_window& model::get_dynamical_window(dynamical_window_id id) const {
-  // Dangerous if another window is added after returning!!
-  return dynamicalWindows.at(id);
-}
-
-bool model::on_vertical_axis(double x, double y, dynamical_window_id id) const {
+bool model::on_dynamical_vertical_axis(dynamical_window_id id,
+				       int x, int y) const {
   dynamicalWindows.at(id).on_vertical_axis(x, y);
 }
-bool model::on_horizontal_axis(double x, double y, dynamical_window_id id) const {
+bool model::on_dynamical_horizontal_axis(dynamical_window_id id,
+					 int x, int y) const {
   dynamicalWindows.at(id).on_horizontal_axis(x, y);
 }
-const std::unordered_map<solution_id, solution>& model::get_solutions() const {
-  return solutions;
-}
 
-void model::clear_solution_color() {
-  for(std::unordered_map<solution_id, solution>::iterator iter = solutions.begin();
-      iter != solutions.end(); ++iter) {
-    iter->second.specification.glColor = color(0,0,0,1);
-  }
-}
-
-void model::edit_solution(solution_id id, solution_specification spec) {
+void model::set_solution_specification(solution_id id,
+				       const solution_specification& spec) {
   solutions.at(id).specification = spec;
   generate_solution_data(id);
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.generate_vbo(id);
+    iter->second.add_solution(id);
   }
 }
 
@@ -576,7 +671,7 @@ void model::delete_solution(solution_id id) {
   solutions.erase(id);
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.delete_vbo(id);
+    iter->second.delete_solution(id);
   }
 }
 
@@ -591,6 +686,7 @@ void model::generate_solution_data(solution_id id) {
   
   std::list<math::vector> points;
   math::vector tmp(spec.initialValue);
+  math::vector parameterPosition(5, 0.0);
   
   // Fill in forwards
   while(tmp[0] <= spec.tMax) {
@@ -609,8 +705,18 @@ void model::generate_solution_data(solution_id id) {
   solutions.at(id).data = points;
 }
 
-bool model::select_solution(int x, int y, dynamical_window_id windowId, solution_id& id) {
-  return dynamicalWindows.at(windowId).select_solution(math::vector2d(x, y), id);
+bool model::select_solution(dynamical_window_id id, int x, int y,
+			    solution_id* ret) {
+  return dynamicalWindows.at(id).select_solution(x, y, ret);
+}
+
+const std::unordered_map<solution_id, solution>& model::get_solutions() const {
+  return solutions;
+}
+
+const dynamical_window_specification&
+model::get_dynamical_window_specification(dynamical_window_id id) const {
+  return dynamicalWindows.at(id).get_specification();
 }
 } // namespace gui
 } // namespace dynslover
