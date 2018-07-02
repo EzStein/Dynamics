@@ -196,7 +196,7 @@ bool dynamical_dialog::validate_and_set_specification() {
 		       upDirectionZPropertyGridItem->GetValue().GetDouble());
 
   // Verify that the upDriection and cameraDirection are not colinear.
-  math::vector3d up = math::cross(cameraDirection, upDirection);
+  math::vector3d up = math::vector3d::cross(cameraDirection, upDirection);
   const double tolerance = 0.001;
   if(std::abs(up.x()) <= tolerance &&
      std::abs(up.y()) <= tolerance &&

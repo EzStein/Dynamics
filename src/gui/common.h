@@ -10,6 +10,7 @@ namespace gui {
 // gui frames.
 typedef int dynamical_window_id;
 typedef int parameter_window_id;
+typedef int singular_point_id;
 typedef int solution_id;
 } // namespace gui
 } // namespace dynsolver

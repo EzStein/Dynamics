@@ -23,9 +23,6 @@ class vector2d : public vector {
   const double& y() const;
   double& y();
 
-  // Returns the distance between this point and another point.
-  double distance(const vector2d&) const;
-
   // Computes the distance from this point to the line segment
   // connected the two provided points. Note that this computes the
   // distance to a line segment, not a line.

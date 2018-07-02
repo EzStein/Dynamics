@@ -73,9 +73,8 @@ class dynamical_frame : public dynamical_frame_base {
   ~dynamical_frame();
 
   virtual void dynamical_frame_on_set_focus(wxFocusEvent&) override;
-  virtual void solution_menu_on_menu_selection(wxCommandEvent&) override;
-  virtual void isocline_menu_on_menu_selection(wxCommandEvent&) override;
-  virtual void singular_point_menu_on_menu_selection(wxCommandEvent&) override;
+  virtual void solution_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void singular_point_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void dynamical_frame_on_close(wxCloseEvent&) override;
   virtual void edit_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void dynamical_frame_on_iconize(wxIconizeEvent& evt) override;

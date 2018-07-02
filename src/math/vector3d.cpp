@@ -40,17 +40,45 @@ void vector3d::normalize() {
   z() /= norm;
 }
 
-vector3d cross(const vector3d& v1, const vector3d& v2) {
-  return vector3d(v1.y()*v2.z() - v1.z()*v2.y(),
-		  v1.z()*v2.x() - v1.x()*v2.z(),
-		  v1.x()*v2.y() - v1.y()*v2.x());
+vector3d& vector3d::operator+=(const vector3d& other) {
+  vector::operator+=(other);
+  return *this;
+}
+vector3d& vector3d::operator-=(const vector3d& other) {
+  vector::operator-=(other);
+  return *this;
 }
 
-vector3d operator-(const vector3d& lhs, const vector3d& rhs) {
-  vector3d sub(lhs.x() - rhs.x(),
-	       lhs.y() - rhs.y(),
-	       lhs.z() - rhs.z());
-  return sub;
+vector3d& vector3d::operator*=(double scal) {
+  vector::operator*=(scal);
+  return *this;
+}
+
+vector3d& vector3d::cross(const vector3d& v) {
+  double xVal = y()*v.z() - z()*v.y();
+  double yVal = z()*v.x() - x()*v.z();
+  double zVal = x()*v.y() - y()*v.x();
+  x() = xVal;
+  y() = yVal;
+  z() = zVal;
+  return *this;
+}
+
+vector3d vector3d::cross(vector3d v1, const vector3d& v2) {
+  return v1.cross(v2);
+}
+
+vector3d operator+(vector3d lhs, const vector3d& rhs) {
+  return lhs += rhs;
+}
+vector3d operator-(vector3d lhs, const vector3d& rhs) {
+  return lhs -= rhs;
+}
+vector3d operator*(double scalar, vector3d vec) {
+  return vec *= scalar;
+}
+vector3d operator*(vector3d vec, double scalar) {
+  return vec *= scalar;
 }
 } // namespace math
 } // namespace dynsolver

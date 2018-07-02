@@ -2,10 +2,12 @@
 
 #include "gui/generated.h"
 #include <wx/glcanvas.h>
+#include <wx/msgdlg.h>
 
 #include "gui/solution_dialog.h"
 #include "gui/singular_point_dialog.h"
 #include "gui/dynamical_dialog.h"
+#include "math/vector3d.h"
 
 namespace dynsolver {
 namespace gui {
@@ -68,7 +70,7 @@ void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
 
 void dynamical_frame::dynamical_frame_on_set_focus(wxFocusEvent& evt) { }
 
-void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
+void dynamical_frame::solution_menu_item_on_menu_selection(wxCommandEvent& evt) {
   math::window2d window(appl.get_model().get_dynamical_window_specification(id)
 			.viewport2d);
   math::vector2d initialPoint
@@ -80,11 +82,11 @@ void dynamical_frame::solution_menu_on_menu_selection(wxCommandEvent& evt) {
     .verticalAxisVariable;
   initialValue[horz] = initialPoint[0];
   initialValue[vert] = initialPoint[1];
-  
+
   solution_specification spec;
   spec.tMin = -10;
   spec.tMax = 10;
-  spec.increment = 0.01;
+  spec.increment = 0.001;
   spec.initialValue = initialValue;
   solution_specification newSpec;
   if(appl.get_solution_dialog()->show_dialog(spec, &newSpec)) {
@@ -97,31 +99,50 @@ void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
     math::window3d
       viewport(appl.get_model().get_dynamical_window_specification(id).viewport3d);
     math::vector3d position(viewport.get_position());
-    if(evt.GetUnicodeKey() == WXK_CONTROL_W + 64) {
-      position.z() += 0.1;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_S + 64) {
-      position.z() -= 0.1;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_A + 64) {
-      position.x() -= 0.1;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_D + 64) {
-      position.x() += 0.1;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_E + 64) {
-      position.y() -= 0.1;
-    } else if(evt.GetUnicodeKey() == WXK_CONTROL_C + 64) {
-      position.y() += 0.1;
+    math::vector3d viewDirection(viewport.get_view_direction());
+    math::vector3d upDirection(viewport.get_up_direction());
+    math::vector3d rightDirection(math::vector3d::cross(viewDirection, upDirection));
+    double speed = 1.0;
+    if(evt.GetKeyCode() == 'W' || evt.GetKeyCode() == WXK_UP) {
+      position += speed * viewDirection;
+    } else if(evt.GetKeyCode() == 'S' || evt.GetKeyCode() == WXK_DOWN) {
+      position -= speed * viewDirection;
+    } else if(evt.GetKeyCode() == 'A' || evt.GetKeyCode() == WXK_LEFT) {
+      position -= speed * rightDirection;
+    } else if(evt.GetKeyCode() == 'D' || evt.GetKeyCode() == WXK_RIGHT) {
+      position += speed * rightDirection;
+    } else if(evt.GetKeyCode() == 'E') {
+      position += speed * upDirection;
+    } else if(evt.GetKeyCode() == 'C') {
+      position -= speed * upDirection;
     }
     viewport.set_position(position);
     appl.set_dynamical_viewport_3d(id, viewport);
-    std::cout << position.x() << std::endl;
   } else {
-    
+    math::window2d viewport(appl.get_model()
+			    .get_dynamical_window_specification(id)
+			    .viewport2d);
+    double speed = 10.0;
+    double changeX = 0.0;
+    double changeY = 0.0;
+    if(evt.GetKeyCode() == 'W' || evt.GetKeyCode() == WXK_UP) {
+      changeY = speed;
+    } else if(evt.GetKeyCode() == 'S' || evt.GetKeyCode() == WXK_DOWN) {
+      changeY = -speed;
+    } else if(evt.GetKeyCode() == 'A' || evt.GetKeyCode() == WXK_LEFT) {
+      changeX = -speed;
+    } else if(evt.GetKeyCode() == 'D' || evt.GetKeyCode() == WXK_RIGHT) {
+      changeX = speed;
+    }
+    viewport.move_pixel(math::vector2d(changeX, changeY));
+    appl.set_dynamical_viewport_2d(id, viewport);
   }
 }
-void dynamical_frame::isocline_menu_on_menu_selection(wxCommandEvent& evt) { }
-void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt) {
+void dynamical_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent& evt) {
   math::window2d window(appl.get_model().get_dynamical_window_specification(id)
 			.viewport2d);
-  math::vector2d initialPoint(window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
+  math::vector2d initialPoint
+    (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
   math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
   int horz = appl.get_model().get_dynamical_window_specification(id)
     .horizontalAxisVariable;
@@ -133,7 +154,11 @@ void dynamical_frame::singular_point_menu_on_menu_selection(wxCommandEvent& evt)
   struct singular_point_specification spec;
   spec.initialValue = initialValue;
   if(appl.get_singular_point_dialog()->show_dialog(spec, &spec)) {
-    // Attempt to add the singular point, indicating a failure if error occurs.
+    if(!appl.add_singular_point(spec)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
+				    "Singular Point", wxOK);
+      messageDialog.ShowModal();
+    }
   }
 }
 
@@ -142,15 +167,17 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   leftClickMouseY = height - leftClickMouseY;
-  
-  if(appl.get_model().on_dynamical_vertical_axis(id, leftClickMouseX, leftClickMouseY)) {
-    verticalScaling = true;
-  } else if(appl.get_model().on_dynamical_horizontal_axis(id, leftClickMouseX, leftClickMouseY)) {
-    horizontalScaling = true;
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+    rotationViewport = appl.get_model().get_dynamical_window_specification(id).viewport3d;
+  } else {
+    if(appl.get_model().on_dynamical_vertical_axis(id, leftClickMouseX, leftClickMouseY)) {
+      verticalScaling = true;
+    } else if(appl.get_model().on_dynamical_horizontal_axis(id, leftClickMouseX, leftClickMouseY)) {
+      horizontalScaling = true;
+    }
+    axesScalingViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+    moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
   }
-  axesScalingViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
-  moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
-  rotationViewport = appl.get_model().get_dynamical_window_specification(id).viewport3d;
 }
 
 void dynamical_frame::set_cursor(int x, int y) {
@@ -170,21 +197,23 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
 
-  const int tolerance = 2;
-  if(std::abs(leftClickMouseX - posX) <= tolerance
-     && std::abs(leftClickMouseY - posY) <= tolerance) {
-    // A mouse click occured. We now attempt to find and select
-    // an object.
-    appl.select_solution(posX, posY, id);
+  if(!appl.get_model().get_dynamical_window_specification(id).is3d) {
+    const int tolerance = 2;
+    if(std::abs(leftClickMouseX - posX) <= tolerance
+       && std::abs(leftClickMouseY - posY) <= tolerance) {
+      // A mouse click occured. We now attempt to find and select
+      // an object.
+      appl.select_solution(posX, posY, id);
+    }
+
+    leftClickMouseX = posX;
+    leftClickMouseY = posY;
+    moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+    verticalScaling = false;
+    horizontalScaling = false;
+
+    set_cursor(leftClickMouseX, leftClickMouseY);
   }
-
-  leftClickMouseX = posX;
-  leftClickMouseY = posY;
-  moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
-  verticalScaling = false;
-  horizontalScaling = false;
-
-  set_cursor(leftClickMouseX, leftClickMouseY);
 }
 
 void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
@@ -244,14 +273,20 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
-  totalMagnification = 1.0;
-  magnificationX = posX;
-  magnificationY = posY;
-  magnificationViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  } else {
+    totalMagnification = 1.0;
+    magnificationX = posX;
+    magnificationY = posY;
+    magnificationViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+  }
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
-  firstWheelEvent = true;
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  } else {
+    firstWheelEvent = true;
+  }
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
@@ -264,13 +299,16 @@ void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
     gl_canvas_on_mouse_wheel_start(posX, posY);
     firstWheelEvent = false;
   }
-  double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());
-  totalMagnification *= magnificationUnit;
-  math::window2d tmp(magnificationViewport);
-  tmp.scale_pixel(math::vector2d(totalMagnification, totalMagnification),
-		  math::vector2d(magnificationX, magnificationY));
-  appl.set_dynamical_viewport_2d(id, tmp);
   magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  } else {
+    double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());
+    totalMagnification *= magnificationUnit;
+    math::window2d tmp(magnificationViewport);
+    tmp.scale_pixel(math::vector2d(totalMagnification, totalMagnification),
+		    math::vector2d(magnificationX, magnificationY));
+    appl.set_dynamical_viewport_2d(id, tmp);
+  }
 }
 
 void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
@@ -278,7 +316,10 @@ void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   rightClickMouseY = height - rightClickMouseY;
-  PopupMenu(objectsPopupMenu);
+  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  } else {
+    PopupMenu(objectsPopupMenu);
+  }
 }
 void dynamical_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
 }
@@ -301,7 +342,6 @@ void dynamical_frame::gl_canvas_on_paint(wxPaintEvent& evt) {
 }
 
 void dynamical_frame::dynamical_frame_on_iconize(wxIconizeEvent& evt) {
-  std::cout << "ICONIZE" << std::endl;
   Layout();
 }
 

@@ -40,7 +40,7 @@ solution_specification::solution_specification() : initialValue(1),
 						   glColor(0,0,0,1) { }
 
 singular_point_specification::singular_point_specification() :
-  initialValue(1) { }
+  initialValue(1), pointColor(0,0,1,1) { }
 
 model::dynamical_window::
 dynamical_window(model& model,
@@ -135,27 +135,48 @@ void model::dynamical_window::paint() {
       .as_float_array(transformationMatrix);
     glUniformMatrix4fv(modelData.kPath3dTransformationUniformLocation,
 		       1, true, transformationMatrix);
-    glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
-    GLfloat cube[8 * 3] = {
-      -1, -1, -5,
-      -1, 1, -5,
-      1, 1, -5,
-      1, -1, -5,
-      -1, -1, -4,
-      -1, 1, -4,
-      1, 1, -4,
-      1, -1, -4
+
+    // Draw 3d axes.
+    GLfloat axes[4 * 3] = {
+      0, 0, 0,
+      0, 0, 1000,
+      0, 1000, 0,
+      1000, 0, 0};
+    GLuint elements[2] = {
+      0, 1
     };
-    GLuint elements[16] = {
-      0, 1, 2, 3, 0, 4, 5, 6, 7, 4, 5, 1, 2, 6, 7, 3
-    };
-    gl::buffer tmp(reinterpret_cast<unsigned char*>(cube),
-		   8 * 3 * sizeof(float), GL_STATIC_DRAW);
+    gl::buffer tmp(reinterpret_cast<unsigned char*>(axes),
+		   4 * 3 * sizeof(float), GL_STATIC_DRAW);
     glBindVertexBuffer(model::kPath3dVertexBinding,
 		       tmp.get_handle(), 0, 3 * sizeof(float));
-    glDrawElements(GL_LINE_STRIP, 16, GL_UNSIGNED_INT, elements);
+
+    glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
+    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+    elements[1] = 2;
+    glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 1.0, 0.0, 1.0);
+    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+    elements[1] = 3;
+    glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 0.0, 1.0, 1.0);
+    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+
+    // Draw trajectories
+    for(solution_render_data_const_iter iter = solutionRenderData.begin();
+	iter != solutionRenderData.end(); ++iter) {
+      color glColor(modelData.solutions.at(iter->first).specification.glColor);
+      glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
+		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      glBindVertexBuffer(model::kPath3dVertexBinding,
+			 iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
+      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+    }
   } else {
     // Render 2d
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glUseProgram(modelData.program2d.get_handle());
     glBindVertexArray(modelData.vao2d.get_handle());
@@ -163,10 +184,6 @@ void model::dynamical_window::paint() {
     specification.viewport2d.real_to_ndc().as_float_array(transformationMatrix);
     glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
 		       1, true, transformationMatrix);
-
-    // Clear to white
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     // Render each solution
     for(solution_render_data_const_iter iter = solutionRenderData.begin();
@@ -190,6 +207,32 @@ void model::dynamical_window::paint() {
     glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
 		       0, 2 * sizeof(float));
     glDrawArrays(GL_LINES, 0, axesVboVertices);
+
+    // Render singular points
+    glUniform4f(modelData.k2dColorUniformLocation, 0, 1, 0, 1);
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       modelData.circleVbo.get_handle(),
+		       0, 2 * sizeof(float));
+    for(std::unordered_map<singular_point_id, singular_point>::const_iterator
+	  iter = modelData.singularPoints.begin();
+	iter != modelData.singularPoints.end(); ++iter) {
+      glUniform4f(modelData.k2dColorUniformLocation,
+		  iter->second.spec.pointColor.get_red(),
+		  iter->second.spec.pointColor.get_green(),
+		  iter->second.spec.pointColor.get_blue(),
+		  iter->second.spec.pointColor.get_alpha());
+      math::vector2d realCoordinate
+	(iter->second.position[specification.horizontalAxisVariable],
+	 iter->second.position[specification.verticalAxisVariable]);
+      math::vector2d pixelCoordinate
+	(specification.viewport2d.pixel_coordinate_of(realCoordinate));
+      (specification.viewport2d.pixel_to_ndc() *
+       math::matrix_4x4::translation(pixelCoordinate.x(), pixelCoordinate.y()) *
+       math::matrix_4x4::scale(6, 6)).as_float_array(transformationMatrix);
+      glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+			 1, true, transformationMatrix);
+      glDrawArrays(GL_LINE_LOOP, 0, modelData.circleVboVertices);
+    }
 
 
     // Render Axes text
@@ -486,6 +529,7 @@ std::vector<gl::shader> model::build_shaders_path_3d() {
 
 model::model() : font(constants::kDefaultFontFilePath),
 		 uniqueDynamicalId(0),
+		 uniqueSolutionId(0),
 		 dynamicalDimension(0),
 		 compiled(false),
 		 program2d(build_shaders_2d()),
@@ -501,7 +545,8 @@ model::model() : font(constants::kDefaultFontFilePath),
 				       kPath3dTransformationUniform.c_str())),
 		 kPath3dColorUniformLocation
 		 (glGetUniformLocation(programPath3d.get_handle(),
-				       kPath3dColorUniform.c_str())) {
+				       kPath3dColorUniform.c_str())),
+		 circleVbo(nullptr, 0, GL_STATIC_DRAW) {
   glUseProgram(program2d.get_handle());
   glBindVertexArray(vao2d.get_handle());
   glEnableVertexAttribArray(k2dPositionAttribute);
@@ -515,6 +560,53 @@ model::model() : font(constants::kDefaultFontFilePath),
   glVertexAttribFormat(kPath3dPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0);
   glVertexAttribBinding(kPath3dPositionAttribute, kPath3dVertexBinding);
   glBindVertexArray(0);
+
+  // Initialize circle vbo.
+  circleVboVertices = 107;
+  const int vertices = circleVboVertices - 6;
+  const double pi = 3.14159265359;
+  std::vector<GLfloat> data;
+  for(int i = 0; i != vertices; ++i) {
+    double angle = 2 * pi *
+      static_cast<double>(i) / static_cast<double>(vertices);
+    data.push_back(std::cos(angle));
+    data.push_back(std::sin(angle));
+  }
+  data.push_back(1.0);
+  data.push_back(0.0);
+  
+  data.push_back(-1.0);
+  data.push_back(0.0);
+  
+  data.push_back(0.0);
+  data.push_back(0.0);
+  
+  data.push_back(0.0);
+  data.push_back(1.0);
+  
+  data.push_back(0.0);
+  data.push_back(-1.0);
+  
+  data.push_back(0.0);
+  data.push_back(0.0);
+  circleVbo.set_data(reinterpret_cast<unsigned char*>(data.data()),
+		     circleVboVertices * 2 * sizeof(GLfloat));
+}
+
+void model::set_no_compile() {
+  compiled = false;
+  dynamicalWindows.clear();
+  solutions.clear();
+  singularPoints.clear();
+  system.clear();
+  jacobian.clear();
+  expressions.clear();
+}
+
+
+const std::unordered_map<singular_point_id, singular_point>&
+model::get_singular_points() const {
+  return singularPoints;
 }
 
 void model::add_solution(const solution_specification& spec) {
@@ -534,6 +626,50 @@ void model::add_solution(const solution_specification& spec) {
     iter->second.add_solution(solutionId);
   }
 }
+
+bool model::add_singular_point(const singular_point_specification& spec) {
+  std::vector<compiler::function<double, const double*>> systemFunctions;
+  for(std::vector<expression>::const_iterator iter = system.begin();
+      iter != system.end(); ++iter) {
+    systemFunctions.push_back(iter->function);
+  }
+  std::vector<compiler::function<double, const double*>> jacobianFunctions;
+  for(std::vector<expression>::const_iterator iter = jacobian.begin();
+      iter != jacobian.end(); ++iter) {
+    jacobianFunctions.push_back(iter->function);
+  }
+  const double tolerance = 0.0001;
+  math::vector result;
+  math::vector init(spec.initialValue.size() - 1);
+  for(int i = 0; i != init.size(); ++i) {
+    init[i] = spec.initialValue[i+1];
+  }
+  if(!math::newton_method(init, systemFunctions,
+			  jacobianFunctions, &result)) {
+    return false;
+  }
+  math::vector tmp(result.size() + 1);
+  tmp[0] = 0;
+  for(int i = 0; i != result.size(); ++i) {
+    tmp[i + 1] = result[i];
+  }
+  // We now check to see if the singular point already exists.
+  for(std::unordered_map<singular_point_id, singular_point>::const_iterator
+	iter = singularPoints.begin(); iter != singularPoints.end(); ++iter) {
+    if(iter->second.position.distance(tmp) < tolerance) {
+      // Already exists
+      return true;
+    }
+  }
+
+  singularPoints.insert(std::make_pair(++uniqueSingularPointId,
+				       singular_point{spec, tmp}));
+  return true;
+}
+
+void model::delete_singular_point(singular_point_id id) {
+  singularPoints.erase(id);
+}
                     
 bool model::compile(std::vector<std::string> newExpressions) {
   assert(newExpressions.size() >= 1);
@@ -550,7 +686,8 @@ bool model::compile(std::vector<std::string> newExpressions) {
 
   for(int i = 0; i != 5; ++i) {
     std::string str("a" + std::to_string(i + 1));
-    symbolTable.push_back(symbol(str, newDynamicalDimension+1+i, newDynamicalDimension + 1 + i));
+    symbolTable.push_back(symbol(str, newDynamicalDimension+1+i,
+				 newDynamicalDimension + 1 + i));
   }
   
   symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
@@ -559,8 +696,9 @@ bool model::compile(std::vector<std::string> newExpressions) {
 
   std::vector<expression> newSystem;
   std::vector<expression> newJacobian;
-  
+
   compiler::expression_parser parse;
+
   for(std::vector<std::string>::const_iterator expr = newExpressions.begin();
       expr != newExpressions.end(); ++expr) {
     AST ast;
@@ -573,7 +711,7 @@ bool model::compile(std::vector<std::string> newExpressions) {
     newSystem.push_back(expression{ast, function});
     for(symbol sym : symbolTable) {
       //We must check that the symbol is indeed a variable and not a parameter
-      if(sym.parameter == 0 || sym.parameter >= get_dynamical_variables())
+      if(sym.parameter == 0 || sym.parameter >= newDynamicalDimension + 1)
         continue;
       AST diffAst = AST(ast).differentiate(sym.name);
       compiler::function<double, const double*> diffFunction = diffAst.compile();
@@ -587,7 +725,7 @@ bool model::compile(std::vector<std::string> newExpressions) {
   jacobian = newJacobian;
 
   expressions = newExpressions;
-  dynamicalDimension = static_cast<int>(expressions.size());
+  dynamicalDimension = newDynamicalDimension;
 
   for(std::unordered_map<dynamical_window_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
@@ -596,8 +734,8 @@ bool model::compile(std::vector<std::string> newExpressions) {
       iter->second.delete_solution(sol->first);
     }
   }
-
   solutions.clear();
+  singularPoints.clear();
   compiled = true;
   return true;
 }
@@ -648,13 +786,17 @@ void model::set_solution_color(solution_id id, const color& color) {
   solutions.at(id).specification.glColor = color;
 }
 
+void model::set_singular_point_color(singular_point_id id, const color& color) {
+  singularPoints.at(id).spec.pointColor = color;
+}
+
 bool model::on_dynamical_vertical_axis(dynamical_window_id id,
 				       int x, int y) const {
-  dynamicalWindows.at(id).on_vertical_axis(x, y);
+  return dynamicalWindows.at(id).on_vertical_axis(x, y);
 }
 bool model::on_dynamical_horizontal_axis(dynamical_window_id id,
 					 int x, int y) const {
-  dynamicalWindows.at(id).on_horizontal_axis(x, y);
+  return dynamicalWindows.at(id).on_horizontal_axis(x, y);
 }
 
 void model::set_solution_specification(solution_id id,

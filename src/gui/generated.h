@@ -25,12 +25,12 @@
 #include <wx/combobox.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
+#include <wx/panel.h>
+#include <wx/notebook.h>
 #include <wx/statusbr.h>
 #include <wx/frame.h>
-#include <wx/panel.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
-#include <wx/notebook.h>
 #include <wx/dialog.h>
 #include <wx/radiobox.h>
 
@@ -47,7 +47,15 @@ class console_frame_base : public wxFrame
 	protected:
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu1;
+		wxMenuItem* m_menuItem1;
+		wxMenuItem* closeMenuItem;
+		wxMenuItem* saveMenuItem;
+		wxMenuItem* saveAsMenuItem;
+		wxMenuItem* m_menuItem19;
+		wxMenuItem* m_menuItem38;
 		wxMenu* m_menu2;
+		wxMenuItem* solutionMenuItem;
+		wxMenuItem* singularPointMenuItem;
 		wxMenu* m_menu4;
 		wxMenuItem* newDynamicalWindowMenuItem;
 		wxMenuItem* closeDynamicalWindowsMenuItem;
@@ -57,17 +65,22 @@ class console_frame_base : public wxFrame
 		wxStaticText* m_staticText1;
 		wxComboBox* variablesComboBox;
 		wxDataViewListCtrl* m_dataViewListCtrl6;
+		wxNotebook* m_notebook2;
+		wxPanel* m_panel5;
 		wxDataViewListCtrl* solutionsDataViewCtrl;
 		wxButton* solutionsEditButton;
 		wxButton* solutionsDeleteButton;
-		wxDataViewListCtrl* singularPointsDataViewListCtrl;
-		wxButton* singularPointsEditButton;
+		wxPanel* m_panel6;
+		wxDataViewListCtrl* singularPointsDataViewCtrl;
 		wxButton* singularPointsDeleteButton;
 		wxStatusBar* statusBar;
 		wxMenu* m_menu22;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void console_frame_on_close( wxCloseEvent& event ) = 0;
+		virtual void close_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void new_dynamical_window_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void close_dynamical_windows_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
@@ -78,7 +91,7 @@ class console_frame_base : public wxFrame
 		virtual void solutions_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void solutions_edit_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void solutions_delete_button_on_button_click( wxCommandEvent& event ) = 0;
-		virtual void singular_points_edit_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void singular_points_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void singular_points_delete_button_on_button_click( wxCommandEvent& event ) = 0;
 		
 	
@@ -108,9 +121,8 @@ class dynamical_frame_base : public wxFrame
 		wxMenu* selectionPopupMenu;
 		wxPanel* m_panel15;
 		wxMenu* objectsPopupMenu;
-		wxMenuItem* solutionMenu;
-		wxMenuItem* isoclineMenu;
-		wxMenuItem* singularPointMenu;
+		wxMenuItem* solutionMenuItem;
+		wxMenuItem* singularPointMenuItem;
 		wxBoxSizer* dynamicalWindowBox;
 		wxStatusBar* m_statusBar2;
 		wxMenuBar* m_menubar1;
@@ -124,9 +136,8 @@ class dynamical_frame_base : public wxFrame
 		virtual void selection_select_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void selection_delete_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void selection_edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void solution_menu_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void isocline_menu_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void singular_point_menu_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		
 	

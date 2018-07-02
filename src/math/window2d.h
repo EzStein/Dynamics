@@ -6,6 +6,7 @@ namespace dynsolver {
 namespace math {
 
 class square_matrix;
+class matrix_4x4;
 
 // Represents a window into a 2d plane that has both a size in pixels
 // a spanning size of the plane and a location.
@@ -79,12 +80,12 @@ class window2d {
 
   // This transformation matrix is a 4x4 matrix which maps
   // real coordinates to normalized device coordinates for use in opengl.
-  square_matrix real_to_ndc();
+  matrix_4x4 real_to_ndc();
 
   // This transformation matrix is a 4x4 matrix which maps
   // pixel coordinate to normalized device coordinates for use in opengl.
   // In pixel coordinates, the origin is the lower left corner of the screen.
-  square_matrix pixel_to_ndc();
+  matrix_4x4 pixel_to_ndc();
 };
 } // namespace dynsolver
 } // namespace math

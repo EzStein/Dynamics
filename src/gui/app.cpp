@@ -230,6 +230,12 @@ const wxGLAttributes& app::get_gl_attributes() {
   return glAttributes;
 }
 
+void app::set_no_compile() {
+  modelData->set_no_compile();
+  delete_all_dynamical_windows();
+  consoleFrame->set_no_compile();
+}
+
 void app::paint_dynamical_window(dynamical_window_id id) {
   modelData->paint_dynamical_window(id);
 }
@@ -250,6 +256,15 @@ void app::add_solution(const solution_specification& spec) {
   modelData->add_solution(spec);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
+}
+
+bool app::add_singular_point(const singular_point_specification& spec) {
+  bool success = modelData->add_singular_point(spec);
+  if(success) {
+    refresh_dynamical_windows();
+    consoleFrame->update_singular_points_list();
+  }
+  return success;
 }
 
 bool app::compile(const std::vector<std::string> system) {
@@ -274,6 +289,11 @@ void app::set_solution_color(solution_id id, const color& color) {
   refresh_dynamical_windows();
 }
 
+void app::set_singular_point_color(singular_point_id id, const color& color) {
+  modelData->set_singular_point_color(id, color);
+  refresh_dynamical_windows();
+}
+
 void app::set_solution_specification(solution_id id,
 				     const solution_specification& spec) {
   modelData->set_solution_specification(id, spec);
@@ -285,6 +305,12 @@ void app::delete_solution(solution_id id) {
   modelData->delete_solution(id);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
+}
+
+void app::delete_singular_point(singular_point_id id) {
+  modelData->delete_singular_point(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_singular_points_list();
 }
 
 bool app::select_solution(int x, int y, dynamical_window_id id) {

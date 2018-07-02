@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "math/vector3d.h"
 #include "math/quaternion.h"
 #include "math/vector2d.h"
 #include "math/matrix_3x3.h"
@@ -19,7 +20,7 @@ window3d::window3d(const vector3d& position, const vector3d& viewDirection,
 		   const vector3d& up,
 		   double nearZ, double farZ, double width, double height) :
   position(position), viewDirection(viewDirection),
-  upDirection(cross(cross(viewDirection, up), viewDirection)),
+  upDirection(vector3d::cross(vector3d::cross(viewDirection, up), viewDirection)),
   nearZ(nearZ), farZ(farZ), width(width), height(height) {
   this->viewDirection.normalize();
   this->upDirection.normalize();
@@ -76,16 +77,17 @@ void window3d::rotate(const vector2d& start, const vector2d& end) {
   const vector3d negZ(0,0,-1);
   vector2d startNdc(window_to_ndc(start));
   vector2d endNdc(window_to_ndc(end));
-  vector3d startCamera(vector3d(startNdc.x(), startNdc.y(), -1));
-  vector3d endCamera(vector3d(endNdc.x(), endNdc.y(), -1));
-  double angle(-math::angle(endCamera, startCamera));
-  vector3d diff = (startCamera - endCamera);
+  vector3d startCamera(startNdc.x(), startNdc.y(), -1);
+  vector3d endCamera(endNdc.x(), endNdc.y(), -1);
+  double angle(-vector::angle(endCamera, startCamera));
+  vector3d diff = startCamera - endCamera;
   diff.normalize();
-  quaternion rotation(cross(diff, negZ), angle);
+  
   matrix_3x3 cameraToWorldRot(world_to_camera_rotation());
   cameraToWorldRot.invert();
-  matrix_3x3 transform(cameraToWorldRot * rotation.as_rotation_matrix());
-  viewDirection = transform * negZ;
+  quaternion rotation(cameraToWorldRot * vector3d::cross(diff, negZ), angle);
+  matrix_3x3 transform(rotation.as_rotation_matrix());
+  viewDirection = transform * viewDirection;
   upDirection = transform * upDirection;
 }
 
@@ -99,12 +101,12 @@ vector2d window3d::window_to_ndc(const vector2d& window) const {
 matrix_3x3 window3d::world_to_camera_rotation() const {
   const vector3d negZ(0,0,-1);
   const vector3d posY(0,1,0);
-  vector3d rotation1Axis(cross(viewDirection, negZ));
-  double angle(math::angle(viewDirection, negZ));
+  vector3d rotation1Axis(vector3d::vector3d::cross(viewDirection, negZ));
+  double angle(vector::angle(viewDirection, negZ));
   quaternion rotation1(rotation1Axis, angle);
   vector3d newUp(rotation1.as_rotation_matrix() * upDirection);
-  vector3d rotation2Axis(cross(newUp, posY));
-  angle = math::angle(newUp, posY);
+  vector3d rotation2Axis(vector3d::vector3d::cross(newUp, posY));
+  angle = vector::angle(newUp, posY);
   quaternion rotation2(rotation2Axis, angle);
   return (rotation2 * rotation1).as_rotation_matrix();
 }

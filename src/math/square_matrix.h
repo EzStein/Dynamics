@@ -7,6 +7,9 @@ namespace math {
 // A specialization of the matrix class that represents a square matrix.
 class square_matrix : public matrix {
  public:
+  // Constructs a 0x0 empty matrix.
+  square_matrix();
+  
   // Constructs a square matrix where size is the number of rows and columns.
   square_matrix(int size);
 
@@ -22,10 +25,18 @@ class square_matrix : public matrix {
   // Returns true if the matrix is invertible.
   bool invertable() const;
 
-  // Inverts this matrix if possible. If the matrix is not invertible, returns false.
+  // Inverts this matrix if possible. If the matrix is not invertiable,
+  // returns false through the pointer. If the pointer is null, it is
+  // ignored.
   // Note that if the matrix is not invertible, this function does not alter
   // matrix.
-  bool invert();
+  square_matrix& invert(bool* success = nullptr);
+
+  square_matrix& operator+=(const square_matrix&);
+  square_matrix& operator-=(const square_matrix&);
+  square_matrix& operator*=(const square_matrix&);
+  square_matrix& operator*=(double);
+  square_matrix& operator/=(double);
 
   // Returns the identity matrix of dimension n.
   // Requires that n is positive.

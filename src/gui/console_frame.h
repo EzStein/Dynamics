@@ -30,21 +30,29 @@ class console_frame : public console_frame_base {
   virtual void close_dynamical_windows_menu_item_on_selection(wxCommandEvent&) override;
   virtual void lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  virtual void singular_points_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
   virtual void solutions_edit_button_on_button_click(wxCommandEvent&) override;
   virtual void solutions_delete_button_on_button_click(wxCommandEvent&) override;
-  virtual void singular_points_edit_button_on_button_click(wxCommandEvent&) override;
   virtual void singular_points_delete_button_on_button_click(wxCommandEvent&) override;
+  virtual void solution_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void singular_point_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void close_menu_item_on_menu_selection(wxCommandEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();
   void set_yes_compile();
 
+  // Updates the table of solutions/singular points
   void update_solutions_list();
-    // Selects the solution in the list of available solutions.
-  void select_solution(solution_id id);
+  void update_singular_points_list();
 
-  // deselects all solutions.
+  // For programatic selection and deselection. Note that simply calling
+  // the deselect/select functions do not generate the selection changed
+  // events automatically.
+  void select_solution(solution_id id);
   void unselect_solution();
+  void select_singular_point(singular_point_id id);
+  void unselect_singular_point();
   
 private:
   // Clears the list of equations in the data view ctrl and adds
@@ -57,11 +65,15 @@ private:
   // Returns the id of the selected solution.
   solution_id get_selected_solution_id();
 
+  singular_point_id get_selected_singular_point_id();
+
   // Called by the selection changed event handler.
-  void process_select_row();
+  void process_select_solution();
+
+  void process_select_singular_point();
 
   void clear_solution_color();
-
+  void clear_singular_point_color();
 };
 } // namespace gui
 } // namespace dynsolver

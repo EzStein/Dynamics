@@ -1,13 +1,15 @@
 #include "math/window2d.h"
 
-#include "math/square_matrix.h"
+#include "math/matrix_4x4.h"
 
 namespace dynsolver {
 namespace math {
 
-window2d::window2d() : window2d(vector2d(100, 100), vector2d(2, 2), vector2d(-1, -1)) { }
+window2d::window2d() : window2d(vector2d(100, 100), vector2d(2, 2),
+				vector2d(-1, -1)) { }
 
-window2d::window2d(const vector2d& size, const vector2d& span, const vector2d& position) :
+window2d::window2d(const vector2d& size, const vector2d& span,
+		   const vector2d& position) :
   size(size), span(span), position(position) { }
 
 vector2d window2d::pixel_coordinate_of(const vector2d& real) const {
@@ -85,31 +87,25 @@ void window2d::set_position(const vector2d& val) {
   position = val;
 }
 
-square_matrix window2d::real_to_ndc() {
+matrix_4x4 window2d::real_to_ndc() {
   vector2d center(get_center());
-  square_matrix mat(4, 0.0);
+  matrix_4x4 mat;
   mat[0][0] = 2.0/span.x();
   mat[0][3] = -center.x()*mat[0][0];
 
   mat[1][1] = 2.0/span.y();
   mat[1][3] = -center.y()*mat[1][1];
-
-  mat[2][2] = 1;
-  mat[3][3] = 1;
   return mat;
 }
 
-square_matrix window2d::pixel_to_ndc() {
+matrix_4x4 window2d::pixel_to_ndc() {
   vector2d center(get_center());
-  square_matrix mat(4, 0.0);
+  matrix_4x4 mat;
   mat[0][0] = 2.0/size.x();
   mat[0][3] = -1;
 
   mat[1][1] = 2.0/size.y();
   mat[1][3] = -1;
-
-  mat[2][2] = 1;
-  mat[3][3] = 1;
   return mat;
 }
 } // namespace math

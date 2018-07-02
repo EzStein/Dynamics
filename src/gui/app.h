@@ -109,6 +109,9 @@ class app : public wxApp {
   void set_dynamical_viewport_3d(dynamical_window_id id,
 				 const math::window3d&);
 
+  // Called when we need to clear what is currently compiled
+  void set_no_compile();
+
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model();
@@ -128,7 +131,14 @@ class app : public wxApp {
 
   void add_solution(const solution_specification&);
 
+  // Attempts to add the singular point. Returns false if it fails.
+  bool add_singular_point(const singular_point_specification&);
+
+  // Deletes the singular point.
+  void delete_singular_point(solution_id id);
+
   void set_solution_color(solution_id id, const color&);
+  void set_singular_point_color(singular_point_id id, const color&);
 
   // Changes the existing solution.
   void set_solution_specification(solution_id, const solution_specification&);

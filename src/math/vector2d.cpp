@@ -27,12 +27,6 @@ const double& vector2d::y() const {
   return (*this)[1];
 }
 
-double vector2d::distance(const vector2d& other) const {
-  double changeX = x() - other.x();
-  double changeY = y() - other.y();
-  return std::sqrt(changeX * changeX + changeY * changeY);
-}
-
 double vector2d::line_segment_distance(const vector2d& p1, const vector2d& p2) const {
   double t = ((p2.x() - p1.x())*(x() - p1.x()) + (p2.y() - p1.y())*(y() - p1.y())) /
     ((p2.x() - p1.x()) * (p2.x() - p1.x()) + (p2.y() - p1.y()) * (p2.y() - p1.y()));

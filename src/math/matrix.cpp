@@ -4,9 +4,12 @@
 #include <cmath>
 #include <cstring>
 #include <utility>
+#include <iostream>
 
 namespace dynsolver {
 namespace math {
+
+matrix::matrix() : array(nullptr) { }
 
 matrix::~matrix() {
   delete[] array;
@@ -18,7 +21,7 @@ matrix::matrix(const matrix& matrix) : rows(matrix.rows), cols(matrix.cols) {
 }
 
 matrix::matrix(matrix&& matrix)
-    : rows(matrix.rows), cols(matrix.cols), array(matrix.array) {
+  : array(matrix.array), rows(matrix.rows), cols(matrix.cols) {
   matrix.array = nullptr;
 }
 
@@ -70,7 +73,7 @@ void matrix::as_float_array(float* arr) const {
 }
 
 // NOTE: this may be inefficient for large arrays do to caching problems.
-void matrix::transpose() {
+matrix& matrix::transpose() {
   std::swap(rows, cols);
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
@@ -78,6 +81,7 @@ void matrix::transpose() {
     }
   }
   std::swap(rows, cols);
+  return *this;
 }
 
 double matrix::norm() const {
@@ -103,32 +107,7 @@ const double* matrix::operator[](int row) const {
   return array + row * cols;
 }
 
-void matrix::set_zeros() {
-  for(int row = 0; row != rows; ++row) {
-    for(int col = 0; col != cols; ++col) {
-      if(std::abs((*this)[row][col]) < kTolerance) {
-        (*this)[row][col] = 0.0;
-      }
-    }
-  }
-}
-
-void matrix::set_ones() {
-  for(int row = 0; row != rows; ++row) {
-    for(int col = 0; col != cols; ++col) {
-      if(std::abs((*this)[row][col] - 1.0) < kTolerance)
-        (*this)[row][col] = 1;
-    }
-  }
-}
-
-void matrix::rref() {
-  double det;
-  rref(det);
-}
-
-
-void matrix::operator+=(const matrix& other) {
+matrix& matrix::operator+=(const matrix& other) {
   assert(rows == other.rows);
   assert(cols == other.cols);
   for(int r = 0; r != rows; ++r) {
@@ -136,9 +115,10 @@ void matrix::operator+=(const matrix& other) {
       (*this)[r][c] += other[r][c];
     }
   }
+  return *this;
 }
 
-void matrix::operator-=(const matrix& other) {
+matrix& matrix::operator-=(const matrix& other) {
   assert(rows == other.rows);
   assert(cols == other.cols);
   for(int r = 0; r != rows; ++r) {
@@ -146,10 +126,10 @@ void matrix::operator-=(const matrix& other) {
       (*this)[r][c] -= other[r][c];
     }
   }
+  return *this;
 }
 
-
-void matrix::operator*=(const matrix& other) {
+matrix& matrix::operator*=(const matrix& other) {
   assert(cols == other.rows);
   double* newArray = new double[rows*other.cols];
 
@@ -163,26 +143,56 @@ void matrix::operator*=(const matrix& other) {
   delete[] array;
   array = newArray;
   cols = other.cols;
+  return *this;
 }
 
-void matrix::operator*=(double scalar) {
+matrix& matrix::operator*=(double scalar) {
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
       (*this)[r][c] *= scalar;
     }
   }
+  return *this;
 }
 
-void matrix::operator/=(double scalar) {
+matrix& matrix::operator/=(double scalar) {
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
       (*this)[r][c] /= scalar;
     }
   }
+  return *this;
 }
 
-void matrix::operator-() {
-  operator*=(-1.0);
+void matrix::split_vertically(int leftCols, matrix* left, matrix* right) {
+  assert(leftCols > 0 && leftCols < cols);
+  matrix lMatrix(rows, leftCols);
+  matrix rMatrix(rows, cols - leftCols);
+  for(int r = 0; r != rows; ++r) {
+    for(int c = 0; c != leftCols; ++c) {
+      lMatrix[r][c] = (*this)[r][c];
+    }
+  }
+  for(int r = 0; r != rows; ++r) {
+    for(int c = leftCols; c != cols; ++c) {
+      rMatrix[r][c - leftCols] = (*this)[r][c];
+    }
+  }
+  *left = lMatrix;
+  *right = rMatrix;
+}
+
+bool matrix::is_identity() {
+  if(rows != cols) return false;
+  for(int r = 0; r != rows; ++r) {
+    for(int c = 0; c != cols; ++c) {
+      double val = r == c ? 1 : 0;
+      if(std::abs((*this)[r][c] - val) > kTolerance) {
+	return false;
+      }
+    }
+  }
+  return true;
 }
 
 //
@@ -193,43 +203,41 @@ void matrix::operator-() {
 // as being equal to all values also within that tolerance.
 // Thus it may be useful to call, set_zeros() after calling
 // this method. The method will also calculate the determinant
-//
-void matrix::rref(double& determinant) {
+matrix& matrix::rref(double* det) {
+  double determinant;
   determinant = 1.0;
+  
+  // The first step in RREF is to choose a (nonzero) pivot in the first
+  // column if one exists.  We will choose the largest pivot in
+  // std::absolute value in order to minimize instability 
 
-  /*The first step in RREF is to choose a (nonzero) pivot in the first column if one exists
-    We will choose the largest pivot in std::absolute value in order to minimize instability*/
-
-  /*The rowStart indicates where we should start searching for a pivot.
-    That is, we ignore all rows before rowStart (above it in the matrix)*/
+  // The rowStart indicates where we should start searching for a pivot.
+  // That is, we ignore all rows before rowStart (above it in the matrix)
   int rowStart = 0;
 
-  /*
-   * We apply this process of finding a pivot to each row,
-   * although the rowStart may not increment each time (for instance
-   if we don't find a pivot)
-  */
+  // We apply this process of finding a pivot to each row,
+  // although the rowStart may not increment each time (for instance
+  // we don't find a pivot)
   for(int pivotColumn = 0; pivotColumn != cols; ++pivotColumn) {
-    /*Holds the row index (not the value) of the largest pivot in std::absolute value in the column.
-      It is initially set to rowStart*/
+    // Holds the row index (not the value) of the largest pivot in
+    // std::absolute value in the column. It is initially set to rowStart
     int largestPivotIndex = rowStart;
 
-    /*We traverse the column. We start at rowStart + 1 since the largestPivotIndex is already set to rowStart*/
+    // We traverse the column. We start at rowStart + 1 since the
+    // largestPivotIndex is already set to rowStart
     for(int pivotChoice = rowStart + 1; pivotChoice != rows; ++pivotChoice) {
       if(std::abs(static_cast<double>((*this)[largestPivotIndex][pivotColumn]))
          < std::abs(static_cast<double>((*this)[pivotChoice][pivotColumn])))
         largestPivotIndex = pivotChoice;
     }
-    /*If after the traversal, largestPivotIndex points to a zero element, then the whole column is zero,
-      so we may skip it and move on to the next column without incrementing rowStart.
-      Since we are doing a comparison by zero,
-      we will use the tolerance*/
+    // If after the traversal, largestPivotIndex points to a zero
+    // element, then the whole column is zero,
+    //  so we may skip it and move on to the next column without incrementing
+    // rowStart.  Since we are doing a comparison by zero,
+    //  we will use the tolerance
     if(std::abs((*this)[largestPivotIndex][pivotColumn]) < kTolerance) continue;
 
 
-    /*Otherwise, We interchange it with the rowStart row. This is a potentially
-      expensive operation (since we are using a 2d array and not an array of points) thus an adjacency
-      list might be more efficient than a 2d array in this case*/
     double largestPivotValue = (*this)[largestPivotIndex][pivotColumn];
     /*In this case, we are multiplying the row by 1/largestPivotValue,
       so we multiply by the inverse (largestPivotValue) for the determinant*/
@@ -304,6 +312,10 @@ void matrix::rref(double& determinant) {
       }
     }
   }
+  if(det != nullptr) {
+    *det = determinant;
+  }
+  return *this;
 }
 
 matrix matrix::adjoin_by_row(const matrix& mat1, const matrix& mat2) {
@@ -340,34 +352,30 @@ matrix matrix::adjoin_by_column(const matrix& mat1, const matrix& mat2) {
   return retMat;
 }
 
+namespace matrix_ops {
 matrix operator+(matrix lhs, const matrix& rhs) {
-  lhs += rhs;
-  return lhs;
+  return lhs += rhs;
 }
 
 matrix operator-(matrix lhs, const matrix& rhs) {
-  lhs -= rhs;
-  return lhs;
+  return lhs -= rhs;
 }
 
 matrix operator*(matrix lhs, const matrix& rhs) {
-  lhs *= rhs;
-  return lhs;
+  return lhs *= rhs;
 }
 
 matrix operator*(double scal, matrix mat) {
-  mat *= scal;
-  return mat;
+  return mat *= scal;
 }
 
 matrix operator*(matrix mat, double scal) {
-  mat *= scal;
-  return mat;
+  return mat *= scal;
 }
 
 matrix operator/(matrix mat, double scal) {
-  mat /= scal;
-  return mat;
+  return mat /= scal;
 }
+} // namespace matrix_ops
 } // namespace math
 } // namespace dynsolver

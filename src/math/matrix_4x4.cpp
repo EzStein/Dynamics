@@ -21,5 +21,35 @@ matrix_4x4 operator*(matrix_4x4 lhs, const matrix_4x4& rhs) {
   return ret;
 }
 
+matrix_4x4 matrix_4x4::translation(double x, double y) {
+  matrix_4x4 mat;
+  mat[0][3] = x;
+  mat[1][3] = y;
+  return mat;
+}
+
+matrix_4x4 matrix_4x4::translation(double x, double y, double z) {
+  matrix_4x4 mat;
+  mat[0][3] = x;
+  mat[1][3] = y;
+  mat[2][3] = z;
+  return mat;
+}
+
+matrix_4x4 matrix_4x4::scale(double x, double y, double z) {
+  matrix_4x4 mat;
+  mat[0][0] = x;
+  mat[1][1] = y;
+  mat[2][2] = z;
+  return mat;
+}
+
+matrix_4x4 matrix_4x4::scale(double x, double y) {
+  matrix_4x4 mat;
+  mat[0][0] = x;
+  mat[1][1] = y;
+  return mat;
+}
+
 } // namespace math
 } // namespace dynsolver

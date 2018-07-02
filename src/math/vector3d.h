@@ -23,14 +23,22 @@ public:
 
   // Normalizes this vector
   void normalize();
+
+  // Crosses this vector with the other.
+  vector3d& cross(const vector3d& other);
+
+  vector3d& operator+=(const vector3d& other);
+  vector3d& operator-=(const vector3d& other);
+  vector3d& operator*=(double scal);
+
+  // Returns the cross product of the two vectors.
+  static vector3d cross(vector3d, const vector3d&);
 };
 
-// Computes lhs - rhs
-vector3d operator-(const vector3d& lhs, const vector3d& rhs);
-
-// Returns the cross product of the two vectors.
-vector3d cross(const vector3d&, const vector3d&);
-
+vector3d operator+(vector3d lhs, const vector3d& rhs);
+vector3d operator-(vector3d lhs, const vector3d& rhs);
+vector3d operator*(double scal, vector3d rhs);
+vector3d operator*(vector3d lhs, double scal);
 } // namespace math		
 } // namespace dynslover
 #endif

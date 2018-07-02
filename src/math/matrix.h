@@ -1,6 +1,8 @@
 #ifndef DYNSOLVER_MATH_MATRIX_H_
 #define DYNSOLVER_MATH_MATRIX_H_
 
+#include <cstddef>
+
 namespace dynsolver {
 namespace math {
 
@@ -20,11 +22,14 @@ class matrix {
 
   // The number of rows and columns of the matrix.
   // Class Invariant: rows and columns are both positive.
-  int rows, cols;
+  size_t rows, cols;
 
   static constexpr double kTolerance = 1.0e-10;
   
  public:
+  // Default constructor builds a 0 by 0 matrix.
+  matrix();
+  
   // Destructor
   ~matrix();
 
@@ -56,7 +61,7 @@ class matrix {
 
   // Transposes the matrix.
   // The transpose occurs in place and mutates the state of this matrix.
-  void transpose();
+  matrix& transpose();
 
   // Returns the standard frobenius matrix norm
   // which is the square root of the sum of the squares of all entries.
@@ -75,39 +80,34 @@ class matrix {
 
   // Adds or subtracts the provided matrix from this one.
   // Requires that the matrices have the same dimensions.
-  void operator+=(const matrix&);
-  void operator-=(const matrix&);
+  matrix& operator+=(const matrix&);
+  matrix& operator-=(const matrix&);
 
   // Right multiples this matrix by the provided one. The operation may require
   // memory reallocation if the new matrix is of a larger size.
   // Requires that the cols of this matrix are the same number as the rows of
   // the other matrix.
-  void operator*=(const matrix&);
+  matrix& operator*=(const matrix&);
 
   // Scalar multiplies this matrix by the provided number.
-  void operator*=(double);
+  matrix& operator*=(double);
 
   // Scalar divides this matrix by the provided number.
-  void operator/=(double);
+  matrix& operator/=(double);
 
-  // Negates this matrix. Equivalent to multiplication by negative one.
-  void operator-();
+  // Row reduces this matrix and returns the computed determinant through a
+  // pointer. Note that the returned value is only meaningful for square
+  // matrices. If the passed pointer is null, it is ignored.
+  matrix& rref(double* det = nullptr);
 
-  // Row reduces the matrix returning a reference to itself.
-  void rref();
+  // Splits the matrix vectically along some column. Returns the left and right,
+  // parts through pointers. The left part has cols number of columns.
+  void split_vertically(int cols, matrix* left, matrix* right);
 
-  void rref(double& determinant);
-  
-  // Iterates over the matrix, replacing every element within tolerance
-  // of zero with the value +0.0. Sometimes it may be
-  // useful to call this after various methods which do not guarentee that
-  // values treated as zeros will be set to zero. Note that this function
-  // mutates the matrix and returns a reference to itself.
-  //
-  void set_zeros();
-
-  // Replaces every element within a tolernace of 1 with the value 1.
-  void set_ones();
+  // Returns true if this is the square identity matrix.
+  // Note that values within the tolerance of 0 or 1 are
+  // considered to be zero or 1.
+  bool is_identity();
 
   // Adjoins the matrices by column. That is,
   // the nth col of the returned matrix is the nth col of
@@ -122,14 +122,18 @@ class matrix {
   // Requires that mat1.get_rows() == mat2.get_rows()
   static matrix adjoin_by_row(const matrix& mat1, const matrix& mat2);
 };
-    
-// These non class functions do the obvious thing.
+
+// This namespace is used to refer to the more base overloads of these
+// operators when the compiler by default chooses more derived versions.
+namespace matrix_ops {
+// Various arithmetic operations on matrices
 matrix operator+(matrix, const matrix&);
 matrix operator-(matrix, const matrix&);
 matrix operator*(matrix, const matrix&);
 matrix operator*(double, matrix);
 matrix operator*(matrix, double);
 matrix operator/(matrix, double);
+} // namespace matrix_ops
 } // namespace math
 } // namespace dynsolver
 #endif

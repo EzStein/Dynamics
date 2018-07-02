@@ -77,6 +77,13 @@ struct solution {
 struct singular_point_specification {
   singular_point_specification();
   math::vector initialValue;
+  color pointColor;
+};
+
+struct singular_point {
+  singular_point_specification spec;
+  math::vector position;
+  // std::vector<double> eigenvalues
 };
 
 // Used to pass to and from the dynamical window dialog to obtain
@@ -131,6 +138,7 @@ class model {
 
     // The VBO for storing the axes vertex info.
     gl::buffer axesVbo;
+    
     GLsizei axesVboVertices;
 
     // Each solution is associated with render data containing a VBO each for
@@ -281,6 +289,12 @@ class model {
   // All solutions mapped have id's strictly less than this number.
   solution_id uniqueSolutionId;
 
+  std::unordered_map<singular_point_id, singular_point> singularPoints;
+
+  // All singular points mapped in singularPoints have indexes strictly
+  // less than this value.
+  singular_point_id uniqueSingularPointId;
+
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
@@ -299,6 +313,11 @@ class model {
   const GLuint kPath3dTransformationUniformLocation;
   const GLuint kPath3dColorUniformLocation;
 
+  // Contains vertex data for rendering a circle of radius 1.
+  gl::buffer circleVbo;
+  // The number of vertices stored in the circle vbo.
+  GLsizei circleVboVertices;
+
   // Private functions.
   std::vector<gl::shader> build_shaders_2d();
   std::vector<gl::shader> build_shaders_path_3d();
@@ -311,6 +330,9 @@ class model {
   solution_const_iter;
 public:
   model();
+
+  // Called to clear what is currently compiled.
+  void set_no_compile();
 
   // Tells opengl to paint the given dynamical window according to the state
   // contained in this model. Note the the opengl context must be bound to the
@@ -366,6 +388,8 @@ public:
   // the specification.
   void set_solution_color(solution_id id, const color& color);
 
+  void set_singular_point_color(singular_point_id id, const color&);
+
   // Sets the solution specification. Updates VBO's if necessary.
   void set_solution_specification(solution_id id,
 				  const solution_specification& spec);
@@ -377,7 +401,17 @@ public:
   // specification provided.
   void add_solution(const solution_specification&);
 
+  // Attempts find and add the singular point. If newtons method fails,
+  // this method returns false. If the singular point already exists,
+  // nothing more is done.
+  bool add_singular_point(const singular_point_specification&);
+
+  // Deletes this singular point.
+  void delete_singular_point(singular_point_id id);
+
   const std::unordered_map<solution_id, solution>& get_solutions() const;
+  const std::unordered_map<singular_point_id, singular_point>&
+  get_singular_points() const;
 
   // Attempts to select the solution below the cursor at x, y in the dynamical
   // window given by id. On success, returns true and stores the found solution
