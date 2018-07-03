@@ -86,6 +86,29 @@ struct singular_point {
   // std::vector<double> eigenvalues
 };
 
+struct isocline_specs {
+  // This is the seed used in newtons method to find the isocline.
+  math::vector init;
+
+  // This is the direction that the vector field points in on this isocline.
+  math::vector direction;
+
+  // This is the maximal increment (in some direction) that is used when
+  // computing the isocline.
+  double inc;
+
+  // This is the maximum number of vertices used to render the isocline.
+  size_t vertices;
+};
+
+struct isocline {
+  isocline_specs specs;
+
+  // This is the data representing the isocline. It is ordered so that it
+  // may be drawn in a single GL_LINE_STRIP primative.
+  std::list<math::vector> data;
+};
+
 // Used to pass to and from the dynamical window dialog to obtain
 // imformation on the viewport and axes for generating or changing a dynamical
 // window.
@@ -158,8 +181,22 @@ class model {
       size_t vertices;
     };
 
+    struct isocline_data {
+      // This vbo stores the 2d vertex data used to render a given isocline.
+      // Each vertex contains one attribute of 2 floats. The stride is thus 2.
+      gl::buffer vbo2d;
+
+      // A vbo for the vertex data for 3d rendering of the isocline.
+      // Each vertex contains one attribute of 3 floats.
+      gl::buffer vbo3d;
+
+      size_t vertices;
+    };
+
     // Maps each solution to its render data.
     std::unordered_map<solution_id, solution_data> solutionData;
+
+    std::unordered_map<isocline_id, isocline_data> isoclineData;
 
     // The number of ticks between each labeled tick.
     int ticksPerLabel;
@@ -209,18 +246,29 @@ class model {
     // Deletes the VBO associated with the given solution.
     void delete_solution(solution_id);
     void add_solution(solution_id);
+
+    // Adds an isocline to this dynamical frame by adding a new
+    // isocline vbo.
+    void add_isocline(isocline_id);
     
   private:
     // Generates a VBo for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
-    void generate_vbo(solution_id);
+    void gen_solution_vbo(solution_id);
+
+    // Generates a VBo for the corresponding isocline data and id.
+    // Replaces the VBO for that ID if it already exists.
+    void gen_isocline_vbo(isocline_id);
     
     // Updates the axes vbo. This should be called whenever the axes
     // or the ticks on the axes are altered.
     void update_axes_vbo();
     
     typedef std::unordered_map<solution_id, solution_data>::const_iterator
-    solution_render_data_const_iter;
+    solution_data_const_iter;
+
+    typedef std::unordered_map<solution_id, isocline_data>::const_iterator
+    isocline_data_const_iter;
   };
 
   // Model Class
@@ -295,6 +343,12 @@ class model {
   // less than this value.
   singular_point_id uniqueSingularPointId;
 
+  std::unordered_map<isocline_id, isocline> isoclines;
+
+  // All isoclins mapped in isoclines have id's which are strictly
+  // less than that of uniqueIsoclineId.
+  isocline_id uniqueIsoclineId;
+
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
@@ -332,6 +386,8 @@ class model {
   dynamical_const_iter;
   typedef std::unordered_map<singular_point_id, singular_point>::const_iterator
   singular_point_const_iter;
+  typedef std::unordered_map<isocline_id, isocline>::const_iterator
+  isocline_const_iter;
 
   typedef std::unordered_map<solution_id, solution>::iterator
   solution_iter;
@@ -339,6 +395,8 @@ class model {
   dynamical_iter;
   typedef std::unordered_map<singular_point_id, singular_point>::iterator
   singular_point_iter;
+  typedef std::unordered_map<isocline_id, isocline>::iterator
+  isocline_iter;
   
 public:
   model();
@@ -430,6 +488,10 @@ public:
   // axes respectively for the given dynamical_window
   bool on_dynamical_vertical_axis(dynamical_id id, int x, int y) const;
   bool on_dynamical_horizontal_axis(dynamical_id id, int x, int y) const;
+
+  // Attempts to add the isocline. Returns true on success, and false
+  // if the isocline could not be found with the given conditions.
+  bool add_isocline(const isocline_specs& specs);
 };
 } // namespace gui
 } // namespace dynsolver

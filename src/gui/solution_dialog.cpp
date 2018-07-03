@@ -33,8 +33,8 @@ void solution_dialog::add_button_on_button_click(wxCommandEvent& evt) {
 
 void solution_dialog::set_ui() {
   initialValueDataViewCtrl->DeleteAllItems();
-  wxVector<wxVariant> data;
   for(int i = 0; i != solutionSpecification.init.size(); ++i) {
+    wxVector<wxVariant> data;
     if(i == 0) {
       data.push_back("t");
     } else {
@@ -42,7 +42,6 @@ void solution_dialog::set_ui() {
     }
     data.push_back(std::to_string(solutionSpecification.init[i]));
     initialValueDataViewCtrl->AppendItem(data);
-    data.clear();
   }
   solutionPropertyGrid->SetPropertyValue(tMinPropertyGridItem,
 					 solutionSpecification.tMin);

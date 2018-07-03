@@ -14,6 +14,7 @@
 #include "gui/solution_dialog.h"
 #include "gui/singular_point_dialog.h"
 #include "gui/dynamical_dialog.h"
+#include "gui/isocline_dialog.h"
 
 namespace dynsolver {
 namespace gui {
@@ -119,6 +120,7 @@ bool app::OnInit() {
   solutionDialog = new solution_dialog();
   singularPointDialog = new singular_point_dialog();
   dynamicalDialog = new dynamical_dialog();
+  isoclineDialog = new isocline_dialog();
   
   return true;
 }
@@ -314,6 +316,18 @@ bool app::select_solution(int x, int y, dynamical_id id) {
     consoleFrame->unselect_solution();
     return false;
   }
+}
+
+isocline_dialog* app::get_isocline_dialog() {
+  return isoclineDialog;
+}
+
+bool app::add_isocline(const isocline_specs& specs) {
+  bool success = modelData->add_isocline(specs);
+  if(success) {
+    refresh_dynamical_windows();
+  }
+  return success;
 }
 
 namespace {

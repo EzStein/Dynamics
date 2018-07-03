@@ -1,7 +1,9 @@
+
 #include "gui/model.h"
 
 #include <vector>
 #include <cassert>
+#include <functional>
 
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
@@ -17,6 +19,8 @@
 #include "math/window2d.h"
 #include "math/vector2d.h"
 #include "math/matrix_4x4.h"
+
+
 
 namespace dynsolver {
 namespace gui {
@@ -55,7 +59,11 @@ model::dynamical_window::dynamical_window(model& model,
   // Generate VBO's for each solution and update the axes.
   for(solution_const_iter iter = modelData.solutions.begin();
       iter != modelData.solutions.end(); ++iter) {
-    generate_vbo(iter->first);
+    gen_solution_vbo(iter->first);
+  }
+  for(isocline_const_iter iter = modelData.isoclines.begin();
+      iter != modelData.isoclines.end(); ++iter) {
+    gen_isocline_vbo(iter->first);
   }
   update_axes_vbo();
 }
@@ -73,7 +81,11 @@ void model::dynamical_window::set_specs(const dynamical_specs& other) {
     // Update VBO's
     for(solution_const_iter iter = modelData.solutions.begin();
 	iter != modelData.solutions.end(); ++iter) {
-      generate_vbo(iter->first);
+      gen_solution_vbo(iter->first);
+    }
+    for(isocline_const_iter iter = modelData.isoclines.begin();
+	iter != modelData.isoclines.end(); ++iter) {
+      gen_isocline_vbo(iter->first);
     }
   } else {
     specs = other;
@@ -159,11 +171,20 @@ void model::dynamical_window::paint() {
     glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
 
     // Draw trajectories
-    for(solution_render_data_const_iter iter = solutionData.begin();
+    for(solution_data_const_iter iter = solutionData.begin();
 	iter != solutionData.end(); ++iter) {
       color glColor(modelData.solutions.at(iter->first).specs.glColor);
       glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      glBindVertexBuffer(model::kPath3dVertexBinding,
+			 iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
+      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+    }
+
+    glUniform4f(modelData.kPath3dColorUniformLocation, 0.5, 0.5, 0, 1);
+    // Draw the isoclines
+    for(isocline_data_const_iter iter = isoclineData.begin();
+	iter != isoclineData.end(); ++iter) {
       glBindVertexBuffer(model::kPath3dVertexBinding,
 			 iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
       glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
@@ -185,11 +206,20 @@ void model::dynamical_window::paint() {
 		       1, true, transformationMatrix);
 
     // Render each solution
-    for(solution_render_data_const_iter iter = solutionData.begin();
+    for(solution_data_const_iter iter = solutionData.begin();
 	iter != solutionData.end(); ++iter) {
       color glColor(modelData.solutions.at(iter->first).specs.glColor);
       glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      glBindVertexBuffer(model::k2dVertexBinding,
+			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
+      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+    }
+
+    // Render each isocline
+    glUniform4f(modelData.kPath3dColorUniformLocation, 0.5, 0.5, 0, 1);
+    for(isocline_data_const_iter iter = isoclineData.begin();
+	iter != isoclineData.end(); ++iter) {
       glBindVertexBuffer(model::k2dVertexBinding,
 			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
       glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
@@ -360,10 +390,14 @@ void model::dynamical_window::delete_solution(solution_id id) {
 }
 
 void model::dynamical_window::add_solution(solution_id id) {
-  generate_vbo(id);
+  gen_solution_vbo(id);
 }
 
-void model::dynamical_window::generate_vbo(solution_id id) {
+void model::dynamical_window::add_isocline(isocline_id id) {
+  gen_isocline_vbo(id);
+}
+
+void model::dynamical_window::gen_solution_vbo(solution_id id) {
   const std::list<math::vector>& solution(modelData.solutions.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
@@ -393,6 +427,39 @@ void model::dynamical_window::generate_vbo(solution_id id) {
 		     size3d, GL_DYNAMIC_DRAW);
     solution_data val{vbo2d, vbo3d, points};
     solutionData.insert(std::make_pair(id, val));
+  }
+}
+
+void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
+  const std::list<math::vector>& isocline(modelData.isoclines.at(id).data);
+  std::vector<float> data2d;
+  std::vector<float> data3d;
+  size_t points = isocline.size();
+  size_t size2d = points * 2 * sizeof(float);
+  size_t size3d = points * 3 * sizeof(float);
+  for(std::list<math::vector>::const_iterator point = isocline.begin();
+      point != isocline.end(); ++point) {
+    data2d.push_back((*point)[specs.horzAxisVar]);
+    data2d.push_back((*point)[specs.vertAxisVar]);
+
+    data3d.push_back((*point)[specs.xAxisVar]);
+    data3d.push_back((*point)[specs.yAxisVar]);
+    data3d.push_back((*point)[specs.zAxisVar]);
+  }
+  // If the render Data already exists.
+  if(isoclineData.find(id) != isoclineData.end()) {
+    isoclineData.at(id).vertices = points;
+    isoclineData.at(id)
+      .vbo2d.set_data(reinterpret_cast<unsigned char *>(data2d.data()), size2d);
+    isoclineData.at(id)
+      .vbo3d.set_data(reinterpret_cast<unsigned char *>(data3d.data()), size3d);
+  } else {
+    gl::buffer vbo2d(reinterpret_cast<unsigned char*>(data2d.data()),
+		     size2d, GL_DYNAMIC_DRAW);
+    gl::buffer vbo3d(reinterpret_cast<unsigned char*>(data3d.data()),
+		     size3d, GL_DYNAMIC_DRAW);
+    isocline_data val{vbo2d, vbo3d, points};
+    isoclineData.insert(std::make_pair(id, val));
   }
 }
 
@@ -856,6 +923,136 @@ bool model::select_solution(dynamical_id id, int x, int y,
 
 const std::unordered_map<solution_id, solution>& model::get_solutions() const {
   return solutions;
+}
+
+bool model::add_isocline(const isocline_specs& specs) {
+  // Let n be the dimension of the system.
+  // We solve the equation g(x1, x2, ..., xn, k) = F(x) - ka = 0 for x and k
+  // where x is an n dimensional vector of the system and k is a scalar
+  // multiple. a is the vector indicating the direction of flow through the
+  // isocline we are trying to find. Thus we have a system of n + 1 unknowns and
+  // n constraints. We must choose a further constraint by limiting one of the
+  // variables to a given value and computing the others. For instance we
+  // arbitrarily choose to add the equation x1 - m = 0 for some value m.
+  //
+  // The initial vector is organized as follows.
+  // initial[0] is the variable of differentiation
+  // initial[1] to initial[n] inclusive are the dynamical variables.
+  // initial[n+1] is the variable k.
+  //
+  // The systemFunctions are organized as
+  // systemFunctions[0] to systemFunctions[n - 1] inclusive are the
+  // system functions expressing the vector equation F(x) - ka = 0
+  // systemFunctions[n] is the function expressing the additional constraint.
+  //
+  // jacobianSystem has the jacobian of F(x) as a submatrix aligned against
+  // the top left corner. The last column is the k partial derivative of each
+  // function so this amounts to -a as the last column. If the restriction
+  // functions is of the form xn - m = 0 then the last row are all
+  // zeros since except in the entry n - 1 which is a 1.
+  //
+  // The indices vector is simply a vector containing the integers,
+  // 1 2 3 4 ... n+1
+  
+  std::vector<std::function<double(const double*)>> systemFunctions;
+  std::vector<std::function<double(const double*)>> jacobianFunctions;
+  int dimension = get_dynamical_dimension();
+  for(int i = 0; i != dimension; ++i) {
+    auto lambda = [=](const double* arr) -> double {
+      return
+      system[i].function(arr) - arr[dimension+1] * specs.direction[i];
+    };
+    systemFunctions.push_back(std::function<double(const double*)>(lambda));
+  }
+  int constraintVar(1);
+  double constant(0);
+  systemFunctions.push_back([=](const double* arr) -> double {
+      return arr[constraintVar] - constant;
+    });
+  for(int r = 0; r != dimension; ++r) {
+    for(int c = 0; c != dimension; ++c) {
+      jacobianFunctions.push_back
+	(std::function<double(const double*)>
+	 (jacobian[r*dimension + c].function));
+    }
+    jacobianFunctions.push_back([=](const double*) -> double {
+	return -specs.direction[r];
+      });
+  }
+  for(int i = 0; i != dimension+1; ++i) {
+    if(i == constraintVar - 1) {
+      jacobianFunctions.push_back([](const double*) -> double {
+	  return 1;
+	});
+    } else {
+      jacobianFunctions.push_back([](const double*) -> double {
+	  return 0;
+	});
+    }
+  }
+  math::vector init(specs.init.size() + 2);
+  init[0] = 0;
+  for(int i = 0; i != specs.init.size(); ++i) {
+    init[i + 1] = specs.init[i];
+  }
+  init[init.size() - 1] = 1;
+  std::vector<size_t> indices;
+  for(int i = 0; i != dimension + 1; ++i) {
+    indices.push_back(i + 1);
+  }
+  std::list<math::vector> points;
+  double change = 0.1;
+  for(int i = 0; i != 1000; ++i) {
+    systemFunctions[dimension] = [=](const double* arr) -> double {
+      return arr[constraintVar] - constant;
+    };
+    if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
+      // Reverse direction and try again.
+      change *= -1;
+      constant += 2*change;
+      systemFunctions[dimension] = [=](const double* arr) -> double {
+	return arr[constraintVar] - constant;
+      };
+      if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
+	jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
+	  [](const double*) -> double {
+	  return 0;
+	};
+	// If it still fails, we change the axis of sweeping.
+	if(constraintVar < dimension) {
+	  ++constraintVar;
+	} else {
+	  constraintVar = 1;
+	}
+	jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
+	  [](const double*) -> double {
+	  return 1;
+	};
+	constant = init[constraintVar];
+	constant += change;
+	systemFunctions[dimension] = [=](const double* arr) -> double {
+	  return arr[constraintVar] - constant;
+	};
+	if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
+	  change *= -1;
+	  constant += 2*change;
+	}
+      } else {
+	constant += change;
+      }
+    } else {
+      points.push_back(init);
+    }
+    constant += change;
+  }
+  int uniqueId = ++uniqueIsoclineId;
+  isoclines.insert(std::make_pair(uniqueId, isocline{specs, points}));
+  // We now need to update the VBO's of each window.
+  for(dynamical_iter iter = dynamicalWindows.begin();
+      iter != dynamicalWindows.end(); ++iter) {
+    iter->second.add_isocline(uniqueId);
+  }
+  return true;
 }
 
 const dynamical_specs&

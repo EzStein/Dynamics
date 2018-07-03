@@ -85,6 +85,7 @@ class console_frame_base : public wxFrame
 		virtual void close_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void new_dynamical_window_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void close_dynamical_windows_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
@@ -142,6 +143,7 @@ class dynamical_frame_base : public wxFrame
 		virtual void selection_edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		
 	
@@ -222,25 +224,30 @@ class dynamical_dialog_base : public wxDialog
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class MyDialog4
+/// Class isocline_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class MyDialog4 : public wxDialog 
+class isocline_dialog_base : public wxDialog 
 {
 	private:
 	
 	protected:
 		wxNotebook* m_notebook3;
 		wxPanel* m_panel9;
-		wxDataViewListCtrl* m_dataViewListCtrl10;
+		wxDataViewListCtrl* directionDataViewCtrl;
 		wxPanel* m_panel10;
-		wxDataViewListCtrl* m_dataViewListCtrl11;
+		wxDataViewListCtrl* initialDataViewCtrl;
 		wxButton* m_button14;
 		wxButton* m_button13;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
 	
 	public:
 		
-		MyDialog4( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
-		~MyDialog4();
+		isocline_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~isocline_dialog_base();
 	
 };
 

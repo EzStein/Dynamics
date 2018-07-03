@@ -9,6 +9,7 @@
 #include "gui/dynamical_dialog.h"
 #include "gui/singular_point_dialog.h"
 #include "gui/solution_dialog.h"
+#include "gui/isocline_dialog.h"
 
 #include "util/util.h"
 
@@ -370,6 +371,22 @@ void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) 
   }
 }
 
+void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
+  isocline_specs specs;
+  specs.inc = 0.01;
+  specs.vertices = 100;
+  specs.direction =
+    math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+  specs.init = math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+  if(appl.get_isocline_dialog()->show_dialog(specs)) {
+    if(!appl.add_isocline(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find isocline.",
+				    "Isocline", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
+}
+
 void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
   solution_id solutionId(get_selected_solution_id());
   solution_specs spec(appl.get_model().get_solutions().at(solutionId).specs);
@@ -377,6 +394,7 @@ void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
     appl.set_solution_specs(solutionId, spec);
   }
 }
+
 void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {
   appl.delete_solution(get_selected_solution_id());
 }

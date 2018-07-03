@@ -23,6 +23,7 @@ class console_frame;
 class solution_dialog;
 class singular_point_dialog;
 class dynamical_dialog;
+class isocline_dialog;
 struct solution_specs;
 
 // WxWidgets will call the OnInit method of this class on program startup.
@@ -63,6 +64,7 @@ class app : public wxApp {
   solution_dialog* solutionDialog;
   singular_point_dialog* singularPointDialog;
   dynamical_dialog* dynamicalDialog;
+  isocline_dialog* isoclineDialog;
   
  public:
   app();
@@ -147,16 +149,19 @@ class app : public wxApp {
   // on success.
   bool compile(const std::vector<std::string>);
 
+  // Returns the dialogs.
   solution_dialog* get_solution_dialog();
-
   singular_point_dialog* get_singular_point_dialog();
-
   dynamical_dialog* get_dynamical_dialog();
+  isocline_dialog* get_isocline_dialog();
 
   // Attempts to selects the solution under the mouse cursor specified
   // by the coordnates x, y and the dynamical window given by id.
   // Returns true on success.
   bool select_solution(dynamical_id id, int x, int y);
+
+  // Attempts to add the isocline returning true on success.
+  bool add_isocline(const isocline_specs&);
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

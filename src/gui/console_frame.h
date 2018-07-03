@@ -37,6 +37,7 @@ class console_frame : public console_frame_base {
   virtual void solution_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void singular_point_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void close_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void isocline_menu_item_on_menu_selection(wxCommandEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();

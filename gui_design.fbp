@@ -3623,7 +3623,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">MyDialog4</property>
+            <property name="name">isocline_dialog_base</property>
             <property name="pos"></property>
             <property name="size">663,392</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
@@ -3854,7 +3854,7 @@
                                             <property name="id">wxID_ANY</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">m_dataViewListCtrl10</property>
+                                            <property name="name">directionDataViewCtrl</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -4008,7 +4008,7 @@
                                             <property name="id">wxID_ANY</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">m_dataViewListCtrl11</property>
+                                            <property name="name">initialDataViewCtrl</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -4137,7 +4137,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
-                                <event name="OnButtonClick"></event>
+                                <event name="OnButtonClick">ok_button_on_button_click</event>
                                 <event name="OnChar"></event>
                                 <event name="OnEnterWindow"></event>
                                 <event name="OnEraseBackground"></event>
@@ -4225,7 +4225,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
-                                <event name="OnButtonClick"></event>
+                                <event name="OnButtonClick">cancel_button_on_button_click</event>
                                 <event name="OnChar"></event>
                                 <event name="OnEnterWindow"></event>
                                 <event name="OnEraseBackground"></event>

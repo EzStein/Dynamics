@@ -48,6 +48,10 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	singularPointMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Singular Point...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu2->Append( singularPointMenuItem );
 	
+	wxMenuItem* isoclineMenuItem;
+	isoclineMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Isocline...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( isoclineMenuItem );
+	
 	m_menubar1->Append( m_menu2, wxT("Objects") ); 
 	
 	m_menu4 = new wxMenu();
@@ -158,7 +162,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel5->SetSizer( bSizer182 );
 	m_panel5->Layout();
 	bSizer182->Fit( m_panel5 );
-	m_notebook2->AddPage( m_panel5, wxT("Solutions"), false );
+	m_notebook2->AddPage( m_panel5, wxT("Solutions"), true );
 	m_panel6 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxVERTICAL );
@@ -203,7 +207,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel7->SetSizer( bSizer191 );
 	m_panel7->Layout();
 	bSizer191->Fit( m_panel7 );
-	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), true );
+	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), false );
 	
 	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -222,6 +226,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	this->Connect( closeMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_menu_item_on_menu_selection ) );
 	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
+	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Connect( newDynamicalWindowMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_window_menu_item_on_selection ) );
 	this->Connect( closeDynamicalWindowsMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_windows_menu_item_on_selection ) );
 	this->Connect( lorenzExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
@@ -243,6 +248,7 @@ console_frame_base::~console_frame_base()
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_window_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_windows_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
@@ -298,6 +304,10 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	singularPointMenuItem = new wxMenuItem( objectsPopupMenu, wxID_ANY, wxString( wxT("Singular Point...") ) , wxEmptyString, wxITEM_NORMAL );
 	objectsPopupMenu->Append( singularPointMenuItem );
 	
+	wxMenuItem* isoclineMenuItem;
+	isoclineMenuItem = new wxMenuItem( objectsPopupMenu, wxID_ANY, wxString( wxT("MyMenuItem") ) , wxEmptyString, wxITEM_NORMAL );
+	objectsPopupMenu->Append( isoclineMenuItem );
+	
 	m_panel15->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::m_panel15OnContextMenu ), NULL, this ); 
 	
 	bSizer20->Add( m_panel15, 1, wxEXPAND | wxALL, 5 );
@@ -335,6 +345,7 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	this->Connect( selectionEditMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_edit_menu_item_on_menu_selection ) );
 	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ) );
+	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ) );
 }
 
@@ -349,6 +360,7 @@ dynamical_frame_base::~dynamical_frame_base()
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_edit_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ) );
 	
 	delete selectionPopupMenu; 
@@ -478,7 +490,7 @@ dynamical_dialog_base::~dynamical_dialog_base()
 	
 }
 
-MyDialog4::MyDialog4( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+isocline_dialog_base::isocline_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
@@ -490,8 +502,8 @@ MyDialog4::MyDialog4( wxWindow* parent, wxWindowID id, const wxString& title, co
 	wxBoxSizer* bSizer23;
 	bSizer23 = new wxBoxSizer( wxVERTICAL );
 	
-	m_dataViewListCtrl10 = new wxDataViewListCtrl( m_panel9, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer23->Add( m_dataViewListCtrl10, 1, wxEXPAND, 5 );
+	directionDataViewCtrl = new wxDataViewListCtrl( m_panel9, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer23->Add( directionDataViewCtrl, 1, wxEXPAND, 5 );
 	
 	
 	m_panel9->SetSizer( bSizer23 );
@@ -502,8 +514,8 @@ MyDialog4::MyDialog4( wxWindow* parent, wxWindowID id, const wxString& title, co
 	wxBoxSizer* bSizer24;
 	bSizer24 = new wxBoxSizer( wxVERTICAL );
 	
-	m_dataViewListCtrl11 = new wxDataViewListCtrl( m_panel10, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer24->Add( m_dataViewListCtrl11, 1, wxEXPAND, 5 );
+	initialDataViewCtrl = new wxDataViewListCtrl( m_panel10, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer24->Add( initialDataViewCtrl, 1, wxEXPAND, 5 );
 	
 	
 	m_panel10->SetSizer( bSizer24 );
@@ -530,10 +542,18 @@ MyDialog4::MyDialog4( wxWindow* parent, wxWindowID id, const wxString& title, co
 	this->Layout();
 	
 	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_button14->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( isocline_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button13->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( isocline_dialog_base::cancel_button_on_button_click ), NULL, this );
 }
 
-MyDialog4::~MyDialog4()
+isocline_dialog_base::~isocline_dialog_base()
 {
+	// Disconnect Events
+	m_button14->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( isocline_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button13->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( isocline_dialog_base::cancel_button_on_button_click ), NULL, this );
+	
 }
 
 singular_point_dialog_base::singular_point_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

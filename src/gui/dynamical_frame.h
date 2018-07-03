@@ -81,6 +81,7 @@ class dynamical_frame : public dynamical_frame_base {
   virtual void selection_delete_menu_item_on_menu_selection(wxCommandEvent& evt) override;
   virtual void selection_edit_menu_item_on_menu_selection(wxCommandEvent& evt) override;
   virtual void selection_select_menu_item_on_menu_selection(wxCommandEvent& evt) override;
+  virtual void isocline_menu_item_on_menu_selection(wxCommandEvent&) override;
   void gl_canvas_on_key_down(wxKeyEvent&);
   void gl_canvas_on_key_up(wxKeyEvent&);
   void gl_canvas_on_left_down(wxMouseEvent&);

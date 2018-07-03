@@ -12,6 +12,7 @@ typedef int dynamical_id;
 typedef int parameter_id;
 typedef int singular_point_id;
 typedef int solution_id;
+typedef int isocline_id;
 } // namespace gui
 } // namespace dynsolver
 #endif

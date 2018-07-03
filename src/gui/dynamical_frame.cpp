@@ -7,6 +7,7 @@
 #include "gui/solution_dialog.h"
 #include "gui/singular_point_dialog.h"
 #include "gui/dynamical_dialog.h"
+#include "gui/isocline_dialog.h"
 #include "math/vector3d.h"
 
 namespace dynsolver {
@@ -219,6 +220,35 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
     horizontalScaling = false;
 
     set_cursor(leftClickMouseX, leftClickMouseY);
+  }
+}
+
+void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
+  isocline_specs specs;
+  specs.inc = 0.01;
+  specs.vertices = 100;
+  specs.direction =
+    math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+  specs.init = math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+
+  math::window2d window(appl.get_model().get_dynamical_specs(id).viewport2d);
+  math::vector2d initialPoint
+    (window.real_coordinate_of(math::vector2d(rightClickMouseX,
+					      rightClickMouseY)));
+  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
+  int horz = appl.get_model().get_dynamical_specs(id)
+    .horzAxisVar;
+  int vert = appl.get_model().get_dynamical_specs(id)
+    .vertAxisVar;
+  specs.init[horz - 1] = initialPoint[0];
+  specs.init[vert - 1] = initialPoint[1];
+  
+  if(appl.get_isocline_dialog()->show_dialog(specs)) {
+    if(!appl.add_isocline(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find isocline.",
+				    "Isocline", wxOK);
+      messageDialog.ShowModal();
+    }
   }
 }
 
