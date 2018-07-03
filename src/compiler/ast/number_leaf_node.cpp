@@ -41,7 +41,7 @@ void number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) co
   }
   sstream << ", %eax\n";
   acc += sstream.str();
-  acc += "movl %eax, -0x4c(%rbp)\n";
+  acc += "movl %eax, -0x0c(%rbp)\n";
 
   sstream = std::stringstream();
   sstream << std::hex;

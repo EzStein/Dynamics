@@ -12,18 +12,18 @@ namespace gui {
 // To show, use the 
 class solution_dialog : public solution_dialog_base {
  private:
-  solution_specification solutionSpecification;
+  solution_specs solutionSpecification;
   
  public:
   solution_dialog();
 
   // Shows the dialog modally. The dialog is populated with imformation,
-  // based on the solution_specification provided. If the dialog is closed,
+  // based on the solution_specs provided. If the dialog is closed,
   // or canceled, this function returns false.
-  // Otherwise it returns true and fills the solution_specification pointer
+  // Otherwise it returns true and fills the solution_specs pointer
   // with the specification that the user generated. Only one instance of this
   // class is meant to be in the program. That is, you should reuse it.
-  bool show_dialog(const solution_specification&, solution_specification*);
+  bool show_dialog(const solution_specs&, solution_specs*);
   virtual void cancel_button_on_button_click(wxCommandEvent&) override;
   virtual void add_button_on_button_click(wxCommandEvent&) override;
 private:

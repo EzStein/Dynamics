@@ -2,6 +2,7 @@
 #define DYNSOLVER_MATH_MATRIX_H_
 
 #include <cstddef>
+#include <string>
 
 namespace dynsolver {
 namespace math {
@@ -108,6 +109,9 @@ class matrix {
   // Note that values within the tolerance of 0 or 1 are
   // considered to be zero or 1.
   bool is_identity();
+
+  // Pretty prints this matrix to a string.
+  std::string to_string() const;
 
   // Adjoins the matrices by column. That is,
   // the nth col of the returned matrix is the nth col of

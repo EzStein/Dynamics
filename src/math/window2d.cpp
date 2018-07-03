@@ -12,7 +12,7 @@ window2d::window2d(const vector2d& size, const vector2d& span,
 		   const vector2d& position) :
   size(size), span(span), position(position) { }
 
-vector2d window2d::pixel_coordinate_of(const vector2d& real) const {
+vector2d window2d::pixel_of(const vector2d& real) const {
   vector2d pixel;
   pixel.x() = (real.x() - position.x()) * size.x() / span.x();
   pixel.y() = (real.y() - position.y()) * size.y() / span.y();
@@ -52,7 +52,7 @@ bool window2d::contains_pixel(const vector2d& pixel) const {
 }
 
 bool window2d::contains_real(const vector2d& real) const {
-  return contains_pixel(pixel_coordinate_of(real));
+  return contains_pixel(pixel_of(real));
 }
 
 void window2d::move_pixel(const vector2d& pixel) {

@@ -23,7 +23,7 @@ class console_frame;
 class solution_dialog;
 class singular_point_dialog;
 class dynamical_dialog;
-struct solution_specification;
+struct solution_specs;
 
 // WxWidgets will call the OnInit method of this class on program startup.
 // This class handles communication between all the windows and dialogs.
@@ -53,7 +53,7 @@ class app : public wxApp {
   // The opengl context used across all windows for rendering.
   wxGLContext* glContext;
   
-  std::unordered_map<dynamical_window_id, dynamical_frame*> dynamicalFrames;
+  std::unordered_map<dynamical_id, dynamical_frame*> dynamicalFrames;
 
   // The main frame that is always shown.
   console_frame* consoleFrame;
@@ -83,7 +83,7 @@ class app : public wxApp {
   // Closes the dynamical window, freeing up all of its info in the model.
   // This is called in the on close event of the dynamical_frame, so there
   // is no need to destroy the frame manually.
-  void delete_dynamical_window(dynamical_window_id id);
+  void delete_dynamical(dynamical_id id);
 
   // Called in order to delete all dynamical windows.
   // Does not assume that the dynamical frames have been destroyed,
@@ -95,18 +95,18 @@ class app : public wxApp {
   void close_application();
 
   // Constructs a new dynamical window according to the provided specification.
-  void new_dynamical_window(const dynamical_window_specification&);
+  void new_dynamical(const dynamical_specs&);
 
   // Changes the specification of the dynamical window.
-  void set_dynamical_window_specification(dynamical_window_id id,
-					  const dynamical_window_specification&);
+  void set_dynamical_specs(dynamical_id id,
+					  const dynamical_specs&);
 
   // Changes the specification of the dynamical window.
-  void set_dynamical_viewport_2d(dynamical_window_id id,
+  void set_dynamical_viewport_2d(dynamical_id id,
 				 const math::window2d&);
   
   // Changes the specification of the dynamical window.
-  void set_dynamical_viewport_3d(dynamical_window_id id,
+  void set_dynamical_viewport_3d(dynamical_id id,
 				 const math::window3d&);
 
   // Called when we need to clear what is currently compiled
@@ -123,16 +123,13 @@ class app : public wxApp {
   // canvas's in this program.
   const wxGLAttributes& get_gl_attributes();
 
-  void paint_dynamical_window(dynamical_window_id);
-  void resize_dynamical_window(dynamical_window_id, double, double);
+  void paint_dynamical(dynamical_id);
+  void resize_dynamical(dynamical_id, double, double);
 
-  wxGLContextAttrs getGlContextAttributes();
-  wxGLAttributes getGlAttributes();
-
-  void add_solution(const solution_specification&);
+  void add_solution(const solution_specs&);
 
   // Attempts to add the singular point. Returns false if it fails.
-  bool add_singular_point(const singular_point_specification&);
+  bool add_singular_point(const singular_point_specs&);
 
   // Deletes the singular point.
   void delete_singular_point(solution_id id);
@@ -141,7 +138,7 @@ class app : public wxApp {
   void set_singular_point_color(singular_point_id id, const color&);
 
   // Changes the existing solution.
-  void set_solution_specification(solution_id, const solution_specification&);
+  void set_solution_specs(solution_id, const solution_specs&);
 
   // Deletes the existing solution.
   void delete_solution(solution_id);
@@ -154,12 +151,12 @@ class app : public wxApp {
 
   singular_point_dialog* get_singular_point_dialog();
 
-  dynamical_dialog* get_dynamical_window_dialog();
+  dynamical_dialog* get_dynamical_dialog();
 
   // Attempts to selects the solution under the mouse cursor specified
   // by the coordnates x, y and the dynamical window given by id.
   // Returns true on success.
-  bool select_solution(dynamical_window_id id, int x, int y);
+  bool select_solution(dynamical_id id, int x, int y);
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

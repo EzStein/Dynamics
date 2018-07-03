@@ -11,7 +11,7 @@ class app;
 
 class dynamical_dialog : public dynamical_dialog_base {
  private:
-  dynamical_window_specification dynamicalSpecification;
+  dynamical_specs dynamicalSpecification;
   wxPGProperty* horizontalAxisVariablePropertyGridItem;
   wxPGProperty* horizontalAxisMinPropertyGridItem;
   wxPGProperty* horizontalAxisMaxPropertyGridItem;
@@ -40,10 +40,10 @@ class dynamical_dialog : public dynamical_dialog_base {
   // Shows the dialog modally. The dialog is populated with imformation,
   // based on the specification provided. If the dialog is closed,
   // or canceled, this function returns false.
-  // Otherwise it returns true and fills the solution_specification pointer
+  // Otherwise it returns true and fills the solution_specs pointer
   // with the specification that the user generated. Only one instance of this
   // class is meant to be in the program. That is, you should reuse it.
-  bool show_dialog(const dynamical_window_specification&, dynamical_window_specification*);
+  bool show_dialog(const dynamical_specs&, dynamical_specs*);
   virtual void cancel_button_on_button_click(wxCommandEvent&) override;
   virtual void ok_button_on_button_click(wxCommandEvent&) override;
   virtual void viewport_radio_box_on_radio_box(wxCommandEvent&) override;

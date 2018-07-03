@@ -9,8 +9,8 @@ solution_dialog::solution_dialog() :
   initialValueDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 }
 
-bool solution_dialog::show_dialog(const solution_specification& spec,
-				  solution_specification* ret) {
+bool solution_dialog::show_dialog(const solution_specs& spec,
+				  solution_specs* ret) {
   solutionSpecification = spec;
   set_ui();
   if(ShowModal() == wxID_OK) {
@@ -34,13 +34,13 @@ void solution_dialog::add_button_on_button_click(wxCommandEvent& evt) {
 void solution_dialog::set_ui() {
   initialValueDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
-  for(int i = 0; i != solutionSpecification.initialValue.size(); ++i) {
+  for(int i = 0; i != solutionSpecification.init.size(); ++i) {
     if(i == 0) {
       data.push_back("t");
     } else {
       data.push_back("x" + std::to_string(i));
     }
-    data.push_back(std::to_string(solutionSpecification.initialValue[i]));
+    data.push_back(std::to_string(solutionSpecification.init[i]));
     initialValueDataViewCtrl->AppendItem(data);
     data.clear();
   }
@@ -49,7 +49,7 @@ void solution_dialog::set_ui() {
   solutionPropertyGrid->SetPropertyValue(tMaxPropertyGridItem,
 					 solutionSpecification.tMax);
   solutionPropertyGrid->SetPropertyValue(incrementPropertyGridItem,
-					 solutionSpecification.increment);
+					 solutionSpecification.inc);
 }
 
 bool solution_dialog::validate_and_set_specification() {
@@ -57,10 +57,10 @@ bool solution_dialog::validate_and_set_specification() {
     solutionPropertyGrid->GetPropertyValue(tMinPropertyGridItem).GetDouble();
   solutionSpecification.tMax =
     solutionPropertyGrid->GetPropertyValue(tMaxPropertyGridItem).GetDouble();
-  solutionSpecification.increment =
+  solutionSpecification.inc =
     solutionPropertyGrid->GetPropertyValue(incrementPropertyGridItem).GetDouble();
   int variables = initialValueDataViewCtrl->GetItemCount();
-  solutionSpecification.initialValue = math::vector(variables);
+  solutionSpecification.init = math::vector(variables);
   for(int i = 0; i != variables; ++i) {
     double value;
     try {
@@ -70,13 +70,13 @@ bool solution_dialog::validate_and_set_specification() {
     } catch (const std::out_of_range& exc) {
       return false;
     }
-    solutionSpecification.initialValue[i] = value;
+    solutionSpecification.init[i] = value;
   }
-  if(solutionSpecification.tMin >= solutionSpecification.initialValue[0]) {
+  if(solutionSpecification.tMin >= solutionSpecification.init[0]) {
     return false;
-  } else if(solutionSpecification.initialValue[0] >= solutionSpecification.tMax) {
+  } else if(solutionSpecification.init[0] >= solutionSpecification.tMax) {
     return false;
-  } else if(solutionSpecification.increment <= 0.0) {
+  } else if(solutionSpecification.inc <= 0.0) {
     return false;
   }
   return true;

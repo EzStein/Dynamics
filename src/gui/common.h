@@ -8,8 +8,8 @@ namespace gui {
 
 // A mapping from the id's of the dynamical/parameter windows to their
 // gui frames.
-typedef int dynamical_window_id;
-typedef int parameter_window_id;
+typedef int dynamical_id;
+typedef int parameter_id;
 typedef int singular_point_id;
 typedef int solution_id;
 } // namespace gui

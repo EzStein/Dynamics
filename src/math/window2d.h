@@ -35,7 +35,7 @@ class window2d {
 	   const vector2d& position);
   
   // Returns the pixel associated with the real coordinate provided.
-  vector2d pixel_coordinate_of(const vector2d& real) const;
+  vector2d pixel_of(const vector2d& real) const;
   
   // Returns the real cordinated associated with the given pixel.
   vector2d real_coordinate_of(const vector2d& pixel) const;

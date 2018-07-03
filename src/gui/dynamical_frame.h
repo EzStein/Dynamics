@@ -23,7 +23,7 @@ class dynamical_frame : public dynamical_frame_base {
   wxGLCanvas* glCanvas;
   
   // The id associated to this frame.
-  dynamical_window_id id;
+  dynamical_id id;
 
   // Variables which are set whenever the mouse is right clicked.
   // The value is stored until the next right click.
@@ -69,7 +69,7 @@ class dynamical_frame : public dynamical_frame_base {
   // rotation when dragging the mouse.
   math::window3d rotationViewport;
  public:
-  dynamical_frame(app&, dynamical_window_id id, int width, int height);
+  dynamical_frame(app&, dynamical_id id, int width, int height);
   ~dynamical_frame();
 
   virtual void dynamical_frame_on_set_focus(wxFocusEvent&) override;

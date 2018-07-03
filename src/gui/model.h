@@ -1,4 +1,3 @@
-
 #ifndef DYNSOLVER_GUI_MODEL_H_
 #define DYNSOLVER_GUI_MODEL_H_
 
@@ -44,14 +43,14 @@ public:
   double get_alpha() const;
 };
 
-struct solution_specification {
-  solution_specification();
+struct solution_specs {
+  solution_specs();
 
   // The color that should be used to render this solution.
   color glColor;
   
   // The starting point of the solution including the initial value of t.
-  math::vector initialValue;
+  math::vector init;
 
   // Invariant:
   // tMax must be strictly greater than tMin. initial[0] must be
@@ -64,24 +63,25 @@ struct solution_specification {
 
   // Currently we use standard euler's method. This indicates the standard
   // increment.
-  double increment;
+  double inc;
 };
 
 // A specification for drawing a solution through an initial point.
 struct solution {
-  solution_specification specification;
-
+  solution_specs specs;
   std::list<math::vector> data;
 };
 
-struct singular_point_specification {
-  singular_point_specification();
-  math::vector initialValue;
-  color pointColor;
+struct singular_point_specs {
+  singular_point_specs();
+  // The initial point used to compute the position of the singular point
+  // in newtons method.
+  math::vector init;
+  color glColor;
 };
 
 struct singular_point {
-  singular_point_specification spec;
+  singular_point_specs specs;
   math::vector position;
   // std::vector<double> eigenvalues
 };
@@ -89,21 +89,21 @@ struct singular_point {
 // Used to pass to and from the dynamical window dialog to obtain
 // imformation on the viewport and axes for generating or changing a dynamical
 // window.
-struct dynamical_window_specification {
+struct dynamical_specs {
   bool is3d;
   
-  unsigned int dynamicalVariables;
+  unsigned int dynamicalVars;
 
   // 2d
-  int horizontalAxisVariable;
-  int verticalAxisVariable;
+  int horzAxisVar;
+  int vertAxisVar;
   math::window2d viewport2d;
 
   // 3d
   math::window3d viewport3d;
-  int xAxisVariable;
-  int yAxisVariable;
-  int zAxisVariable;
+  int xAxisVar;
+  int yAxisVar;
+  int zAxisVar;
 };
 
 // This class is used to hold all the data behind the GUI system.
@@ -134,7 +134,7 @@ class model {
     model& modelData;
 
     // The specification from which VBO's and other data is generated.
-    dynamical_window_specification specification;
+    dynamical_specs specs;
 
     // The VBO for storing the axes vertex info.
     gl::buffer axesVbo;
@@ -143,7 +143,7 @@ class model {
 
     // Each solution is associated with render data containing a VBO each for
     // its 2d and 3d rendering.
-    struct solution_render_data {
+    struct solution_data {
       // The 2d vbo is stores the projection of a solution onto the plane that
       // is currently being viewed. Each vertex contains one attribute of 2
       // floats. Thus the stride is also 2 floats.
@@ -159,7 +159,7 @@ class model {
     };
 
     // Maps each solution to its render data.
-    std::unordered_map<solution_id, solution_render_data> solutionRenderData;
+    std::unordered_map<solution_id, solution_data> solutionData;
 
     // The number of ticks between each labeled tick.
     int ticksPerLabel;
@@ -171,19 +171,19 @@ class model {
     // axis tickets jumps above the maximum, then the number of tickets are
     // doubled, and the real distance between each tick is halved. If it falls
     // below the minimum, the distance between each tick is doubled.
-    const int minimumPixelTickDistance;
-    const int maximumPixelTickDistance;
+    const int minPixelTickDist;
+    const int maxPixelTickDist;
 
     // The current tick distance in real coordnate values.
     double realTickDistanceX;
     double realTickDistanceY;
     
   public:
-    dynamical_window(model&, const dynamical_window_specification& spec);
+    dynamical_window(model&, const dynamical_specs& spec);
 
     // Gets and sets the specifications.
-    const dynamical_window_specification& get_specification() const;
-    void set_specification(const dynamical_window_specification& spec);
+    const dynamical_specs& get_specs() const;
+    void set_specs(const dynamical_specs& spec);
 
     // Sets the 2d viewport.
     void set_viewport_2d(const math::window2d&);
@@ -219,8 +219,8 @@ class model {
     // or the ticks on the axes are altered.
     void update_axes_vbo();
     
-    typedef std::unordered_map<solution_id, solution_render_data>::
-    const_iterator solution_render_data_const_iter;
+    typedef std::unordered_map<solution_id, solution_data>::const_iterator
+    solution_render_data_const_iter;
   };
 
   // Model Class
@@ -258,10 +258,10 @@ class model {
   // with the some information in the following maps. The id is also used to
   // lookup the appropriate frames in the app class.
   // Consider using strong typdefs
-  std::unordered_map<dynamical_window_id, dynamical_window> dynamicalWindows;
+  std::unordered_map<dynamical_id, dynamical_window> dynamicalWindows;
   
   // This is an id number which is not currently mapped in dynamicalWindows map.
-  dynamical_window_id uniqueDynamicalId;
+  dynamical_id uniqueDynamicalId;
 
   
   // The following variables are updated on every recompile.
@@ -328,6 +328,18 @@ class model {
 
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
+  typedef std::unordered_map<dynamical_id, dynamical_window>::const_iterator
+  dynamical_const_iter;
+  typedef std::unordered_map<singular_point_id, singular_point>::const_iterator
+  singular_point_const_iter;
+
+  typedef std::unordered_map<solution_id, solution>::iterator
+  solution_iter;
+  typedef std::unordered_map<dynamical_id, dynamical_window>::iterator
+  dynamical_iter;
+  typedef std::unordered_map<singular_point_id, singular_point>::iterator
+  singular_point_iter;
+  
 public:
   model();
 
@@ -338,11 +350,11 @@ public:
   // contained in this model. Note the the opengl context must be bound to the
   // appropriate window before calling this method, and the buffers must
   // be swapped after calling this method.
-  void paint_dynamical_window(dynamical_window_id id);
+  void paint_dynamical(dynamical_id id);
 
   // Resizes the dynamical window so that the width and height are given by
   // the new values in pixels.
-  void resize_dynamical_window(dynamical_window_id id, int width, int height);
+  void resize_dynamical(dynamical_id id, int width, int height);
 
   // Returns the dynamical dimension.
   // The dynamical dimension is one less than the number of dynamical variables.
@@ -350,7 +362,7 @@ public:
 
   // Returns the number of dynamical variables including the variable of
   // integration t.
-  int get_dynamical_variables() const;
+  int get_dynamical_vars() const;
 
   // Resets most variables and compiles the array of strings into a vector
   // field system of ODE's.  Returns true
@@ -360,29 +372,26 @@ public:
   bool compile(std::vector<std::string>);
 
   // Adds the dynamical window according to the specification provided.
-  dynamical_window_id add_dynamical_window
-  (const dynamical_window_specification&);
+  dynamical_id add_dynamical(const dynamical_specs&);
 
   // Sets the dynamical window specification. This will update the
   // necessary VBO's if that is needed.
-  void set_dynamical_window_specification
-  (dynamical_window_id id, const dynamical_window_specification& spec);
-  const dynamical_window_specification&
-  get_dynamical_window_specification(dynamical_window_id id) const;
+  void set_dynamical_specs(dynamical_id id, const dynamical_specs& spec);
+  const dynamical_specs& get_dynamical_specs(dynamical_id id) const;
 
   // Deletes all the data associated with the given window and removes
   // it from the model.
-  void delete_dynamical_window(dynamical_window_id id);
+  void delete_dynamical(dynamical_id id);
 
   // Sets the 2d viewport of the dynamical window without altering the rest
   // of the specification.
-  void set_dynamical_viewport_2d(dynamical_window_id id,
-					const math::window2d& window);
+  void set_dynamical_viewport_2d(dynamical_id id,
+				 const math::window2d& window);
 
   // Sets the 2d viewport of the dynamical window without altering the rest of
   // the specification.
-  void set_dynamical_viewport_3d(dynamical_window_id id,
-					const math::window3d& window);
+  void set_dynamical_viewport_3d(dynamical_id id,
+				 const math::window3d& window);
 
   // Sets the color of the solution provided without altering the rest of
   // the specification.
@@ -391,20 +400,19 @@ public:
   void set_singular_point_color(singular_point_id id, const color&);
 
   // Sets the solution specification. Updates VBO's if necessary.
-  void set_solution_specification(solution_id id,
-				  const solution_specification& spec);
+  void set_solution_specs(solution_id id, const solution_specs& spec);
 
   // Deletes the solution.
   void delete_solution(solution_id id);
 
   // Adds the initial value solution. The solution is added according to the
   // specification provided.
-  void add_solution(const solution_specification&);
+  void add_solution(const solution_specs&);
 
   // Attempts find and add the singular point. If newtons method fails,
   // this method returns false. If the singular point already exists,
   // nothing more is done.
-  bool add_singular_point(const singular_point_specification&);
+  bool add_singular_point(const singular_point_specs&);
 
   // Deletes this singular point.
   void delete_singular_point(singular_point_id id);
@@ -416,12 +424,12 @@ public:
   // Attempts to select the solution below the cursor at x, y in the dynamical
   // window given by id. On success, returns true and stores the found solution
   // in the reference provided.
-  bool select_solution(dynamical_window_id id, int x, int y, solution_id*);
+  bool select_solution(dynamical_id id, int x, int y, solution_id*);
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
-  bool on_dynamical_vertical_axis(dynamical_window_id id, int x, int y) const;
-  bool on_dynamical_horizontal_axis(dynamical_window_id id, int x, int y) const;
+  bool on_dynamical_vertical_axis(dynamical_id id, int x, int y) const;
+  bool on_dynamical_horizontal_axis(dynamical_id id, int x, int y) const;
 };
 } // namespace gui
 } // namespace dynsolver

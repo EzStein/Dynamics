@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <sstream>
 #include <utility>
 #include <iostream>
 
@@ -350,6 +351,17 @@ matrix matrix::adjoin_by_column(const matrix& mat1, const matrix& mat2) {
     }
   }
   return retMat;
+}
+
+std::string matrix::to_string() const {
+  std::stringstream sstream;
+  for(int r = 0; r != rows; ++r) {
+    for(int c = 0; c != cols; ++c) {
+      sstream << (*this)[r][c] << " ";
+    }
+    sstream << "\n";
+  }
+  return sstream.str();
 }
 
 namespace matrix_ops {

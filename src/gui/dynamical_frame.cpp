@@ -17,15 +17,21 @@ const int dynamical_frame::kMagnificationTimerEventId = 0;
 dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
   dynamical_frame_base(nullptr, wxID_ANY, "Dynamical Space"),
   appl(app), id(id),
+  magnificationViewport(math::vector2d(0,0),
+			math::vector2d(0,0),
+			math::vector2d(0,0)),
   magnificationTimer(this, kMagnificationTimerEventId),
-  magnificationViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
-  axesScalingViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
-  moveViewport(math::vector2d(0,0), math::vector2d(0,0), math::vector2d(0,0)),
+  moveViewport(math::vector2d(0,0),
+	       math::vector2d(0,0),
+	       math::vector2d(0,0)),
+  axesScalingViewport(math::vector2d(0,0),
+		      math::vector2d(0,0),
+		      math::vector2d(0,0)),
   firstWheelEvent(true),
-  horizontalScaling(false),
-  verticalScaling(false) {
+  verticalScaling(false),
+  horizontalScaling(false) {
   // Setup events and widgets not already done in dynamical_frame_base
-  glCanvas = new wxGLCanvas(this, appl.getGlAttributes(), wxID_ANY,
+  glCanvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
 			    wxDefaultPosition, wxSize(width, height));
   dynamicalWindowBox->Add(glCanvas, 1, wxEXPAND);
   Fit();
@@ -57,47 +63,47 @@ dynamical_frame::~dynamical_frame() {
 }
 
 void dynamical_frame::dynamical_frame_on_close(wxCloseEvent&) {
-  appl.delete_dynamical_window(id);
+  appl.delete_dynamical(id);
 }
 
 void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  dynamical_window_specification
-    spec(appl.get_model().get_dynamical_window_specification(id));
-  if(appl.get_dynamical_window_dialog()->show_dialog(spec, &spec)) {
-    appl.set_dynamical_window_specification(id, spec);
+  dynamical_specs
+    spec(appl.get_model().get_dynamical_specs(id));
+  if(appl.get_dynamical_dialog()->show_dialog(spec, &spec)) {
+    appl.set_dynamical_specs(id, spec);
   }
 }
 
 void dynamical_frame::dynamical_frame_on_set_focus(wxFocusEvent& evt) { }
 
 void dynamical_frame::solution_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_window_specification(id)
+  math::window2d window(appl.get_model().get_dynamical_specs(id)
 			.viewport2d);
   math::vector2d initialPoint
     (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
-  math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
-  int horz = appl.get_model().get_dynamical_window_specification(id)
-    .horizontalAxisVariable;
-  int vert = appl.get_model().get_dynamical_window_specification(id)
-    .verticalAxisVariable;
+  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
+  int horz = appl.get_model().get_dynamical_specs(id)
+    .horzAxisVar;
+  int vert = appl.get_model().get_dynamical_specs(id)
+    .vertAxisVar;
   initialValue[horz] = initialPoint[0];
   initialValue[vert] = initialPoint[1];
 
-  solution_specification spec;
+  solution_specs spec;
   spec.tMin = -10;
   spec.tMax = 10;
-  spec.increment = 0.001;
-  spec.initialValue = initialValue;
-  solution_specification newSpec;
+  spec.inc = 0.001;
+  spec.init = initialValue;
+  solution_specs newSpec;
   if(appl.get_solution_dialog()->show_dialog(spec, &newSpec)) {
     appl.add_solution(newSpec);
   }
 }
 void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
 void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
     math::window3d
-      viewport(appl.get_model().get_dynamical_window_specification(id).viewport3d);
+      viewport(appl.get_model().get_dynamical_specs(id).viewport3d);
     math::vector3d position(viewport.get_position());
     math::vector3d viewDirection(viewport.get_view_direction());
     math::vector3d upDirection(viewport.get_up_direction());
@@ -120,7 +126,7 @@ void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
     appl.set_dynamical_viewport_3d(id, viewport);
   } else {
     math::window2d viewport(appl.get_model()
-			    .get_dynamical_window_specification(id)
+			    .get_dynamical_specs(id)
 			    .viewport2d);
     double speed = 10.0;
     double changeX = 0.0;
@@ -139,20 +145,20 @@ void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
   }
 }
 void dynamical_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_window_specification(id)
+  math::window2d window(appl.get_model().get_dynamical_specs(id)
 			.viewport2d);
   math::vector2d initialPoint
     (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
-  math::vector initialValue(appl.get_model().get_dynamical_variables(), 0.0);
-  int horz = appl.get_model().get_dynamical_window_specification(id)
-    .horizontalAxisVariable;
-  int vert = appl.get_model().get_dynamical_window_specification(id)
-    .verticalAxisVariable;
+  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
+  int horz = appl.get_model().get_dynamical_specs(id)
+    .horzAxisVar;
+  int vert = appl.get_model().get_dynamical_specs(id)
+    .vertAxisVar;
   initialValue[horz] = initialPoint[0];
   initialValue[vert] = initialPoint[1];
   
-  struct singular_point_specification spec;
-  spec.initialValue = initialValue;
+  struct singular_point_specs spec;
+  spec.init = initialValue;
   if(appl.get_singular_point_dialog()->show_dialog(spec, &spec)) {
     if(!appl.add_singular_point(spec)) {
       wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
@@ -167,16 +173,16 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   leftClickMouseY = height - leftClickMouseY;
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
-    rotationViewport = appl.get_model().get_dynamical_window_specification(id).viewport3d;
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
+    rotationViewport = appl.get_model().get_dynamical_specs(id).viewport3d;
   } else {
     if(appl.get_model().on_dynamical_vertical_axis(id, leftClickMouseX, leftClickMouseY)) {
       verticalScaling = true;
     } else if(appl.get_model().on_dynamical_horizontal_axis(id, leftClickMouseX, leftClickMouseY)) {
       horizontalScaling = true;
     }
-    axesScalingViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
-    moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+    axesScalingViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
+    moveViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
   }
 }
 
@@ -197,7 +203,7 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
 
-  if(!appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(!appl.get_model().get_dynamical_specs(id).is3d) {
     const int tolerance = 2;
     if(std::abs(leftClickMouseX - posX) <= tolerance
        && std::abs(leftClickMouseY - posY) <= tolerance) {
@@ -208,7 +214,7 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 
     leftClickMouseX = posX;
     leftClickMouseY = posY;
-    moveViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+    moveViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
     verticalScaling = false;
     horizontalScaling = false;
 
@@ -223,7 +229,7 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
 
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
     if(evt.LeftIsDown()) {
       math::window3d tmp(rotationViewport);
       tmp.rotate(math::vector2d(leftClickMouseX, leftClickMouseY),
@@ -273,17 +279,17 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     totalMagnification = 1.0;
     magnificationX = posX;
     magnificationY = posY;
-    magnificationViewport = appl.get_model().get_dynamical_window_specification(id).viewport2d;
+    magnificationViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
   }
 }
 
 void dynamical_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     firstWheelEvent = true;
   }
@@ -300,7 +306,7 @@ void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
     firstWheelEvent = false;
   }
   magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());
     totalMagnification *= magnificationUnit;
@@ -316,7 +322,7 @@ void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
   int width, height;
   glCanvas->GetSize(&width, &height);
   rightClickMouseY = height - rightClickMouseY;
-  if(appl.get_model().get_dynamical_window_specification(id).is3d) {
+  if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     PopupMenu(objectsPopupMenu);
   }
@@ -326,7 +332,7 @@ void dynamical_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
 
 void dynamical_frame::gl_canvas_on_size(wxSizeEvent& evt) {
   wxSize size(evt.GetSize());
-  appl.resize_dynamical_window(id, size.GetWidth(), size.GetHeight());
+  appl.resize_dynamical(id, size.GetWidth(), size.GetHeight());
 }
 
 void dynamical_frame::refresh_gl_canvas() {
@@ -336,7 +342,7 @@ void dynamical_frame::refresh_gl_canvas() {
 void dynamical_frame::gl_canvas_on_paint(wxPaintEvent& evt) {
   if(glCanvas->IsShownOnScreen()) {
     appl.get_gl_context().SetCurrent(*glCanvas);
-    appl.paint_dynamical_window(id);
+    appl.paint_dynamical(id);
     glCanvas->SwapBuffers();
   }
 }

@@ -64,8 +64,8 @@ dynamical_dialog::dynamical_dialog() :
     dynamical3dPropertyGrid->Append( new wxFloatProperty( wxT("Far"), wxT("Far") ) ); 
 }
 
-bool dynamical_dialog::show_dialog(const dynamical_window_specification& spec,
-				  dynamical_window_specification* ret) {
+bool dynamical_dialog::show_dialog(const dynamical_specs& spec,
+				  dynamical_specs* ret) {
   dynamicalSpecification = spec;
   set_ui();
   if(ShowModal() == wxID_OK) {
@@ -139,10 +139,10 @@ void dynamical_dialog::set_ui() {
 					    zFar);
 
   // Set choices.
-  assert(dynamicalSpecification.dynamicalVariables >= 2);
+  assert(dynamicalSpecification.dynamicalVars >= 2);
   wxPGChoices list;
   list.Add("t");
-  for(unsigned int i = 1; i != dynamicalSpecification.dynamicalVariables; ++i) {
+  for(unsigned int i = 1; i != dynamicalSpecification.dynamicalVars; ++i) {
     list.Add("x" + std::to_string(i));
   }
   horizontalAxisVariablePropertyGridItem->SetChoices(list);
@@ -151,15 +151,15 @@ void dynamical_dialog::set_ui() {
   yAxisVariablePropertyGridItem->SetChoices(list);
   zAxisVariablePropertyGridItem->SetChoices(list);
   horizontalAxisVariablePropertyGridItem
-    ->SetChoiceSelection(dynamicalSpecification.horizontalAxisVariable);
+    ->SetChoiceSelection(dynamicalSpecification.horzAxisVar);
   verticalAxisVariablePropertyGridItem
-    ->SetChoiceSelection(dynamicalSpecification.verticalAxisVariable);
+    ->SetChoiceSelection(dynamicalSpecification.vertAxisVar);
   xAxisVariablePropertyGridItem->
-    SetChoiceSelection(dynamicalSpecification.xAxisVariable);
+    SetChoiceSelection(dynamicalSpecification.xAxisVar);
   yAxisVariablePropertyGridItem->
-    SetChoiceSelection(dynamicalSpecification.yAxisVariable);
+    SetChoiceSelection(dynamicalSpecification.yAxisVar);
   zAxisVariablePropertyGridItem->
-    SetChoiceSelection(dynamicalSpecification.zAxisVariable);
+    SetChoiceSelection(dynamicalSpecification.zAxisVar);
 
   if(dynamicalSpecification.is3d) {
     viewportRadioBox->SetSelection(1);
@@ -180,9 +180,9 @@ bool dynamical_dialog::validate_and_set_specification() {
   dynamicalSpecification.viewport2d
     .set_span(math::vector2d(horizontalAxisMax - horizontalAxisMin,
 			     verticalAxisMax - verticalAxisMin));
-  dynamicalSpecification.horizontalAxisVariable
+  dynamicalSpecification.horzAxisVar
     = horizontalAxisVariablePropertyGridItem->GetChoiceSelection();
-  dynamicalSpecification.verticalAxisVariable
+  dynamicalSpecification.vertAxisVar
     = verticalAxisVariablePropertyGridItem->GetChoiceSelection();
 
   math::vector3d cameraPosition(cameraPositionXPropertyGridItem->GetValue().GetDouble(),
@@ -212,11 +212,11 @@ bool dynamical_dialog::validate_and_set_specification() {
 		     dynamicalSpecification.viewport3d.get_width(),
 		     dynamicalSpecification.viewport3d.get_height());
 
-  dynamicalSpecification.xAxisVariable
+  dynamicalSpecification.xAxisVar
     = xAxisVariablePropertyGridItem->GetChoiceSelection();
-  dynamicalSpecification.yAxisVariable
+  dynamicalSpecification.yAxisVar
     = yAxisVariablePropertyGridItem->GetChoiceSelection();
-  dynamicalSpecification.zAxisVariable
+  dynamicalSpecification.zAxisVar
     = zAxisVariablePropertyGridItem->GetChoiceSelection();
 
   dynamicalSpecification.is3d = viewportRadioBox->GetSelection() == 0?false:true;

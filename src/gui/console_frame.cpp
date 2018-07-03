@@ -59,7 +59,7 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
 void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&) {
   double width = 800;
   double height = 800;
-  dynamical_window_specification spec;
+  dynamical_specs spec;
   spec.viewport2d = math::window2d(math::vector2d(width, height),
 				   math::vector2d(10, 10),
 				   math::vector2d(-5, -5));
@@ -68,33 +68,33 @@ void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&)
 				   math::vector3d(-10,-10,-10),
 				   math::vector3d(0,1,0),
 				   1, 100, width, height);
-  spec.dynamicalVariables = appl.get_model().get_dynamical_variables();
-  if(spec.dynamicalVariables == 2) {
-    spec.xAxisVariable = 0;
-    spec.yAxisVariable = 1;
-    spec.zAxisVariable = 1;
-    spec.horizontalAxisVariable = 0;
-    spec.verticalAxisVariable = 1;
-  } else if(spec.dynamicalVariables == 3) {
-    spec.xAxisVariable = 0;
-    spec.yAxisVariable = 1;
-    spec.zAxisVariable = 2;
-    spec.horizontalAxisVariable = 1;
-    spec.verticalAxisVariable = 2;
-  } else if(spec.dynamicalVariables >= 4) {
-    spec.xAxisVariable = 1;
-    spec.yAxisVariable = 2;
-    spec.zAxisVariable = 3;
-    spec.horizontalAxisVariable = 1;
-    spec.verticalAxisVariable = 2;
+  spec.dynamicalVars = appl.get_model().get_dynamical_vars();
+  if(spec.dynamicalVars == 2) {
+    spec.xAxisVar = 0;
+    spec.yAxisVar = 1;
+    spec.zAxisVar = 1;
+    spec.horzAxisVar = 0;
+    spec.vertAxisVar = 1;
+  } else if(spec.dynamicalVars == 3) {
+    spec.xAxisVar = 0;
+    spec.yAxisVar = 1;
+    spec.zAxisVar = 2;
+    spec.horzAxisVar = 1;
+    spec.vertAxisVar = 2;
+  } else if(spec.dynamicalVars >= 4) {
+    spec.xAxisVar = 1;
+    spec.yAxisVar = 2;
+    spec.zAxisVar = 3;
+    spec.horzAxisVar = 1;
+    spec.vertAxisVar = 2;
   } else {
     assert(false);
   }
 
   
   spec.is3d = false;
-  if(appl.get_dynamical_window_dialog()->show_dialog(spec, &spec)) {
-    appl.new_dynamical_window(spec);
+  if(appl.get_dynamical_dialog()->show_dialog(spec, &spec)) {
+    appl.new_dynamical(spec);
   }
 }
 
@@ -230,9 +230,9 @@ void console_frame::update_solutions_list() {
       iter != appl.get_model().get_solutions().end(); ++iter) {
     wxVector<wxVariant> data;
     data.push_back(wxVariant(std::to_string(iter->first)));
-    data.push_back(wxVariant(std::to_string(iter->second.specification.increment)));
-    data.push_back(wxVariant(std::to_string(iter->second.specification.tMin)));
-    data.push_back(wxVariant(std::to_string(iter->second.specification.tMax)));
+    data.push_back(wxVariant(std::to_string(iter->second.specs.inc)));
+    data.push_back(wxVariant(std::to_string(iter->second.specs.tMin)));
+    data.push_back(wxVariant(std::to_string(iter->second.specs.tMax)));
     solutionsDataViewCtrl->AppendItem(data);
   }
 }
@@ -244,7 +244,7 @@ void console_frame::update_singular_points_list() {
       iter != appl.get_model().get_singular_points().end(); ++iter) {
     wxVector<wxVariant> data;
     data.push_back(wxVariant(std::to_string(iter->first)));
-    for(int i = 0; i != appl.get_model().get_dynamical_variables(); ++i) {
+    for(int i = 0; i != appl.get_model().get_dynamical_vars(); ++i) {
       data.push_back(wxVariant(std::to_string(iter->second.position[i])));
     }
     singularPointsDataViewCtrl->AppendItem(data);
@@ -346,21 +346,21 @@ void console_frame::unselect_singular_point() {
 }
 
 void console_frame::solution_menu_item_on_menu_selection(wxCommandEvent&) {
-  solution_specification spec;
+  solution_specs spec;
   spec.tMin = -10;
   spec.tMax = 10;
-  spec.increment = 0.01;
-  int dynamicalVariables = appl.get_model().get_dynamical_variables();
-  spec.initialValue = math::vector(dynamicalVariables, 0.0);
-  solution_specification newSpec;
+  spec.inc = 0.01;
+  int dynamicalVariables = appl.get_model().get_dynamical_vars();
+  spec.init = math::vector(dynamicalVariables, 0.0);
+  solution_specs newSpec;
   if(appl.get_solution_dialog()->show_dialog(spec, &newSpec)) {
     appl.add_solution(newSpec);
   }
 }
 void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) {
-  struct singular_point_specification spec;
-  int dynamicalVariables = appl.get_model().get_dynamical_variables();
-  spec.initialValue = math::vector(dynamicalVariables, 0.0);
+  struct singular_point_specs spec;
+  int dynamicalVariables = appl.get_model().get_dynamical_vars();
+  spec.init = math::vector(dynamicalVariables, 0.0);
   if(appl.get_singular_point_dialog()->show_dialog(spec, &spec)) {
     if(!appl.add_singular_point(spec)) {
       wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
@@ -372,9 +372,9 @@ void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) 
 
 void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
   solution_id solutionId(get_selected_solution_id());
-  solution_specification spec(appl.get_model().get_solutions().at(solutionId).specification);
+  solution_specs spec(appl.get_model().get_solutions().at(solutionId).specs);
   if(appl.get_solution_dialog()->show_dialog(spec, &spec)) {
-    appl.set_solution_specification(solutionId, spec);
+    appl.set_solution_specs(solutionId, spec);
   }
 }
 void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {

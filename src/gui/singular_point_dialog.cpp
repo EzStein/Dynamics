@@ -9,8 +9,8 @@ singular_point_dialog::singular_point_dialog() :
   initialValueDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 }
 
-bool singular_point_dialog::show_dialog(const singular_point_specification& spec,
-					singular_point_specification* ret) {
+bool singular_point_dialog::show_dialog(const singular_point_specs& spec,
+					singular_point_specs* ret) {
   singularPointSpecification = spec;
   set_ui();
   if(ShowModal() == wxID_OK) {
@@ -34,13 +34,13 @@ void singular_point_dialog::add_button_on_button_click(wxCommandEvent& evt) {
 void singular_point_dialog::set_ui() {
   initialValueDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
-  for(int i = 0; i != singularPointSpecification.initialValue.size(); ++i) {
+  for(int i = 0; i != singularPointSpecification.init.size(); ++i) {
     if(i == 0) {
       data.push_back("t");
     } else {
       data.push_back("x" + std::to_string(i));
     }
-    data.push_back(std::to_string(singularPointSpecification.initialValue[i]));
+    data.push_back(std::to_string(singularPointSpecification.init[i]));
     initialValueDataViewCtrl->AppendItem(data);
     data.clear();
   }
@@ -48,7 +48,7 @@ void singular_point_dialog::set_ui() {
 
 bool singular_point_dialog::validate_and_set_specification() {
   int variables = initialValueDataViewCtrl->GetItemCount();
-  singularPointSpecification.initialValue = math::vector(variables);
+  singularPointSpecification.init = math::vector(variables);
   for(int i = 0; i != variables; ++i) {
     double value;
     try {
@@ -58,7 +58,7 @@ bool singular_point_dialog::validate_and_set_specification() {
     } catch (const std::out_of_range& exc) {
       return false;
     }
-    singularPointSpecification.initialValue[i] = value;
+    singularPointSpecification.init[i] = value;
   }
   return true;
 }

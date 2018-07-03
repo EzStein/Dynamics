@@ -123,8 +123,8 @@ bool app::OnInit() {
   return true;
 }
 
-void app::delete_dynamical_window(dynamical_window_id id) {
-  modelData->delete_dynamical_window(id);
+void app::delete_dynamical(dynamical_id id) {
+  modelData->delete_dynamical(id);
   dynamicalFrames.at(id)->Destroy();
   dynamicalFrames.erase(id);
 }
@@ -133,9 +133,9 @@ void app::delete_dynamical_window(dynamical_window_id id) {
 // Does not assume that the dynamical frames have been destroyed,
 // so it destroys them
 void app::delete_all_dynamical_windows() {
-  for(std::unordered_map<dynamical_window_id, dynamical_frame*>::const_iterator iter
+  for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
-    modelData->delete_dynamical_window(iter->first);
+    modelData->delete_dynamical(iter->first);
     iter->second->Destroy();
   }
   dynamicalFrames.clear();
@@ -149,28 +149,28 @@ void app::close_application() {
   consoleFrame->Destroy();
 }
 
-void app::new_dynamical_window(const dynamical_window_specification& spec) {
+void app::new_dynamical(const dynamical_specs& spec) {
   int width = spec.viewport2d.get_size().x();
   int height = spec.viewport2d.get_size().y();
-  dynamical_window_id id = modelData->add_dynamical_window(spec);
+  dynamical_id id = modelData->add_dynamical(spec);
   dynamical_frame* frame = new dynamical_frame(*this, id, width, height);
   dynamicalFrames.insert(std::make_pair(id, frame));
   frame->Show();
 }
 
-void app::set_dynamical_window_specification(dynamical_window_id id,
-					     const dynamical_window_specification& spec) {
-  modelData->set_dynamical_window_specification(id, spec);
+void app::set_dynamical_specs(dynamical_id id,
+					     const dynamical_specs& spec) {
+  modelData->set_dynamical_specs(id, spec);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
-void app::set_dynamical_viewport_2d(dynamical_window_id id,
+void app::set_dynamical_viewport_2d(dynamical_id id,
 				    const math::window2d& window) {
   modelData->set_dynamical_viewport_2d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
-void app::set_dynamical_viewport_3d(dynamical_window_id id,
+void app::set_dynamical_viewport_3d(dynamical_id id,
 				    const math::window3d& window) {
   modelData->set_dynamical_viewport_3d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
@@ -214,7 +214,7 @@ singular_point_dialog* app::get_singular_point_dialog() {
   return singularPointDialog;
 }
 
-dynamical_dialog* app::get_dynamical_window_dialog() {
+dynamical_dialog* app::get_dynamical_dialog() {
   return dynamicalDialog;
 }
 
@@ -236,29 +236,21 @@ void app::set_no_compile() {
   consoleFrame->set_no_compile();
 }
 
-void app::paint_dynamical_window(dynamical_window_id id) {
-  modelData->paint_dynamical_window(id);
+void app::paint_dynamical(dynamical_id id) {
+  modelData->paint_dynamical(id);
 }
 
-void app::resize_dynamical_window(dynamical_window_id id, double width, double height) {
-  modelData->resize_dynamical_window(id, width, height);
+void app::resize_dynamical(dynamical_id id, double width, double height) {
+  modelData->resize_dynamical(id, width, height);
 }
 
-wxGLContextAttrs app::getGlContextAttributes() {
-  return glContextAttributes;
-}
-					   
-wxGLAttributes app::getGlAttributes() {
-  return glAttributes;
-}
-
-void app::add_solution(const solution_specification& spec) {
+void app::add_solution(const solution_specs& spec) {
   modelData->add_solution(spec);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
 }
 
-bool app::add_singular_point(const singular_point_specification& spec) {
+bool app::add_singular_point(const singular_point_specs& spec) {
   bool success = modelData->add_singular_point(spec);
   if(success) {
     refresh_dynamical_windows();
@@ -278,7 +270,7 @@ bool app::compile(const std::vector<std::string> system) {
 }
 
 void app::refresh_dynamical_windows() {
-  for(std::unordered_map<dynamical_window_id, dynamical_frame*>::const_iterator iter
+  for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
   }
@@ -294,9 +286,9 @@ void app::set_singular_point_color(singular_point_id id, const color& color) {
   refresh_dynamical_windows();
 }
 
-void app::set_solution_specification(solution_id id,
-				     const solution_specification& spec) {
-  modelData->set_solution_specification(id, spec);
+void app::set_solution_specs(solution_id id,
+				     const solution_specs& spec) {
+  modelData->set_solution_specs(id, spec);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
 }
@@ -313,7 +305,7 @@ void app::delete_singular_point(singular_point_id id) {
   consoleFrame->update_singular_points_list();
 }
 
-bool app::select_solution(int x, int y, dynamical_window_id id) {
+bool app::select_solution(int x, int y, dynamical_id id) {
   solution_id solutionId;
   if(modelData->select_solution(id, x, y, &solutionId)) {
     consoleFrame->select_solution(solutionId);
