@@ -73,6 +73,10 @@ class console_frame_base : public wxFrame
 		wxPanel* m_panel6;
 		wxDataViewListCtrl* singularPointsDataViewCtrl;
 		wxButton* singularPointsDeleteButton;
+		wxPanel* m_panel7;
+		wxDataViewListCtrl* m_dataViewListCtrl7;
+		wxButton* m_button11;
+		wxButton* m_button12;
 		wxStatusBar* statusBar;
 		wxMenu* m_menu22;
 		
@@ -214,6 +218,29 @@ class dynamical_dialog_base : public wxDialog
 		
 		dynamical_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 661,300 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~dynamical_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class MyDialog4
+///////////////////////////////////////////////////////////////////////////////
+class MyDialog4 : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxNotebook* m_notebook3;
+		wxPanel* m_panel9;
+		wxDataViewListCtrl* m_dataViewListCtrl10;
+		wxPanel* m_panel10;
+		wxDataViewListCtrl* m_dataViewListCtrl11;
+		wxButton* m_button14;
+		wxButton* m_button13;
+	
+	public:
+		
+		MyDialog4( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~MyDialog4();
 	
 };
 

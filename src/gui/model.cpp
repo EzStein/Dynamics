@@ -63,19 +63,21 @@ const dynamical_specs& model::dynamical_window::get_specs() const {
   return specs;
 }
 
-void model::dynamical_window::set_specs(const dynamical_specs& spec) {
-  if(specs.horzAxisVar != spec.horzAxisVar ||
-     specs.vertAxisVar != spec.vertAxisVar) {
-    specs.horzAxisVar = spec.horzAxisVar;
-    specs.vertAxisVar = spec.vertAxisVar;
-    
+void model::dynamical_window::set_specs(const dynamical_specs& other) {
+  if(specs.horzAxisVar != other.horzAxisVar ||
+     specs.vertAxisVar != other.vertAxisVar ||
+     specs.xAxisVar != other.xAxisVar ||
+     specs.yAxisVar != other.yAxisVar ||
+     specs.zAxisVar != other.zAxisVar) {
+    specs = other;
     // Update VBO's
     for(solution_const_iter iter = modelData.solutions.begin();
 	iter != modelData.solutions.end(); ++iter) {
       generate_vbo(iter->first);
     }
+  } else {
+    specs = other;
   }
-  specs = spec;
 }
 
 void model::dynamical_window::set_viewport_2d(const math::window2d& val) {
@@ -377,16 +379,13 @@ void model::dynamical_window::generate_vbo(solution_id id) {
     data3d.push_back((*point)[specs.yAxisVar]);
     data3d.push_back((*point)[specs.zAxisVar]);
   }
-
   // If the render Data already exists.
   if(solutionData.find(id) != solutionData.end()) {
     solutionData.at(id).vertices = points;
     solutionData.at(id)
-      .vbo2d.set_data(reinterpret_cast<unsigned char *>(data2d.data()),
-		      size2d);
+      .vbo2d.set_data(reinterpret_cast<unsigned char *>(data2d.data()), size2d);
     solutionData.at(id)
-      .vbo3d.set_data(reinterpret_cast<unsigned char *>(data3d.data()),
-		      size3d);
+      .vbo3d.set_data(reinterpret_cast<unsigned char *>(data3d.data()), size3d);
   } else {
     gl::buffer vbo2d(reinterpret_cast<unsigned char*>(data2d.data()),
 		     size2d, GL_DYNAMIC_DRAW);

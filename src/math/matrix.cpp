@@ -7,6 +7,8 @@
 #include <utility>
 #include <iostream>
 
+#include "math/vector.h"
+
 namespace dynsolver {
 namespace math {
 
@@ -14,6 +16,17 @@ matrix::matrix() : array(nullptr) { }
 
 matrix::~matrix() {
   delete[] array;
+}
+
+matrix::matrix(const std::vector<vector>& vectors) {
+  assert(vectors.size() >= 1);
+  cols = vectors.size();
+  rows = vectors[0].size();
+  for(int r = 0; r != rows; ++r) {
+    for(int c = 0; c != cols; ++c) {
+      (*this)[r][c] = vectors[c][r];
+    }
+  }
 }
 
 matrix::matrix(const matrix& matrix) : rows(matrix.rows), cols(matrix.cols) {
@@ -73,8 +86,12 @@ void matrix::as_float_array(float* arr) const {
   }
 }
 
+void matrix::normalize() {
+  *this /= norm();
+}
+
 // NOTE: this may be inefficient for large arrays do to caching problems.
-matrix& matrix::transpose() {
+void matrix::transpose() {
   std::swap(rows, cols);
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
@@ -82,7 +99,6 @@ matrix& matrix::transpose() {
     }
   }
   std::swap(rows, cols);
-  return *this;
 }
 
 double matrix::norm() const {
@@ -108,7 +124,7 @@ const double* matrix::operator[](int row) const {
   return array + row * cols;
 }
 
-matrix& matrix::operator+=(const matrix& other) {
+void matrix::operator+=(const matrix& other) {
   assert(rows == other.rows);
   assert(cols == other.cols);
   for(int r = 0; r != rows; ++r) {
@@ -116,10 +132,9 @@ matrix& matrix::operator+=(const matrix& other) {
       (*this)[r][c] += other[r][c];
     }
   }
-  return *this;
 }
 
-matrix& matrix::operator-=(const matrix& other) {
+void matrix::operator-=(const matrix& other) {
   assert(rows == other.rows);
   assert(cols == other.cols);
   for(int r = 0; r != rows; ++r) {
@@ -127,10 +142,9 @@ matrix& matrix::operator-=(const matrix& other) {
       (*this)[r][c] -= other[r][c];
     }
   }
-  return *this;
 }
 
-matrix& matrix::operator*=(const matrix& other) {
+void matrix::operator*=(const matrix& other) {
   assert(cols == other.rows);
   double* newArray = new double[rows*other.cols];
 
@@ -144,28 +158,25 @@ matrix& matrix::operator*=(const matrix& other) {
   delete[] array;
   array = newArray;
   cols = other.cols;
-  return *this;
 }
 
-matrix& matrix::operator*=(double scalar) {
+void matrix::operator*=(double scalar) {
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
       (*this)[r][c] *= scalar;
     }
   }
-  return *this;
 }
 
-matrix& matrix::operator/=(double scalar) {
+void matrix::operator/=(double scalar) {
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
       (*this)[r][c] /= scalar;
     }
   }
-  return *this;
 }
 
-void matrix::split_vertically(int leftCols, matrix* left, matrix* right) {
+void matrix::split_vertically(int leftCols, matrix* left, matrix* right) const {
   assert(leftCols > 0 && leftCols < cols);
   matrix lMatrix(rows, leftCols);
   matrix rMatrix(rows, cols - leftCols);
@@ -183,7 +194,7 @@ void matrix::split_vertically(int leftCols, matrix* left, matrix* right) {
   *right = rMatrix;
 }
 
-bool matrix::is_identity() {
+bool matrix::is_identity() const {
   if(rows != cols) return false;
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
@@ -204,9 +215,8 @@ bool matrix::is_identity() {
 // as being equal to all values also within that tolerance.
 // Thus it may be useful to call, set_zeros() after calling
 // this method. The method will also calculate the determinant
-matrix& matrix::rref(double* det) {
-  double determinant;
-  determinant = 1.0;
+double matrix::rref() {
+  double determinant = 1.0;
   
   // The first step in RREF is to choose a (nonzero) pivot in the first
   // column if one exists.  We will choose the largest pivot in
@@ -313,10 +323,7 @@ matrix& matrix::rref(double* det) {
       }
     }
   }
-  if(det != nullptr) {
-    *det = determinant;
-  }
-  return *this;
+  return determinant;
 }
 
 matrix matrix::adjoin_by_row(const matrix& mat1, const matrix& mat2) {
@@ -364,30 +371,78 @@ std::string matrix::to_string() const {
   return sstream.str();
 }
 
-namespace matrix_ops {
-matrix operator+(matrix lhs, const matrix& rhs) {
-  return lhs += rhs;
+vector matrix::get_column(int c) const {
+  vector vec(rows);
+  for(int r = 0; r != rows; ++r) {
+    vec[r] = (*this)[r][c];
+  }
+  return vec;
 }
 
-matrix operator-(matrix lhs, const matrix& rhs) {
-  return lhs -= rhs;
+// We implement qr_decomposition with the gram schmidt process.
+void matrix::qr_decomposition(matrix& qMat, matrix& rMat) const {
+  qMat = matrix(rows, cols);
+  rMat = matrix(cols, cols, 0.0);
+  // Holds the list of computed orthogonal basis vectors.
+  std::vector<vector> projections;
+  // Same as the projection vector except each vector is normalized.
+  std::vector<vector> normals;
+  projections.push_back(get_column(0));
+  for(int c = 1; c != cols; ++c) {
+    vector acc(get_column(c));
+    for(int i = 0; i != c; ++i) {
+      acc = acc - acc.projection(projections[i]);
+    }
+    projections.push_back(acc);
+    vector tmp(acc);
+    tmp.normalize();
+    projections.push_back(tmp);
+    for(int r = 0; r != c; ++r) {
+      rMat[r][c] = vector::dot(normals[r], projections[c]);
+    }
+  }
+  qMat = matrix(normals);
 }
 
-matrix operator*(matrix lhs, const matrix& rhs) {
-  return lhs *= rhs;
+
+matrix matrix::operator+(const matrix& rhs) const {
+  matrix mat(*this);
+  mat += rhs;
+  return mat;
 }
 
-matrix operator*(double scal, matrix mat) {
-  return mat *= scal;
+matrix matrix::operator-(const matrix& rhs) const {
+  matrix mat(*this);
+  mat -= rhs;
+  return mat;
 }
 
-matrix operator*(matrix mat, double scal) {
-  return mat *= scal;
+matrix matrix::operator*(const matrix& rhs) const {
+  matrix mat(*this);
+  mat *= rhs;
+  return mat;
 }
 
-matrix operator/(matrix mat, double scal) {
-  return mat /= scal;
+matrix matrix::operator*(double scal) const {
+  matrix mat(*this);
+  mat *= scal;
+  return mat;
 }
-} // namespace matrix_ops
+
+matrix matrix::operator/(double scal) const {
+  matrix mat(*this);
+  mat /= scal;
+  return mat;
+}
+
+vector matrix::operator*(const vector& vec) const {
+  matrix mat(*this);
+  mat *= vec;
+  vector ret(vec.size());
+  for(int i = 0; i != vec.size(); ++i) {
+    ret[i] = mat[i][0];
+  }
+  return ret;
+}
 } // namespace math
 } // namespace dynsolver

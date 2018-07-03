@@ -14,9 +14,8 @@ int square_matrix::size() const {
 }
 
 double square_matrix::determinant() const {
-  double det;
   matrix copy(*this);
-  copy.rref(&det);
+  double det = copy.rref();
   return det;
 }
 
@@ -24,22 +23,21 @@ bool square_matrix::invertable() const {
   matrix augmented(matrix::adjoin_by_row(*this, identity_matrix(rows)));
   augmented.rref();
   matrix left, right;
-  augmented.rref().split_vertically(rows, &left, &right);
+  augmented.rref();
+  augmented.split_vertically(rows, &left, &right);
   return left.is_identity();
 }
 
-square_matrix& square_matrix::invert(bool* success) {
+bool square_matrix::invert() {
   matrix augmented(matrix::adjoin_by_row(*this, identity_matrix(rows)));
   matrix left, right;
-  augmented.rref().split_vertically(rows, &left, &right);
+  augmented.rref();
+  augmented.split_vertically(rows, &left, &right);
   bool invertible = left.is_identity();
   if(invertible) {
     this->matrix::operator=(right);
   }
-  if(success != nullptr) {
-    *success = invertible;
-  }
-  return *this;
+  return invertible;
 }
 
 square_matrix square_matrix::identity_matrix(int size) {
@@ -52,47 +50,64 @@ square_matrix square_matrix::identity_matrix(int size) {
   return retMat;
 }
 
-square_matrix& square_matrix::operator+=(const square_matrix& other) {
-  matrix::operator+=(other);
-  return *this;
-}
-square_matrix& square_matrix::operator-=(const square_matrix& other) {
-  matrix::operator-=(other);
-  return *this;
-}
-square_matrix& square_matrix::operator*=(const square_matrix& other) {
-  matrix::operator*=(other);
-  return *this;
-}
-square_matrix& square_matrix::operator*=(double scal) {
-  matrix::operator*=(scal);
-  return *this;
-}
-square_matrix& square_matrix::operator/=(double scal) {
-  matrix::operator/=(scal);
-  return *this;
+// We shall use a simple (Non optimized) qr decomposition
+// iteration to find the eigenvalues. Currently this works only,
+// when all eigenvalues have distinct size.
+std::vector<double> square_matrix::eigenvalues() const {
+  static const double tolerance = 1e-10;
+  int size = rows;
+  matrix acc(*this);
+  matrix q, r;
+  bool terminate = false;
+  while(!terminate) {
+    acc.qr_decomposition(q, r);
+    acc *= q;
+    q.transpose();
+    acc = q * acc;
+
+    // Scan the sub diagonal
+    terminate = true;
+    for(int i = 0; i + 1 != size; ++size) {
+      if(std::abs(acc[i][i + 1]) >= tolerance) {
+	terminate = false;
+      }
+    }
+  }
+  std::vector<double> values;
+  for(int i = 0; i != size; ++i) {
+    values.push_back(acc[i][i]);
+  }
+  return values;
 }
 
-namespace square_matrix_ops {
-// These functions perform the arithmatic in the expected way on square matrices.
-square_matrix operator+(square_matrix lhs, const square_matrix& rhs) {
-  return lhs += rhs;
+square_matrix square_matrix::operator+(const square_matrix& rhs) const {
+  square_matrix mat(*this);
+  mat += rhs;
+  return mat;
 }
-square_matrix operator-(square_matrix lhs, const square_matrix& rhs) {
-  return lhs -= rhs;
+
+square_matrix square_matrix::operator-(const square_matrix& rhs) const {
+  square_matrix mat(*this);
+  mat -= rhs;
+  return mat;
 }
-square_matrix operator*(square_matrix lhs, const square_matrix& rhs) {
-  return lhs *= rhs;
+
+square_matrix square_matrix::operator*(const square_matrix& rhs) const {
+  square_matrix mat(*this);
+  mat *= rhs;
+  return mat;
 }
-square_matrix operator*(double scalar, square_matrix mat) {
-  return mat *= scalar;
+
+square_matrix square_matrix::operator*(double scal) const {
+  square_matrix mat(*this);
+  mat *= scal;
+  return mat;
 }
-square_matrix operator*(square_matrix mat, double scalar) {
-  return mat *= scalar;
+
+square_matrix square_matrix::operator/(double scal) const {
+  square_matrix mat(*this);
+  mat /= scal;
+  return mat;
 }
-square_matrix operator/(square_matrix mat, double scalar) {
-  return mat /= scalar;
-}
-} // namespace square_matrix_ops
 } // namespace math
 } // namespace dynslover

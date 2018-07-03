@@ -22,8 +22,9 @@ matrix_4x4 matrix_3x3::augment_to_4x4() const {
   return ret;
 }
 
-matrix_3x3 operator*(matrix_3x3 lhs, const matrix_3x3& rhs) {
-  square_matrix mat(square_matrix_ops::operator*(lhs, rhs));
+matrix_3x3 matrix_3x3::operator*(const matrix_3x3& rhs) const {
+  matrix_3x3 lhs(*this);
+  square_matrix mat(lhs.square_matrix::operator*(rhs));
   matrix_3x3 ret;
   for(int i = 0; i != 3; ++i) {
     for(int j = 0; j != 3; ++j) {
@@ -33,8 +34,9 @@ matrix_3x3 operator*(matrix_3x3 lhs, const matrix_3x3& rhs) {
   return ret;
 }
 
-vector3d operator*(matrix_3x3 lhs, const vector3d& rhs) {
-  vector vec(vector_ops::operator*(lhs, rhs));
+vector3d matrix_3x3::operator*(const vector3d& rhs) const {
+  matrix_3x3 lhs(*this);
+  vector vec(lhs.matrix::operator*(rhs));
   vector3d ret(0, 0, 0);
   for(int i = 0; i != 3; ++i) {
     ret[i] = vec[i];

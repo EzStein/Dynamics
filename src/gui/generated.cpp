@@ -179,7 +179,31 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel6->SetSizer( bSizer20 );
 	m_panel6->Layout();
 	bSizer20->Fit( m_panel6 );
-	m_notebook2->AddPage( m_panel6, wxT("Singular Points"), true );
+	m_notebook2->AddPage( m_panel6, wxT("Singular Points"), false );
+	m_panel7 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer191;
+	bSizer191 = new wxBoxSizer( wxVERTICAL );
+	
+	m_dataViewListCtrl7 = new wxDataViewListCtrl( m_panel7, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer191->Add( m_dataViewListCtrl7, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer201;
+	bSizer201 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button11 = new wxButton( m_panel7, wxID_ANY, wxT("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer201->Add( m_button11, 0, wxALL, 5 );
+	
+	m_button12 = new wxButton( m_panel7, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer201->Add( m_button12, 0, wxALL, 5 );
+	
+	
+	bSizer191->Add( bSizer201, 0, wxEXPAND, 5 );
+	
+	
+	m_panel7->SetSizer( bSizer191 );
+	m_panel7->Layout();
+	bSizer191->Fit( m_panel7 );
+	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), true );
 	
 	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -452,6 +476,64 @@ dynamical_dialog_base::~dynamical_dialog_base()
 	okButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::ok_button_on_button_click ), NULL, this );
 	cancelButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( dynamical_dialog_base::cancel_button_on_button_click ), NULL, this );
 	
+}
+
+MyDialog4::MyDialog4( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer21;
+	bSizer21 = new wxBoxSizer( wxVERTICAL );
+	
+	m_notebook3 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel9 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer23;
+	bSizer23 = new wxBoxSizer( wxVERTICAL );
+	
+	m_dataViewListCtrl10 = new wxDataViewListCtrl( m_panel9, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer23->Add( m_dataViewListCtrl10, 1, wxEXPAND, 5 );
+	
+	
+	m_panel9->SetSizer( bSizer23 );
+	m_panel9->Layout();
+	bSizer23->Fit( m_panel9 );
+	m_notebook3->AddPage( m_panel9, wxT("Direction"), false );
+	m_panel10 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer24;
+	bSizer24 = new wxBoxSizer( wxVERTICAL );
+	
+	m_dataViewListCtrl11 = new wxDataViewListCtrl( m_panel10, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer24->Add( m_dataViewListCtrl11, 1, wxEXPAND, 5 );
+	
+	
+	m_panel10->SetSizer( bSizer24 );
+	m_panel10->Layout();
+	bSizer24->Fit( m_panel10 );
+	m_notebook3->AddPage( m_panel10, wxT("Initial Point"), false );
+	
+	bSizer21->Add( m_notebook3, 1, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer22;
+	bSizer22 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button14 = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer22->Add( m_button14, 0, wxALL, 5 );
+	
+	m_button13 = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer22->Add( m_button13, 0, wxALL, 5 );
+	
+	
+	bSizer21->Add( bSizer22, 0, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer21 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+}
+
+MyDialog4::~MyDialog4()
+{
 }
 
 singular_point_dialog_base::singular_point_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

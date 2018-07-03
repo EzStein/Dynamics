@@ -27,10 +27,9 @@ class vector : public matrix {
   // Returns the number of entries in this vector.
   int size() const;
 
-  vector& operator+=(const vector&);
-  vector& operator-=(const vector&);
-  vector& operator*=(double);
-  vector& operator/=(double);
+  // Computes and returns the orthogonal projection of this vector
+  // onto other.
+  vector projection(const vector& other) const;
 
   // Computes the standard distance between this vector and another vector.
   double distance(const vector&) const;
@@ -40,17 +39,13 @@ class vector : public matrix {
 
   // returns the dot product between both vectors.
   static double dot(const vector&, const vector&);
-};
 
-// More arithmatic overloads
-vector operator+(vector, const vector&);
-vector operator-(vector, const vector&);
-namespace vector_ops {
-vector operator*(matrix, const vector&);
-}
-vector operator*(double, vector);
-vector operator*(vector, double);
-vector operator/(vector, double);
+  // More arithmatic overloads
+  vector operator+(const vector&) const;
+  vector operator-(const vector&) const;
+  vector operator*(double) const;
+  vector operator/(double) const;
+};
 } // namespace math
 } // namespace dynsolver
 #endif

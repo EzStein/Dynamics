@@ -10,8 +10,9 @@ matrix_4x4::matrix_4x4() : square_matrix(4, 0.0) {
   (*this)[3][3] = 1;
 }
 
-matrix_4x4 operator*(matrix_4x4 lhs, const matrix_4x4& rhs) {
-  square_matrix mat(square_matrix_ops::operator*(lhs, rhs));
+matrix_4x4 matrix_4x4::operator*(const matrix_4x4& rhs) const {
+  matrix_4x4 lhs(*this);
+  square_matrix mat(lhs.square_matrix::operator*(rhs));
   matrix_4x4 ret;
   for(int i = 0; i != 4; ++i) {
     for(int j = 0; j != 4; ++j) {

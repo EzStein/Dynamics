@@ -26,9 +26,9 @@ public:
   // Generates a 4x4 scaling matrix which scales, just the
   // x, y and z coordinates.
   static matrix_4x4 scale(double x, double y, double z);
-};
 
-matrix_4x4 operator*(matrix_4x4, const matrix_4x4&);
+  matrix_4x4 operator*(const matrix_4x4&) const;
+};
 
 } // namespace math
 } // namespace dynsolver

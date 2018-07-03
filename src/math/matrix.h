@@ -3,9 +3,11 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace dynsolver {
 namespace math {
+class vector;
 
 // This class represents a potentially rectangular matrix of doubles.
 // It provides numerical operations on matrices that are specifically optimized
@@ -28,7 +30,9 @@ class matrix {
   static constexpr double kTolerance = 1.0e-10;
   
  public:
-  // Default constructor builds a 0 by 0 matrix.
+  // Default constructor builds a 0 by 0 matrix. Note that this function does
+  // not allocate any memory. It is an error to call any functions while the
+  // matrix is in this state.
   matrix();
   
   // Destructor
@@ -56,17 +60,23 @@ class matrix {
   // Requires: rows and cols are positive integers.
   matrix(int rows, int cols);
 
+  // Constructs the matrix from a list of column vectors.
+  matrix(const std::vector<vector>&);
+
   // Returns the number of rows and columns of the matrix.
   int get_rows() const;
   int get_cols() const;
 
   // Transposes the matrix.
   // The transpose occurs in place and mutates the state of this matrix.
-  matrix& transpose();
+  void transpose();
 
   // Returns the standard frobenius matrix norm
   // which is the square root of the sum of the squares of all entries.
   double norm() const;
+
+  // Normalizes the matrix by performing this /= norm();
+  void normalize();
 
   // Returns the a const pointer to the data contained in this matrix.
   const double* data() const;
@@ -76,42 +86,58 @@ class matrix {
   void as_float_array(float* arr) const;
 
   // Returns a pointer to the start of the row.
+  // These functions do not perform any bound checking.
   double* operator[](int);
   const double* operator[](int) const;
 
   // Adds or subtracts the provided matrix from this one.
   // Requires that the matrices have the same dimensions.
-  matrix& operator+=(const matrix&);
-  matrix& operator-=(const matrix&);
+  void operator+=(const matrix&);
+  void operator-=(const matrix&);
 
   // Right multiples this matrix by the provided one. The operation may require
   // memory reallocation if the new matrix is of a larger size.
   // Requires that the cols of this matrix are the same number as the rows of
   // the other matrix.
-  matrix& operator*=(const matrix&);
+  void operator*=(const matrix&);
 
   // Scalar multiplies this matrix by the provided number.
-  matrix& operator*=(double);
+  void operator*=(double);
 
   // Scalar divides this matrix by the provided number.
-  matrix& operator/=(double);
+  void operator/=(double);
 
-  // Row reduces this matrix and returns the computed determinant through a
-  // pointer. Note that the returned value is only meaningful for square
+  // Row reduces this matrix and returns the computed determinant.
+  // Note that the returned value is only meaningful for square
   // matrices. If the passed pointer is null, it is ignored.
-  matrix& rref(double* det = nullptr);
+  double rref();
 
   // Splits the matrix vectically along some column. Returns the left and right,
   // parts through pointers. The left part has cols number of columns.
-  void split_vertically(int cols, matrix* left, matrix* right);
+  void split_vertically(int cols, matrix* left, matrix* right) const;
 
   // Returns true if this is the square identity matrix.
   // Note that values within the tolerance of 0 or 1 are
   // considered to be zero or 1.
-  bool is_identity();
+  bool is_identity() const;
+
+  // Decomposes this matrix into an orthogonal matrix q and and an upper
+  // triangular matrix r such that q*r is approximately (*this).
+  void qr_decomposition(matrix& q, matrix& r) const;
 
   // Pretty prints this matrix to a string.
   std::string to_string() const;
+
+  // Returns the column vector associated with the given column.
+  vector get_column(int col) const;
+
+  // Various arithmetic operations on matrices
+  matrix operator+(const matrix&) const;
+  matrix operator-(const matrix&) const;
+  matrix operator*(const matrix&) const;
+  matrix operator*(double) const;
+  matrix operator/(double) const;
+  vector operator*(const vector&) const;
 
   // Adjoins the matrices by column. That is,
   // the nth col of the returned matrix is the nth col of
@@ -126,18 +152,6 @@ class matrix {
   // Requires that mat1.get_rows() == mat2.get_rows()
   static matrix adjoin_by_row(const matrix& mat1, const matrix& mat2);
 };
-
-// This namespace is used to refer to the more base overloads of these
-// operators when the compiler by default chooses more derived versions.
-namespace matrix_ops {
-// Various arithmetic operations on matrices
-matrix operator+(matrix, const matrix&);
-matrix operator-(matrix, const matrix&);
-matrix operator*(matrix, const matrix&);
-matrix operator*(double, matrix);
-matrix operator*(matrix, double);
-matrix operator/(matrix, double);
-} // namespace matrix_ops
 } // namespace math
 } // namespace dynsolver
 #endif

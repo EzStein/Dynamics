@@ -22,7 +22,8 @@ bool solve_linear(const square_matrix& matrix,
   assert(vec.size() == matrix.size());
   math::matrix augmented = matrix::adjoin_by_row(matrix, vec);
   math::matrix left, right;
-  augmented.rref().split_vertically(matrix.get_cols(), &left, &right);
+  augmented.rref();
+  augmented.split_vertically(matrix.get_cols(), &left, &right);
   if(!left.is_identity()) return false;
   vector result(matrix.size());
   for(int i = 0; i != right.get_rows(); ++i) {

@@ -31,24 +31,6 @@ double vector::distance(const vector& other) const {
   return std::sqrt(acc);
 }
 
-
-vector& vector::operator+=(const vector& other) {
-  matrix::operator+=(other);
-  return *this;
-}
-vector& vector::operator-=(const vector& other) {
-  matrix::operator-=(other);
-  return *this;
-}
-vector& vector::operator*=(double scal) {
-  matrix::operator*=(scal);
-  return *this;
-}
-vector& vector::operator/=(double scal) {
-  matrix::operator/=(scal);
-  return *this;
-}
-
 double vector::angle(const vector& v1, const vector& v2) {
   assert(v1.size() == v2.size());
   return std::acos(dot(v1, v2) / (v1.norm() * v2.norm()));
@@ -63,30 +45,33 @@ double vector::dot(const vector& v1, const vector& v2) {
   return acc;
 }
 
-vector operator+(vector lhs, const vector& rhs) {
-  return lhs += rhs;
+vector vector::projection(const vector& other) const {
+  return other * (dot(*this, other) / dot(other, other));
 }
-vector operator-(vector lhs, const vector& rhs) {
-  return lhs -= rhs;
+
+vector vector::operator+(const vector& rhs) const {
+  vector vec(*this);
+  vec += rhs;
+  return vec;
 }
-vector operator*(double scalar, vector vec) {
-  return vec *= scalar;
+
+vector vector::operator-(const vector& rhs) const {
+  vector vec(*this);
+  vec -= rhs;
+  return vec;
 }
-vector operator*(vector vec, double scalar) {
-  return vec *= scalar;
+
+vector vector::operator*(double scal) const {
+  vector vec(*this);
+  vec *= scal;
+  return vec;
 }
-vector operator/(vector vec, double scalar) {
-  return vec /= scalar;
+
+vector vector::operator/(double scal) const {
+  vector vec(*this);
+  vec /= scal;
+  return vec;
 }
-namespace vector_ops {
-vector operator*(matrix lhs, const vector& rhs) {
-  lhs *= rhs;
-  vector ret(rhs.size());
-  for(int i = 0; i != rhs.size(); ++i) {
-    ret[i] = lhs[i][0];
-  }
-  return ret;
-}
-}
+
 } // namespace math
 } // namespace dynslover

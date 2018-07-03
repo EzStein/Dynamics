@@ -16,10 +16,10 @@ public:
   
   // Augmenst this matrix to a 4x4 matrix.
   matrix_4x4 augment_to_4x4() const;
-};
 
-matrix_3x3 operator*(matrix_3x3, const matrix_3x3&);
-vector3d operator*(matrix_3x3, const vector3d&);
+  matrix_3x3 operator*(const matrix_3x3&) const;
+  vector3d operator*(const vector3d&) const;
+};
 } // namespace math
 } // namespace dynsolver
 #endif

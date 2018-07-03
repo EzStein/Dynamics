@@ -25,33 +25,25 @@ class square_matrix : public matrix {
   // Returns true if the matrix is invertible.
   bool invertable() const;
 
-  // Inverts this matrix if possible. If the matrix is not invertiable,
-  // returns false through the pointer. If the pointer is null, it is
-  // ignored.
-  // Note that if the matrix is not invertible, this function does not alter
-  // matrix.
-  square_matrix& invert(bool* success = nullptr);
+  // Computes the eigenvalues of this matrix. Returns a vector of these
+  // eigenvalues, counting multiplicities, in no particular order.
+  std::vector<double> eigenvalues() const;
 
-  square_matrix& operator+=(const square_matrix&);
-  square_matrix& operator-=(const square_matrix&);
-  square_matrix& operator*=(const square_matrix&);
-  square_matrix& operator*=(double);
-  square_matrix& operator/=(double);
+  // Inverts this matrix if possible. If the matrix is not invertiable,
+  // returns false and does not alter the matrix.
+  bool invert();
+
+  // Various arithmetic operations on matrices
+  square_matrix operator+(const square_matrix&) const;
+  square_matrix operator-(const square_matrix&) const;
+  square_matrix operator*(const square_matrix&) const;
+  square_matrix operator*(double) const;
+  square_matrix operator/(double) const;
 
   // Returns the identity matrix of dimension n.
   // Requires that n is positive.
   static square_matrix identity_matrix(int n);
 };
-
-namespace square_matrix_ops {
-// These functions perform the arithmatic in the expected way on square matrices.
-square_matrix operator+(square_matrix, const square_matrix&);
-square_matrix operator-(square_matrix, const square_matrix&);
-square_matrix operator*(square_matrix, const square_matrix&);
-square_matrix operator*(double, square_matrix);
-square_matrix operator*(square_matrix, double);
-square_matrix operator/(square_matrix, double);
-} // square_matrix_ops
 } // namespace math
 } // namespace dynsolver
 #endif

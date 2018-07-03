@@ -12,10 +12,11 @@ class matrix_2x2 : public square_matrix {
 public:
   // Constructs the 2x2 identity matrix.
   matrix_2x2();
+  matrix_2x2 operator*(const matrix_2x2&) const;
+  vector2d operator*(const vector2d&) const;
 };
 
-matrix_2x2 operator*(matrix_2x2, const matrix_2x2&);
-vector2d operator*(matrix_2x2, const vector2d&);
+
 
 } // namespace math
 } // namespace dynsolver
