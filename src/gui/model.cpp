@@ -41,9 +41,30 @@ double color::get_alpha() const {
   return a;
 }
 
-solution_specs::solution_specs() : glColor(0,0,0,1), init(1) { }
+void color::set_red(double red) {
+  r = red;
+}
+void color::set_green(double green) {
+  g = green;
+}
+void color::set_blue(double blue) {
+  b = blue;
+}
+void color::set_alpha(double alpha) {
+  a = alpha;
+}
 
-singular_point_specs::singular_point_specs() : init(1), glColor(0,0,1,1) { }
+void color::invert() {
+  r = 1.0 - r;
+  g = 1.0 - g;
+  b = 1.0 - b;
+}
+
+solution_specs::solution_specs() : glColor(0.5,0.5,0,1), init(1) { }
+
+isocline_specs::isocline_specs() : glColor(0,0.5,0.5,1), init(1) { }
+
+singular_point_specs::singular_point_specs() : init(1), glColor(0.5,0,0.5,1) { }
 
 model::dynamical_window::dynamical_window(model& model,
 					  const dynamical_specs& spec)
@@ -102,156 +123,192 @@ void model::dynamical_window::set_viewport_3d(const math::window3d& val) {
 
 bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
   typedef std::list<math::vector>::const_iterator point_const_iter;
-  for(model::solution_const_iter iter = modelData.solutions.begin();
-      iter != modelData.solutions.end(); ++iter) {
-    if(iter->second.data.size() <= 2) continue;
-    point_const_iter point = iter->second.data.begin();
-    ++point;
-    point_const_iter prevPoint = iter->second.data.begin();
-    for(; point != iter->second.data.end(); ++point, ++prevPoint) {
-      math::vector2d real((*point)[specs.horzAxisVar],
-			  (*point)[specs.vertAxisVar]);
+  if(specs.is3d) {
+    return false;
+  } else {
+    for(model::solution_const_iter iter = modelData.solutions.begin();
+	iter != modelData.solutions.end(); ++iter) {
+      if(iter->second.data.size() <= 2) continue;
+      point_const_iter point = iter->second.data.begin();
+      ++point;
+      point_const_iter prevPoint = iter->second.data.begin();
+      for(; point != iter->second.data.end(); ++point, ++prevPoint) {
+	math::vector2d real((*point)[specs.horzAxisVar],
+			    (*point)[specs.vertAxisVar]);
+	math::vector2d pixel(specs.viewport2d.pixel_of(real));
+	math::vector2d realPrev((*prevPoint)[specs.horzAxisVar],
+				(*prevPoint)[specs.vertAxisVar]);
+	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
+	const int tolerance(5);
+	math::vector2d cursor(x, y);
+	if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
+	  *id = iter->first;
+	  return true;
+	}
+      }
+    }
+    return false;
+  }
+}
+
+bool model::dynamical_window::select_isocline(int x, int y, isocline_id* id) {
+  typedef std::list<math::vector>::const_iterator point_const_iter;
+  if(specs.is3d) {
+    return false;
+  } else {
+    for(model::isocline_const_iter iter = modelData.isoclines.begin();
+	iter != modelData.isoclines.end(); ++iter) {
+      if(iter->second.data.size() <= 2) continue;
+      point_const_iter point = iter->second.data.begin();
+      ++point;
+      point_const_iter prevPoint = iter->second.data.begin();
+      for(; point != iter->second.data.end(); ++point, ++prevPoint) {
+	math::vector2d real((*point)[specs.horzAxisVar],
+			    (*point)[specs.vertAxisVar]);
+	math::vector2d pixel(specs.viewport2d.pixel_of(real));
+	math::vector2d realPrev((*prevPoint)[specs.horzAxisVar],
+				(*prevPoint)[specs.vertAxisVar]);
+	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
+	const int tolerance(5);
+	math::vector2d cursor(x, y);
+	if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
+	  *id = iter->first;
+	  return true;
+	}
+      }
+    }
+    return false;
+  }
+}
+
+bool model::dynamical_window::select_singular_point(int x,int y,
+						    singular_point_id* id) {
+  if(specs.is3d) {
+    return false;
+  } else {
+    for(model::singular_point_const_iter iter = modelData.singularPoints.begin();
+	iter != modelData.singularPoints.end(); ++iter) {
+      math::vector2d real(iter->second.position[specs.horzAxisVar],
+			  iter->second.position[specs.vertAxisVar]);
       math::vector2d pixel(specs.viewport2d.pixel_of(real));
-      math::vector2d realPrev((*prevPoint)[specs.horzAxisVar],
-			      (*prevPoint)[specs.vertAxisVar]);
-      math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
-      const int tolerance(5);
-      math::vector2d cursor(x, y);
-      if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
+      const double tolerance = 5;
+      if(pixel.distance(math::vector2d(x, y)) <= tolerance) {
 	*id = iter->first;
 	return true;
       }
     }
+    return false;
   }
-  return false;
 }
 
-void model::dynamical_window::paint() {
-  glViewport(0, 0, specs.viewport2d.get_size().x(),
-	     specs.viewport2d.get_size().y());
-  if(specs.is3d) {
-    // Render 3d
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
-    glDepthRange(0.0f, 1.0f);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(modelData.programPath3d.get_handle());
-    glBindVertexArray(modelData.vaoPath3d.get_handle());
-    float transformationMatrix[16];
-    (specs.viewport3d.camera_to_clip() *
-     specs.viewport3d.world_to_camera())
-      .as_float_array(transformationMatrix);
-    glUniformMatrix4fv(modelData.kPath3dTransformationUniformLocation,
-		       1, true, transformationMatrix);
-
-    // Draw 3d axes.
-    GLfloat axes[4 * 3] = {
-      0, 0, 0,
-      0, 0, 1000,
-      0, 1000, 0,
-      1000, 0, 0};
-    GLuint elements[2] = {
-      0, 1
-    };
-    gl::buffer tmp(reinterpret_cast<unsigned char*>(axes),
-		   4 * 3 * sizeof(float), GL_STATIC_DRAW);
+void model::dynamical_window::draw_solutions_3d() {
+  for(solution_data_const_iter iter = solutionData.begin();
+      iter != solutionData.end(); ++iter) {
+    color glColor(modelData.solutions.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedSolutionId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
     glBindVertexBuffer(model::kPath3dVertexBinding,
-		       tmp.get_handle(), 0, 3 * sizeof(float));
-
-    glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
-    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
-    elements[1] = 2;
-    glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 1.0, 0.0, 1.0);
-    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
-    elements[1] = 3;
-    glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 0.0, 1.0, 1.0);
-    glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
-
-    // Draw trajectories
-    for(solution_data_const_iter iter = solutionData.begin();
-	iter != solutionData.end(); ++iter) {
-      color glColor(modelData.solutions.at(iter->first).specs.glColor);
+		       iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+void model::dynamical_window::draw_isoclines_3d() {
+  // We don't draw isoclines if we are viewing the time component.
+  if(specs.xAxisVar != 0 && specs.yAxisVar != 0 && specs.zAxisVar != 0) {
+    for(isocline_data_const_iter iter = isoclineData.begin();
+	iter != isoclineData.end(); ++iter) {
+      color glColor(modelData.isoclines.at(iter->first).specs.glColor);
+      if(iter->first == modelData.selectedIsoclineId) {
+	glColor.invert();
+      }
       glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
       glBindVertexBuffer(model::kPath3dVertexBinding,
 			 iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
       glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
     }
+  }
+}
+void model::dynamical_window::draw_singular_points_3d() {
+}
+void model::dynamical_window::draw_axes_3d() {
+  GLfloat axes[4 * 3] = {
+    0, 0, 0,
+    0, 0, 1000,
+    0, 1000, 0,
+    1000, 0, 0};
+  GLuint elements[2] = {
+    0, 1
+  };
+  gl::buffer tmp(reinterpret_cast<unsigned char*>(axes),
+		 4 * 3 * sizeof(float), GL_STATIC_DRAW);
+  glBindVertexBuffer(model::kPath3dVertexBinding,
+		     tmp.get_handle(), 0, 3 * sizeof(float));
 
-    glUniform4f(modelData.kPath3dColorUniformLocation, 0.5, 0.5, 0, 1);
-    // Draw the isoclines
+  glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+  elements[1] = 2;
+  glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 1.0, 0.0, 1.0);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+  elements[1] = 3;
+  glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 0.0, 1.0, 1.0);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+}
+
+void model::dynamical_window::draw_solutions_2d() {
+  for(solution_data_const_iter iter = solutionData.begin();
+      iter != solutionData.end(); ++iter) {
+    color glColor(modelData.solutions.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedSolutionId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+void model::dynamical_window::draw_isoclines_2d() {
+  if(specs.horzAxisVar != 0 && specs.vertAxisVar != 0) {
     for(isocline_data_const_iter iter = isoclineData.begin();
 	iter != isoclineData.end(); ++iter) {
-      glBindVertexBuffer(model::kPath3dVertexBinding,
-			 iter->second.vbo3d.get_handle(), 0, 3 * sizeof(float));
-      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
-    }
-  } else {
-    // Render 2d
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glUseProgram(modelData.program2d.get_handle());
-    glBindVertexArray(modelData.vao2d.get_handle());
-    float transformationMatrix[16];
-    specs.viewport2d.real_to_ndc().as_float_array(transformationMatrix);
-    glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
-		       1, true, transformationMatrix);
-
-    // Render each solution
-    for(solution_data_const_iter iter = solutionData.begin();
-	iter != solutionData.end(); ++iter) {
-      color glColor(modelData.solutions.at(iter->first).specs.glColor);
+      color glColor(modelData.isoclines.at(iter->first).specs.glColor);
+      if(iter->first == modelData.selectedIsoclineId) {
+	glColor.invert();
+      }
       glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
       glBindVertexBuffer(model::k2dVertexBinding,
 			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
       glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
     }
-
-    // Render each isocline
-    glUniform4f(modelData.kPath3dColorUniformLocation, 0.5, 0.5, 0, 1);
-    for(isocline_data_const_iter iter = isoclineData.begin();
-	iter != isoclineData.end(); ++iter) {
-      glBindVertexBuffer(model::k2dVertexBinding,
-			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
-      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
-    }
-
-    update_axes_vbo();
-    // Generate pixel to ndc transform
-    specs.viewport2d.pixel_to_ndc()
-      .as_float_array(transformationMatrix);
-    glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
-		       1, true, transformationMatrix);
-    // Set color to Black
-    glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-    glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
-		       0, 2 * sizeof(float));
-    glDrawArrays(GL_LINES, 0, axesVboVertices);
-
-    // Render singular points
-    glUniform4f(modelData.k2dColorUniformLocation, 0, 1, 0, 1);
+  }
+}
+void model::dynamical_window::draw_singular_points_2d() {
+  // We don't draw it if we are viewing the t axis.
+  if(specs.horzAxisVar != 0 && specs.vertAxisVar != 0) {
     glBindVertexBuffer(model::k2dVertexBinding,
 		       modelData.circleVbo.get_handle(),
 		       0, 2 * sizeof(float));
     for(model::singular_point_const_iter iter = modelData.singularPoints.begin();
 	iter != modelData.singularPoints.end(); ++iter) {
+      color glColor(modelData.singularPoints.at(iter->first).specs.glColor);
+      if(iter->first == modelData.selectedSingularPointId) {
+	glColor.invert();
+      }
       glUniform4f(modelData.k2dColorUniformLocation,
-		  iter->second.specs.glColor.get_red(),
-		  iter->second.specs.glColor.get_green(),
-		  iter->second.specs.glColor.get_blue(),
-		  iter->second.specs.glColor.get_alpha());
+		  glColor.get_red(),
+		  glColor.get_green(),
+		  glColor.get_blue(),
+		  glColor.get_alpha());
       math::vector2d realCoordinate
 	(iter->second.position[specs.horzAxisVar],
 	 iter->second.position[specs.vertAxisVar]);
+      GLfloat transformationMatrix[16];
       math::vector2d pixelCoordinate
 	(specs.viewport2d.pixel_of(realCoordinate));
       (specs.viewport2d.pixel_to_ndc() *
@@ -261,81 +318,153 @@ void model::dynamical_window::paint() {
 			 1, true, transformationMatrix);
       glDrawArrays(GL_LINE_LOOP, 0, modelData.circleVboVertices);
     }
+  }
+}
+void model::dynamical_window::draw_axes_2d() {
+  GLfloat transformationMatrix[16];
+  // Render axes text.
+  update_axes_vbo();
+  // Generate pixel to ndc transform
+  specs.viewport2d.pixel_to_ndc()
+    .as_float_array(transformationMatrix);
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		     1, true, transformationMatrix);
+  // Set color to Black
+  glUniform4f(modelData.k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+  glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
+		     0, 2 * sizeof(float));
+  glDrawArrays(GL_LINES, 0, axesVboVertices);
 
+  // Render Axes text
+  const double tolerance = 0.001;
+  math::vector2d axesPixel(specs.viewport2d
+			   .pixel_of(math::vector2d(0.0, 0.0)));
+  int yTextOffset(10);
+  int xTextOffset(10);
+  if(axesPixel.x() < 0.0) {
+    axesPixel.x() = 0.0;
+  }
+  if(axesPixel.x() > specs.viewport2d.get_size().x()) {
+    axesPixel.x() = specs.viewport2d.get_size().x();
+    xTextOffset = -40;
+  }
+  if(axesPixel.y() < 0.0) {
+    axesPixel.y() = 0.0;
+  }
+  if(axesPixel.y() > specs.viewport2d.get_size().y()) {
+    axesPixel.y() = specs.viewport2d.get_size().y();
+    yTextOffset = -20;
+  }
+  math::vector2d axesReal(specs.viewport2d
+			  .real_coordinate_of(axesPixel));
+  double xStart = realTickDistanceX * ticksPerLabel *
+    static_cast<int>(specs.viewport2d.get_position().x() /
+		     (realTickDistanceX * ticksPerLabel));
+  double yStart = realTickDistanceY * ticksPerLabel *
+    static_cast<int>(specs.viewport2d.get_position().y() /
+		     (realTickDistanceY * ticksPerLabel));
+  for(double x = xStart; x > specs.viewport2d.get_position().x();
+      x -= ticksPerLabel * realTickDistanceX) {
+    if(std::abs(x) < tolerance) continue;
+    math::vector2d pixel(specs.viewport2d
+			 .pixel_of(math::vector2d(x,
+						  axesReal.y())));
+    std::string text = util::double_to_string(x, 2);
+    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
+				       pixel.y() + yTextOffset,
+				       modelData.font, tickFontSize);
+  }
+  for(double x = xStart; x < specs.viewport2d.get_position().x()
+	+ specs.viewport2d.get_span().x();
+      x += ticksPerLabel * realTickDistanceX) {
+    if(std::abs(x) < tolerance) continue;
+    math::vector2d pixel(specs.viewport2d
+			 .pixel_of(math::vector2d(x, axesReal.y())));
+    std::string text = util::double_to_string(x, 2);
+    modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
+				       pixel.y() + yTextOffset,
+				       modelData.font, tickFontSize);
+  }
+  for(double y = yStart; y > specs.viewport2d.get_position().y();
+      y -= ticksPerLabel * realTickDistanceY) {
+    if(std::abs(y) < tolerance) continue;
+    math::vector2d pixel(specs.viewport2d
+			 .pixel_of(math::vector2d(axesReal.x(),y)));
+    std::string text = util::double_to_string(y, 2);
+    modelData.textRenderer.render_text(text,
+				       pixel.x() + xTextOffset,
+				       pixel.y() - 5,
+				       modelData.font,
+				       tickFontSize);
+  }
+  for(double y = yStart; y < specs.viewport2d.get_position().y()
+	+ specs.viewport2d.get_span().y();
+      y += ticksPerLabel * realTickDistanceY) {
+    if(std::abs(y) < tolerance) continue;
+    math::vector2d pixel(specs.viewport2d
+			 .pixel_of(math::vector2d(axesReal.x(),y)));
+    std::string text = util::double_to_string(y, 2);
+    modelData.textRenderer.render_text(text, pixel.x() + xTextOffset,
+				       pixel.y() - 5, modelData.font,
+				       tickFontSize);
+  }
+}
 
-    // Render Axes text
-    const double tolerance = 0.001;
-    math::vector2d axesPixel(specs.viewport2d
-			     .pixel_of(math::vector2d(0.0, 0.0)));
-    int yTextOffset(10);
-    int xTextOffset(10);
-    if(axesPixel.x() < 0.0) {
-      axesPixel.x() = 0.0;
-    }
-    if(axesPixel.x() > specs.viewport2d.get_size().x()) {
-      axesPixel.x() = specs.viewport2d.get_size().x();
-      xTextOffset = -40;
-    }
-    if(axesPixel.y() < 0.0) {
-      axesPixel.y() = 0.0;
-    }
-    if(axesPixel.y() > specs.viewport2d.get_size().y()) {
-      axesPixel.y() = specs.viewport2d.get_size().y();
-      yTextOffset = -20;
-    }
-    math::vector2d axesReal(specs.viewport2d
-			    .real_coordinate_of(axesPixel));
-    double xStart = realTickDistanceX * ticksPerLabel *
-      static_cast<int>(specs.viewport2d.get_position().x() /
-		       (realTickDistanceX * ticksPerLabel));
-    double yStart = realTickDistanceY * ticksPerLabel *
-      static_cast<int>(specs.viewport2d.get_position().y() /
-		       (realTickDistanceY * ticksPerLabel));
-    for(double x = xStart; x > specs.viewport2d.get_position().x();
-	x -= ticksPerLabel * realTickDistanceX) {
-      if(std::abs(x) < tolerance) continue;
-      math::vector2d pixel(specs.viewport2d
-			   .pixel_of(math::vector2d(x,
-						    axesReal.y())));
-      std::string text = util::double_to_string(x, 2);
-      modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
-					 pixel.y() + yTextOffset,
-					 modelData.font, tickFontSize);
-    }
-    for(double x = xStart; x < specs.viewport2d.get_position().x()
-	  + specs.viewport2d.get_span().x();
-	x += ticksPerLabel * realTickDistanceX) {
-      if(std::abs(x) < tolerance) continue;
-      math::vector2d pixel(specs.viewport2d
-			   .pixel_of(math::vector2d(x, axesReal.y())));
-      std::string text = util::double_to_string(x, 2);
-      modelData.textRenderer.render_text(text, pixel.x() - text.size() * 3,
-					 pixel.y() + yTextOffset,
-					 modelData.font, tickFontSize);
-    }
-    for(double y = yStart; y > specs.viewport2d.get_position().y();
-	y -= ticksPerLabel * realTickDistanceY) {
-      if(std::abs(y) < tolerance) continue;
-      math::vector2d pixel(specs.viewport2d
-			   .pixel_of(math::vector2d(axesReal.x(),y)));
-      std::string text = util::double_to_string(y, 2);
-      modelData.textRenderer.render_text(text,
-					 pixel.x() + xTextOffset,
-					 pixel.y() - 5,
-					 modelData.font,
-					 tickFontSize);
-    }
-    for(double y = yStart; y < specs.viewport2d.get_position().y()
-	  + specs.viewport2d.get_span().y();
-	y += ticksPerLabel * realTickDistanceY) {
-      if(std::abs(y) < tolerance) continue;
-      math::vector2d pixel(specs.viewport2d
-			   .pixel_of(math::vector2d(axesReal.x(),y)));
-      std::string text = util::double_to_string(y, 2);
-      modelData.textRenderer.render_text(text, pixel.x() + xTextOffset,
-					 pixel.y() - 5, modelData.font,
-					 tickFontSize);
-    }
+void model::dynamical_window::paint() {
+  glViewport(0, 0, specs.viewport2d.get_size().x(),
+	     specs.viewport2d.get_size().y());
+  if(specs.is3d) {
+    // Enable Depth filtering and writing
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glDepthRange(0.0f, 1.0f);
+
+    // Clear Buffers
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set program, VAO and matrix transform
+    glUseProgram(modelData.programPath3d.get_handle());
+    glBindVertexArray(modelData.vaoPath3d.get_handle());
+    float transformationMatrix[16];
+    (specs.viewport3d.camera_to_clip() * specs.viewport3d.world_to_camera())
+      .as_float_array(transformationMatrix);
+    glUniformMatrix4fv(modelData.kPath3dTransformationUniformLocation,
+		       1, true, transformationMatrix);
+
+    // Render
+    draw_axes_3d();
+    draw_solutions_3d();
+    draw_isoclines_3d();
+
+    // Note that this call changes the transformation uniform.
+    draw_singular_points_3d();
+  } else {
+    // Disable depth filtering
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    // Clear background
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set program and transformation.
+    glUseProgram(modelData.program2d.get_handle());
+    glBindVertexArray(modelData.vao2d.get_handle());
+    float transformationMatrix[16];
+    specs.viewport2d.real_to_ndc().as_float_array(transformationMatrix);
+    glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		       1, true, transformationMatrix);
+
+    draw_solutions_2d();
+    draw_isoclines_2d();
+
+    // Note that these calls changes the transformation uniform.
+    draw_singular_points_2d();
+    draw_axes_2d();
   }
 }
   
@@ -396,6 +525,12 @@ void model::dynamical_window::add_solution(solution_id id) {
 void model::dynamical_window::add_isocline(isocline_id id) {
   gen_isocline_vbo(id);
 }
+
+void model::dynamical_window::delete_isocline(isocline_id id) {
+  isoclineData.erase(id);
+}
+
+
 
 void model::dynamical_window::gen_solution_vbo(solution_id id) {
   const std::list<math::vector>& solution(modelData.solutions.at(id).data);
@@ -593,8 +728,17 @@ std::vector<gl::shader> model::build_shaders_path_3d() {
 }
 
 model::model() : font(constants::kDefaultFontFilePath),
-		 uniqueDynamicalId(0),
-		 uniqueSolutionId(0),
+		 kNoDynamicalId(0),
+		 kNoSolutionId(0),
+		 kNoSingularPointId(0),
+		 kNoIsoclineId(0),
+		 selectedSolutionId(kNoSolutionId),
+		 selectedSingularPointId(kNoSingularPointId),
+		 selectedIsoclineId(kNoIsoclineId),
+		 uniqueDynamicalId(kNoDynamicalId),
+		 uniqueSolutionId(kNoSolutionId),
+		 uniqueSingularPointId(kNoSingularPointId),
+		 uniqueIsoclineId(kNoIsoclineId),
 		 dynamicalDimension(0),
 		 compiled(false),
 		 program2d(build_shaders_2d()),
@@ -681,14 +825,15 @@ void model::add_solution(const solution_specs& spec) {
   assert(compiled);
   
 
-  int solutionId = ++uniqueSolutionId;
-  solutions.insert(std::make_pair(solutionId, solution{spec, std::list<math::vector>()}));
-  generate_solution_data(solutionId);
+  ++uniqueSolutionId;
+  solutions.insert(std::make_pair(uniqueSolutionId,
+				  solution{spec, std::list<math::vector>()}));
+  generate_solution_data(uniqueSolutionId);
   
   // We now need to update the VBO's of each window.
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
-    iter->second.add_solution(solutionId);
+    iter->second.add_solution(uniqueSolutionId);
   }
 }
 
@@ -722,8 +867,8 @@ bool model::add_singular_point(const singular_point_specs& spec) {
       return true;
     }
   }
-
-  singularPoints.insert(std::make_pair(++uniqueSingularPointId,
+  ++uniqueSingularPointId;
+  singularPoints.insert(std::make_pair(uniqueSingularPointId,
 				       singular_point{spec, init}));
   return true;
 }
@@ -795,19 +940,23 @@ bool model::compile(std::vector<std::string> newExpressions) {
 	sol != solutions.end(); ++sol) {
       iter->second.delete_solution(sol->first);
     }
+    for(isocline_const_iter iso = isoclines.begin();
+	iso != isoclines.end(); ++iso) {
+      iter->second.delete_solution(iso->first);
+    }
   }
   solutions.clear();
+  isoclines.clear();
   singularPoints.clear();
   compiled = true;
   return true;
 }
 
-int model::add_dynamical(const dynamical_specs& spec) {
-  dynamicalWindows.insert(
-			  std::make_pair(
-					 uniqueDynamicalId,
+dynamical_id model::add_dynamical(const dynamical_specs& spec) {
+  ++uniqueDynamicalId;
+  dynamicalWindows.insert(std::make_pair(uniqueDynamicalId,
 					 dynamical_window(*this, spec)));
-  return uniqueDynamicalId++;
+  return uniqueDynamicalId;
 }
 
 void model::set_dynamical_specs(dynamical_id id,
@@ -844,14 +993,6 @@ void model::set_dynamical_viewport_3d(dynamical_id id,
   dynamicalWindows.at(id).set_viewport_3d(window);
 }
 
-void model::set_solution_color(solution_id id, const color& color) {
-  solutions.at(id).specs.glColor = color;
-}
-
-void model::set_singular_point_color(singular_point_id id, const color& color) {
-  singularPoints.at(id).specs.glColor = color;
-}
-
 bool model::on_dynamical_vertical_axis(dynamical_id id,
 				       int x, int y) const {
   return dynamicalWindows.at(id).on_vertical_axis(x, y);
@@ -868,6 +1009,14 @@ void model::set_solution_specs(solution_id id,
   for(std::unordered_map<dynamical_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
     iter->second.add_solution(id);
+  }
+}
+
+void model::delete_isocline(isocline_id id) {
+  isoclines.erase(id);
+  for(dynamical_iter iter = dynamicalWindows.begin();
+      iter != dynamicalWindows.end(); ++iter) {
+    iter->second.delete_isocline(id);
   }
 }
 
@@ -916,13 +1065,59 @@ void model::generate_solution_data(solution_id id) {
   solutions.at(id).data = points;
 }
 
-bool model::select_solution(dynamical_id id, int x, int y,
-			    solution_id* ret) {
-  return dynamicalWindows.at(id).select_solution(x, y, ret);
+bool model::select_solution(dynamical_id id, int x, int y) {
+  return dynamicalWindows.at(id).select_solution(x, y, &selectedSolutionId);
+}
+
+bool model::select_isocline(dynamical_id id, int x, int y) {
+  return dynamicalWindows.at(id).select_isocline(x, y, &selectedIsoclineId);
+}
+
+bool model::select_singular_point(dynamical_id id, int x, int y) {
+  return dynamicalWindows.at(id)
+    .select_singular_point(x, y, &selectedSingularPointId);
+}
+
+void model::deselect_solution() {
+  selectedSolutionId = kNoSolutionId;
+}
+
+void model::deselect_isocline() {
+  selectedIsoclineId = kNoIsoclineId;
+}
+
+void model::deselect_singular_point() {
+  selectedSingularPointId = kNoSingularPointId;
+}
+
+void model::select_solution(solution_id id) {
+  selectedSolutionId = id;
+}
+void model::select_singular_point(singular_point_id id) {
+  selectedSingularPointId = id;
+}
+void model::select_isocline(isocline_id id) {
+  selectedIsoclineId = id;
+}
+
+solution_id model::get_selected_solution() const {
+  return selectedSolutionId;
+}
+
+isocline_id model::get_selected_isocline() const {
+  return selectedIsoclineId;
+}
+
+singular_point_id model::get_selected_singular_point() const {
+  return selectedSingularPointId;
 }
 
 const std::unordered_map<solution_id, solution>& model::get_solutions() const {
   return solutions;
+}
+
+const std::unordered_map<isocline_id, isocline>& model::get_isoclines() const {
+  return isoclines;
 }
 
 bool model::add_isocline(const isocline_specs& specs) {
@@ -935,21 +1130,21 @@ bool model::add_isocline(const isocline_specs& specs) {
   // variables to a given value and computing the others. For instance we
   // arbitrarily choose to add the equation x1 - m = 0 for some value m.
   //
-  // The initial vector is organized as follows.
+  // The initial vector is of size n + 2 and is organized as follows.
   // initial[0] is the variable of differentiation
   // initial[1] to initial[n] inclusive are the dynamical variables.
   // initial[n+1] is the variable k.
   //
   // The systemFunctions are organized as
   // systemFunctions[0] to systemFunctions[n - 1] inclusive are the
-  // system functions expressing the vector equation F(x) - ka = 0
+  // n system functions expressing the vector equation F(x) - ka = 0
   // systemFunctions[n] is the function expressing the additional constraint.
   //
   // jacobianSystem has the jacobian of F(x) as a submatrix aligned against
   // the top left corner. The last column is the k partial derivative of each
   // function so this amounts to -a as the last column. If the restriction
-  // functions is of the form xn - m = 0 then the last row are all
-  // zeros since except in the entry n - 1 which is a 1.
+  // functions is of the form x_l - m = 0 then the last row are all
+  // zeros  except in the entry l - 1 which is a 1.
   //
   // The indices vector is simply a vector containing the integers,
   // 1 2 3 4 ... n+1
@@ -958,11 +1153,9 @@ bool model::add_isocline(const isocline_specs& specs) {
   std::vector<std::function<double(const double*)>> jacobianFunctions;
   int dimension = get_dynamical_dimension();
   for(int i = 0; i != dimension; ++i) {
-    auto lambda = [=](const double* arr) -> double {
-      return
-      system[i].function(arr) - arr[dimension+1] * specs.direction[i];
-    };
-    systemFunctions.push_back(std::function<double(const double*)>(lambda));
+    systemFunctions.push_back([=](const double* arr) -> double {
+	return system[i].function(arr) - arr[dimension+1] * specs.direction[i];
+      });
   }
   int constraintVar(1);
   double constant(0);
@@ -1045,18 +1238,17 @@ bool model::add_isocline(const isocline_specs& specs) {
     }
     constant += change;
   }
-  int uniqueId = ++uniqueIsoclineId;
-  isoclines.insert(std::make_pair(uniqueId, isocline{specs, points}));
+  ++uniqueIsoclineId;
+  isoclines.insert(std::make_pair(uniqueIsoclineId, isocline{specs, points}));
   // We now need to update the VBO's of each window.
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
-    iter->second.add_isocline(uniqueId);
+    iter->second.add_isocline(uniqueIsoclineId);
   }
   return true;
 }
 
-const dynamical_specs&
-model::get_dynamical_specs(dynamical_id id) const {
+const dynamical_specs& model::get_dynamical_specs(dynamical_id id) const {
   return dynamicalWindows.at(id).get_specs();
 }
 } // namespace gui

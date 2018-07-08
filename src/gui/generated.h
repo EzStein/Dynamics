@@ -74,9 +74,9 @@ class console_frame_base : public wxFrame
 		wxDataViewListCtrl* singularPointsDataViewCtrl;
 		wxButton* singularPointsDeleteButton;
 		wxPanel* m_panel7;
-		wxDataViewListCtrl* m_dataViewListCtrl7;
-		wxButton* m_button11;
-		wxButton* m_button12;
+		wxDataViewListCtrl* isoclinesDataViewCtrl;
+		wxButton* isoclinesEditButton;
+		wxButton* isoclinesDeleteButton;
 		wxStatusBar* statusBar;
 		wxMenu* m_menu22;
 		
@@ -98,6 +98,9 @@ class console_frame_base : public wxFrame
 		virtual void solutions_delete_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void singular_points_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void singular_points_delete_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void isoclines_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
+		virtual void isoclines_edit_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void isoclines_delete_button_on_button_click( wxCommandEvent& event ) = 0;
 		
 	
 	public:

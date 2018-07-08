@@ -38,6 +38,9 @@ class console_frame : public console_frame_base {
   virtual void singular_point_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void close_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void isocline_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void isoclines_edit_button_on_button_click(wxCommandEvent&) override;
+  virtual void isoclines_delete_button_on_button_click(wxCommandEvent&) override;
+  virtual void isoclines_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();
@@ -46,14 +49,7 @@ class console_frame : public console_frame_base {
   // Updates the table of solutions/singular points
   void update_solutions_list();
   void update_singular_points_list();
-
-  // For programatic selection and deselection. Note that simply calling
-  // the deselect/select functions do not generate the selection changed
-  // events automatically.
-  void select_solution(solution_id id);
-  void unselect_solution();
-  void select_singular_point(singular_point_id id);
-  void unselect_singular_point();
+  void update_isoclines_list();
   
 private:
   // Clears the list of equations in the data view ctrl and adds
@@ -64,17 +60,9 @@ private:
   void read_variables_combo_box_input();
 
   // Returns the id of the selected solution.
-  solution_id get_selected_solution_id();
-
-  singular_point_id get_selected_singular_point_id();
-
-  // Called by the selection changed event handler.
-  void process_select_solution();
-
-  void process_select_singular_point();
-
-  void clear_solution_color();
-  void clear_singular_point_color();
+  solution_id get_selected_solution();
+  singular_point_id get_selected_singular_point();
+  isocline_id get_selected_isocline();
 };
 } // namespace gui
 } // namespace dynsolver

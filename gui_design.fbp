@@ -1641,7 +1641,7 @@
                                             <property name="id">wxID_ANY</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">m_dataViewListCtrl7</property>
+                                            <property name="name">isoclinesDataViewCtrl</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -1669,7 +1669,7 @@
                                             <event name="OnDataViewListCtrlItemExpanding"></event>
                                             <event name="OnDataViewListCtrlItemStartEditing"></event>
                                             <event name="OnDataViewListCtrlItemValueChanged"></event>
-                                            <event name="OnDataViewListCtrlSelectionChanged"></event>
+                                            <event name="OnDataViewListCtrlSelectionChanged">isoclines_data_view_ctrl_on_selection_changed</event>
                                             <event name="OnEnterWindow"></event>
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
@@ -1744,7 +1744,7 @@
                                                     <property name="minimize_button">0</property>
                                                     <property name="minimum_size"></property>
                                                     <property name="moveable">1</property>
-                                                    <property name="name">m_button11</property>
+                                                    <property name="name">isoclinesEditButton</property>
                                                     <property name="pane_border">1</property>
                                                     <property name="pane_position"></property>
                                                     <property name="pane_size"></property>
@@ -1765,7 +1765,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
-                                                    <event name="OnButtonClick"></event>
+                                                    <event name="OnButtonClick">isoclines_edit_button_on_button_click</event>
                                                     <event name="OnChar"></event>
                                                     <event name="OnEnterWindow"></event>
                                                     <event name="OnEraseBackground"></event>
@@ -1832,7 +1832,7 @@
                                                     <property name="minimize_button">0</property>
                                                     <property name="minimum_size"></property>
                                                     <property name="moveable">1</property>
-                                                    <property name="name">m_button12</property>
+                                                    <property name="name">isoclinesDeleteButton</property>
                                                     <property name="pane_border">1</property>
                                                     <property name="pane_position"></property>
                                                     <property name="pane_size"></property>
@@ -1853,7 +1853,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
-                                                    <event name="OnButtonClick"></event>
+                                                    <event name="OnButtonClick">isoclines_delete_button_on_button_click</event>
                                                     <event name="OnChar"></event>
                                                     <event name="OnEnterWindow"></event>
                                                     <event name="OnEraseBackground"></event>
@@ -2264,7 +2264,7 @@
                                         <property name="help"></property>
                                         <property name="id">wxID_ANY</property>
                                         <property name="kind">wxITEM_NORMAL</property>
-                                        <property name="label">MyMenuItem</property>
+                                        <property name="label">Isocline...</property>
                                         <property name="name">isoclineMenuItem</property>
                                         <property name="permission">none</property>
                                         <property name="shortcut"></property>

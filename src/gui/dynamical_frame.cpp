@@ -15,7 +15,7 @@ namespace gui {
 
 const int dynamical_frame::kMagnificationTimerEventId = 0;
 
-dynamical_frame::dynamical_frame(app& app, int id, int width, int height) :
+dynamical_frame::dynamical_frame(app& app, dynamical_id id, int width, int height) :
   dynamical_frame_base(nullptr, wxID_ANY, "Dynamical Space"),
   appl(app), id(id),
   magnificationViewport(math::vector2d(0,0),
@@ -204,21 +204,22 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
 
-  if(!appl.get_model().get_dynamical_specs(id).is3d) {
-    const int tolerance = 2;
-    if(std::abs(leftClickMouseX - posX) <= tolerance
-       && std::abs(leftClickMouseY - posY) <= tolerance) {
-      // A mouse click occured. We now attempt to find and select
-      // an object.
-      appl.select_solution(posX, posY, id);
-    }
 
-    leftClickMouseX = posX;
-    leftClickMouseY = posY;
+  const int tolerance = 2;
+  if(std::abs(leftClickMouseX - posX) <= tolerance
+     && std::abs(leftClickMouseY - posY) <= tolerance) {
+    // A mouse click occured. We now attempt to find and select
+    // an object.
+    appl.select_object(id, posX, posY);
+  }
+
+  leftClickMouseX = posX;
+  leftClickMouseY = posY;
+  
+  if(!appl.get_model().get_dynamical_specs(id).is3d) {
     moveViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
     verticalScaling = false;
     horizontalScaling = false;
-
     set_cursor(leftClickMouseX, leftClickMouseY);
   }
 }

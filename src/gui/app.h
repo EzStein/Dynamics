@@ -114,6 +114,13 @@ class app : public wxApp {
   // Called when we need to clear what is currently compiled
   void set_no_compile();
 
+  // Read
+  // Returns the dialogs.
+  solution_dialog* get_solution_dialog();
+  singular_point_dialog* get_singular_point_dialog();
+  dynamical_dialog* get_dynamical_dialog();
+  isocline_dialog* get_isocline_dialog();
+
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model();
@@ -128,40 +135,48 @@ class app : public wxApp {
   void paint_dynamical(dynamical_id);
   void resize_dynamical(dynamical_id, double, double);
 
+  // Compiles the provided system and updates the UI. Returns true
+  // on success.
+  bool compile(const std::vector<std::string>);
+
+  // Add
+  // Adds a solution and updates the necessary frames.
   void add_solution(const solution_specs&);
 
   // Attempts to add the singular point. Returns false if it fails.
   bool add_singular_point(const singular_point_specs&);
 
-  // Deletes the singular point.
+  // Attempts to add the isocline returning true on success.
+  bool add_isocline(const isocline_specs&);
+
+  // Delete
+  // Deletes the solution. and updates the necessary frames
+  void delete_solution(solution_id);
+  
   void delete_singular_point(solution_id id);
 
-  void set_solution_color(solution_id id, const color&);
-  void set_singular_point_color(singular_point_id id, const color&);
+  void delete_isocline(isocline_id id);
 
+  // Update
   // Changes the existing solution.
   void set_solution_specs(solution_id, const solution_specs&);
 
-  // Deletes the existing solution.
-  void delete_solution(solution_id);
-
-  // Compiles the provided system and updates the UI. Returns true
-  // on success.
-  bool compile(const std::vector<std::string>);
-
-  // Returns the dialogs.
-  solution_dialog* get_solution_dialog();
-  singular_point_dialog* get_singular_point_dialog();
-  dynamical_dialog* get_dynamical_dialog();
-  isocline_dialog* get_isocline_dialog();
-
-  // Attempts to selects the solution under the mouse cursor specified
+  // Select
+  // Attempts to selects the object near the mouse cursor specified
   // by the coordnates x, y and the dynamical window given by id.
-  // Returns true on success.
-  bool select_solution(dynamical_id id, int x, int y);
+  // It attempts to select objects in this order:
+  // singular_point, solution, isocline.
+  void select_object(dynamical_id id, int x, int y);
 
-  // Attempts to add the isocline returning true on success.
-  bool add_isocline(const isocline_specs&);
+  // Programatically selects an object.
+  void select_solution(solution_id id);
+  void select_singular_point(singular_point_id id);
+  void select_isocline(isocline_id id);
+
+  // Deselects the object programatically
+  void deselect_solution();
+  void deselect_singular_point();
+  void deselect_isocline();
 
 private:
   // Sends a refresh request to the glCanvas's of all dynamical windows.

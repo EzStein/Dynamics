@@ -28,10 +28,13 @@ console_frame::console_frame(app& app) : console_frame_base(nullptr, wxID_ANY, "
   solutionsDataViewCtrl->AppendTextColumn("T Max");
 
   singularPointsDataViewCtrl->AppendTextColumn("ID");
+  isoclinesDataViewCtrl->AppendTextColumn("ID");
   set_no_compile();
   solutionsEditButton->Disable();
   solutionsDeleteButton->Disable();
   singularPointsDeleteButton->Disable();
+  isoclinesDeleteButton->Disable();
+  isoclinesEditButton->Disable();
 }
 
 console_frame::~console_frame() { }
@@ -220,12 +223,66 @@ void console_frame::update_equations_data_view_ctrl(int variables) {
 }
 
 void console_frame::solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent& evt) {
-  std::cout << "!!" << std::endl;
-  process_select_solution();
+  if(!GetEvtHandlerEnabled()) {
+    return;
+  }
+  std::cout << "!!!" << std::endl;
+  if(solutionsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    appl.select_solution(get_selected_solution());
+    solutionsEditButton->Enable();
+    solutionsDeleteButton->Enable();
+  } else {
+    appl.deselect_solution();
+    solutionsEditButton->Disable();
+    solutionsDeleteButton->Disable();
+  }
+}
+
+void console_frame::isoclines_edit_button_on_button_click(wxCommandEvent&) {
+  
+}
+
+void console_frame::isoclines_delete_button_on_button_click(wxCommandEvent&) {
+}
+
+void console_frame::isoclines_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
+  if(!GetEvtHandlerEnabled()) {
+    return;
+  }
+  if(isoclinesDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    appl.select_isocline(get_selected_isocline());
+    isoclinesDeleteButton->Enable();
+    isoclinesEditButton->Enable();
+  } else {
+    appl.deselect_isocline();
+    isoclinesDeleteButton->Disable();
+    isoclinesEditButton->Disable();
+  }
+}
+
+void console_frame::update_isoclines_list() {
+  // We don't want to generate selection changed events
+  SetEvtHandlerEnabled(false);
+  isoclinesDataViewCtrl->DeleteAllItems();
+  int row = 0;
+  for(std::unordered_map<solution_id, isocline>::const_iterator
+	iter = appl.get_model().get_isoclines().begin();
+      iter != appl.get_model().get_isoclines().end(); ++iter) {
+    wxVector<wxVariant> data;
+    data.push_back(wxVariant(std::to_string(iter->first)));
+    isoclinesDataViewCtrl->AppendItem(data);
+    if(iter->first == appl.get_model().get_selected_isocline()) {
+      isoclinesDataViewCtrl->SelectRow(row);
+    }
+    ++row;
+  }
+  SetEvtHandlerEnabled(true);
 }
 
 void console_frame::update_solutions_list() {
+  SetEvtHandlerEnabled(false);
   solutionsDataViewCtrl->DeleteAllItems();
+  int row = 0;
   for(std::unordered_map<solution_id, solution>::const_iterator
 	iter = appl.get_model().get_solutions().begin();
       iter != appl.get_model().get_solutions().end(); ++iter) {
@@ -235,11 +292,18 @@ void console_frame::update_solutions_list() {
     data.push_back(wxVariant(std::to_string(iter->second.specs.tMin)));
     data.push_back(wxVariant(std::to_string(iter->second.specs.tMax)));
     solutionsDataViewCtrl->AppendItem(data);
+    if(iter->first == appl.get_model().get_selected_solution()) {
+      solutionsDataViewCtrl->SelectRow(row);
+    }
+    ++row;
   }
+  SetEvtHandlerEnabled(true);
 }
 
 void console_frame::update_singular_points_list() {
+  SetEvtHandlerEnabled(false);
   singularPointsDataViewCtrl->DeleteAllItems();
+  int row = 0;
   for(std::unordered_map<singular_point_id, singular_point>::const_iterator iter
 	= appl.get_model().get_singular_points().begin();
       iter != appl.get_model().get_singular_points().end(); ++iter) {
@@ -249,100 +313,24 @@ void console_frame::update_singular_points_list() {
       data.push_back(wxVariant(std::to_string(iter->second.position[i])));
     }
     singularPointsDataViewCtrl->AppendItem(data);
-  }
-	
-}
-
-void console_frame::select_solution(solution_id id) {
-  wxVariant value;
-  for(int i = 0; i != solutionsDataViewCtrl->GetItemCount(); ++i) {
-    solutionsDataViewCtrl->GetValue(value, i, 0);
-    int rowId = std::stoi(value.GetString().ToStdString());
-    if(rowId == id) {
-      solutionsDataViewCtrl->SelectRow(i);
-      process_select_solution();
-      return;
+    if(iter->first == appl.get_model().get_selected_singular_point()) {
+      singularPointsDataViewCtrl->SelectRow(row);
     }
+    ++row;
   }
-  assert(false);
-}
-
-void console_frame::select_singular_point(singular_point_id id) {
-  wxVariant value;
-  for(int i = 0; i != singularPointsDataViewCtrl->GetItemCount(); ++i) {
-    singularPointsDataViewCtrl->GetValue(value, i, 0);
-    int rowId = std::stoi(value.GetString().ToStdString());
-    if(rowId == id) {
-      singularPointsDataViewCtrl->SelectRow(i);
-      process_select_singular_point();
-      return;
-    }
-  }
-  assert(false);
-}
-
-void console_frame::process_select_singular_point() {
-  if(singularPointsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
-    singularPointsDeleteButton->Enable();
-    clear_singular_point_color();
-    color color(0,1,0,1);
-    appl.set_singular_point_color(get_selected_singular_point_id(), color);
-  } else {
-    singularPointsDeleteButton->Disable();
-    clear_singular_point_color();
-  }
+  SetEvtHandlerEnabled(true);
 }
 
 void console_frame::singular_points_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
-  process_select_singular_point();
-}
-
-void console_frame::process_select_solution() {
-  if(solutionsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
-    color color(1.0, 0.0,0.0,1.0);
-    clear_solution_color();
-    appl.set_solution_color(get_selected_solution_id(), color);
-    solutionsEditButton->Enable();
-    solutionsDeleteButton->Enable();
+  if(!GetEvtHandlerEnabled()) {
+    return;
+  }
+  if(singularPointsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    singularPointsDeleteButton->Enable();
+    appl.select_singular_point(get_selected_singular_point());
   } else {
-    // Unselect
-    solutionsEditButton->Disable();
-    solutionsDeleteButton->Disable();
-    clear_solution_color();
-  }
-}
-
-void console_frame::clear_solution_color() {
-  for(std::unordered_map<solution_id, solution>::const_iterator iter =
-	appl.get_model().get_solutions().begin();
-      iter != appl.get_model().get_solutions().end();
-      ++iter) {
-    appl.set_solution_color(iter->first, color(0.0,0.0,0.0,1.0));
-  }
-}
-
-void console_frame::clear_singular_point_color() {
-  for(std::unordered_map<singular_point_id, singular_point>::const_iterator iter =
-	appl.get_model().get_singular_points().begin();
-      iter != appl.get_model().get_singular_points().end();
-      ++iter) {
-    appl.set_singular_point_color(iter->first, color(0.0,0.0,1.0,1.0));
-  }
-}
-
-void console_frame::unselect_solution() {
-  int row = solutionsDataViewCtrl->GetSelectedRow();
-  if(row != wxNOT_FOUND) {
-    solutionsDataViewCtrl->UnselectRow(row);
-    process_select_solution();
-  }  
-}
-
-void console_frame::unselect_singular_point() {
-  int row = singularPointsDataViewCtrl->GetSelectedRow();
-  if(row != wxNOT_FOUND) {
-    singularPointsDataViewCtrl->UnselectRow(row);
-    process_select_singular_point();
+    singularPointsDeleteButton->Disable();
+    appl.deselect_singular_point();
   }
 }
 
@@ -388,7 +376,7 @@ void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
 }
 
 void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
-  solution_id solutionId(get_selected_solution_id());
+  solution_id solutionId(get_selected_solution());
   solution_specs spec(appl.get_model().get_solutions().at(solutionId).specs);
   if(appl.get_solution_dialog()->show_dialog(spec, &spec)) {
     appl.set_solution_specs(solutionId, spec);
@@ -396,15 +384,22 @@ void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
 }
 
 void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {
-  appl.delete_solution(get_selected_solution_id());
+  appl.delete_solution(get_selected_solution());
 }
 
-solution_id console_frame::get_selected_solution_id() {
+solution_id console_frame::get_selected_solution() {
   wxVariant value;
   solutionsDataViewCtrl->GetValue(value, solutionsDataViewCtrl->GetSelectedRow(), 0);
   return std::stoi(value.GetString().ToStdString());
 }
-singular_point_id console_frame::get_selected_singular_point_id() {
+
+isocline_id console_frame::get_selected_isocline() {
+  wxVariant value;
+  isoclinesDataViewCtrl->GetValue(value, isoclinesDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+
+singular_point_id console_frame::get_selected_singular_point() {
   wxVariant value;
   singularPointsDataViewCtrl->GetValue(value,
 				      singularPointsDataViewCtrl->GetSelectedRow(), 0);
@@ -414,7 +409,7 @@ void console_frame::close_menu_item_on_menu_selection(wxCommandEvent&) {
   appl.set_no_compile();
 }
 void console_frame::singular_points_delete_button_on_button_click(wxCommandEvent&) {
-  appl.delete_singular_point(get_selected_singular_point_id());
+  appl.delete_singular_point(get_selected_singular_point());
 }
 } // namespace gui
 } // namespace dynsolver

@@ -19,7 +19,8 @@ class font;
 class text_renderer {
 private:
   vertex_array vao;
-  buffer vbo;
+  // Marked mutable since it is never directly exposed.
+  mutable buffer vbo;
   sampler so;
   program prog;
   GLuint transformationUniform;
@@ -43,10 +44,10 @@ public:
   // font. The coordinates are the window space positions relative to the
   // bottom left corner of the screen. fontSize is the size in pixels
   // of the font. Generally this just means the height of the rendered text.
-  void render_text(const std::string& text, int x, int y, font&,
+  void render_text(const std::string& text, int x, int y, const font&,
 		   GLfloat fontSize = 20,
 		   GLfloat red = 0.0f, GLfloat green = 0.0f, GLfloat blue = 0.0f,
-		   GLfloat alpha = 1.0f);
+		   GLfloat alpha = 1.0f) const;
   
 private:
   std::vector<shader> generate_shaders();

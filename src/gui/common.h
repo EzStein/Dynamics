@@ -8,11 +8,11 @@ namespace gui {
 
 // A mapping from the id's of the dynamical/parameter windows to their
 // gui frames.
-typedef int dynamical_id;
-typedef int parameter_id;
-typedef int singular_point_id;
-typedef int solution_id;
-typedef int isocline_id;
+typedef size_t dynamical_id;
+typedef size_t parameter_id;
+typedef size_t singular_point_id;
+typedef size_t solution_id;
+typedef size_t isocline_id;
 } // namespace gui
 } // namespace dynsolver
 #endif

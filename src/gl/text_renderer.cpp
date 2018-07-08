@@ -68,9 +68,11 @@ text_renderer::text_renderer() : prog(generate_shaders()),
   glBindSampler(textureUnit, so.get_handle());
 }
 
-void text_renderer::render_text(const std::string& text, int x, int y, font& font,
+void text_renderer::render_text(const std::string& text, int x, int y,
+				const font& font,
 				GLfloat fontSize,
-				GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
+				GLfloat red, GLfloat green, GLfloat blue,
+				GLfloat alpha) const {
   GLfloat buffer[16] = {
     0.0f, 0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 0.0f, 0.0f,

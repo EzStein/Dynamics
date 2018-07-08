@@ -149,6 +149,7 @@ void app::close_application() {
   singularPointDialog->Destroy();
   dynamicalDialog->Destroy();
   consoleFrame->Destroy();
+  isoclineDialog->Destroy();
 }
 
 void app::new_dynamical(const dynamical_specs& spec) {
@@ -246,6 +247,15 @@ void app::resize_dynamical(dynamical_id id, double width, double height) {
   modelData->resize_dynamical(id, width, height);
 }
 
+bool app::add_isocline(const isocline_specs& specs) {
+  bool success = modelData->add_isocline(specs);
+  if(success) {
+    refresh_dynamical_windows();
+    consoleFrame->update_isoclines_list();
+  }
+  return success;
+}
+
 void app::add_solution(const solution_specs& spec) {
   modelData->add_solution(spec);
   refresh_dynamical_windows();
@@ -278,16 +288,6 @@ void app::refresh_dynamical_windows() {
   }
 }
 
-void app::set_solution_color(solution_id id, const color& color) {
-  modelData->set_solution_color(id, color);
-  refresh_dynamical_windows();
-}
-
-void app::set_singular_point_color(singular_point_id id, const color& color) {
-  modelData->set_singular_point_color(id, color);
-  refresh_dynamical_windows();
-}
-
 void app::set_solution_specs(solution_id id,
 				     const solution_specs& spec) {
   modelData->set_solution_specs(id, spec);
@@ -307,28 +307,64 @@ void app::delete_singular_point(singular_point_id id) {
   consoleFrame->update_singular_points_list();
 }
 
-bool app::select_solution(int x, int y, dynamical_id id) {
-  solution_id solutionId;
-  if(modelData->select_solution(id, x, y, &solutionId)) {
-    consoleFrame->select_solution(solutionId);
-    return true;
-  } else {
-    consoleFrame->unselect_solution();
-    return false;
+void app::delete_isocline(isocline_id id) {
+  modelData->delete_isocline(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_isoclines_list();
+}
+
+void app::select_object(dynamical_id id, int x, int y) {
+  if(modelData->select_singular_point(id, x, y)) {
+    consoleFrame->update_singular_points_list();
+    refresh_dynamical_windows();
+  } else if(modelData->select_solution(id, x, y)) {
+    consoleFrame->update_solutions_list();
+    refresh_dynamical_windows();
+  } else if(modelData->select_isocline(id, x, y)) {
+    consoleFrame->update_isoclines_list();
+    refresh_dynamical_windows();
   }
+}
+
+// Since these functions are called by console frame, there is no need,
+// to update the console frame.
+void app::select_solution(solution_id id) {
+  modelData->select_solution(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_solutions_list();
+}
+void app::select_singular_point(singular_point_id id) {
+  modelData->select_singular_point(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_singular_points_list();
+}
+void app::select_isocline(isocline_id id) {
+  modelData->select_isocline(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_isoclines_list();
+}
+
+void app::deselect_solution() {
+  modelData->deselect_solution();
+  refresh_dynamical_windows();
+  consoleFrame->update_solutions_list();
+}
+void app::deselect_singular_point() {
+  modelData->deselect_singular_point();
+  refresh_dynamical_windows();
+  consoleFrame->update_singular_points_list();
+}
+void app::deselect_isocline() {
+  modelData->deselect_isocline();
+  refresh_dynamical_windows();
+  consoleFrame->update_isoclines_list();
 }
 
 isocline_dialog* app::get_isocline_dialog() {
   return isoclineDialog;
 }
 
-bool app::add_isocline(const isocline_specs& specs) {
-  bool success = modelData->add_isocline(specs);
-  if(success) {
-    refresh_dynamical_windows();
-  }
-  return success;
-}
+
 
 namespace {
 wxGLContext create_context(const wxGLAttributes& glAttributes,

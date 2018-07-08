@@ -26,8 +26,9 @@ private:
     size_t bearingY;
   };
   // A map from unicode code points to the corresponding character data,
-  // given by the font loaded.
-  std::unordered_map<unsigned long, character> characters;
+  // given by the font loaded. This is used to cache previously loaded
+  // characters so it is marked mutable.
+  mutable std::unordered_map<unsigned long, character> characters;
 
   FT_Face face;
   FT_Library& library;
@@ -49,7 +50,7 @@ public:
   void get_character_data(unsigned long character,
 			  size_t& width, size_t& height,
 			  size_t& bearingX, size_t& bearingY,
-			  size_t& advance, GLuint& texture);
+			  size_t& advance, GLuint& texture) const;
   
   FT_UInt get_base_height() const;
 };

@@ -41,6 +41,14 @@ public:
   double get_green() const;
   double get_blue() const;
   double get_alpha() const;
+
+  void set_red(double);
+  void set_green(double);
+  void set_blue(double);
+  void set_alpha(double);
+
+  // Inverts this color.
+  void invert();
 };
 
 struct solution_specs {
@@ -87,6 +95,7 @@ struct singular_point {
 };
 
 struct isocline_specs {
+  isocline_specs();
   // This is the seed used in newtons method to find the isocline.
   math::vector init;
 
@@ -99,6 +108,8 @@ struct isocline_specs {
 
   // This is the maximum number of vertices used to render the isocline.
   size_t vertices;
+
+  color glColor;
 };
 
 struct isocline {
@@ -154,7 +165,7 @@ class model {
   private:
     // A reference to the containing model. Since this is an inner class of
     // model, it may access all of its private variables.
-    model& modelData;
+    const model& modelData;
 
     // The specification from which VBO's and other data is generated.
     dynamical_specs specs;
@@ -218,8 +229,7 @@ class model {
   public:
     dynamical_window(model&, const dynamical_specs& spec);
 
-    // Gets and sets the specifications.
-    const dynamical_specs& get_specs() const;
+    // Update
     void set_specs(const dynamical_specs& spec);
 
     // Sets the 2d viewport.
@@ -228,9 +238,6 @@ class model {
     // Sets the 3d viewport.
     void set_viewport_3d(const math::window3d&);
 
-    // Performs the same thing as model::select_solution except,
-    bool select_solution(int x, int y, solution_id* id);
-
     // Renders the window to the currently bound context.
     void paint();
 
@@ -238,19 +245,36 @@ class model {
     // width and height is given.
     void resize(int width, int height);
 
+    // Read
     // Returns true if the point given in pixels is on the vertical/horizontal
     // axis.
     bool on_vertical_axis(int x, int y) const;
     bool on_horizontal_axis(int x, int y) const;
+    // Gets and sets the specifications.
+    const dynamical_specs& get_specs() const;
 
-    // Deletes the VBO associated with the given solution.
-    void delete_solution(solution_id);
+    // Add
+    // Adds a solution to this dynamical frame by adding a new solution vbo.
     void add_solution(solution_id);
 
-    // Adds an isocline to this dynamical frame by adding a new
-    // isocline vbo.
+    // Adds an isocline to this dynamical frame by adding a new isocline vbo.
     void add_isocline(isocline_id);
-    
+
+    // Delete
+    // Deletes the VBO associated with the given solution.
+    void delete_solution(solution_id);
+
+    // Deletes the isocline's render data.
+    void delete_isocline(isocline_id);
+
+    // Select
+    // Attempts to select the solution near the mouse cursor at position,
+    // x and y. Returns the selected solution through id. If no solution is
+    // found, returns false and does not modify id.
+    bool select_solution(int x, int y, solution_id* id);
+    bool select_isocline(int x, int y, isocline_id* id);
+    bool select_singular_point(int x, int y, singular_point_id* id);
+
   private:
     // Generates a VBo for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
@@ -263,6 +287,18 @@ class model {
     // Updates the axes vbo. This should be called whenever the axes
     // or the ticks on the axes are altered.
     void update_axes_vbo();
+
+    // Draw
+    void draw_solutions_3d();
+    void draw_isoclines_3d();
+    void draw_singular_points_3d();
+    void draw_axes_3d();
+
+    void draw_solutions_2d();
+    void draw_isoclines_2d();
+    void draw_singular_points_2d();
+    void draw_axes_2d();
+    
     
     typedef std::unordered_map<solution_id, solution_data>::const_iterator
     solution_data_const_iter;
@@ -301,16 +337,6 @@ class model {
   // A list of expressions corresponding to the abstract syntax trees.
   // The size is d.
   std::vector<std::string> expressions;
-
-  // Each dynamical and parameter window will have an id. The id is associated
-  // with the some information in the following maps. The id is also used to
-  // lookup the appropriate frames in the app class.
-  // Consider using strong typdefs
-  std::unordered_map<dynamical_id, dynamical_window> dynamicalWindows;
-  
-  // This is an id number which is not currently mapped in dynamicalWindows map.
-  dynamical_id uniqueDynamicalId;
-
   
   // The following variables are updated on every recompile.
   
@@ -326,28 +352,44 @@ class model {
   // The size is d^2.
   std::vector<expression> jacobian;
 
+  // Each dynamical and parameter window will have an id. The id is associated
+  // with the some information in the following maps. The id is also used to
+  // lookup the appropriate frames in the app class.
+  // Consider using strong typdefs
+  std::unordered_map<dynamical_id, dynamical_window> dynamicalWindows;
+
+
   // The following variables are updated on each change to parameterPosition
   // and to each change to system or jacobian (on any recompilation).
   
   // The following variables demonstrate what to draw on the dynamical plane.
   // They are specifications for what to draw, and the actually pixel data.
-  // Each solution has a unique id.
+  // Each entry in the following maps is given by a unique id.
   std::unordered_map<solution_id, solution> solutions;
-  
-  // All solutions mapped have id's strictly less than this number.
-  solution_id uniqueSolutionId;
-
   std::unordered_map<singular_point_id, singular_point> singularPoints;
-
-  // All singular points mapped in singularPoints have indexes strictly
-  // less than this value.
-  singular_point_id uniqueSingularPointId;
-
   std::unordered_map<isocline_id, isocline> isoclines;
 
-  // All isoclins mapped in isoclines have id's which are strictly
-  // less than that of uniqueIsoclineId.
+  // This value is never mapped. Usually this is set to 0.
+  const dynamical_id kNoDynamicalId;
+  const solution_id kNoSolutionId;
+  const singular_point_id kNoSingularPointId;
+  const isocline_id kNoIsoclineId;
+
+  // This value indicates which object is currently selected. If the value is
+  // set to one of the kNoId constants above, then no object of that type is
+  // selected.
+  solution_id selectedSolutionId;
+  singular_point_id selectedSingularPointId;
+  isocline_id selectedIsoclineId;
+
+  // These unique id's are all greater than or equal to any id's mapped in the
+  // corresponding maps. When adding a new value, the unique id is incremented
+  // and then the new value is inserted with the new id.
+  dynamical_id uniqueDynamicalId;
+  solution_id uniqueSolutionId;
+  singular_point_id uniqueSingularPointId;
   isocline_id uniqueIsoclineId;
+  
 
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
@@ -414,14 +456,6 @@ public:
   // the new values in pixels.
   void resize_dynamical(dynamical_id id, int width, int height);
 
-  // Returns the dynamical dimension.
-  // The dynamical dimension is one less than the number of dynamical variables.
-  int get_dynamical_dimension() const;
-
-  // Returns the number of dynamical variables including the variable of
-  // integration t.
-  int get_dynamical_vars() const;
-
   // Resets most variables and compiles the array of strings into a vector
   // field system of ODE's.  Returns true
   // on success. In the future, this function will return information
@@ -429,18 +463,71 @@ public:
   // Requires that the vector has size 1 or more.
   bool compile(std::vector<std::string>);
 
+  // Add
   // Adds the dynamical window according to the specification provided.
   dynamical_id add_dynamical(const dynamical_specs&);
 
-  // Sets the dynamical window specification. This will update the
-  // necessary VBO's if that is needed.
-  void set_dynamical_specs(dynamical_id id, const dynamical_specs& spec);
-  const dynamical_specs& get_dynamical_specs(dynamical_id id) const;
+  // Adds the initial value solution. The solution is added according to the
+  // specification provided.
+  void add_solution(const solution_specs&);
+  
+  // Attempts find and add the singular point. If newtons method fails,
+  // this method returns false. If the singular point already exists,
+  // nothing more is done.
+  bool add_singular_point(const singular_point_specs&);
 
+  // Attempts to add the isocline. Returns true on success, and false
+  // if the isocline could not be found with the given conditions.
+  bool add_isocline(const isocline_specs& specs);
+
+
+  // Delete
   // Deletes all the data associated with the given window and removes
   // it from the model.
   void delete_dynamical(dynamical_id id);
 
+  // Deletes the solution.
+  void delete_solution(solution_id id);
+
+  // Deletes this singular point.
+  void delete_singular_point(singular_point_id id);
+
+  // Deletes the isocline.
+  void delete_isocline(isocline_id);
+
+  // Select
+  // Attempts to select the solution below the cursor at x, y in the dynamical
+  // window given by id. On success, returns true. The solution found can be
+  // checked throught get_selected_solution_id().
+  // This function will work regardless of whether
+  // the dynamical plane is viewing in 2 or 3 dimensions.
+  bool select_solution(dynamical_id id, int x, int y);
+
+  // Performs the same as select_solution except operates on isoclines and
+  // singular points
+  bool select_isocline(dynamical_id, int x, int y);
+  bool select_singular_point(dynamical_id, int x, int y);
+
+  // Selects the object directly
+  void select_solution(solution_id id);
+  void select_singular_point(singular_point_id id);
+  void select_isocline(isocline_id id);
+
+  // Deselects the solution that is currently selected. Does nothing if no
+  // solution is selected.
+  void deselect_solution();
+
+  // Does the same as the above functions but operates on isoclines or
+  // singular points.
+  void deselect_isocline();
+  void deselect_singular_point();
+
+  // Update: Some specs need to be dynamically updated. More fine grained
+  // control is provided if such functions are common.
+  // Sets the dynamical window specification. This will update the
+  // necessary VBO's if that is needed.
+  void set_dynamical_specs(dynamical_id id, const dynamical_specs& spec);
+  
   // Sets the 2d viewport of the dynamical window without altering the rest
   // of the specification.
   void set_dynamical_viewport_2d(dynamical_id id,
@@ -451,47 +538,37 @@ public:
   void set_dynamical_viewport_3d(dynamical_id id,
 				 const math::window3d& window);
 
-  // Sets the color of the solution provided without altering the rest of
-  // the specification.
-  void set_solution_color(solution_id id, const color& color);
-
-  void set_singular_point_color(singular_point_id id, const color&);
-
   // Sets the solution specification. Updates VBO's if necessary.
   void set_solution_specs(solution_id id, const solution_specs& spec);
 
-  // Deletes the solution.
-  void delete_solution(solution_id id);
 
-  // Adds the initial value solution. The solution is added according to the
-  // specification provided.
-  void add_solution(const solution_specs&);
-
-  // Attempts find and add the singular point. If newtons method fails,
-  // this method returns false. If the singular point already exists,
-  // nothing more is done.
-  bool add_singular_point(const singular_point_specs&);
-
-  // Deletes this singular point.
-  void delete_singular_point(singular_point_id id);
+  // Read
+  const dynamical_specs& get_dynamical_specs(dynamical_id id) const;
 
   const std::unordered_map<solution_id, solution>& get_solutions() const;
+  
   const std::unordered_map<singular_point_id, singular_point>&
   get_singular_points() const;
+  const std::unordered_map<isocline_id, isocline>& get_isoclines() const;
 
-  // Attempts to select the solution below the cursor at x, y in the dynamical
-  // window given by id. On success, returns true and stores the found solution
-  // in the reference provided.
-  bool select_solution(dynamical_id id, int x, int y, solution_id*);
+  // Returns the selected id for the given object or kNoId if no such
+  // object is selected.
+  solution_id get_selected_solution() const;
+  isocline_id get_selected_isocline() const;
+  singular_point_id get_selected_singular_point() const;
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
   bool on_dynamical_vertical_axis(dynamical_id id, int x, int y) const;
   bool on_dynamical_horizontal_axis(dynamical_id id, int x, int y) const;
 
-  // Attempts to add the isocline. Returns true on success, and false
-  // if the isocline could not be found with the given conditions.
-  bool add_isocline(const isocline_specs& specs);
+  // Returns the dynamical dimension.
+  // The dynamical dimension is one less than the number of dynamical variables.
+  int get_dynamical_dimension() const;
+
+  // Returns the number of dynamical variables including the variable of
+  // integration t.
+  int get_dynamical_vars() const;
 };
 } // namespace gui
 } // namespace dynsolver

@@ -24,7 +24,7 @@ font::~font() {
 void font::get_character_data(unsigned long characterCode,
 			size_t& width, size_t& height,
 			size_t& bearingX, size_t& bearingY,
-			size_t& advance, GLuint& texture) {
+			size_t& advance, GLuint& texture) const {
   std::unordered_map<unsigned long, character>::const_iterator iter =
     characters.find(characterCode);
   if(iter != characters.end()) {
