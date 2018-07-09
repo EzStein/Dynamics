@@ -8,6 +8,7 @@ namespace math {
 
 // Represents a complex number as a 2d vector.
 class complex : public vector2d {
+public:
   // Constructs a complex number from real and imaginary components.
   complex(double real, double imag);
 
