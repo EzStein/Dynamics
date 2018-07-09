@@ -233,6 +233,31 @@ void model::dynamical_window::draw_isoclines_3d() {
   }
 }
 void model::dynamical_window::draw_singular_points_3d() {
+  /*  if(specs.xAxisVar != 0 && specs.yAxisVar != 0 && specs.zAxisVar != 0) {
+    glUseProgram(modelData.program2d.get_handle());
+    glBindVertexArray(modelData.vao2d.get_handle());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       modelData.circleVbo.get_handle(),
+		       0, 2 * sizeof(float));
+    for(singular_point_data_const_iter iter = singularPointData.begin();
+	iter != singularPointData.end(); ++iter) {
+      color glColor(modelData.singularPoints.at(iter->first).specs.glColor);
+      if(iter->first == modelData.selectedSingularPointId) {
+	glColor.invert();
+      }
+      glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      
+      math::matrix_4x4 mat = math::matrix_4x4::translation(pixelCoordinate.x(),
+							   pixelCoordinate.y());
+      mat *= math::matrix_4x4::scale(6,6);
+      GLfloat transformationMatrix[16];
+      mat.as_float_array(transformationMatrix);
+      glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+			 1, true, transformationMatrix);
+      glDrawArrays(GL_LINE_LOOP, 0, modelData.circleVboVertices);
+    }
+    } */
 }
 void model::dynamical_window::draw_axes_3d() {
   GLfloat axes[4 * 3] = {

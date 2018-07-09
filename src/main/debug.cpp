@@ -1,24 +1,23 @@
 // This file is for a main executable that is used for ad hoc tests and GDB debugging.
 
-#include "regex/nfa.h"
-#include "compiler/front/driver.h"
-#include "compiler/ir/symbol.h"
-#include "compiler/ast/AST.h"
-
-#include <unordered_map>
-struct production_info {
-  int a;
-  int b;
-};
+#include <iostream>
+#include <string>
+#include <vector>
+#include "math/polynomial.h"
+#include "math/poly_matrix.h"
 int main() {
-  driver dr;
-  std::list<symbol> table;
-  table.push_back(symbol("x",0,0));
-  table.push_back(symbol("y",1,1));
-  table.push_back(symbol("a",2,2));
-  AST ast = dr.parse_as_ast("a(y-x)",table);
-  driver::double_func_t f = dr.compile_as_function<driver::double_func_t>(ast);
-  double args[2] = {3,2};
-  std::cout << "RESULT: " <<  f(args) << std::endl;
+  dynsolver::math::polynomial poly1(std::vector<double>{5, 1});
+  dynsolver::math::polynomial poly2(std::vector<double>{2, 2});
+  dynsolver::math::polynomial poly3(std::vector<double>{3});
+  dynsolver::math::polynomial poly4(std::vector<double>{4});
+
+  dynsolver::math::poly_matrix mat(2);
+  mat[0][0] = poly1;
+  mat[0][1] = poly2;
+  mat[1][0] = poly3;
+  mat[1][1] = poly4;
+
+  const dynsolver::math::poly_matrix& matRef(mat);
+  std::cout << matRef.determinant().to_string() << std::endl;
   return 0;
 }

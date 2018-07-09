@@ -122,6 +122,7 @@ void console_frame::set_no_compile() {
   closeMenuItem->Enable(false);
   solutionsDataViewCtrl->DeleteAllItems();
   singularPointsDataViewCtrl->DeleteAllItems();
+  isoclinesDataViewCtrl->DeleteAllItems();
 }
 
 void console_frame::set_yes_compile() {

@@ -323,6 +323,10 @@ void app::select_object(dynamical_id id, int x, int y) {
   } else if(modelData->select_isocline(id, x, y)) {
     consoleFrame->update_isoclines_list();
     refresh_dynamical_windows();
+  } else {
+    deselect_isocline();
+    deselect_solution();
+    deselect_singular_point();
   }
 }
 
