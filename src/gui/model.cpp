@@ -1,4 +1,3 @@
-
 #include "gui/model.h"
 
 #include <vector>
@@ -19,8 +18,6 @@
 #include "math/window2d.h"
 #include "math/vector2d.h"
 #include "math/matrix_4x4.h"
-
-
 
 namespace dynsolver {
 namespace gui {
@@ -65,6 +62,32 @@ solution_specs::solution_specs() : glColor(0.5,0.5,0,1), init(1) { }
 isocline_specs::isocline_specs() : glColor(0,0.5,0.5,1), init(1) { }
 
 singular_point_specs::singular_point_specs() : init(1), glColor(0.5,0,0.5,1) { }
+
+model::parameter_window::parameter_window(model& model,
+					  const parameter_specs& spec)
+  : modelData(model) {
+}
+
+void model::parameter_window::set_specs(const parameter_specs& spec) {
+}
+
+void model::parameter_window::set_viewport(const math::window2d&) {
+}
+
+void model::parameter_window::paint() {
+}
+
+void model::parameter_window::resize(int width, int height) {
+}
+
+bool model::parameter_window::on_vert_axis(const math::vector2d&) const {
+}
+
+bool model::parameter_window::on_horiz_axis(const math::vector2d&) const {
+}
+
+const parameter_specs& model::parameter_window::get_specs() const {
+}
 
 model::dynamical_window::dynamical_window(model& model,
 					  const dynamical_specs& spec)
@@ -752,19 +775,22 @@ std::vector<gl::shader> model::build_shaders_path_3d() {
   return shaders;
 }
 
+const dynamical_id model::kNoDynamicalId = 0;
+const parameter_id model::kNoParameterId = 0;
+const solution_id model::kNoSolutionId = 0;
+const singular_point_id model::kNoSingularPointId = 0;
+const isocline_id model::kNoIsoclineId = 0;
+
 model::model() : font(constants::kDefaultFontFilePath),
-		 kNoDynamicalId(0),
-		 kNoSolutionId(0),
-		 kNoSingularPointId(0),
-		 kNoIsoclineId(0),
+		 dynamicalDimension(0),
 		 selectedSolutionId(kNoSolutionId),
 		 selectedSingularPointId(kNoSingularPointId),
 		 selectedIsoclineId(kNoIsoclineId),
 		 uniqueDynamicalId(kNoDynamicalId),
+		 uniqueParameterId(kNoParameterId),
 		 uniqueSolutionId(kNoSolutionId),
 		 uniqueSingularPointId(kNoSingularPointId),
 		 uniqueIsoclineId(kNoIsoclineId),
-		 dynamicalDimension(0),
 		 compiled(false),
 		 program2d(build_shaders_2d()),
 		 programPath3d(build_shaders_path_3d()),
@@ -984,13 +1010,29 @@ dynamical_id model::add_dynamical(const dynamical_specs& spec) {
   return uniqueDynamicalId;
 }
 
+parameter_id model::add_parameter(const parameter_specs& spec) {
+  ++uniqueParameterId;
+  parameterWindows.insert(std::make_pair(uniqueParameterId,
+					 parameter_window(*this, spec)));
+  return uniqueParameterId;
+}
+
 void model::set_dynamical_specs(dynamical_id id,
 				const dynamical_specs& spec) {
   dynamicalWindows.at(id).set_specs(spec);
 }
 
+void model::set_parameter_specs(parameter_id id,
+				const parameter_specs& spec) {
+  parameterWindows.at(id).set_specs(spec);
+}
+
 void model::delete_dynamical(dynamical_id id) {
   dynamicalWindows.erase(id);
+}
+
+void model::delete_parameter(parameter_id id) {
+  parameterWindows.erase(id);
 }
 
 int model::get_dynamical_vars() const {
@@ -1008,6 +1050,14 @@ void model::resize_dynamical(dynamical_id id, int width, int height) {
   dynamicalWindows.at(id).resize(width, height);
 }
 
+void model::paint_parameter(parameter_id id) {
+  parameterWindows.at(id).paint();
+}
+
+void model::resize_parameter(parameter_id id, int width, int height) {
+  parameterWindows.at(id).resize(width, height);
+}
+
 void model::set_dynamical_viewport_2d(dynamical_id id,
 				      const math::window2d& window) {
   dynamicalWindows.at(id).set_viewport_2d(window);
@@ -1018,6 +1068,11 @@ void model::set_dynamical_viewport_3d(dynamical_id id,
   dynamicalWindows.at(id).set_viewport_3d(window);
 }
 
+void model::set_parameter_viewport(parameter_id id,
+				   const math::window2d &window) {
+  parameterWindows.at(id).set_viewport(window);
+}
+
 bool model::on_dynamical_vertical_axis(dynamical_id id,
 				       int x, int y) const {
   return dynamicalWindows.at(id).on_vertical_axis(x, y);
@@ -1025,6 +1080,16 @@ bool model::on_dynamical_vertical_axis(dynamical_id id,
 bool model::on_dynamical_horizontal_axis(dynamical_id id,
 					 int x, int y) const {
   return dynamicalWindows.at(id).on_horizontal_axis(x, y);
+}
+
+bool model::on_parameter_horiz_axis(parameter_id id,
+				    const math::vector2d& pos) const {
+  return parameterWindows.at(id).on_horiz_axis(pos);
+}
+
+bool model::on_parameter_vert_axis(parameter_id id,
+				    const math::vector2d& pos) const {
+  return parameterWindows.at(id).on_vert_axis(pos);
 }
 
 void model::set_solution_specs(solution_id id,
@@ -1183,7 +1248,7 @@ bool model::add_isocline(const isocline_specs& specs) {
       });
   }
   int constraintVar(1);
-  double constant(0);
+  double constant(specs.init[constraintVar - 1]);
   systemFunctions.push_back([=](const double* arr) -> double {
       return arr[constraintVar] - constant;
     });
@@ -1214,29 +1279,25 @@ bool model::add_isocline(const isocline_specs& specs) {
     init[i + 1] = specs.init[i];
   }
   init[init.size() - 1] = 1;
+  math::vector original(init);
+  math::vector prev(init);
   std::vector<size_t> indices;
   for(int i = 0; i != dimension + 1; ++i) {
     indices.push_back(i + 1);
   }
   std::list<math::vector> points;
-  double change = 0.1;
-  for(int i = 0; i != 1000; ++i) {
-    systemFunctions[dimension] = [=](const double* arr) -> double {
-      return arr[constraintVar] - constant;
-    };
-    if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
-      // Reverse direction and try again.
-      change *= -1;
-      constant += 2*change;
+  double change = 0.01;
+  for(int j = 0; j != 2; ++j) {
+    for(int i = 0; i != 10000; ++i) {
       systemFunctions[dimension] = [=](const double* arr) -> double {
 	return arr[constraintVar] - constant;
       };
-      if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
+      math::vector newInit(init);
+      if(!newton_method(newInit, systemFunctions, jacobianFunctions, indices)) {
 	jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
 	  [](const double*) -> double {
 	  return 0;
 	};
-	// If it still fails, we change the axis of sweeping.
 	if(constraintVar < dimension) {
 	  ++constraintVar;
 	} else {
@@ -1246,22 +1307,40 @@ bool model::add_isocline(const isocline_specs& specs) {
 	  [](const double*) -> double {
 	  return 1;
 	};
-	constant = init[constraintVar];
+	if(init[constraintVar] - prev[constraintVar] > 0) {
+	  std::cout << "PLUS" << std::endl;
+	  change = std::abs(change);
+	} else {
+	  std::cout << "MINUS" << std::endl;
+	  change = -std::abs(change);
+	}
+	constant = prev[constraintVar];
 	constant += change;
 	systemFunctions[dimension] = [=](const double* arr) -> double {
 	  return arr[constraintVar] - constant;
 	};
-	if(!newton_method(init, systemFunctions, jacobianFunctions, indices)) {
-	  change *= -1;
-	  constant += 2*change;
-	}
       } else {
-	constant += change;
+	prev = init;
+	init = newInit;
+	points.push_back(init);
       }
-    } else {
-      points.push_back(init);
+      constant += change;
     }
-    constant += change;
+    jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
+      [](const double*) -> double {
+      return 0;
+    };
+    change = -0.01;
+    constraintVar = 1;
+    constant = specs.init[0];
+    init = original;
+    prev = original;
+    points.reverse();
+    jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
+      [](const double*) -> double {
+      return 1;
+    };
+
   }
   ++uniqueIsoclineId;
   isoclines.insert(std::make_pair(uniqueIsoclineId, isocline{specs, points}));
@@ -1275,6 +1354,10 @@ bool model::add_isocline(const isocline_specs& specs) {
 
 const dynamical_specs& model::get_dynamical_specs(dynamical_id id) const {
   return dynamicalWindows.at(id).get_specs();
+}
+
+const parameter_specs& model::get_parameter_specs(parameter_id id) const {
+  return parameterWindows.at(id).get_specs();
 }
 } // namespace gui
 } // namespace dynslover

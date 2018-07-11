@@ -11,6 +11,7 @@
 #include "constants.h"
 #include "gui/console_frame.h"
 #include "gui/dynamical_frame.h"
+#include "gui/parameter_frame.h"
 #include "gui/solution_dialog.h"
 #include "gui/singular_point_dialog.h"
 #include "gui/dynamical_dialog.h"
@@ -31,15 +32,22 @@ void APIENTRY opengl_debug_message_callback( GLenum source,
 					       const GLchar* message,
 					       const void* userParam ) {
   if(severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
-    throw std::runtime_error("OpenGL exception: " + std::to_string(type) + ": " + message);
+    throw std::runtime_error("OpenGL exception: " + std::to_string(type)
+			     + ": " + message);
   } else {
     std::cout << "GL Notification: " << message << std::endl;
   }
 }
 } // namespace anonymous
 
-app::app() : glContext(nullptr), solutionDialog(nullptr),
-	     modelData(nullptr), dynamicalDialog(nullptr), customLogger(nullptr) { }
+app::app() : customLogger(nullptr),
+	     modelData(nullptr),
+	     glContext(nullptr),
+	     consoleFrame(nullptr),
+	     solutionDialog(nullptr),
+	     singularPointDialog(nullptr),
+	     dynamicalDialog(nullptr),
+	     isoclineDialog(nullptr) { }
 
 app::~app() {
   // This destructer is called multiple times for some stupid reason!
@@ -131,6 +139,12 @@ void app::delete_dynamical(dynamical_id id) {
   dynamicalFrames.erase(id);
 }
 
+void app::delete_parameter(parameter_id id) {
+  modelData->delete_parameter(id);
+  parameterFrames.at(id)->Destroy();
+  parameterFrames.erase(id);
+}
+
 // Called in order to delete all dynamical windows.
 // Does not assume that the dynamical frames have been destroyed,
 // so it destroys them
@@ -152,7 +166,7 @@ void app::close_application() {
   isoclineDialog->Destroy();
 }
 
-void app::new_dynamical(const dynamical_specs& spec) {
+void app::add_dynamical(const dynamical_specs& spec) {
   int width = spec.viewport2d.get_size().x();
   int height = spec.viewport2d.get_size().y();
   dynamical_id id = modelData->add_dynamical(spec);
@@ -161,11 +175,26 @@ void app::new_dynamical(const dynamical_specs& spec) {
   frame->Show();
 }
 
+void app::add_parameter(const parameter_specs& spec) {
+  math::vector2d size(spec.viewport.get_size());
+  parameter_id id = modelData->add_parameter(spec);
+  parameter_frame* frame = new parameter_frame(*this, id, size.x(), size.y());
+  parameterFrames.insert(std::make_pair(id, frame));
+  frame->Show();
+}
+
 void app::set_dynamical_specs(dynamical_id id,
 					     const dynamical_specs& spec) {
   modelData->set_dynamical_specs(id, spec);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
+
+void app::set_parameter_specs(parameter_id id,
+			      const parameter_specs& spec) {
+  modelData->set_parameter_specs(id, spec);
+  parameterFrames.at(id)->refresh_gl_canvas();
+}
+
 
 void app::set_dynamical_viewport_2d(dynamical_id id,
 				    const math::window2d& window) {
@@ -177,6 +206,11 @@ void app::set_dynamical_viewport_3d(dynamical_id id,
 				    const math::window3d& window) {
   modelData->set_dynamical_viewport_3d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
+}
+
+void app::set_parameter_viewport(parameter_id id, const math::window2d& wind) {
+  modelData->set_parameter_viewport(id, wind);
+  parameterFrames.at(id)->refresh_gl_canvas();
 }
 
 int app::OnExit() {
@@ -243,8 +277,16 @@ void app::paint_dynamical(dynamical_id id) {
   modelData->paint_dynamical(id);
 }
 
+void app::paint_parameter(parameter_id id) {
+  modelData->paint_parameter(id);
+}
+
 void app::resize_dynamical(dynamical_id id, double width, double height) {
   modelData->resize_dynamical(id, width, height);
+}
+
+void app::resize_parameter(parameter_id id, int width, int height) {
+  modelData->resize_parameter(id, width, height);
 }
 
 bool app::add_isocline(const isocline_specs& specs) {
@@ -367,8 +409,6 @@ void app::deselect_isocline() {
 isocline_dialog* app::get_isocline_dialog() {
   return isoclineDialog;
 }
-
-
 
 namespace {
 wxGLContext create_context(const wxGLAttributes& glAttributes,

@@ -4,6 +4,8 @@
 namespace dynsolver {
 namespace math {
 
+class eigenvalue;
+
 // A specialization of the matrix class that represents a square matrix.
 class square_matrix : public matrix {
  public:
@@ -32,6 +34,10 @@ class square_matrix : public matrix {
   // Inverts this matrix if possible. If the matrix is not invertiable,
   // returns false and does not alter the matrix.
   bool invert();
+
+  // Finds all the eigenvalues of this matrix including the corresponding
+  // eigenvectors.
+  std::vector<eigenvalue> find_eigenvalues() const;
 
   // Various arithmetic operations on matrices
   square_matrix operator+(const square_matrix&) const;

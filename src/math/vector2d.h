@@ -27,6 +27,9 @@ class vector2d : public vector {
   // connected the two provided points. Note that this computes the
   // distance to a line segment, not a line.
   double line_segment_distance(const vector2d&, const vector2d&) const;
+
+  vector2d operator+(const vector2d&) const;
+  vector2d operator-(const vector2d&) const;
 };
 } // namespace math
 } // namespace dynsolver

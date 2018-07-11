@@ -169,6 +169,58 @@ class dynamical_frame_base : public wxFrame
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// Class parameter_frame_base
+///////////////////////////////////////////////////////////////////////////////
+class parameter_frame_base : public wxFrame 
+{
+	private:
+	
+	protected:
+		wxMenuBar* m_menubar3;
+		wxMenu* m_menu9;
+		wxMenuItem* editMenuItem;
+		wxStatusBar* m_statusBar3;
+		wxPanel* m_panel11;
+		wxMenu* m_menu10;
+		wxBoxSizer* parameterWindowBox;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		parameter_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 845,713 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		
+		~parameter_frame_base();
+		
+		void m_panel11OnContextMenu( wxMouseEvent &event )
+		{
+			m_panel11->PopupMenu( m_menu10, event.GetPosition() );
+		}
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class parameter_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class parameter_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxPropertyGrid* m_propertyGrid6;
+		wxButton* m_button15;
+		wxButton* m_button16;
+	
+	public:
+		
+		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 627,357 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~parameter_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// Class solution_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
 class solution_dialog_base : public wxDialog 
@@ -239,6 +291,10 @@ class isocline_dialog_base : public wxDialog
 		wxDataViewListCtrl* directionDataViewCtrl;
 		wxPanel* m_panel10;
 		wxDataViewListCtrl* initialDataViewCtrl;
+		wxPanel* m_panel101;
+		wxPropertyGrid* m_propertyGrid5;
+		wxPGProperty* m_propertyGridItem4;
+		wxPGProperty* m_propertyGridItem5;
 		wxButton* m_button14;
 		wxButton* m_button13;
 		

@@ -19,6 +19,7 @@ namespace dynsolver {
 namespace gui {
 
 class dynamical_frame;
+class parameter_frame;
 class console_frame;
 class solution_dialog;
 class singular_point_dialog;
@@ -55,6 +56,7 @@ class app : public wxApp {
   wxGLContext* glContext;
   
   std::unordered_map<dynamical_id, dynamical_frame*> dynamicalFrames;
+  std::unordered_map<parameter_id, parameter_frame*> parameterFrames;
 
   // The main frame that is always shown.
   console_frame* consoleFrame;
@@ -87,6 +89,8 @@ class app : public wxApp {
   // is no need to destroy the frame manually.
   void delete_dynamical(dynamical_id id);
 
+  void delete_parameter(parameter_id id);
+
   // Called in order to delete all dynamical windows.
   // Does not assume that the dynamical frames have been destroyed,
   // so it destroys them.
@@ -97,11 +101,12 @@ class app : public wxApp {
   void close_application();
 
   // Constructs a new dynamical window according to the provided specification.
-  void new_dynamical(const dynamical_specs&);
+  void add_dynamical(const dynamical_specs&);
+
+  void add_parameter(const parameter_specs&);
 
   // Changes the specification of the dynamical window.
-  void set_dynamical_specs(dynamical_id id,
-					  const dynamical_specs&);
+  void set_dynamical_specs(dynamical_id id, const dynamical_specs&);
 
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_2d(dynamical_id id,
@@ -110,6 +115,9 @@ class app : public wxApp {
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_3d(dynamical_id id,
 				 const math::window3d&);
+
+  void set_parameter_specs(parameter_id, const parameter_specs&);
+  void set_parameter_viewport(parameter_id id, const math::window2d&);
 
   // Called when we need to clear what is currently compiled
   void set_no_compile();
@@ -133,7 +141,9 @@ class app : public wxApp {
   const wxGLAttributes& get_gl_attributes();
 
   void paint_dynamical(dynamical_id);
+  void paint_parameter(parameter_id);
   void resize_dynamical(dynamical_id, double, double);
+  void resize_parameter(parameter_id, int, int);
 
   // Compiles the provided system and updates the UI. Returns true
   // on success.
@@ -179,7 +189,6 @@ class app : public wxApp {
   void deselect_isocline();
 
 private:
-  // Sends a refresh request to the glCanvas's of all dynamical windows.
   void refresh_dynamical_windows();
 };
 

@@ -8,6 +8,7 @@
 namespace dynsolver {
 namespace math {
 class vector;
+class eigenvalue;
 
 // This class represents a potentially rectangular matrix of doubles.
 // It provides numerical operations on matrices that are specifically optimized

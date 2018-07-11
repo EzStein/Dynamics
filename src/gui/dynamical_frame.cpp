@@ -21,16 +21,16 @@ dynamical_frame::dynamical_frame(app& app, dynamical_id id, int width, int heigh
   magnificationViewport(math::vector2d(0,0),
 			math::vector2d(0,0),
 			math::vector2d(0,0)),
-  magnificationTimer(this, kMagnificationTimerEventId),
   moveViewport(math::vector2d(0,0),
 	       math::vector2d(0,0),
 	       math::vector2d(0,0)),
+  firstWheelEvent(true),
+  magnificationTimer(this, kMagnificationTimerEventId),
+  verticalScaling(false),
+  horizontalScaling(false),
   axesScalingViewport(math::vector2d(0,0),
 		      math::vector2d(0,0),
-		      math::vector2d(0,0)),
-  firstWheelEvent(true),
-  verticalScaling(false),
-  horizontalScaling(false) {
+		      math::vector2d(0,0)) {
   // Setup events and widgets not already done in dynamical_frame_base
   glCanvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
 			    wxDefaultPosition, wxSize(width, height));

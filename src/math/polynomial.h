@@ -93,7 +93,8 @@ public:
   // Returns a vector of size n + 1.
   // The kth derivative is returned in the std::vector at index k. In particular
   // the evaluation is returned in the 0th index.
-  //  std::vector<double> evauluate(size_t n, double x) const;
+  //  std::vector<double> evaluate(size_t n, double x) const;
+  //  std::vector<complex> evaluate(size_t n, complex x) const;
 
   // Finds all the roots of this polynomial returning a vector of these roots.
   // The multiplicities of each root in the vector will add up to get_degree().

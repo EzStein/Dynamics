@@ -18,8 +18,10 @@ private:
 public:
   poly_root(const complex& root, size_t multiplicity);
 
+  // Getters and setters.
   const complex& get_root() const;
   size_t get_multiplicity() const;
+  void set_multiplicity(size_t);
 };
 } // namespace math
 } // namespace dynsolver

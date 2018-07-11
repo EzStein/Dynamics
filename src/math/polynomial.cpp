@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstring>
 #include <cassert>
+#include <iostream>
 
 #include "math/complex.h"
 #include "math/poly_root.h"
@@ -244,10 +245,97 @@ division_ret polynomial::divide(const polynomial& divisor) const {
 // We shall use Lagurre's method with polynomial deflation followed by
 // polishing with newton's method.
 std::vector<poly_root> polynomial::find_roots() const {
+  const double tolerance = 1e-10;
+  const int maxIterations = 1000;
+  // This vector holds a list of potential roots that have yet to be polished.
+  std::vector<complex> potentialRoots;
+
+  // This is the polynomial for which we will find a root.
   polynomial deflated(*this);
-  polynomial deflatedDeriv1(deflated.derivative());
-  polynomial deflatedDeriv2(deflatedDeriv1.derivative());
-  assert(false);
+  while(1) {
+    // Our initial guess at the root.
+    complex root(0, 0);
+
+    // The Degree of the polynomial
+    complex n(deflated.get_degree(), 0);
+    polynomial deriv(deflated.derivative());
+    polynomial deriv2(deriv.derivative());
+    for(int i = 0; i != maxIterations; ++i) {
+      complex eval(deflated.evaluate(root));
+      if(eval.norm() < tolerance) break;
+      complex evalDeriv(deriv.evaluate(root));
+      complex evalDeriv2(deriv2.evaluate(root));
+      complex g = evalDeriv / eval;
+      complex gSquared = g * g;
+      complex h = gSquared - evalDeriv2 / eval;
+      complex sqrt = ((n - complex(1,0)) * (n * h - gSquared));
+      sqrt.sqrt();
+      complex denomMinus = g - sqrt;
+      complex denomPlus = g + sqrt;
+      complex change(denomMinus.norm() > denomPlus.norm() ?
+		     n / denomMinus : n / denomPlus);
+      root -= change;
+      if(change.norm() < tolerance) break;
+    }
+    // We now have a potential root stored in roots. We first polish it before
+    // using synthetic division to get a new polynomial for seraching
+    // for the remaining roots.
+    if(std::abs(root.imaginary()) < tolerance) {
+      // Real root
+      potentialRoots.push_back(root);
+      polynomial divisor(std::vector<double>{-1 * root.real(), 1});
+      deflated = deflated.divide(divisor).quotient;
+    } else {
+      // Complex conjugate Root we add it and its conjugate.
+      potentialRoots.push_back(root);
+      root.conjugate();
+      potentialRoots.push_back(root);
+      
+      std::vector<double> coefficients;
+      coefficients.push_back(root.norm_squared());
+      coefficients.push_back(-2 * root.real());
+      coefficients.push_back(1);
+      polynomial divisor(coefficients);
+      deflated = deflated.divide(divisor).quotient;
+    }
+    if(deflated.get_degree() == 0) break;
+  }
+  // We now polish the roots with newton's method against the
+  // original polynomial.
+  std::vector<poly_root> roots;
+  polynomial deriv(derivative());
+  for(std::vector<complex>::iterator root = potentialRoots.begin();
+      root != potentialRoots.end(); ++root) {
+    for(int i = 0; i != maxIterations; ++i) {
+      complex eval(evaluate(*root));
+      complex evalDeriv(deriv.evaluate(*root));
+      if(evalDeriv.norm() < tolerance) break;
+      complex change = eval / evalDeriv;
+      *root = *root - change;
+      if(change.norm() < tolerance) break;
+    }
+    // We now add root to the list of poly_roots, increasing the multiplicity,
+    // if it is not distinct.
+    bool distinct = true;
+    for(std::vector<poly_root>::iterator iter = roots.begin();
+	iter != roots.end(); ++iter) {
+      if(iter->get_root().distance(*root) < 1e-5) {
+	iter->set_multiplicity(iter->get_multiplicity() + 1);
+	distinct = false;
+	break;
+      }
+    }
+    if(distinct) {
+      roots.push_back(poly_root(*root, 1));
+    }
+  }
+  return roots;
+  /*  std::vector<poly_root> roots;
+  for(std::vector<complex>::iterator root = potentialRoots.begin();
+      root != potentialRoots.end(); ++root) {
+    roots.push_back(poly_root(*root, 1));
+  }
+  return roots;*/
 }
 } // namespace math
 } // namespace dynsolver

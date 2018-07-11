@@ -1,6 +1,9 @@
 #include "math/square_matrix.h"
 
 #include <cassert>
+#include "math/poly_matrix.h"
+#include "math/polynomial.h"
+#include "math/eigenvalue.h"
 
 namespace dynsolver {
 namespace math {
@@ -108,6 +111,50 @@ square_matrix square_matrix::operator/(double scal) const {
   square_matrix mat(*this);
   mat /= scal;
   return mat;
+}
+
+std::vector<eigenvalue> square_matrix::find_eigenvalues() const {
+  const double tolerance = 1e-10;
+  // We first perform iterative QR decomposition
+  square_matrix mat(*this);
+  const int maxIterations = 100;
+  for(int i = 0; i != maxIterations; ++i) {
+    square_matrix q;
+    square_matrix r;
+    mat.qr_decomposition(q, r);
+    mat = r * q;
+    // Check for termination;
+    
+  }
+  // For each submatrix we compute a set of eigenvalues.
+  std::vector<eigenvalue> values;
+  int start = 0;
+  while(start != mat.size()) {
+    int r = start;
+    while(std::abs(mat[r][start]) >= tolerance && r != mat.size()) {
+      ++r;
+    }
+    poly_matrix sub(r - start);
+    for(int i = start; i != r; ++i) {
+      for(int j = start; j != r; ++j) {
+	if(i == j) {
+	  sub[i][j] = polynomial(std::vector<double>{mat[i][j], -1});
+	} else {
+	  sub[i][j] = polynomial(std::vector<double>{mat[i][j]});
+	}
+      }
+    }
+    const poly_matrix& subConst(sub);
+    polynomial characteristic(subConst.determinant());
+    std::vector<poly_root> roots(characteristic.find_roots());
+    for(std::vector<poly_root>::const_iterator root = roots.begin();
+	root != roots.end(); ++root) {
+      std::vector<math::vector> vectors;
+      values.push_back(eigenvalue(*root, vectors));
+    }
+    start = r;
+  }
+  return values;
 }
 } // namespace math
 } // namespace dynslover

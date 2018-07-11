@@ -16,5 +16,9 @@ size_t poly_root::get_multiplicity() const {
   return multiplicity;
 }
 
+void poly_root::set_multiplicity(size_t newMult) {
+  multiplicity = newMult;
+}
+
 } // namespace math
 } // namespace dynsolver

@@ -140,6 +140,12 @@ struct dynamical_specs {
   int zAxisVar;
 };
 
+struct parameter_specs {
+  int horizAxisVar;
+  int vertAxisVar;
+  math::window2d viewport;
+};
+
 // This class is used to hold all the data behind the GUI system.
 // In general, the data can only be accessed using getters and setters.
 // This class almost completely decoupled from the view. It is the
@@ -157,6 +163,41 @@ class model {
   struct expression {
     AST ast;
     compiler::function<double, const double*> function;
+  };
+
+  class parameter_window {
+  private:
+    // A reference to the model.
+    const model& modelData;
+
+    // The specification for this window.
+    parameter_specs specs;
+    
+  public:
+    parameter_window(model&, const parameter_specs& spec);
+
+    // Update
+    void set_specs(const parameter_specs& spec);
+
+    // Sets the 2d viewport.
+    void set_viewport(const math::window2d&);
+
+    // Renders the window to the currently bound context.
+    void paint();
+
+    // Called when the parameter window is resized. The new
+    // width and height is given.
+    void resize(int width, int height);
+
+    // Read
+    // Returns true if the point given in pixels is on the vertical/horizontal
+    // axis.
+    bool on_vert_axis(const math::vector2d&) const;
+    bool on_horiz_axis(const math::vector2d&) const;
+    
+    // Gets and sets the specifications.
+    const parameter_specs& get_specs() const;
+    
   };
   
   // Represents information associated with an instance of a dynamical window.
@@ -357,6 +398,7 @@ class model {
   // lookup the appropriate frames in the app class.
   // Consider using strong typdefs
   std::unordered_map<dynamical_id, dynamical_window> dynamicalWindows;
+  std::unordered_map<parameter_id, parameter_window> parameterWindows;
 
 
   // The following variables are updated on each change to parameterPosition
@@ -369,12 +411,6 @@ class model {
   std::unordered_map<singular_point_id, singular_point> singularPoints;
   std::unordered_map<isocline_id, isocline> isoclines;
 
-  // This value is never mapped. Usually this is set to 0.
-  const dynamical_id kNoDynamicalId;
-  const solution_id kNoSolutionId;
-  const singular_point_id kNoSingularPointId;
-  const isocline_id kNoIsoclineId;
-
   // This value indicates which object is currently selected. If the value is
   // set to one of the kNoId constants above, then no object of that type is
   // selected.
@@ -386,6 +422,7 @@ class model {
   // corresponding maps. When adding a new value, the unique id is incremented
   // and then the new value is inserted with the new id.
   dynamical_id uniqueDynamicalId;
+  parameter_id uniqueParameterId;
   solution_id uniqueSolutionId;
   singular_point_id uniqueSingularPointId;
   isocline_id uniqueIsoclineId;
@@ -441,6 +478,13 @@ class model {
   isocline_iter;
   
 public:
+  // This value is never mapped. Usually this is set to 0.
+  static const dynamical_id kNoDynamicalId;
+  static const parameter_id kNoParameterId;
+  static const solution_id kNoSolutionId;
+  static const singular_point_id kNoSingularPointId;
+  static const isocline_id kNoIsoclineId;
+  
   model();
 
   // Called to clear what is currently compiled.
@@ -451,10 +495,13 @@ public:
   // appropriate window before calling this method, and the buffers must
   // be swapped after calling this method.
   void paint_dynamical(dynamical_id id);
+  void paint_parameter(parameter_id id);
 
   // Resizes the dynamical window so that the width and height are given by
   // the new values in pixels.
   void resize_dynamical(dynamical_id id, int width, int height);
+  void resize_parameter(parameter_id id, int width, int height);
+  
 
   // Resets most variables and compiles the array of strings into a vector
   // field system of ODE's.  Returns true
@@ -466,6 +513,8 @@ public:
   // Add
   // Adds the dynamical window according to the specification provided.
   dynamical_id add_dynamical(const dynamical_specs&);
+
+  parameter_id add_parameter(const parameter_specs&);
 
   // Adds the initial value solution. The solution is added according to the
   // specification provided.
@@ -485,6 +534,8 @@ public:
   // Deletes all the data associated with the given window and removes
   // it from the model.
   void delete_dynamical(dynamical_id id);
+
+  void delete_parameter(parameter_id id);
 
   // Deletes the solution.
   void delete_solution(solution_id id);
@@ -538,12 +589,18 @@ public:
   void set_dynamical_viewport_3d(dynamical_id id,
 				 const math::window3d& window);
 
+  void set_parameter_specs(parameter_id, const parameter_specs&);
+  
+  void set_parameter_viewport(parameter_id,
+			      const math::window2d& window);
+
   // Sets the solution specification. Updates VBO's if necessary.
   void set_solution_specs(solution_id id, const solution_specs& spec);
 
 
   // Read
   const dynamical_specs& get_dynamical_specs(dynamical_id id) const;
+  const parameter_specs& get_parameter_specs(parameter_id id) const;
 
   const std::unordered_map<solution_id, solution>& get_solutions() const;
   
@@ -561,6 +618,9 @@ public:
   // axes respectively for the given dynamical_window
   bool on_dynamical_vertical_axis(dynamical_id id, int x, int y) const;
   bool on_dynamical_horizontal_axis(dynamical_id id, int x, int y) const;
+
+  bool on_parameter_vert_axis(parameter_id id, const math::vector2d&) const;
+  bool on_parameter_horiz_axis(parameter_id id, const math::vector2d&) const;
 
   // Returns the dynamical dimension.
   // The dynamical dimension is one less than the number of dynamical variables.

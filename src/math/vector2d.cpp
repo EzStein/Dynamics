@@ -45,5 +45,17 @@ double vector2d::line_segment_distance(const vector2d& p1, const vector2d& p2) c
     }
   }
 }
+
+vector2d vector2d::operator+(const vector2d& other) const {
+  vector2d vec(*this);
+  vec += other;
+  return vec;
+}
+
+vector2d vector2d::operator-(const vector2d& other) const {
+  vector2d vec(*this);
+  vec += other;
+  return vec;
+}
 } // namespace math
 } // namespace dynsolver

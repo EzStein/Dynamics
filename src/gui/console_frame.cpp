@@ -98,7 +98,7 @@ void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&)
   
   spec.is3d = false;
   if(appl.get_dynamical_dialog()->show_dialog(spec, &spec)) {
-    appl.new_dynamical(spec);
+    appl.add_dynamical(spec);
   }
 }
 
@@ -135,6 +135,7 @@ void console_frame::set_yes_compile() {
 
   singularPointsDataViewCtrl->DeleteAllItems();
   solutionsDataViewCtrl->DeleteAllItems();
+  isoclinesDataViewCtrl->DeleteAllItems();
   
   singularPointsDataViewCtrl->ClearColumns();
   singularPointsDataViewCtrl->AppendTextColumn("ID");
@@ -142,6 +143,9 @@ void console_frame::set_yes_compile() {
   for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
     singularPointsDataViewCtrl->AppendTextColumn("x" + std::to_string(i));
   }
+
+  isoclinesDataViewCtrl->ClearColumns();
+  isoclinesDataViewCtrl->AppendTextColumn("ID");
 }
 
 void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
@@ -224,18 +228,10 @@ void console_frame::update_equations_data_view_ctrl(int variables) {
 }
 
 void console_frame::solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent& evt) {
-  if(!GetEvtHandlerEnabled()) {
-    return;
-  }
-  std::cout << "!!!" << std::endl;
   if(solutionsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
     appl.select_solution(get_selected_solution());
-    solutionsEditButton->Enable();
-    solutionsDeleteButton->Enable();
   } else {
     appl.deselect_solution();
-    solutionsEditButton->Disable();
-    solutionsDeleteButton->Disable();
   }
 }
 
@@ -244,26 +240,20 @@ void console_frame::isoclines_edit_button_on_button_click(wxCommandEvent&) {
 }
 
 void console_frame::isoclines_delete_button_on_button_click(wxCommandEvent&) {
+  appl.delete_isocline(get_selected_isocline());
 }
 
 void console_frame::isoclines_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
-  if(!GetEvtHandlerEnabled()) {
-    return;
-  }
   if(isoclinesDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
     appl.select_isocline(get_selected_isocline());
-    isoclinesDeleteButton->Enable();
-    isoclinesEditButton->Enable();
   } else {
     appl.deselect_isocline();
-    isoclinesDeleteButton->Disable();
-    isoclinesEditButton->Disable();
   }
 }
 
 void console_frame::update_isoclines_list() {
   // We don't want to generate selection changed events
-  SetEvtHandlerEnabled(false);
+  isoclinesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
   isoclinesDataViewCtrl->DeleteAllItems();
   int row = 0;
   for(std::unordered_map<solution_id, isocline>::const_iterator
@@ -274,14 +264,20 @@ void console_frame::update_isoclines_list() {
     isoclinesDataViewCtrl->AppendItem(data);
     if(iter->first == appl.get_model().get_selected_isocline()) {
       isoclinesDataViewCtrl->SelectRow(row);
+      
     }
     ++row;
   }
-  SetEvtHandlerEnabled(true);
+  if(appl.get_model().get_selected_isocline() == model::kNoIsoclineId) {
+    isoclinesDeleteButton->Disable();
+  } else {
+    isoclinesDeleteButton->Enable();
+  }
+  isoclinesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
 }
 
 void console_frame::update_solutions_list() {
-  SetEvtHandlerEnabled(false);
+  solutionsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
   solutionsDataViewCtrl->DeleteAllItems();
   int row = 0;
   for(std::unordered_map<solution_id, solution>::const_iterator
@@ -298,11 +294,18 @@ void console_frame::update_solutions_list() {
     }
     ++row;
   }
-  SetEvtHandlerEnabled(true);
+  if(appl.get_model().get_selected_solution() == model::kNoSolutionId) {
+    solutionsDeleteButton->Disable();
+    solutionsEditButton->Disable();
+  } else {
+    solutionsDeleteButton->Enable();
+    solutionsEditButton->Enable();
+  }
+  solutionsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
 }
 
 void console_frame::update_singular_points_list() {
-  SetEvtHandlerEnabled(false);
+  singularPointsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
   singularPointsDataViewCtrl->DeleteAllItems();
   int row = 0;
   for(std::unordered_map<singular_point_id, singular_point>::const_iterator iter
@@ -319,18 +322,19 @@ void console_frame::update_singular_points_list() {
     }
     ++row;
   }
-  SetEvtHandlerEnabled(true);
+  if(appl.get_model().get_selected_singular_point()
+     == model::kNoSingularPointId) {
+    singularPointsDeleteButton->Disable();
+  } else {
+    singularPointsDeleteButton->Enable();
+  }
+  singularPointsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
 }
 
 void console_frame::singular_points_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
-  if(!GetEvtHandlerEnabled()) {
-    return;
-  }
   if(singularPointsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
-    singularPointsDeleteButton->Enable();
     appl.select_singular_point(get_selected_singular_point());
   } else {
-    singularPointsDeleteButton->Disable();
     appl.deselect_singular_point();
   }
 }

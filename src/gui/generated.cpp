@@ -162,7 +162,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel5->SetSizer( bSizer182 );
 	m_panel5->Layout();
 	bSizer182->Fit( m_panel5 );
-	m_notebook2->AddPage( m_panel5, wxT("Solutions"), true );
+	m_notebook2->AddPage( m_panel5, wxT("Solutions"), false );
 	m_panel6 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxVERTICAL );
@@ -207,7 +207,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel7->SetSizer( bSizer191 );
 	m_panel7->Layout();
 	bSizer191->Fit( m_panel7 );
-	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), false );
+	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), true );
 	
 	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
 	
@@ -373,6 +373,101 @@ dynamical_frame_base::~dynamical_frame_base()
 	delete objectsPopupMenu; 
 }
 
+parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	m_menubar3 = new wxMenuBar( 0 );
+	m_menu9 = new wxMenu();
+	editMenuItem = new wxMenuItem( m_menu9, wxID_ANY, wxString( wxT("Edit...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu9->Append( editMenuItem );
+	
+	m_menubar3->Append( m_menu9, wxT("View") ); 
+	
+	this->SetMenuBar( m_menubar3 );
+	
+	m_statusBar3 = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
+	wxBoxSizer* bSizer26;
+	bSizer26 = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* bSizer27;
+	bSizer27 = new wxBoxSizer( wxVERTICAL );
+	
+	m_panel11 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	m_panel11->Hide();
+	
+	m_menu10 = new wxMenu();
+	wxMenuItem* m_menuItem26;
+	m_menuItem26 = new wxMenuItem( m_menu10, wxID_ANY, wxString( wxT("Hopf Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu10->Append( m_menuItem26 );
+	
+	wxMenuItem* m_menuItem27;
+	m_menuItem27 = new wxMenuItem( m_menu10, wxID_ANY, wxString( wxT("Saddle Node Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu10->Append( m_menuItem27 );
+	
+	m_panel11->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::m_panel11OnContextMenu ), NULL, this ); 
+	
+	bSizer27->Add( m_panel11, 1, wxEXPAND | wxALL, 5 );
+	
+	
+	bSizer26->Add( bSizer27, 1, wxEXPAND, 5 );
+	
+	parameterWindowBox = new wxBoxSizer( wxVERTICAL );
+	
+	
+	bSizer26->Add( parameterWindowBox, 1, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer26 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
+}
+
+parameter_frame_base::~parameter_frame_base()
+{
+	// Disconnect Events
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
+	
+	delete m_menu10; 
+}
+
+parameter_dialog_base::parameter_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer30;
+	bSizer30 = new wxBoxSizer( wxVERTICAL );
+	
+	m_propertyGrid6 = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE);
+	bSizer30->Add( m_propertyGrid6, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer31;
+	bSizer31 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button15 = new wxButton( this, wxID_ANY, wxT("MyButton"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( m_button15, 0, wxALL, 5 );
+	
+	m_button16 = new wxButton( this, wxID_ANY, wxT("MyButton"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( m_button16, 0, wxALL, 5 );
+	
+	
+	bSizer30->Add( bSizer31, 0, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer30 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+}
+
+parameter_dialog_base::~parameter_dialog_base()
+{
+}
+
 solution_dialog_base::solution_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -414,7 +509,7 @@ solution_dialog_base::solution_dialog_base( wxWindow* parent, wxWindowID id, con
 	wxBoxSizer* bSizer32;
 	bSizer32 = new wxBoxSizer( wxHORIZONTAL );
 	
-	addButton = new wxButton( this, wxID_ANY, wxT("Add"), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer32->Add( addButton, 0, wxALL, 5 );
 	
 	cancelButton = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -528,6 +623,20 @@ isocline_dialog_base::isocline_dialog_base( wxWindow* parent, wxWindowID id, con
 	m_panel10->Layout();
 	bSizer24->Fit( m_panel10 );
 	m_notebook3->AddPage( m_panel10, wxT("Initial Point"), false );
+	m_panel101 = new wxPanel( m_notebook3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer25;
+	bSizer25 = new wxBoxSizer( wxVERTICAL );
+	
+	m_propertyGrid5 = new wxPropertyGrid(m_panel101, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
+	m_propertyGridItem4 = m_propertyGrid5->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
+	m_propertyGridItem5 = m_propertyGrid5->Append( new wxIntProperty( wxT("Span"), wxT("Span") ) ); 
+	bSizer25->Add( m_propertyGrid5, 1, wxEXPAND, 5 );
+	
+	
+	m_panel101->SetSizer( bSizer25 );
+	m_panel101->Layout();
+	bSizer25->Fit( m_panel101 );
+	m_notebook3->AddPage( m_panel101, wxT("Properties"), true );
 	
 	bSizer21->Add( m_notebook3, 1, wxEXPAND | wxALL, 5 );
 	

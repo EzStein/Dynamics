@@ -5,16 +5,21 @@
 #include <vector>
 #include "math/polynomial.h"
 #include "math/poly_matrix.h"
+#include "math/poly_root.h"
+#include "math/square_matrix.h"
+#include "math/eigenvalue.h"
+
 int main() {
-  dynsolver::math::polynomial poly1(std::vector<double>{6, 12, 23});
-  dynsolver::math::polynomial divisor(std::vector<double>{-2, 32, 3, 3, 3, 3, 3, 3});
-  dynsolver::math::division_ret ret(poly1.divide(divisor));
-  //  std::cout << "(" << poly1.to_string() <<
-  //    ")/(" << poly2.to_string() <<
-  //    ") = (" << ret.quotient.to_string() << ") + (" <<
-  //    ret.remainder.to_string() << ")/(" << poly2.to_string() <<
-  //    ")" << std::endl;
-  std::cout << (ret.quotient * divisor + ret.remainder).to_string() << " = " <<
-    poly1.to_string() << std::endl;
+  int size = 3;
+  dynsolver::math::square_matrix mat(size);
+  for(int i = 0; i != size; ++i) {
+    for(int j = 0; j != size; ++j) {
+      mat[i][j] = i + j;
+    }
+  }
+  std::vector<dynsolver::math::eigenvalue> values(mat.find_eigenvalues());
+  for(int i = 0; i != values.size(); ++i) {
+    std::cout << values[i].get_value().get_root().to_string() << std::endl;
+  }
   return 0;
 }
