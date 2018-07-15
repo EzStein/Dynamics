@@ -1,9 +1,11 @@
 #include "gui/isocline_dialog.h"
-
+#include "gui/app.h"
 namespace dynsolver {
 namespace gui {
 
-isocline_dialog::isocline_dialog() : isocline_dialog_base(nullptr) {
+isocline_dialog::isocline_dialog(const app& appl)
+  : isocline_dialog_base(nullptr),
+    appl(appl) {
   initialDataViewCtrl->AppendTextColumn("Variable");
   initialDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 
@@ -36,18 +38,22 @@ void isocline_dialog::set_ui() {
   initialDataViewCtrl->DeleteAllItems();
   directionDataViewCtrl->DeleteAllItems();
 
-  for(int i = 0; i != specs.init.size(); ++i) {
+  for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
     wxVector<wxVariant> data;
-    data.push_back("x" + std::to_string(i + 1));
+    data.push_back(appl.get_model().get_dynamical_names()[i]);
     data.push_back(std::to_string(specs.init[i]));
     initialDataViewCtrl->AppendItem(data);
   }
   for(int i = 0; i != specs.direction.size(); ++i) {
     wxVector<wxVariant> data;
-    data.push_back("x" + std::to_string(i + 1));
+    data.push_back(appl.get_model().get_dynamical_names()[i]);
     data.push_back(std::to_string(specs.direction[i]));
     directionDataViewCtrl->AppendItem(data);
   }
+  incrementPGItem->SetValue(specs.inc);
+  spanPGItem->SetValue(specs.span);
+  searchRadiusPGItem->SetValue(specs.searchRadius);
+  searchIncrementPGItem->SetValue(specs.searchInc);
 }
 
 bool isocline_dialog::validate_and_set() {
@@ -75,6 +81,15 @@ bool isocline_dialog::validate_and_set() {
     }
     specs.direction[i] = value;
   }
+  specs.inc = incrementPGItem->GetValue().GetDouble();
+  specs.span = spanPGItem->GetValue().GetInteger();
+  specs.searchRadius = searchRadiusPGItem->GetValue().GetDouble();
+  specs.searchInc = searchIncrementPGItem->GetValue().GetDouble();
+
+  if(specs.inc <= 0) return false;
+  if(specs.span <= 0) return false;
+  if(specs.searchRadius <= 0) return false;
+  if(specs.searchInc <= 0) return false;
   return true;
 }
 } // namespace gui

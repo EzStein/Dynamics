@@ -24,10 +24,14 @@ class console_frame : public console_frame_base {
   virtual void compile_button_on_button_click(wxCommandEvent&) override;
   virtual void variables_combo_box_on_combo_box(wxCommandEvent&) override;
   virtual void variables_combo_box_on_text_enter(wxCommandEvent&) override;
+  virtual void parameters_combo_box_on_combo_box(wxCommandEvent&) override;
+  virtual void parameters_combo_box_on_text_enter(wxCommandEvent&) override;
   virtual void variables_combo_box_on_kill_focus(wxFocusEvent&) override;
   virtual void console_frame_on_close(wxCloseEvent&) override;
-  virtual void new_dynamical_window_menu_item_on_selection(wxCommandEvent&) override;
-  virtual void close_dynamical_windows_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void new_dynamical_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void close_dynamical_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void new_parameter_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void close_parameter_menu_item_on_selection(wxCommandEvent&) override;
   virtual void lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
   virtual void singular_points_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;

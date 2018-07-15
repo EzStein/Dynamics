@@ -21,6 +21,13 @@
 
 namespace dynsolver {
 namespace gui {
+namespace {
+std::list<symbol> gen_symbol_table(const std::string&,
+				   const std::vector<std::string>&,
+				   const std::vector<std::string>&,
+				   const std::map<std::string, int>&,
+				   const std::unordered_map<int, std::string&>);
+}
 
 color::color(double r, double g, double b, double a)
   : r(r), g(g), b(b), a(a) { }
@@ -59,7 +66,7 @@ void color::invert() {
 
 solution_specs::solution_specs() : glColor(0.5,0.5,0,1), init(1) { }
 
-isocline_specs::isocline_specs() : glColor(0,0.5,0.5,1), init(1) { }
+isocline_specs::isocline_specs() : init(1), glColor(0,0.5,0.5,1) { }
 
 singular_point_specs::singular_point_specs() : init(1), glColor(0.5,0,0.5,1) { }
 
@@ -81,9 +88,11 @@ void model::parameter_window::resize(int width, int height) {
 }
 
 bool model::parameter_window::on_vert_axis(const math::vector2d&) const {
+  return false;
 }
 
 bool model::parameter_window::on_horiz_axis(const math::vector2d&) const {
+  return false;
 }
 
 const parameter_specs& model::parameter_window::get_specs() const {
@@ -105,6 +114,7 @@ model::dynamical_window::dynamical_window(model& model,
       iter != modelData.solutions.end(); ++iter) {
     gen_solution_vbo(iter->first);
   }
+  // Generate a vbo for each isocline
   for(isocline_const_iter iter = modelData.isoclines.begin();
       iter != modelData.isoclines.end(); ++iter) {
     gen_isocline_vbo(iter->first);
@@ -145,7 +155,7 @@ void model::dynamical_window::set_viewport_3d(const math::window3d& val) {
 }
 
 bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
-  typedef std::list<math::vector>::const_iterator point_const_iter;
+  typedef std::list<dynamical_point>::const_iterator point_const_iter;
   if(specs.is3d) {
     return false;
   } else {
@@ -156,11 +166,27 @@ bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
       ++point;
       point_const_iter prevPoint = iter->second.data.begin();
       for(; point != iter->second.data.end(); ++point, ++prevPoint) {
-	math::vector2d real((*point)[specs.horzAxisVar],
-			    (*point)[specs.vertAxisVar]);
+	double xReal;
+	double yReal;
+	double xPrevReal;
+	double yPrevReal;
+	if(specs.horzAxisVar == modelData.varDiffName) {
+	  xReal = point->t;
+	  xPrevReal = prevPoint->t;
+	} else {
+	  xReal = point->vars[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+	  xPrevReal = prevPoint->vars[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+	}
+	if(specs.vertAxisVar == modelData.varDiffName) {
+	  yReal = point->t;
+	  yPrevReal = prevPoint->t;
+	} else {
+	  yReal = point->vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+	  yPrevReal = prevPoint->vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+	}
+	math::vector2d real(xReal, yReal);
 	math::vector2d pixel(specs.viewport2d.pixel_of(real));
-	math::vector2d realPrev((*prevPoint)[specs.horzAxisVar],
-				(*prevPoint)[specs.vertAxisVar]);
+	math::vector2d realPrev(xPrevReal, yPrevReal);
 	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
 	const int tolerance(5);
 	math::vector2d cursor(x, y);
@@ -186,11 +212,19 @@ bool model::dynamical_window::select_isocline(int x, int y, isocline_id* id) {
       ++point;
       point_const_iter prevPoint = iter->second.data.begin();
       for(; point != iter->second.data.end(); ++point, ++prevPoint) {
-	math::vector2d real((*point)[specs.horzAxisVar],
-			    (*point)[specs.vertAxisVar]);
+	double xReal;
+	double yReal;
+	double xPrevReal;
+	double yPrevReal;
+	
+	xReal = (*point)[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+	xPrevReal = (*prevPoint)[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+	yReal = (*point)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+	yPrevReal = (*prevPoint)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+       
+	math::vector2d real(xReal, yReal);
 	math::vector2d pixel(specs.viewport2d.pixel_of(real));
-	math::vector2d realPrev((*prevPoint)[specs.horzAxisVar],
-				(*prevPoint)[specs.vertAxisVar]);
+	math::vector2d realPrev(xPrevReal, yPrevReal);
 	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
 	const int tolerance(5);
 	math::vector2d cursor(x, y);
@@ -211,8 +245,11 @@ bool model::dynamical_window::select_singular_point(int x,int y,
   } else {
     for(model::singular_point_const_iter iter = modelData.singularPoints.begin();
 	iter != modelData.singularPoints.end(); ++iter) {
-      math::vector2d real(iter->second.position[specs.horzAxisVar],
-			  iter->second.position[specs.vertAxisVar]);
+      double xReal;
+      double yReal;
+      xReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+      yReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+      math::vector2d real(xReal, yReal);
       math::vector2d pixel(specs.viewport2d.pixel_of(real));
       const double tolerance = 5;
       if(pixel.distance(math::vector2d(x, y)) <= tolerance) {
@@ -240,7 +277,9 @@ void model::dynamical_window::draw_solutions_3d() {
 }
 void model::dynamical_window::draw_isoclines_3d() {
   // We don't draw isoclines if we are viewing the time component.
-  if(specs.xAxisVar != 0 && specs.yAxisVar != 0 && specs.zAxisVar != 0) {
+  if(specs.xAxisVar != modelData.varDiffName &&
+     specs.yAxisVar != modelData.varDiffName &&
+     specs.zAxisVar != modelData.varDiffName) {
     for(isocline_data_const_iter iter = isoclineData.begin();
 	iter != isoclineData.end(); ++iter) {
       color glColor(modelData.isoclines.at(iter->first).specs.glColor);
@@ -321,7 +360,8 @@ void model::dynamical_window::draw_solutions_2d() {
   }
 }
 void model::dynamical_window::draw_isoclines_2d() {
-  if(specs.horzAxisVar != 0 && specs.vertAxisVar != 0) {
+  if(specs.horzAxisVar != modelData.varDiffName &&
+     specs.vertAxisVar != modelData.varDiffName) {
     for(isocline_data_const_iter iter = isoclineData.begin();
 	iter != isoclineData.end(); ++iter) {
       color glColor(modelData.isoclines.at(iter->first).specs.glColor);
@@ -338,7 +378,8 @@ void model::dynamical_window::draw_isoclines_2d() {
 }
 void model::dynamical_window::draw_singular_points_2d() {
   // We don't draw it if we are viewing the t axis.
-  if(specs.horzAxisVar != 0 && specs.vertAxisVar != 0) {
+  if(specs.horzAxisVar != modelData.varDiffName &&
+     specs.vertAxisVar != modelData.varDiffName) {
     glBindVertexBuffer(model::k2dVertexBinding,
 		       modelData.circleVbo.get_handle(),
 		       0, 2 * sizeof(float));
@@ -353,9 +394,11 @@ void model::dynamical_window::draw_singular_points_2d() {
 		  glColor.get_green(),
 		  glColor.get_blue(),
 		  glColor.get_alpha());
-      math::vector2d realCoordinate
-	(iter->second.position[specs.horzAxisVar],
-	 iter->second.position[specs.vertAxisVar]);
+      double xReal;
+      double yReal;
+      xReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+      yReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+      math::vector2d realCoordinate(xReal, yReal);
       GLfloat transformationMatrix[16];
       math::vector2d pixelCoordinate
 	(specs.viewport2d.pixel_of(realCoordinate));
@@ -533,7 +576,25 @@ void model::dynamical_window::resize(int width, int height) {
   specs.viewport3d.set_height(height);
 }
 
-bool model::dynamical_window::on_vertical_axis(int x, int y) const {
+dynamical_point model::dynamical_window::get_point(const math::vector2d& pos) const {
+  math::vector2d real = specs.viewport2d.real_coordinate_of(pos);
+  dynamical_point point;
+  point.vars = math::vector(modelData.dynamicalVars, 0.0);
+  point.t = 0;
+  if(specs.horzAxisVar == modelData.varDiffName) {
+    point.t = real.x();
+  } else {
+    point.vars[modelData.dynamicalVarIndex.at(specs.horzAxisVar)] = real.x();
+  }
+  if(specs.vertAxisVar == modelData.varDiffName) {
+    point.t = real.y();
+  } else {
+    point.vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)] = real.y();
+  }
+  return point;
+}
+
+bool model::dynamical_window::on_vert_axis(const math::vector2d& pos) const {
   math::vector2d axesPixel(specs.viewport2d
 			   .pixel_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
@@ -545,9 +606,9 @@ bool model::dynamical_window::on_vertical_axis(int x, int y) const {
   if(axesPixel.y() > specs.viewport2d.get_size().y())
     axesPixel.y() = specs.viewport2d.get_size().y();
   double axis = axesPixel.x();
-  return axis - 5 < x && x < axis + 5;
+  return axis - 5 < pos.x() && pos.x() < axis + 5;
 }
-bool model::dynamical_window::on_horizontal_axis(int x, int y) const {
+bool model::dynamical_window::on_horiz_axis(const math::vector2d& pos) const {
   math::vector2d axesPixel(specs.viewport2d
 			   .pixel_of(math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
@@ -559,7 +620,7 @@ bool model::dynamical_window::on_horizontal_axis(int x, int y) const {
   if(axesPixel.y() > specs.viewport2d.get_size().y())
     axesPixel.y() = specs.viewport2d.get_size().y();
   double axis = axesPixel.y();
-  return axis - 5 < y && y < axis + 5;
+  return axis - 5 < pos.y() && pos.y() < axis + 5;
 }
 
 void model::dynamical_window::delete_solution(solution_id id) {
@@ -578,23 +639,50 @@ void model::dynamical_window::delete_isocline(isocline_id id) {
   isoclineData.erase(id);
 }
 
-
-
 void model::dynamical_window::gen_solution_vbo(solution_id id) {
-  const std::list<math::vector>& solution(modelData.solutions.at(id).data);
+  const std::list<dynamical_point>& solution(modelData.solutions.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = solution.size();
   size_t size2d = points * 2 * sizeof(float);
   size_t size3d = points * 3 * sizeof(float);
-  for(std::list<math::vector>::const_iterator point = solution.begin();
+  for(std::list<dynamical_point>::const_iterator point = solution.begin();
       point != solution.end(); ++point) {
-    data2d.push_back((*point)[specs.horzAxisVar]);
-    data2d.push_back((*point)[specs.vertAxisVar]);
+    double xReal;
+    double yReal;
+    if(specs.horzAxisVar == modelData.varDiffName) {
+      xReal = point->t;
+    } else {
+      xReal = point->vars[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+    }
+    if(specs.vertAxisVar == modelData.varDiffName) {
+      yReal = point->t;
+    } else {
+      yReal = point->vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+    }
+    data2d.push_back(xReal);
+    data2d.push_back(yReal);
 
-    data3d.push_back((*point)[specs.xAxisVar]);
-    data3d.push_back((*point)[specs.yAxisVar]);
-    data3d.push_back((*point)[specs.zAxisVar]);
+    double zReal;
+    if(specs.xAxisVar == modelData.varDiffName) {
+      xReal = point->t;
+    } else {
+      xReal = point->vars[modelData.dynamicalVarIndex.at(specs.xAxisVar)];
+    }
+    if(specs.yAxisVar == modelData.varDiffName) {
+      yReal = point->t;
+    } else {
+      yReal = point->vars[modelData.dynamicalVarIndex.at(specs.yAxisVar)];
+    }
+    if(specs.zAxisVar == modelData.varDiffName) {
+      zReal = point->t;
+    } else {
+      zReal = point->vars[modelData.dynamicalVarIndex.at(specs.zAxisVar)];
+    }
+
+    data3d.push_back(xReal);
+    data3d.push_back(yReal);
+    data3d.push_back(zReal);
   }
   // If the render Data already exists.
   if(solutionData.find(id) != solutionData.end()) {
@@ -620,14 +708,34 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
   size_t points = isocline.size();
   size_t size2d = points * 2 * sizeof(float);
   size_t size3d = points * 3 * sizeof(float);
-  for(std::list<math::vector>::const_iterator point = isocline.begin();
-      point != isocline.end(); ++point) {
-    data2d.push_back((*point)[specs.horzAxisVar]);
-    data2d.push_back((*point)[specs.vertAxisVar]);
+  if(specs.horzAxisVar != modelData.varDiffName &&
+     specs.vertAxisVar != modelData.varDiffName) {
+    for(std::list<math::vector>::const_iterator point = isocline.begin();
+	point != isocline.end(); ++point) {
+      double xReal;
+      double yReal;
+      xReal = (*point)[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+      yReal = (*point)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+      data2d.push_back(xReal);
+      data2d.push_back(yReal); 
+    }
+  }
+  if(specs.xAxisVar != modelData.varDiffName &&
+     specs.yAxisVar != modelData.varDiffName &&
+     specs.zAxisVar != modelData.varDiffName) {
+    for(std::list<math::vector>::const_iterator point = isocline.begin();
+	point != isocline.end(); ++point) {
+      double xReal;
+      double yReal;
+      double zReal;
+      xReal = (*point)[modelData.dynamicalVarIndex.at(specs.xAxisVar)];
+      yReal = (*point)[modelData.dynamicalVarIndex.at(specs.yAxisVar)];
+      zReal = (*point)[modelData.dynamicalVarIndex.at(specs.zAxisVar)];
 
-    data3d.push_back((*point)[specs.xAxisVar]);
-    data3d.push_back((*point)[specs.yAxisVar]);
-    data3d.push_back((*point)[specs.zAxisVar]);
+      data3d.push_back(xReal);
+      data3d.push_back(yReal);
+      data3d.push_back(zReal);
+    }
   }
   // If the render Data already exists.
   if(isoclineData.find(id) != isoclineData.end()) {
@@ -782,7 +890,7 @@ const singular_point_id model::kNoSingularPointId = 0;
 const isocline_id model::kNoIsoclineId = 0;
 
 model::model() : font(constants::kDefaultFontFilePath),
-		 dynamicalDimension(0),
+		 dynamicalVars(0),
 		 selectedSolutionId(kNoSolutionId),
 		 selectedSingularPointId(kNoSingularPointId),
 		 selectedIsoclineId(kNoIsoclineId),
@@ -870,15 +978,9 @@ model::get_singular_points() const {
 }
 
 void model::add_solution(const solution_specs& spec) {
-  assert(spec.init.size() == get_dynamical_vars());
-  assert(spec.init[0] > spec.tMin && spec.init[0] < spec.tMax
-	 && spec.inc > 0);
-  assert(compiled);
-  
-
   ++uniqueSolutionId;
   solutions.insert(std::make_pair(uniqueSolutionId,
-				  solution{spec, std::list<math::vector>()}));
+				  solution{spec, std::list<dynamical_point>()}));
   generate_solution_data(uniqueSolutionId);
   
   // We now need to update the VBO's of each window.
@@ -901,90 +1003,152 @@ bool model::add_singular_point(const singular_point_specs& spec) {
   }
   
   const double tolerance = 0.0001;
-  std::vector<size_t> indices;
-  for(int i = 0; i != dynamicalDimension; ++i) {
-    indices.push_back(i+1);
+  std::vector<int> indices;
+  math::vector init(symbolsToIndex.size());
+  init[varDiffIndex] = 0; // This value is ignored.
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = parameterPosition[i];
   }
-  math::vector init(spec.init);
-  if(!math::newton_method(init, systemFunctions,
-			  jacobianFunctions, indices)) {
+  for(int i = 0; i != dynamicalVars; ++i) {
+    init[dynamicalIndexToSymbol[i]] = spec.init[i];
+    indices.push_back(dynamicalIndexToSymbol[i]);
+  }
+ 
+ 
+  if(!math::newton_method(systemFunctions,
+			  jacobianFunctions, indices,
+			  init)) {
     return false;
+  }
+  // We now create a new specification and update it the new init val.
+  singular_point_specs newSpecs(spec);
+  for(int i = 0; i != dynamicalVars; ++i) {
+    newSpecs.init[i] = init[dynamicalIndexToSymbol[i]];
   }
   // We now check to see if the singular point already exists.
   for(singular_point_const_iter iter = singularPoints.begin();
       iter != singularPoints.end(); ++iter) {
-    if(iter->second.position.distance(init) < tolerance) {
+    if(iter->second.position.distance(newSpecs.init) < tolerance) {
       // Already exists
       return true;
     }
   }
   ++uniqueSingularPointId;
   singularPoints.insert(std::make_pair(uniqueSingularPointId,
-				       singular_point{spec, init}));
+				       singular_point{newSpecs, newSpecs.init}));
   return true;
 }
 
 void model::delete_singular_point(singular_point_id id) {
   singularPoints.erase(id);
 }
-                    
-bool model::compile(std::vector<std::string> newExpressions) {
-  assert(newExpressions.size() >= 1);
 
-  int newDynamicalDimension = newExpressions.size();
-  
-  // Set up symbol table.
+namespace {
+std::list<symbol>
+gen_symbol_table(const std::string& varDiffName,
+		 const std::vector<std::string>& dynamicalVarNames,
+		 const std::vector<std::string>& parameterNames,
+		 const std::map<std::string, int>& symbolsToIndex,
+		 const std::unordered_map<int, std::string>& indexToSymbols) {
   std::list<symbol> symbolTable;
-  symbolTable.push_back(symbol("t",0,0));
-  for(int i = 0; i != newDynamicalDimension; ++i) {
-    std::string str("x" + std::to_string(i + 1));
-    symbolTable.push_back(symbol(str,i+1, static_cast<unsigned int>(i+1)));
+  int varDiffIndex(symbolsToIndex.at(varDiffName));
+  symbolTable.push_back(symbol(varDiffName, varDiffIndex, varDiffIndex));
+  for(int i = 0; i != dynamicalVarNames.size(); ++i) {
+    std::string symbolName(dynamicalVarNames[i]);
+    int index(symbolsToIndex.at(symbolName));
+    symbolTable.push_back(symbol(symbolName, index, index));
   }
-
-  for(int i = 0; i != 5; ++i) {
-    std::string str("a" + std::to_string(i + 1));
-    symbolTable.push_back(symbol(str, newDynamicalDimension+1+i,
-				 newDynamicalDimension + 1 + i));
+  for(int i = 0; i != parameterNames.size(); ++i) {
+    std::string symbolName(parameterNames[i]);
+    int index(symbolsToIndex.at(symbolName));
+    symbolTable.push_back(symbol(symbolName, index, index));
   }
-  
   symbolTable.sort([](const symbol& a, const symbol& b) -> bool {
       return a.parameter < b.parameter;
     });
 
+  return symbolTable;
+}
+}
+                    
+bool model::compile(const std::string& newVarDiffName,
+		    const std::vector<std::string>& newDynamicalVarNames,
+		    const std::vector<std::string>& newParameterNames,
+		    const std::vector<std::string>& newExpressions) {
+
+  int newDynamicalVars = newExpressions.size();
+  int newParameters = newParameterNames.size();
+  std::map<std::string, int> newSymbolsToIndex;
+  std::unordered_map<int, std::string> newIndexToSymbols;
+
+  int index = -1;
+  ++index;
+  newSymbolsToIndex.insert(std::make_pair(newVarDiffName, index));
+  newIndexToSymbols.insert(std::make_pair(index, newVarDiffName));
+  for(const std::string& dynamicalVarName : newDynamicalVarNames) {
+    ++index;
+    newSymbolsToIndex.insert(std::make_pair(dynamicalVarName, index));
+    newIndexToSymbols.insert(std::make_pair(index, dynamicalVarName));
+  }
+  for(const std::string& parameterName : newParameterNames) {
+    ++index;
+    newSymbolsToIndex.insert(std::make_pair(parameterName, index));
+    newIndexToSymbols.insert(std::make_pair(index, parameterName));
+  }
+  std::list<symbol> symbolTable(gen_symbol_table(newVarDiffName,
+						 newDynamicalVarNames,
+						 newParameterNames,
+						 newSymbolsToIndex,
+						 newIndexToSymbols));
   std::vector<expression> newSystem;
   std::vector<expression> newJacobian;
 
   compiler::expression_parser parse;
-
-  for(std::vector<std::string>::const_iterator expr = newExpressions.begin();
-      expr != newExpressions.end(); ++expr) {
+  for(const std::string& expr : newExpressions) {
     AST ast;
     try {
-      ast = parse.parse(*expr, symbolTable);
+      ast = parse.parse(expr, symbolTable);
     } catch (const parser::syntax_exception& exc) {
       return false;
     }
     compiler::function<double, const double*> function = ast.compile();
     newSystem.push_back(expression{ast, function});
-    for(symbol sym : symbolTable) {
-      //We must check that the symbol is indeed a variable and not a parameter
-      if(sym.parameter == 0 || sym.parameter >= newDynamicalDimension + 1)
-        continue;
-      AST diffAst = AST(ast).differentiate(sym.name);
-      compiler::function<double, const double*> diffFunction
-	= diffAst.compile();
+    for(const std::string& var : newDynamicalVarNames) {
+      AST diffAst = AST(ast).differentiate(var);
+      compiler::function<double, const double*> diffFunction = diffAst.compile();
       newJacobian.push_back(expression{diffAst, diffFunction});
     }
   }
 
   // We have successfully compiled!
-
+  // We may now update our state.
   system = newSystem;
   jacobian = newJacobian;
-
   expressions = newExpressions;
-  dynamicalDimension = newDynamicalDimension;
-
+  dynamicalVars = newDynamicalVars;
+  dynamicalVarNames = newDynamicalVarNames;
+  parameterNames = newParameterNames;
+  varDiffName = newVarDiffName;
+  symbolsToIndex = newSymbolsToIndex;
+  indexToSymbols = newIndexToSymbols;
+  parameters = newParameters;
+  varDiffIndex = 0;
+  dynamicalVarIndex.clear();
+  dynamicalIndexToSymbol.clear();
+  for(int i = 0; i != dynamicalVarNames.size(); ++i) {
+    dynamicalVarIndex.insert(std::make_pair(dynamicalVarNames[i], i));
+    dynamicalIndexToSymbol.push_back(symbolsToIndex[dynamicalVarNames[i]]);
+  }
+  parameterIndex.clear();
+  parameterIndexToSymbol.clear();
+  for(int i = 0; i != parameterNames.size(); ++i) {
+    parameterIndex.insert(std::make_pair(parameterNames[i], i));
+    parameterIndexToSymbol.push_back(symbolsToIndex[parameterNames[i]]);
+  }
+  if(parameters == 0) 
+    parameterPosition = math::vector(1, 0.0);
+  else
+    parameterPosition = math::vector(parameters, 0.0);
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
     for(solution_const_iter sol = solutions.begin();
@@ -1035,12 +1199,8 @@ void model::delete_parameter(parameter_id id) {
   parameterWindows.erase(id);
 }
 
-int model::get_dynamical_vars() const {
-  return dynamicalDimension + 1;
-}
-
 int model::get_dynamical_dimension() const {
-  return dynamicalDimension;
+  return dynamicalVars;
 }
 
 void model::paint_dynamical(dynamical_id id) {
@@ -1073,13 +1233,13 @@ void model::set_parameter_viewport(parameter_id id,
   parameterWindows.at(id).set_viewport(window);
 }
 
-bool model::on_dynamical_vertical_axis(dynamical_id id,
-				       int x, int y) const {
-  return dynamicalWindows.at(id).on_vertical_axis(x, y);
+bool model::on_dynamical_vert_axis(dynamical_id id,
+				   const math::vector2d& pos) const {
+  return dynamicalWindows.at(id).on_vert_axis(pos);
 }
-bool model::on_dynamical_horizontal_axis(dynamical_id id,
-					 int x, int y) const {
-  return dynamicalWindows.at(id).on_horizontal_axis(x, y);
+bool model::on_dynamical_horiz_axis(dynamical_id id,
+				    const math::vector2d& pos) const {
+  return dynamicalWindows.at(id).on_horiz_axis(pos);
 }
 
 bool model::on_parameter_horiz_axis(parameter_id id,
@@ -1120,37 +1280,56 @@ void model::delete_solution(solution_id id) {
 
 void model::generate_solution_data(solution_id id) {
   solution_specs spec(solutions.at(id).specs);
-
   std::vector<compiler::function<double, const double*>> systemFunctions;
   for(std::vector<expression>::const_iterator iter = system.begin();
       iter != system.end(); ++iter) {
     systemFunctions.push_back(iter->function);
   }
-  
-  std::list<math::vector> points;
-  math::vector tmp(spec.init);
-  math::vector parameterPosition(5, 0.0);
 
-  std::vector<size_t> indices;
-  for(int i = 0; i != dynamicalDimension; ++i) {
-    indices.push_back(i+1);
+  math::vector input(symbolsToIndex.size());
+  for(int i = 0; i != parameterNames.size(); ++i) {
+    input[parameterIndexToSymbol[i]] = parameterPosition[i];
   }
-  
+  for(int i = 0; i != dynamicalVarNames.size(); ++i) {
+    input[dynamicalIndexToSymbol[i]] = spec.init[i];
+  }
+  input[varDiffIndex] = spec.tStart;
+
+  std::list<dynamical_point> points;
   // Fill in forwards
-  while(tmp[0] <= spec.tMax) {
-    points.push_back(tmp);
-    math::euler(tmp, systemFunctions,
-		indices, 0, spec.inc);
-  }
-  
-  tmp = spec.init;
-  // Fill in backwards
-  while(tmp[0] >= spec.tMin) {
-    points.push_front(tmp);
-    math::euler(tmp, systemFunctions,
-		indices, 0, -spec.inc);
+  while(input[varDiffIndex] <= spec.tMax) {
+    // Extract the dynamical variables and variable of differentiation.
+    math::vector vars(dynamicalVars);
+    for(int i = 0; i != dynamicalVars; ++i) {
+      vars[i] = input[dynamicalIndexToSymbol[i]];
+    }
+    double t = input[varDiffIndex];
+    points.push_back(dynamical_point{vars, t});
+
+    math::euler(systemFunctions, spec.inc, dynamicalIndexToSymbol,
+		varDiffIndex, input);
   }
 
+  // Reset back to start.
+  for(int i = 0; i != dynamicalVars; ++i) {
+    input[dynamicalIndexToSymbol[i]] = spec.init[i];
+  }
+  input[varDiffIndex] = spec.tStart;
+  
+  // Fill in backwards
+  while(input[varDiffIndex] >= spec.tMin) {
+    // Extract the dynamical variables and variable of differentiation.
+    math::vector vars(dynamicalVars);
+    for(int i = 0; i != dynamicalVars; ++i) {
+      vars[i] = input[dynamicalIndexToSymbol[i]];
+    }
+    double t = input[varDiffIndex];
+    points.push_front(dynamical_point{vars, t});
+    
+    math::euler(systemFunctions, -spec.inc, dynamicalIndexToSymbol,
+		varDiffIndex, input);
+  }
+  
   // Set the data
   solutions.at(id).data = points;
 }
@@ -1220,128 +1399,199 @@ bool model::add_isocline(const isocline_specs& specs) {
   // variables to a given value and computing the others. For instance we
   // arbitrarily choose to add the equation x1 - m = 0 for some value m.
   //
-  // The initial vector is of size n + 2 and is organized as follows.
-  // initial[0] is the variable of differentiation
-  // initial[1] to initial[n] inclusive are the dynamical variables.
-  // initial[n+1] is the variable k.
+  // The input vector to newtos method is organized according to symbolsToIndex
+  // The variable k is given the index after all symbols. In particular,
+  // its index is symbolsToIndex.size()
   //
-  // The systemFunctions are organized as
-  // systemFunctions[0] to systemFunctions[n - 1] inclusive are the
-  // n system functions expressing the vector equation F(x) - ka = 0
-  // systemFunctions[n] is the function expressing the additional constraint.
+  // The systemFunctions are organized as the dynamical variables followd
+  // by the variable k.
   //
   // jacobianSystem has the jacobian of F(x) as a submatrix aligned against
   // the top left corner. The last column is the k partial derivative of each
-  // function so this amounts to -a as the last column. If the restriction
+  // function so this amounts to (-a, 0) as the last column. If the restriction
   // functions is of the form x_l - m = 0 then the last row are all
   // zeros  except in the entry l - 1 which is a 1.
   //
   // The indices vector is simply a vector containing the integers,
   // 1 2 3 4 ... n+1
-  
+  int kIndex = symbolsToIndex.size();
   std::vector<std::function<double(const double*)>> systemFunctions;
   std::vector<std::function<double(const double*)>> jacobianFunctions;
-  int dimension = get_dynamical_dimension();
-  for(int i = 0; i != dimension; ++i) {
-    systemFunctions.push_back([=](const double* arr) -> double {
-	return system[i].function(arr) - arr[dimension+1] * specs.direction[i];
+  for(int i = 0; i != dynamicalVars; ++i) {
+    systemFunctions.push_back([&, i](const double* arr) -> double {
+	return system[i].function(arr) - arr[kIndex] * specs.direction[i];
       });
   }
-  int constraintVar(1);
-  double constant(specs.init[constraintVar - 1]);
-  systemFunctions.push_back([=](const double* arr) -> double {
-      return arr[constraintVar] - constant;
+  int constraintVar;
+  double constant;
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return arr[dynamicalIndexToSymbol[constraintVar]] - constant;
     });
-  for(int r = 0; r != dimension; ++r) {
-    for(int c = 0; c != dimension; ++c) {
-      jacobianFunctions.push_back
-	(std::function<double(const double*)>
-	 (jacobian[r*dimension + c].function));
+  for(int r = 0; r != dynamicalVars; ++r) {
+    for(int c = 0; c != dynamicalVars; ++c) {
+      jacobianFunctions.push_back(jacobian[r*dynamicalVars + c].function);
     }
-    jacobianFunctions.push_back([=](const double*) -> double {
+    jacobianFunctions.push_back([&, r](const double*) -> double {
 	return -specs.direction[r];
       });
   }
-  for(int i = 0; i != dimension+1; ++i) {
-    if(i == constraintVar - 1) {
-      jacobianFunctions.push_back([](const double*) -> double {
-	  return 1;
-	});
-    } else {
-      jacobianFunctions.push_back([](const double*) -> double {
-	  return 0;
-	});
+  for(int i = 0; i != dynamicalVars; ++i) {
+    jacobianFunctions.push_back([&, i](const double*) -> double {
+	return i == constraintVar ? 1 : 0;
+      });
+  }
+  jacobianFunctions.push_back([](const double*) -> double {
+      return 0;
+    });
+
+  // Setup the initial search vector
+  math::vector init(kIndex + 1);
+  init[varDiffIndex] = 0; // This value is ignored by the functions
+  for(int i = 0; i != dynamicalVars; ++i) {
+    init[dynamicalIndexToSymbol[i]] = specs.init[i];
+  }
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = parameterPosition[i];
+  }
+  // Initially we set the kValue to be 1.
+  init[kIndex] = 1;
+
+  // Setup the var index vector.
+  std::vector<int> varIndex(dynamicalIndexToSymbol);
+  varIndex.push_back(kIndex);
+
+  bool found = false;
+  // We are now ready to attempt to find a hit. We sweep each constraint
+  // about the starting point in a radius of spec.searchRadius
+  // until we get a hit.
+  for(constraintVar = 0; constraintVar != dynamicalVars; ++constraintVar) {
+    for(constant = specs.init[constraintVar];
+	constant <= specs.init[constraintVar] + specs.searchRadius;
+	constant += specs.searchInc) {
+      found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
+      if(found) {
+	break;
+      }
+    }
+    if(found) {
+      break;
+    }
+    for(constant = specs.init[constraintVar];
+	constant >= specs.init[constraintVar] - specs.searchRadius;
+	constant -= specs.searchInc) {
+      found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
+      if(found) {
+	break;
+      }
+    }
+    if(found) {
+      break;
     }
   }
-  math::vector init(specs.init.size() + 2);
-  init[0] = 0;
-  for(int i = 0; i != specs.init.size(); ++i) {
-    init[i + 1] = specs.init[i];
+  if(!found) return false;
+
+  // We've found an isocline, we start by sweeping it out.
+  // We first find a constraint variable which is not transverse.
+  math::vector tmp(init);
+  constant = tmp[constraintVar];
+  constant += specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != dynamicalVars - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constant = init[dynamicalIndexToSymbol[constraintVar]];
+    constant += specs.inc;
+    tmp = init;
   }
-  init[init.size() - 1] = 1;
+  tmp = init;
+  constant =  init[dynamicalIndexToSymbol[constraintVar]];
+  constant -= specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != dynamicalVars - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constant = init[dynamicalIndexToSymbol[constraintVar]];
+    constant -= specs.inc;
+  }
+  
+  int originalConstraintVar(constraintVar);
   math::vector original(init);
   math::vector prev(init);
-  std::vector<size_t> indices;
-  for(int i = 0; i != dimension + 1; ++i) {
-    indices.push_back(i + 1);
-  }
+  
   std::list<math::vector> points;
-  double change = 0.01;
-  for(int j = 0; j != 2; ++j) {
-    for(int i = 0; i != 10000; ++i) {
-      systemFunctions[dimension] = [=](const double* arr) -> double {
-	return arr[constraintVar] - constant;
-      };
-      math::vector newInit(init);
-      if(!newton_method(newInit, systemFunctions, jacobianFunctions, indices)) {
-	jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
-	  [](const double*) -> double {
-	  return 0;
-	};
-	if(constraintVar < dimension) {
-	  ++constraintVar;
-	} else {
-	  constraintVar = 1;
-	}
-	jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
-	  [](const double*) -> double {
-	  return 1;
-	};
-	if(init[constraintVar] - prev[constraintVar] > 0) {
-	  std::cout << "PLUS" << std::endl;
-	  change = std::abs(change);
-	} else {
-	  std::cout << "MINUS" << std::endl;
-	  change = -std::abs(change);
-	}
-	constant = prev[constraintVar];
-	constant += change;
-	systemFunctions[dimension] = [=](const double* arr) -> double {
-	  return arr[constraintVar] - constant;
-	};
+  int direction = 1;
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != dynamicalVars - 1) {
+	++constraintVar;
       } else {
-	prev = init;
-	init = newInit;
-	points.push_back(init);
+	constraintVar = 0;
       }
-      constant += change;
+      if(init[dynamicalIndexToSymbol[constraintVar]]
+	 - prev[dynamicalIndexToSymbol[constraintVar]] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constant = init[dynamicalIndexToSymbol[constraintVar]];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(dynamicalVars);
+      for(int i = 0; i != dynamicalVars; ++i) {
+	vars[i] = init[dynamicalIndexToSymbol[i]];
+      }
+      points.push_back(vars);
     }
-    jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
-      [](const double*) -> double {
-      return 0;
-    };
-    change = -0.01;
-    constraintVar = 1;
-    constant = specs.init[0];
-    init = original;
-    prev = original;
-    points.reverse();
-    jacobianFunctions[dimension * (dimension + 1) + constraintVar - 1] =
-      [](const double*) -> double {
-      return 1;
-    };
-
+    constant += direction * specs.inc;
   }
+
+  // Now we sweep out in the other direction.
+  direction = -1;
+  constraintVar = originalConstraintVar;
+  init = original;
+  prev = original;
+  constant = init[dynamicalIndexToSymbol[constraintVar]];
+  points.reverse();
+
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != dynamicalVars - 1) {
+	++constraintVar;
+      } else {
+	constraintVar = 0;
+      }
+      if(init[dynamicalIndexToSymbol[constraintVar]]
+	 - prev[dynamicalIndexToSymbol[constraintVar]] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constant = init[dynamicalIndexToSymbol[constraintVar]];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(dynamicalVars);
+      for(int i = 0; i != dynamicalVars; ++i) {
+	vars[i] = init[dynamicalIndexToSymbol[i]];
+      }
+      points.push_back(vars);
+    }
+    constant += direction * specs.inc;
+  }
+  
   ++uniqueIsoclineId;
   isoclines.insert(std::make_pair(uniqueIsoclineId, isocline{specs, points}));
   // We now need to update the VBO's of each window.
@@ -1358,6 +1608,27 @@ const dynamical_specs& model::get_dynamical_specs(dynamical_id id) const {
 
 const parameter_specs& model::get_parameter_specs(parameter_id id) const {
   return parameterWindows.at(id).get_specs();
+}
+
+int model::get_parameters() const {
+  return parameters;
+}
+
+const std::vector<std::string>& model::get_dynamical_names() const {
+  return dynamicalVarNames;
+}
+
+const std::vector<std::string>& model::get_parameter_names() const {
+  return parameterNames;
+}
+const std::string& model::get_var_diff_name() const {
+  return varDiffName;
+}
+
+// Returns the dynamical point associated with the given mouse position
+// in this dynamical window.
+dynamical_point model::get_dynamical_point(dynamical_id id, const math::vector2d& pos) const {
+  return dynamicalWindows.at(id).get_point(pos);
 }
 } // namespace gui
 } // namespace dynslover

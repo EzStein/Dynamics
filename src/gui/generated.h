@@ -20,10 +20,10 @@
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/dataview.h>
-#include <wx/button.h>
 #include <wx/stattext.h>
 #include <wx/combobox.h>
 #include <wx/sizer.h>
+#include <wx/button.h>
 #include <wx/statbox.h>
 #include <wx/panel.h>
 #include <wx/notebook.h>
@@ -57,13 +57,17 @@ class console_frame_base : public wxFrame
 		wxMenuItem* solutionMenuItem;
 		wxMenuItem* singularPointMenuItem;
 		wxMenu* m_menu4;
-		wxMenuItem* newDynamicalWindowMenuItem;
-		wxMenuItem* closeDynamicalWindowsMenuItem;
+		wxMenuItem* newDynamicalMenuItem;
+		wxMenuItem* newParameterMenuItem;
+		wxMenuItem* closeDynamicalMenuItem;
+		wxMenuItem* closeParameterMenuItem;
 		wxMenu* m_menu8;
 		wxDataViewListCtrl* equationsDataViewCtrl;
-		wxButton* compileButton;
 		wxStaticText* m_staticText1;
 		wxComboBox* variablesComboBox;
+		wxStaticText* m_staticText2;
+		wxComboBox* parametersComboBox;
+		wxButton* compileButton;
 		wxDataViewListCtrl* m_dataViewListCtrl6;
 		wxNotebook* m_notebook2;
 		wxPanel* m_panel5;
@@ -86,13 +90,17 @@ class console_frame_base : public wxFrame
 		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void new_dynamical_window_menu_item_on_selection( wxCommandEvent& event ) = 0;
-		virtual void close_dynamical_windows_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void new_dynamical_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void new_parameter_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void close_dynamical_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void close_parameter_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void variables_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
 		virtual void variables_combo_box_on_kill_focus( wxFocusEvent& event ) = 0;
 		virtual void variables_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
+		virtual void parameters_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
+		virtual void parameters_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
+		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void solutions_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void solutions_edit_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void solutions_delete_button_on_button_click( wxCommandEvent& event ) = 0;
@@ -209,9 +217,14 @@ class parameter_dialog_base : public wxDialog
 	private:
 	
 	protected:
-		wxPropertyGrid* m_propertyGrid6;
-		wxButton* m_button15;
-		wxButton* m_button16;
+		wxPropertyGrid* parameterPropertyGrid;
+		wxButton* okButton;
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
 	
 	public:
 		
@@ -293,8 +306,10 @@ class isocline_dialog_base : public wxDialog
 		wxDataViewListCtrl* initialDataViewCtrl;
 		wxPanel* m_panel101;
 		wxPropertyGrid* m_propertyGrid5;
-		wxPGProperty* m_propertyGridItem4;
-		wxPGProperty* m_propertyGridItem5;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* spanPGItem;
+		wxPGProperty* searchRadiusPGItem;
+		wxPGProperty* searchIncrementPGItem;
 		wxButton* m_button14;
 		wxButton* m_button13;
 		

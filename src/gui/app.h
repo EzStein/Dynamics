@@ -24,6 +24,7 @@ class console_frame;
 class solution_dialog;
 class singular_point_dialog;
 class dynamical_dialog;
+class parameter_dialog;
 class isocline_dialog;
 struct solution_specs;
 
@@ -66,6 +67,7 @@ class app : public wxApp {
   solution_dialog* solutionDialog;
   singular_point_dialog* singularPointDialog;
   dynamical_dialog* dynamicalDialog;
+  parameter_dialog* parameterDialog;
   isocline_dialog* isoclineDialog;
   
  public:
@@ -96,6 +98,8 @@ class app : public wxApp {
   // so it destroys them.
   void delete_all_dynamical_windows();
 
+  void delete_all_parameter_windows();
+
   // Tells the application to shut down. This is called by the console_frame on
   // close handler.
   void close_application();
@@ -124,21 +128,22 @@ class app : public wxApp {
 
   // Read
   // Returns the dialogs.
-  solution_dialog* get_solution_dialog();
-  singular_point_dialog* get_singular_point_dialog();
-  dynamical_dialog* get_dynamical_dialog();
-  isocline_dialog* get_isocline_dialog();
+  solution_dialog* get_solution_dialog() const;
+  singular_point_dialog* get_singular_point_dialog() const;
+  dynamical_dialog* get_dynamical_dialog() const;
+  isocline_dialog* get_isocline_dialog() const;
+  parameter_dialog* get_parameter_dialog() const;
 
   // Returns a const model that the GUI's will use to update their
   // displays.
-  const model& get_model();
+  const model& get_model() const;
 
   // Returns a reference to the opengl context used in this program.
-  const wxGLContext& get_gl_context();
+  const wxGLContext& get_gl_context() const;
 
   // Returns a reference to the attributes used for constructing all opengl
   // canvas's in this program.
-  const wxGLAttributes& get_gl_attributes();
+  const wxGLAttributes& get_gl_attributes() const;
 
   void paint_dynamical(dynamical_id);
   void paint_parameter(parameter_id);
@@ -147,7 +152,10 @@ class app : public wxApp {
 
   // Compiles the provided system and updates the UI. Returns true
   // on success.
-  bool compile(const std::vector<std::string>);
+  bool compile(const std::string& varDiffName,
+	       const std::vector<std::string>& dynamicalVarNames,
+	       const std::vector<std::string>& parameterNames,
+	       const std::vector<std::string>& expressions);
 
   // Add
   // Adds a solution and updates the necessary frames.

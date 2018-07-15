@@ -16,6 +16,7 @@
 #include "gui/singular_point_dialog.h"
 #include "gui/dynamical_dialog.h"
 #include "gui/isocline_dialog.h"
+#include "gui/parameter_dialog.h"
 
 namespace dynsolver {
 namespace gui {
@@ -47,6 +48,7 @@ app::app() : customLogger(nullptr),
 	     solutionDialog(nullptr),
 	     singularPointDialog(nullptr),
 	     dynamicalDialog(nullptr),
+	     parameterDialog(nullptr),
 	     isoclineDialog(nullptr) { }
 
 app::~app() {
@@ -125,10 +127,11 @@ bool app::OnInit() {
   consoleFrame->Show();
 
   // Set up dialogs
-  solutionDialog = new solution_dialog();
-  singularPointDialog = new singular_point_dialog();
-  dynamicalDialog = new dynamical_dialog();
-  isoclineDialog = new isocline_dialog();
+  solutionDialog = new solution_dialog(*this);
+  singularPointDialog = new singular_point_dialog(*this);
+  dynamicalDialog = new dynamical_dialog(*this);
+  isoclineDialog = new isocline_dialog(*this);
+  parameterDialog = new parameter_dialog(*this);
   
   return true;
 }
@@ -157,6 +160,15 @@ void app::delete_all_dynamical_windows() {
   dynamicalFrames.clear();
 }
 
+void app::delete_all_parameter_windows() {
+  for(std::unordered_map<parameter_id, parameter_frame*>::const_iterator iter
+	= parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
+    modelData->delete_parameter(iter->first);
+    iter->second->Destroy();
+  }
+  parameterFrames.clear();
+}
+
 void app::close_application() {
   delete_all_dynamical_windows();
   solutionDialog->Destroy();
@@ -164,6 +176,7 @@ void app::close_application() {
   dynamicalDialog->Destroy();
   consoleFrame->Destroy();
   isoclineDialog->Destroy();
+  parameterDialog->Destroy();
 }
 
 void app::add_dynamical(const dynamical_specs& spec) {
@@ -218,20 +231,12 @@ int app::OnExit() {
 }
 
 bool app::OnExceptionInMainLoop() {
-  try {
-    throw;
-  } catch(const std::exception& exc) {
-    std::cout << exc.what() << std::endl;
-  }
+  throw;
   return false;
 }
   
 void app::OnUnhandledException() {
-  try {
-    throw;
-  } catch(const std::exception& exc) {
-    std::cout << exc.what() << std::endl;
-  }
+  throw;
 }
 
 bool app::StoreCurrentException() {
@@ -243,33 +248,42 @@ bool app::StoreCurrentException() {
   return false;
 }
 
-solution_dialog* app::get_solution_dialog() {
+solution_dialog* app::get_solution_dialog() const {
   return solutionDialog;
 }
 
-singular_point_dialog* app::get_singular_point_dialog() {
+singular_point_dialog* app::get_singular_point_dialog() const {
   return singularPointDialog;
 }
 
-dynamical_dialog* app::get_dynamical_dialog() {
+dynamical_dialog* app::get_dynamical_dialog() const {
   return dynamicalDialog;
 }
 
-const model& app::get_model() {
+isocline_dialog* app::get_isocline_dialog() const {
+  return isoclineDialog;
+}
+
+parameter_dialog* app::get_parameter_dialog() const {
+  return parameterDialog;
+}
+
+const model& app::get_model() const {
   return *modelData;
 }
 
-const wxGLContext& app::get_gl_context() {
+const wxGLContext& app::get_gl_context() const {
   return *glContext;
 }
 
-const wxGLAttributes& app::get_gl_attributes() {
+const wxGLAttributes& app::get_gl_attributes() const {
   return glAttributes;
 }
 
 void app::set_no_compile() {
   modelData->set_no_compile();
   delete_all_dynamical_windows();
+  delete_all_parameter_windows();
   consoleFrame->set_no_compile();
 }
 
@@ -313,10 +327,17 @@ bool app::add_singular_point(const singular_point_specs& spec) {
   return success;
 }
 
-bool app::compile(const std::vector<std::string> system) {
-  if(modelData->compile(system)) {
+bool app::compile(const std::string& varDiffName,
+		  const std::vector<std::string>& dynamicalVarNames,
+		  const std::vector<std::string>& parameterNames,
+		  const std::vector<std::string>& expressions) {
+  if(modelData->compile(varDiffName,
+			dynamicalVarNames,
+			parameterNames,
+			expressions)) {
     consoleFrame->set_yes_compile();
     delete_all_dynamical_windows();
+    delete_all_parameter_windows();
     return true;
   } else {
     return false;
@@ -404,10 +425,6 @@ void app::deselect_isocline() {
   modelData->deselect_isocline();
   refresh_dynamical_windows();
   consoleFrame->update_isoclines_list();
-}
-
-isocline_dialog* app::get_isocline_dialog() {
-  return isoclineDialog;
 }
 
 namespace {

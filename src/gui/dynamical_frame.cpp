@@ -70,7 +70,7 @@ void dynamical_frame::dynamical_frame_on_close(wxCloseEvent&) {
 void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
   dynamical_specs
     spec(appl.get_model().get_dynamical_specs(id));
-  if(appl.get_dynamical_dialog()->show_dialog(spec, &spec)) {
+  if(appl.get_dynamical_dialog()->show_dialog(spec)) {
     appl.set_dynamical_specs(id, spec);
   }
 }
@@ -78,26 +78,16 @@ void dynamical_frame::edit_menu_item_on_menu_selection(wxCommandEvent& evt) {
 void dynamical_frame::dynamical_frame_on_set_focus(wxFocusEvent& evt) { }
 
 void dynamical_frame::solution_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_specs(id)
-			.viewport2d);
-  math::vector2d initialPoint
-    (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
-  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
-  int horz = appl.get_model().get_dynamical_specs(id)
-    .horzAxisVar;
-  int vert = appl.get_model().get_dynamical_specs(id)
-    .vertAxisVar;
-  initialValue[horz] = initialPoint[0];
-  initialValue[vert] = initialPoint[1];
-
   solution_specs spec;
   spec.tMin = -10;
   spec.tMax = 10;
   spec.inc = 0.001;
-  spec.init = initialValue;
-  solution_specs newSpec;
-  if(appl.get_solution_dialog()->show_dialog(spec, &newSpec)) {
-    appl.add_solution(newSpec);
+  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+									    rightClickMouseY));
+  spec.init = point.vars;
+  spec.tStart = point.t;
+  if(appl.get_solution_dialog()->show_dialog(spec)) {
+    appl.add_solution(spec);
   }
 }
 void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
@@ -146,21 +136,11 @@ void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
   }
 }
 void dynamical_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent& evt) {
-  math::window2d window(appl.get_model().get_dynamical_specs(id)
-			.viewport2d);
-  math::vector2d initialPoint
-    (window.real_coordinate_of(math::vector2d(rightClickMouseX, rightClickMouseY)));
-  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
-  int horz = appl.get_model().get_dynamical_specs(id)
-    .horzAxisVar;
-  int vert = appl.get_model().get_dynamical_specs(id)
-    .vertAxisVar;
-  initialValue[horz] = initialPoint[0];
-  initialValue[vert] = initialPoint[1];
-  
   struct singular_point_specs spec;
-  spec.init = initialValue;
-  if(appl.get_singular_point_dialog()->show_dialog(spec, &spec)) {
+  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+									    rightClickMouseY));
+  spec.init = point.vars;
+  if(appl.get_singular_point_dialog()->show_dialog(spec)) {
     if(!appl.add_singular_point(spec)) {
       wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
 				    "Singular Point", wxOK);
@@ -177,9 +157,9 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   if(appl.get_model().get_dynamical_specs(id).is3d) {
     rotationViewport = appl.get_model().get_dynamical_specs(id).viewport3d;
   } else {
-    if(appl.get_model().on_dynamical_vertical_axis(id, leftClickMouseX, leftClickMouseY)) {
+    if(appl.get_model().on_dynamical_vert_axis(id, math::vector2d(leftClickMouseX, leftClickMouseY))) {
       verticalScaling = true;
-    } else if(appl.get_model().on_dynamical_horizontal_axis(id, leftClickMouseX, leftClickMouseY)) {
+    } else if(appl.get_model().on_dynamical_horiz_axis(id, math::vector2d(leftClickMouseX, leftClickMouseY))) {
       horizontalScaling = true;
     }
     axesScalingViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
@@ -188,9 +168,9 @@ void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
 }
 
 void dynamical_frame::set_cursor(int x, int y) {
-  if(appl.get_model().on_dynamical_vertical_axis(id, x, y)) {
+  if(appl.get_model().on_dynamical_vert_axis(id, math::vector2d(x, y))) {
     SetCursor(wxCURSOR_SIZENS);
-  } else if(appl.get_model().on_dynamical_horizontal_axis(id, x, y)) {
+  } else if(appl.get_model().on_dynamical_horiz_axis(id, math::vector2d(x, y))) {
     SetCursor(wxCURSOR_SIZEWE);
   } else {
     SetCursor(wxCURSOR_DEFAULT);
@@ -227,23 +207,14 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   isocline_specs specs;
   specs.inc = 0.01;
-  specs.vertices = 100;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
   specs.direction =
     math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
-  specs.init = math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
-
-  math::window2d window(appl.get_model().get_dynamical_specs(id).viewport2d);
-  math::vector2d initialPoint
-    (window.real_coordinate_of(math::vector2d(rightClickMouseX,
-					      rightClickMouseY)));
-  math::vector initialValue(appl.get_model().get_dynamical_vars(), 0.0);
-  int horz = appl.get_model().get_dynamical_specs(id)
-    .horzAxisVar;
-  int vert = appl.get_model().get_dynamical_specs(id)
-    .vertAxisVar;
-  specs.init[horz - 1] = initialPoint[0];
-  specs.init[vert - 1] = initialPoint[1];
-  
+  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+									    rightClickMouseY));
+  specs.init = point.vars;
   if(appl.get_isocline_dialog()->show_dialog(specs)) {
     if(!appl.add_isocline(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find isocline.",

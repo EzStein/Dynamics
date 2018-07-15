@@ -10,6 +10,7 @@
 #include "gui/singular_point_dialog.h"
 #include "gui/solution_dialog.h"
 #include "gui/isocline_dialog.h"
+#include "gui/parameter_dialog.h"
 
 #include "util/util.h"
 
@@ -60,7 +61,22 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
   compileButton->Enable();
 }
 
-void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&) {
+void console_frame::new_parameter_menu_item_on_selection(wxCommandEvent&) {
+  double width = 800;
+  double height = 800;
+  parameter_specs spec;
+  spec.viewport = math::window2d(math::vector2d(width, height),
+				 math::vector2d(10, 10),
+				 math::vector2d(-5, -5));
+  int parameters = appl.get_model().get_parameters();
+  spec.horizAxisVar = appl.get_model().get_parameter_names()[0];
+  spec.vertAxisVar = appl.get_model().get_parameter_names()[1];
+  if(appl.get_parameter_dialog()->show_dialog(spec)) {
+    appl.add_parameter(spec);
+  }
+}
+
+void console_frame::new_dynamical_menu_item_on_selection(wxCommandEvent&) {
   double width = 800;
   double height = 800;
   dynamical_specs spec;
@@ -72,38 +88,42 @@ void console_frame::new_dynamical_window_menu_item_on_selection(wxCommandEvent&)
 				   math::vector3d(-10,-10,-10),
 				   math::vector3d(0,1,0),
 				   1, 100, width, height);
-  spec.dynamicalVars = appl.get_model().get_dynamical_vars();
-  if(spec.dynamicalVars == 2) {
-    spec.xAxisVar = 0;
-    spec.yAxisVar = 1;
-    spec.zAxisVar = 1;
-    spec.horzAxisVar = 0;
-    spec.vertAxisVar = 1;
-  } else if(spec.dynamicalVars == 3) {
-    spec.xAxisVar = 0;
-    spec.yAxisVar = 1;
-    spec.zAxisVar = 2;
-    spec.horzAxisVar = 1;
-    spec.vertAxisVar = 2;
-  } else if(spec.dynamicalVars >= 4) {
-    spec.xAxisVar = 1;
-    spec.yAxisVar = 2;
-    spec.zAxisVar = 3;
-    spec.horzAxisVar = 1;
-    spec.vertAxisVar = 2;
+  int vars = appl.get_model().get_dynamical_dimension() + 1;
+  if(vars == 2) {
+    spec.xAxisVar = appl.get_model().get_var_diff_name();
+    spec.yAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.zAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.horzAxisVar = appl.get_model().get_var_diff_name();
+    spec.vertAxisVar = appl.get_model().get_dynamical_names()[0];
+  } else if(vars == 3) {
+    spec.xAxisVar = appl.get_model().get_var_diff_name();
+    spec.yAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.zAxisVar = appl.get_model().get_dynamical_names()[1];
+    spec.horzAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.vertAxisVar = appl.get_model().get_dynamical_names()[1];
+  } else if(vars >= 4) {
+    spec.xAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.yAxisVar = appl.get_model().get_dynamical_names()[1];
+    spec.zAxisVar = appl.get_model().get_dynamical_names()[2];
+    spec.horzAxisVar = appl.get_model().get_dynamical_names()[0];
+    spec.vertAxisVar = appl.get_model().get_dynamical_names()[1];
   } else {
     assert(false);
   }
 
   
   spec.is3d = false;
-  if(appl.get_dynamical_dialog()->show_dialog(spec, &spec)) {
+  if(appl.get_dynamical_dialog()->show_dialog(spec)) {
     appl.add_dynamical(spec);
   }
 }
 
-void console_frame::close_dynamical_windows_menu_item_on_selection(wxCommandEvent&) {
+void console_frame::close_dynamical_menu_item_on_selection(wxCommandEvent&) {
   appl.delete_all_dynamical_windows();
+}
+
+void console_frame::close_parameter_menu_item_on_selection(wxCommandEvent&) {
+  appl.delete_all_parameter_windows();
 }
 
 void console_frame::console_frame_on_close(wxCloseEvent& evt) {
@@ -114,7 +134,8 @@ void console_frame::set_no_compile() {
   variablesComboBox->SetValue("");
   compileButton->Disable();
   equationsDataViewCtrl->DeleteAllItems();
-  newDynamicalWindowMenuItem->Enable(false);
+  newDynamicalMenuItem->Enable(false);
+  newParameterMenuItem->Enable(false);
   solutionMenuItem->Enable(false);
   singularPointMenuItem->Enable(false);
   saveMenuItem->Enable(false);
@@ -126,12 +147,16 @@ void console_frame::set_no_compile() {
 }
 
 void console_frame::set_yes_compile() {
-  newDynamicalWindowMenuItem->Enable(true);
+  newDynamicalMenuItem->Enable(true);
   solutionMenuItem->Enable(true);
   singularPointMenuItem->Enable(true);
   saveMenuItem->Enable(true);
   saveAsMenuItem->Enable(true);
   closeMenuItem->Enable(true);
+
+  if(appl.get_model().get_parameters() >= 2) {
+    newParameterMenuItem->Enable(true);
+  }
 
   singularPointsDataViewCtrl->DeleteAllItems();
   solutionsDataViewCtrl->DeleteAllItems();
@@ -156,8 +181,11 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
     return;
   }
   std::vector<std::string> expressions;
+  std::vector<std::string> dynamicalVarNames;
   for(int row = 0; row != variables; ++row) {
+    dynamicalVarNames.push_back(equationsDataViewCtrl->GetTextValue(row, 0).ToStdString());
     std::string value(equationsDataViewCtrl->GetTextValue(row, 1));
+
     expressions.push_back(value);
     if(value.empty()) {
       wxMessageDialog messageDialog(nullptr, "One of the expressions is empty!",
@@ -166,7 +194,16 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
       return;
     }
   }
-  if(!appl.compile(expressions)) {
+  
+  
+  std::vector<std::string> parameterNames;
+  int params = std::stoi(parametersComboBox->GetValue().ToStdString());
+  for(int i = 0; i != params; ++i) {
+    parameterNames.push_back("a" + std::to_string(i + 1));
+  }
+  std::string varDiffName("t");
+  if(!appl.compile(varDiffName, dynamicalVarNames,
+		   parameterNames, expressions)) {
     wxMessageDialog messageDialog(nullptr, "The Compilation Failed!",
 				  "Compilation Error", wxOK);
     messageDialog.ShowModal();
@@ -217,12 +254,59 @@ void console_frame::update_equations_data_view_ctrl(int variables) {
   assert(variables >= 1);
   if(variables == equationsDataViewCtrl->GetItemCount()) return;
   equationsDataViewCtrl->DeleteAllItems();
-  wxVector<wxVariant> data;
-  for(int i = 0; i != variables; ++i) {
-    data.push_back(wxVariant("x" + std::to_string(i+1)));
-    data.push_back(wxVariant(""));
+
+  if(variables == 1) {
+    wxVector<wxVariant> data;
+    data.push_back("x");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+  } else if(variables == 2) {
+    wxVector<wxVariant> data;
+    data.push_back("x");
+    data.push_back("");
     equationsDataViewCtrl->AppendItem(data);
     data.clear();
+    data.push_back("y");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+  } else if(variables == 3) {
+    wxVector<wxVariant> data;
+    data.push_back("x");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+    data.clear();
+    data.push_back("y");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+    data.clear();
+    data.push_back("z");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+  } else if(variables == 4) {
+    wxVector<wxVariant> data;
+    data.push_back("x");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+    data.clear();
+    data.push_back("y");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+    data.clear();
+    data.push_back("z");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+    data.clear();
+    data.push_back("w");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+  } else {
+    for(int i = 0; i != variables; ++i) {
+      wxVector<wxVariant> data;
+      data.push_back(wxVariant("x" + std::to_string(i+1)));
+      data.push_back(wxVariant(""));
+      equationsDataViewCtrl->AppendItem(data);
+      data.clear();
+    }
   }
   compileButton->Enable();
 }
@@ -313,7 +397,7 @@ void console_frame::update_singular_points_list() {
       iter != appl.get_model().get_singular_points().end(); ++iter) {
     wxVector<wxVariant> data;
     data.push_back(wxVariant(std::to_string(iter->first)));
-    for(int i = 0; i != appl.get_model().get_dynamical_vars(); ++i) {
+    for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
       data.push_back(wxVariant(std::to_string(iter->second.position[i])));
     }
     singularPointsDataViewCtrl->AppendItem(data);
@@ -344,18 +428,17 @@ void console_frame::solution_menu_item_on_menu_selection(wxCommandEvent&) {
   spec.tMin = -10;
   spec.tMax = 10;
   spec.inc = 0.01;
-  int dynamicalVariables = appl.get_model().get_dynamical_vars();
+  int dynamicalVariables = appl.get_model().get_dynamical_dimension() + 1;
   spec.init = math::vector(dynamicalVariables, 0.0);
-  solution_specs newSpec;
-  if(appl.get_solution_dialog()->show_dialog(spec, &newSpec)) {
-    appl.add_solution(newSpec);
+  if(appl.get_solution_dialog()->show_dialog(spec)) {
+    appl.add_solution(spec);
   }
 }
 void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) {
   struct singular_point_specs spec;
-  int dynamicalVariables = appl.get_model().get_dynamical_vars();
+  int dynamicalVariables = appl.get_model().get_dynamical_dimension() + 1;
   spec.init = math::vector(dynamicalVariables, 0.0);
-  if(appl.get_singular_point_dialog()->show_dialog(spec, &spec)) {
+  if(appl.get_singular_point_dialog()->show_dialog(spec)) {
     if(!appl.add_singular_point(spec)) {
       wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
 				    "Singular Point", wxOK);
@@ -367,7 +450,9 @@ void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) 
 void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   isocline_specs specs;
   specs.inc = 0.01;
-  specs.vertices = 100;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
   specs.direction =
     math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
   specs.init = math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
@@ -383,7 +468,7 @@ void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
 void console_frame::solutions_edit_button_on_button_click(wxCommandEvent&) {
   solution_id solutionId(get_selected_solution());
   solution_specs spec(appl.get_model().get_solutions().at(solutionId).specs);
-  if(appl.get_solution_dialog()->show_dialog(spec, &spec)) {
+  if(appl.get_solution_dialog()->show_dialog(spec)) {
     appl.set_solution_specs(solutionId, spec);
   }
 }
@@ -415,6 +500,11 @@ void console_frame::close_menu_item_on_menu_selection(wxCommandEvent&) {
 }
 void console_frame::singular_points_delete_button_on_button_click(wxCommandEvent&) {
   appl.delete_singular_point(get_selected_singular_point());
+}
+
+void console_frame::parameters_combo_box_on_combo_box(wxCommandEvent&) {
+}
+void console_frame::parameters_combo_box_on_text_enter(wxCommandEvent&) {
 }
 } // namespace gui
 } // namespace dynsolver

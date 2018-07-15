@@ -9,10 +9,11 @@ namespace gui {
 
 class singular_point_dialog : public singular_point_dialog_base {
  private:
-  singular_point_specs singularPointSpecification;
+  const app& appl;
+  singular_point_specs specs;
   
  public:
-  singular_point_dialog();
+  singular_point_dialog(const app&);
   
   virtual void cancel_button_on_button_click(wxCommandEvent&) override;
   virtual void add_button_on_button_click(wxCommandEvent&) override;
@@ -23,14 +24,14 @@ class singular_point_dialog : public singular_point_dialog_base {
   // Otherwise it returns true and fills the specification pointer
   // with the specification that the user generated. Only one instance of this
   // class is meant to in the program. That is, you should reuse it.
-  bool show_dialog(const singular_point_specs&, singular_point_specs*);
+  bool show_dialog(singular_point_specs&);
 
 private:
   void set_ui();
 
   // Returns true if the imformation in the UI is valid. It it is,
   // this function also sets the specification member variable.
-  bool validate_and_set_specification();
+  bool validate_and_set();
 };
 } // namespace gui
 } // namespace dynsolver

@@ -55,21 +55,19 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_menubar1->Append( m_menu2, wxT("Objects") ); 
 	
 	m_menu4 = new wxMenu();
-	newDynamicalWindowMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("New Dynamical...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu4->Append( newDynamicalWindowMenuItem );
+	newDynamicalMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("New Dynamical...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu4->Append( newDynamicalMenuItem );
 	
-	wxMenuItem* m_menuItem8;
-	m_menuItem8 = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("New Parameter...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu4->Append( m_menuItem8 );
+	newParameterMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("New Parameter...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu4->Append( newParameterMenuItem );
 	
 	m_menu4->AppendSeparator();
 	
-	closeDynamicalWindowsMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Close Dynamical Windows...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu4->Append( closeDynamicalWindowsMenuItem );
+	closeDynamicalMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Close Dynamical Windows...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu4->Append( closeDynamicalMenuItem );
 	
-	wxMenuItem* m_menuItem23;
-	m_menuItem23 = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Close Parameter Windows...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu4->Append( m_menuItem23 );
+	closeParameterMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Close Parameter Windows...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu4->Append( closeParameterMenuItem );
 	
 	m_menubar1->Append( m_menu4, wxT("Window") ); 
 	
@@ -77,14 +75,6 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxMenuItem* lorenzExampleMenuItem;
 	lorenzExampleMenuItem = new wxMenuItem( m_menu8, wxID_ANY, wxString( wxT("Lorenz System") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu8->Append( lorenzExampleMenuItem );
-	
-	wxMenuItem* m_menuItem25;
-	m_menuItem25 = new wxMenuItem( m_menu8, wxID_ANY, wxString( wxT("Damped Harmonic Motion") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu8->Append( m_menuItem25 );
-	
-	wxMenuItem* m_menuItem26;
-	m_menuItem26 = new wxMenuItem( m_menu8, wxID_ANY, wxString( wxT("Saddle Node Bifurcation") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu8->Append( m_menuItem26 );
 	
 	m_menubar1->Append( m_menu8, wxT("Examples") ); 
 	
@@ -105,9 +95,6 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxHORIZONTAL );
 	
-	compileButton = new wxButton( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer16->Add( compileButton, 0, wxALL, 5 );
-	
 	m_staticText1 = new wxStaticText( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Variables: "), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	bSizer16->Add( m_staticText1, 0, wxALL, 10 );
@@ -122,6 +109,27 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	
 	
 	sbSizer41->Add( bSizer16, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer32;
+	bSizer32 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText2 = new wxStaticText( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Parameters:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2->Wrap( -1 );
+	bSizer32->Add( m_staticText2, 0, wxALL, 5 );
+	
+	parametersComboBox = new wxComboBox( sbSizer41->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxTE_PROCESS_ENTER );
+	parametersComboBox->Append( wxT("0") );
+	parametersComboBox->Append( wxT("1") );
+	parametersComboBox->Append( wxT("2") );
+	parametersComboBox->Append( wxT("3") );
+	parametersComboBox->SetSelection( 0 );
+	bSizer32->Add( parametersComboBox, 1, wxALL, 5 );
+	
+	
+	sbSizer41->Add( bSizer32, 0, wxEXPAND, 5 );
+	
+	compileButton = new wxButton( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer41->Add( compileButton, 0, wxALL, 5 );
 	
 	
 	bSizer18->Add( sbSizer41, 1, wxEXPAND, 5 );
@@ -227,13 +235,17 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Connect( newDynamicalWindowMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_window_menu_item_on_selection ) );
-	this->Connect( closeDynamicalWindowsMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_windows_menu_item_on_selection ) );
+	this->Connect( newDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
+	this->Connect( newParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
+	this->Connect( closeDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
+	this->Connect( closeParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
 	this->Connect( lorenzExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	compileButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	variablesComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::variables_combo_box_on_combo_box ), NULL, this );
 	variablesComboBox->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( console_frame_base::variables_combo_box_on_kill_focus ), NULL, this );
 	variablesComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_combo_box_on_text_enter ), NULL, this );
+	parametersComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_combo_box ), NULL, this );
+	parametersComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_text_enter ), NULL, this );
+	compileButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	solutionsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::solutions_data_view_ctrl_on_selection_changed ), NULL, this );
 	solutionsEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_edit_button_on_button_click ), NULL, this );
 	solutionsDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_delete_button_on_button_click ), NULL, this );
@@ -252,13 +264,17 @@ console_frame_base::~console_frame_base()
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_window_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_windows_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	compileButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	variablesComboBox->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::variables_combo_box_on_combo_box ), NULL, this );
 	variablesComboBox->Disconnect( wxEVT_KILL_FOCUS, wxFocusEventHandler( console_frame_base::variables_combo_box_on_kill_focus ), NULL, this );
 	variablesComboBox->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_combo_box_on_text_enter ), NULL, this );
+	parametersComboBox->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_combo_box ), NULL, this );
+	parametersComboBox->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_text_enter ), NULL, this );
+	compileButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	solutionsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::solutions_data_view_ctrl_on_selection_changed ), NULL, this );
 	solutionsEditButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_edit_button_on_button_click ), NULL, this );
 	solutionsDeleteButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_delete_button_on_button_click ), NULL, this );
@@ -442,17 +458,17 @@ parameter_dialog_base::parameter_dialog_base( wxWindow* parent, wxWindowID id, c
 	wxBoxSizer* bSizer30;
 	bSizer30 = new wxBoxSizer( wxVERTICAL );
 	
-	m_propertyGrid6 = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE);
-	bSizer30->Add( m_propertyGrid6, 1, wxEXPAND, 5 );
+	parameterPropertyGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE);
+	bSizer30->Add( parameterPropertyGrid, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* bSizer31;
 	bSizer31 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_button15 = new wxButton( this, wxID_ANY, wxT("MyButton"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer31->Add( m_button15, 0, wxALL, 5 );
+	okButton = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( okButton, 0, wxALL, 5 );
 	
-	m_button16 = new wxButton( this, wxID_ANY, wxT("MyButton"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer31->Add( m_button16, 0, wxALL, 5 );
+	cancelButton = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( cancelButton, 0, wxALL, 5 );
 	
 	
 	bSizer30->Add( bSizer31, 0, wxEXPAND, 5 );
@@ -462,10 +478,18 @@ parameter_dialog_base::parameter_dialog_base( wxWindow* parent, wxWindowID id, c
 	this->Layout();
 	
 	this->Centre( wxBOTH );
+	
+	// Connect Events
+	okButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( parameter_dialog_base::ok_button_on_button_click ), NULL, this );
+	cancelButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( parameter_dialog_base::cancel_button_on_button_click ), NULL, this );
 }
 
 parameter_dialog_base::~parameter_dialog_base()
 {
+	// Disconnect Events
+	okButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( parameter_dialog_base::ok_button_on_button_click ), NULL, this );
+	cancelButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( parameter_dialog_base::cancel_button_on_button_click ), NULL, this );
+	
 }
 
 solution_dialog_base::solution_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
@@ -628,8 +652,10 @@ isocline_dialog_base::isocline_dialog_base( wxWindow* parent, wxWindowID id, con
 	bSizer25 = new wxBoxSizer( wxVERTICAL );
 	
 	m_propertyGrid5 = new wxPropertyGrid(m_panel101, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
-	m_propertyGridItem4 = m_propertyGrid5->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
-	m_propertyGridItem5 = m_propertyGrid5->Append( new wxIntProperty( wxT("Span"), wxT("Span") ) ); 
+	incrementPGItem = m_propertyGrid5->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
+	spanPGItem = m_propertyGrid5->Append( new wxIntProperty( wxT("Span"), wxT("Span") ) ); 
+	searchRadiusPGItem = m_propertyGrid5->Append( new wxFloatProperty( wxT("Search Radius"), wxT("Search Radius") ) ); 
+	searchIncrementPGItem = m_propertyGrid5->Append( new wxFloatProperty( wxT("Search Increment"), wxT("Search Increment") ) ); 
 	bSizer25->Add( m_propertyGrid5, 1, wxEXPAND, 5 );
 	
 	

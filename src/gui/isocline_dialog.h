@@ -10,7 +10,7 @@ namespace gui {
 
 class isocline_dialog : public isocline_dialog_base {
 public:
-  isocline_dialog();
+  isocline_dialog(const app&);
   
   // Shows this dialog, filling in the default info with the given
   // isocline_specs. Returns false if the user cancelled the operation,
@@ -21,6 +21,7 @@ public:
   virtual void ok_button_on_button_click(wxCommandEvent&) override;
   
 private:
+  const app& appl;
   isocline_specs specs;
 
   // Sets the UI according to the specs field. Assumes that the

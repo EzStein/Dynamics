@@ -1,20 +1,21 @@
 #include "gui/solution_dialog.h"
+#include "gui/app.h"
 
 namespace dynsolver {
 namespace gui {
 
-solution_dialog::solution_dialog() :
-  solution_dialog_base(nullptr) {
+solution_dialog::solution_dialog(const app& appl)
+  : solution_dialog_base(nullptr),
+    appl(appl) {
   initialValueDataViewCtrl->AppendTextColumn("Variable");
   initialValueDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 }
 
-bool solution_dialog::show_dialog(const solution_specs& spec,
-				  solution_specs* ret) {
-  solutionSpecification = spec;
+bool solution_dialog::show_dialog(solution_specs& inSpecs) {
+  specs = inSpecs;
   set_ui();
   if(ShowModal() == wxID_OK) {
-    *ret = solutionSpecification;
+    inSpecs = specs;
     return true;
   } else {
     return false;
@@ -26,56 +27,63 @@ void solution_dialog::cancel_button_on_button_click(wxCommandEvent& evt) {
 }
 
 void solution_dialog::add_button_on_button_click(wxCommandEvent& evt) {
-  if(validate_and_set_specification()) {
+  if(validate_and_set()) {
     EndModal(wxID_OK);
   }
 }
 
 void solution_dialog::set_ui() {
   initialValueDataViewCtrl->DeleteAllItems();
-  for(int i = 0; i != solutionSpecification.init.size(); ++i) {
-    wxVector<wxVariant> data;
-    if(i == 0) {
-      data.push_back("t");
-    } else {
-      data.push_back("x" + std::to_string(i));
-    }
-    data.push_back(std::to_string(solutionSpecification.init[i]));
+  wxVector<wxVariant> data;
+  data.push_back(appl.get_model().get_var_diff_name());
+  data.push_back(std::to_string(specs.tStart));
+  initialValueDataViewCtrl->AppendItem(data);
+  for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
+    data.clear();
+    data.push_back(appl.get_model().get_dynamical_names()[i]);
+    data.push_back(std::to_string(specs.init[i]));
     initialValueDataViewCtrl->AppendItem(data);
   }
   solutionPropertyGrid->SetPropertyValue(tMinPropertyGridItem,
-					 solutionSpecification.tMin);
+					 specs.tMin);
   solutionPropertyGrid->SetPropertyValue(tMaxPropertyGridItem,
-					 solutionSpecification.tMax);
+					 specs.tMax);
   solutionPropertyGrid->SetPropertyValue(incrementPropertyGridItem,
-					 solutionSpecification.inc);
+					 specs.inc);
 }
 
-bool solution_dialog::validate_and_set_specification() {
-  solutionSpecification.tMin =
+bool solution_dialog::validate_and_set() {
+  specs.tMin =
     solutionPropertyGrid->GetPropertyValue(tMinPropertyGridItem).GetDouble();
-  solutionSpecification.tMax =
+  specs.tMax =
     solutionPropertyGrid->GetPropertyValue(tMaxPropertyGridItem).GetDouble();
-  solutionSpecification.inc =
+  specs.inc =
     solutionPropertyGrid->GetPropertyValue(incrementPropertyGridItem).GetDouble();
-  int variables = initialValueDataViewCtrl->GetItemCount();
-  solutionSpecification.init = math::vector(variables);
-  for(int i = 0; i != variables; ++i) {
+  for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
     double value;
     try {
-      value = std::stod(initialValueDataViewCtrl->GetTextValue(i, 1).ToStdString());
+      value = std::stod(initialValueDataViewCtrl->GetTextValue(i + 1, 1).ToStdString());
     } catch (const std::invalid_argument& exc) {
       return false;
     } catch (const std::out_of_range& exc) {
       return false;
     }
-    solutionSpecification.init[i] = value;
+    specs.init[i] = value;
   }
-  if(solutionSpecification.tMin >= solutionSpecification.init[0]) {
+  double value;
+  try {
+    value = std::stod(initialValueDataViewCtrl->GetTextValue(0, 1).ToStdString());
+  } catch (const std::invalid_argument& exc) {
     return false;
-  } else if(solutionSpecification.init[0] >= solutionSpecification.tMax) {
+  } catch (const std::out_of_range& exc) {
     return false;
-  } else if(solutionSpecification.inc <= 0.0) {
+  }
+  specs.tStart = value;
+  if(specs.tMin >= specs.init[0]) {
+    return false;
+  } else if(specs.tStart >= specs.tMax) {
+    return false;
+  } else if(specs.inc <= 0.0) {
     return false;
   }
   return true;

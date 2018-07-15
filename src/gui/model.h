@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 #include <glad/glad.h>
 
@@ -57,8 +58,13 @@ struct solution_specs {
   // The color that should be used to render this solution.
   color glColor;
   
-  // The starting point of the solution including the initial value of t.
+  // The starting value of the dynamical variables. This does not include
+  // the variable of differentiation, and it is ordered according to
+  // the dynamicalVarNames vector.
   math::vector init;
+
+  // This is the starting value of the variable of differentiation.
+  double tStart;
 
   // Invariant:
   // tMax must be strictly greater than tMin. initial[0] must be
@@ -74,10 +80,18 @@ struct solution_specs {
   double inc;
 };
 
+struct dynamical_point {
+  // Represents the dynamical variables in the order of dynamicalVarNames vector
+  math::vector vars;
+
+  // The value of the variable of differentiation.
+  double t;
+};
+
 // A specification for drawing a solution through an initial point.
 struct solution {
   solution_specs specs;
-  std::list<math::vector> data;
+  std::list<dynamical_point> data;
 };
 
 struct singular_point_specs {
@@ -91,23 +105,34 @@ struct singular_point_specs {
 struct singular_point {
   singular_point_specs specs;
   math::vector position;
-  // std::vector<double> eigenvalues
 };
 
 struct isocline_specs {
   isocline_specs();
   // This is the seed used in newtons method to find the isocline.
+  // It is a vector of dynamical variables ordered according to
+  // dynamicalVarNames.
   math::vector init;
 
   // This is the direction that the vector field points in on this isocline.
+  // It is also ordered according to dynamicalVarNames.
   math::vector direction;
 
-  // This is the maximal increment (in some direction) that is used when
+  // This is the increment (in some direction) that is used when
   // computing the isocline.
   double inc;
 
-  // This is the maximum number of vertices used to render the isocline.
-  size_t vertices;
+  // This is the number of vertices to compute in either direction of the
+  // starting point.
+  int span;
+
+  // This is the radius about the init points for which we attempt to
+  // find an isocline. If the the isocline falls outside of this radius,
+  // we may still find it. However we did not find the isocline,
+  // it is likely not in this radius. The granularity of search,
+  // is set by, searchInc;
+  double searchRadius;
+  double searchInc;
 
   color glColor;
 };
@@ -125,24 +150,22 @@ struct isocline {
 // window.
 struct dynamical_specs {
   bool is3d;
-  
-  unsigned int dynamicalVars;
 
   // 2d
-  int horzAxisVar;
-  int vertAxisVar;
+  std::string horzAxisVar;
+  std::string vertAxisVar;
   math::window2d viewport2d;
 
   // 3d
   math::window3d viewport3d;
-  int xAxisVar;
-  int yAxisVar;
-  int zAxisVar;
+  std::string xAxisVar;
+  std::string yAxisVar;
+  std::string zAxisVar;
 };
 
 struct parameter_specs {
-  int horizAxisVar;
-  int vertAxisVar;
+  std::string horizAxisVar;
+  std::string vertAxisVar;
   math::window2d viewport;
 };
 
@@ -289,8 +312,8 @@ class model {
     // Read
     // Returns true if the point given in pixels is on the vertical/horizontal
     // axis.
-    bool on_vertical_axis(int x, int y) const;
-    bool on_horizontal_axis(int x, int y) const;
+    bool on_vert_axis(const math::vector2d&) const;
+    bool on_horiz_axis(const math::vector2d&) const;
     // Gets and sets the specifications.
     const dynamical_specs& get_specs() const;
 
@@ -315,6 +338,8 @@ class model {
     bool select_solution(int x, int y, solution_id* id);
     bool select_isocline(int x, int y, isocline_id* id);
     bool select_singular_point(int x, int y, singular_point_id* id);
+
+    dynamical_point get_point(const math::vector2d& pos) const;
 
   private:
     // Generates a VBo for the corresponding solution data and id.
@@ -370,14 +395,54 @@ class model {
   gl::font font;
   gl::text_renderer textRenderer;
   
-  // The number of variables involved excludin gthe variable of
+  // The number of dynamical variables involved excluding the variable of
   // differentiation, t. Should always be 1 or greater. This number shall be
-  // denoted as d, and the number  of dynamical variables will be denoted as n.
-  int dynamicalDimension;
+  // denoted as d.
+  int dynamicalVars;
+
+  // Indicates the number of parameters used.
+  // Must be nonnegative.
+  int parameters;
 
   // A list of expressions corresponding to the abstract syntax trees.
-  // The size is d.
+  // The size is the number of dynamical variables, and it is ordered according
+  // to the ordering in dynamicalVarNames.
   std::vector<std::string> expressions;
+
+  // This maps symbols in the compiled expression to the index that they are
+  // associated with. That is, the index of the double array that is passed,
+  // to the compiled functions.
+  std::map<std::string, int> symbolsToIndex;
+
+  // This is the transpose of the above symbols to index map.
+  std::unordered_map<int, std::string> indexToSymbols;
+
+  // Each symbol is also either a dynamical variable, parameter,
+  // or the variable of differentiation. That information along with the
+  // ordering of parameters and dynamical variables is stored in these vectors.
+  std::vector<std::string> dynamicalVarNames;
+  // The index of the dynamical variable in the dynamicalVarNames vector.
+  std::map<std::string, int> dynamicalVarIndex;
+  std::vector<std::string> parameterNames;
+  std::map<std::string, int> parameterIndex;
+
+  // Maps the parameterIndex to its symbol index.
+  std::vector<int> parameterIndexToSymbol;
+  std::vector<int> dynamicalIndexToSymbol;
+  std::string varDiffName;
+  int varDiffIndex;
+
+
+  // Stores the current values of all the parameters.
+  math::vector parameterPosition;
+
+  // Invariant on the above members maintains that the size of
+  // dynamicalVarNames and parameterNames are consistent with
+  // dynamicalVariables and parameters. In addition, the indexes mapped
+  // in indexToSymbols form a contiguous range from 0 to
+  // dynamicalVars + parameters exclusive. And the strings
+  // that they are mapped to are precisely those strings contained in the
+  // vectors.
   
   // The following variables are updated on every recompile.
   
@@ -387,10 +452,14 @@ class model {
   // Variables are ordered from 0 to d.
   // We require that jacobian has size of d * d.
   // System.size() is equal to d.
+  // Each index in the system corresponds to the order that the dynamical
+  // variable appears in dynamicalVarNames.
   std::vector<expression> system;
   
   // The jacobian of the system of equations stored in ROW-MAJOR order.
   // The size is d^2.
+  // The order of expressions in the jacobian corresponds to the order that
+  // each dynamical variable appears in dynamicalVarNames.
   std::vector<expression> jacobian;
 
   // Each dynamical and parameter window will have an id. The id is associated
@@ -503,12 +572,15 @@ public:
   void resize_parameter(parameter_id id, int width, int height);
   
 
-  // Resets most variables and compiles the array of strings into a vector
-  // field system of ODE's.  Returns true
+  // Resets most variables and compiles the array of strings in newExpressions
+  // into a vector field system of ODE's.  Returns true
   // on success. In the future, this function will return information
   // on why the compilation failed if it does fail.
   // Requires that the vector has size 1 or more.
-  bool compile(std::vector<std::string>);
+  bool compile(const std::string& newVarDiffName,
+	       const std::vector<std::string>& newDynamicalVarNames,
+	       const std::vector<std::string>& newParameterNames,
+	       const std::vector<std::string>& newExpressions);
 
   // Add
   // Adds the dynamical window according to the specification provided.
@@ -616,8 +688,8 @@ public:
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
-  bool on_dynamical_vertical_axis(dynamical_id id, int x, int y) const;
-  bool on_dynamical_horizontal_axis(dynamical_id id, int x, int y) const;
+  bool on_dynamical_vert_axis(dynamical_id id, const math::vector2d&) const;
+  bool on_dynamical_horiz_axis(dynamical_id id, const math::vector2d&) const;
 
   bool on_parameter_vert_axis(parameter_id id, const math::vector2d&) const;
   bool on_parameter_horiz_axis(parameter_id id, const math::vector2d&) const;
@@ -626,9 +698,15 @@ public:
   // The dynamical dimension is one less than the number of dynamical variables.
   int get_dynamical_dimension() const;
 
-  // Returns the number of dynamical variables including the variable of
-  // integration t.
-  int get_dynamical_vars() const;
+  int get_parameters() const;
+
+  const std::vector<std::string>& get_dynamical_names() const;
+  const std::vector<std::string>& get_parameter_names() const;
+  const std::string& get_var_diff_name() const;
+
+  // Returns the dynamical point associated with the given mouse position
+  // in this dynamical window.
+  dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
 };
 } // namespace gui
 } // namespace dynsolver
