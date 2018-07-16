@@ -54,7 +54,7 @@ vector2d vector2d::operator+(const vector2d& other) const {
 
 vector2d vector2d::operator-(const vector2d& other) const {
   vector2d vec(*this);
-  vec += other;
+  vec -= other;
   return vec;
 }
 } // namespace math

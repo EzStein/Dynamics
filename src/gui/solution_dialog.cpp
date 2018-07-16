@@ -79,7 +79,7 @@ bool solution_dialog::validate_and_set() {
     return false;
   }
   specs.tStart = value;
-  if(specs.tMin >= specs.init[0]) {
+  if(specs.tMin >= specs.tStart) {
     return false;
   } else if(specs.tStart >= specs.tMax) {
     return false;

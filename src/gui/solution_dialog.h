@@ -15,6 +15,7 @@ class solution_dialog : public solution_dialog_base {
   const app& appl;
   solution_specs specs;
   
+  
  public:
   solution_dialog(const app&);
 

@@ -42,19 +42,20 @@ console_frame::~console_frame() { }
 
 void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) {
   variablesComboBox->SetValue("3");
+  parametersComboBox->SetValue("3");
   
   equationsDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
-  data.push_back(wxVariant("x1"));
-  data.push_back(wxVariant("10*(x2-x1)"));
+  data.push_back(wxVariant("x"));
+  data.push_back(wxVariant("a1*(y-x)"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
-  data.push_back(wxVariant("x2"));
-  data.push_back(wxVariant("x1*(28-x3)-x2"));
+  data.push_back(wxVariant("y"));
+  data.push_back(wxVariant("x*(a2-z)-y"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
-  data.push_back(wxVariant("x3"));
-  data.push_back(wxVariant("x1*x2-x3*8/3"));
+  data.push_back(wxVariant("z"));
+  data.push_back(wxVariant("x*y-z*a3"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
 
@@ -62,13 +63,12 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
 }
 
 void console_frame::new_parameter_menu_item_on_selection(wxCommandEvent&) {
-  double width = 800;
-  double height = 800;
+  double width = 400;
+  double height = 400;
   parameter_specs spec;
   spec.viewport = math::window2d(math::vector2d(width, height),
 				 math::vector2d(10, 10),
 				 math::vector2d(-5, -5));
-  int parameters = appl.get_model().get_parameters();
   spec.horizAxisVar = appl.get_model().get_parameter_names()[0];
   spec.vertAxisVar = appl.get_model().get_parameter_names()[1];
   if(appl.get_parameter_dialog()->show_dialog(spec)) {
@@ -164,10 +164,6 @@ void console_frame::set_yes_compile() {
   
   singularPointsDataViewCtrl->ClearColumns();
   singularPointsDataViewCtrl->AppendTextColumn("ID");
-  singularPointsDataViewCtrl->AppendTextColumn("t");
-  for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
-    singularPointsDataViewCtrl->AppendTextColumn("x" + std::to_string(i));
-  }
 
   isoclinesDataViewCtrl->ClearColumns();
   isoclinesDataViewCtrl->AppendTextColumn("ID");
@@ -397,9 +393,6 @@ void console_frame::update_singular_points_list() {
       iter != appl.get_model().get_singular_points().end(); ++iter) {
     wxVector<wxVariant> data;
     data.push_back(wxVariant(std::to_string(iter->first)));
-    for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
-      data.push_back(wxVariant(std::to_string(iter->second.position[i])));
-    }
     singularPointsDataViewCtrl->AppendItem(data);
     if(iter->first == appl.get_model().get_selected_singular_point()) {
       singularPointsDataViewCtrl->SelectRow(row);

@@ -195,9 +195,19 @@ class model {
 
     // The specification for this window.
     parameter_specs specs;
+
+    double realTickDistanceX;
+    double realTickDistanceY;
+    gl::buffer axesVbo;
+    int ticksPerLabel;
+    double tickFontSize;
+    gl::buffer crossVbo;
+    GLsizei crossVboVertices;
     
   public:
     parameter_window(model&, const parameter_specs& spec);
+
+    bool on_parameter_position(const math::vector2d& pos) const;
 
     // Update
     void set_specs(const parameter_specs& spec);
@@ -220,7 +230,6 @@ class model {
     
     // Gets and sets the specifications.
     const parameter_specs& get_specs() const;
-    
   };
   
   // Represents information associated with an instance of a dynamical window.
@@ -236,8 +245,6 @@ class model {
 
     // The VBO for storing the axes vertex info.
     gl::buffer axesVbo;
-    
-    GLsizei axesVboVertices;
 
     // Each solution is associated with render data containing a VBO each for
     // its 2d and 3d rendering.
@@ -278,13 +285,6 @@ class model {
 
     // The font size of the labels on the ticks.
     double tickFontSize;
-
-    // The maximal distance between two axis ticks in pixels. If the number of
-    // axis tickets jumps above the maximum, then the number of tickets are
-    // doubled, and the real distance between each tick is halved. If it falls
-    // below the minimum, the distance between each tick is doubled.
-    const int minPixelTickDist;
-    const int maxPixelTickDist;
 
     // The current tick distance in real coordnate values.
     double realTickDistanceX;
@@ -341,19 +341,15 @@ class model {
 
     dynamical_point get_point(const math::vector2d& pos) const;
 
-  private:
-    // Generates a VBo for the corresponding solution data and id.
+    // Generates a VBO for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
-    void gen_solution_vbo(solution_id);
+    void update_solution_vbo(solution_id);
 
     // Generates a VBo for the corresponding isocline data and id.
     // Replaces the VBO for that ID if it already exists.
-    void gen_isocline_vbo(isocline_id);
-    
-    // Updates the axes vbo. This should be called whenever the axes
-    // or the ticks on the axes are altered.
-    void update_axes_vbo();
+    void update_isocline_vbo(isocline_id);
 
+  private:
     // Draw
     void draw_solutions_3d();
     void draw_isoclines_3d();
@@ -363,7 +359,6 @@ class model {
     void draw_solutions_2d();
     void draw_isoclines_2d();
     void draw_singular_points_2d();
-    void draw_axes_2d();
     
     
     typedef std::unordered_map<solution_id, solution_data>::const_iterator
@@ -528,6 +523,16 @@ class model {
   // specification associated with that solution.
   void generate_solution_data(solution_id id);
 
+  // (Re)Generates the isocline data for the given id using the
+  // specification associated with that solution. If it fails to
+  // find an isocline for that data, returns false.
+  bool generate_isocline_data(isocline_id id);
+
+  // (Re)Generates the singular point data for the given id using the
+  // specification associated with that solution. If it fails to
+  // find an isocline for that data, returns false.
+  bool generate_singular_point_data(singular_point_id id);
+
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
   typedef std::unordered_map<dynamical_id, dynamical_window>::const_iterator
@@ -554,7 +559,23 @@ public:
   static const singular_point_id kNoSingularPointId;
   static const isocline_id kNoIsoclineId;
   
+  // The maximal distance between two axis ticks in pixels. If the number of
+  // axis tickets jumps above the maximum, then the number of tickets are
+  // doubled, and the real distance between each tick is halved. If it falls
+  // below the minimum, the distance between each tick is doubled.
+  static const int minPixelTickDist;
+  static const int maxPixelTickDist;
+  
   model();
+
+  // Draws the 2d axes to the bound context. Updates
+  // the realTickDistances accordingly.
+  void draw_axes_2d(const math::window2d& viewport,
+		    int ticksPerLabel,
+		    double tickFontSize,
+		    double& realTickDistanceX,
+		    double& realTickDistanceY,
+		    gl::buffer& axesVbo) const;
 
   // Called to clear what is currently compiled.
   void set_no_compile();
@@ -707,6 +728,14 @@ public:
   // Returns the dynamical point associated with the given mouse position
   // in this dynamical window.
   dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
+
+  // Sets the parameter position and updates all solutions, isoclines, and
+  // singular points and their vbo's.
+  void set_parameter_position(parameter_id, const math::vector2d&);
+
+  // Returns true if the mouse cursor specified by pos is near the parameter
+  // position.
+  bool on_parameter_position(parameter_id id, const math::vector2d& pos) const;
 };
 } // namespace gui
 } // namespace dynsolver

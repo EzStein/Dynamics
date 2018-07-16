@@ -196,8 +196,13 @@ class app : public wxApp {
   void deselect_singular_point();
   void deselect_isocline();
 
+  // Sets the parameter position according to the position provided in window
+  // coordinates. Updates all parameter and dynamical windows accordingly.
+  void set_parameter_position(parameter_id, const math::vector2d&);
+
 private:
   void refresh_dynamical_windows();
+  void refresh_parameter_windows();
 };
 
 } // namespace gui

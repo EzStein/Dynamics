@@ -83,11 +83,13 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxBoxSizer* bSizer4;
 	bSizer4 = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxBoxSizer* bSizer18;
-	bSizer18 = new wxBoxSizer( wxVERTICAL );
+	m_notebook4 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer18 = new wxPanel( m_notebook4, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer183;
+	bSizer183 = new wxBoxSizer( wxVERTICAL );
 	
 	wxStaticBoxSizer* sbSizer41;
-	sbSizer41 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Equations") ), wxVERTICAL );
+	sbSizer41 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 	
 	equationsDataViewCtrl = new wxDataViewListCtrl( sbSizer41->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	sbSizer41->Add( equationsDataViewCtrl, 1, wxEXPAND, 5 );
@@ -132,19 +134,42 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer41->Add( compileButton, 0, wxALL, 5 );
 	
 	
-	bSizer18->Add( sbSizer41, 1, wxEXPAND, 5 );
+	bSizer183->Add( sbSizer41, 1, wxEXPAND, 5 );
+	
+	
+	bSizer18->SetSizer( bSizer183 );
+	bSizer18->Layout();
+	bSizer183->Fit( bSizer18 );
+	m_notebook4->AddPage( bSizer18, wxT("Staging"), true );
+	m_panel13 = new wxPanel( m_notebook4, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer34;
+	bSizer34 = new wxBoxSizer( wxVERTICAL );
+	
+	wxStaticBoxSizer* sbSizer4;
+	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Parameters") ), wxVERTICAL );
+	
+	m_dataViewListCtrl10 = new wxDataViewListCtrl( sbSizer4->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer4->Add( m_dataViewListCtrl10, 1, wxEXPAND, 5 );
+	
+	
+	bSizer34->Add( sbSizer4, 1, wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* sbSizer5;
-	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Parameters") ), wxVERTICAL );
+	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 	
-	m_dataViewListCtrl6 = new wxDataViewListCtrl( sbSizer5->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer5->Add( m_dataViewListCtrl6, 1, wxEXPAND, 5 );
-	
-	
-	bSizer18->Add( sbSizer5, 1, wxEXPAND, 5 );
+	m_dataViewListCtrl11 = new wxDataViewListCtrl( sbSizer5->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer5->Add( m_dataViewListCtrl11, 1, wxEXPAND, 5 );
 	
 	
-	bSizer4->Add( bSizer18, 1, wxEXPAND, 5 );
+	bSizer34->Add( sbSizer5, 1, wxEXPAND, 5 );
+	
+	
+	m_panel13->SetSizer( bSizer34 );
+	m_panel13->Layout();
+	bSizer34->Fit( m_panel13 );
+	m_notebook4->AddPage( m_panel13, wxT("Compiled"), false );
+	
+	bSizer4->Add( m_notebook4, 1, wxEXPAND | wxALL, 5 );
 	
 	m_notebook2 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	m_panel5 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
@@ -440,12 +465,14 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	this->Centre( wxBOTH );
 	
 	// Connect Events
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
 	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
 }
 
 parameter_frame_base::~parameter_frame_base()
 {
 	// Disconnect Events
+	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
 	
 	delete m_menu10; 

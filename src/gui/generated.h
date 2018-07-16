@@ -62,13 +62,17 @@ class console_frame_base : public wxFrame
 		wxMenuItem* closeDynamicalMenuItem;
 		wxMenuItem* closeParameterMenuItem;
 		wxMenu* m_menu8;
+		wxNotebook* m_notebook4;
+		wxPanel* bSizer18;
 		wxDataViewListCtrl* equationsDataViewCtrl;
 		wxStaticText* m_staticText1;
 		wxComboBox* variablesComboBox;
 		wxStaticText* m_staticText2;
 		wxComboBox* parametersComboBox;
 		wxButton* compileButton;
-		wxDataViewListCtrl* m_dataViewListCtrl6;
+		wxPanel* m_panel13;
+		wxDataViewListCtrl* m_dataViewListCtrl10;
+		wxDataViewListCtrl* m_dataViewListCtrl11;
 		wxNotebook* m_notebook2;
 		wxPanel* m_panel5;
 		wxDataViewListCtrl* solutionsDataViewCtrl;
@@ -193,6 +197,7 @@ class parameter_frame_base : public wxFrame
 		wxBoxSizer* parameterWindowBox;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void parameter_frame_on_close( wxCloseEvent& event ) { event.Skip(); }
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) { event.Skip(); }
 		
 	

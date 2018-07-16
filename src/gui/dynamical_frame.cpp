@@ -222,6 +222,7 @@ void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
       messageDialog.ShowModal();
     }
   }
+  std::cout << "Computed Isocline" << std::endl;
 }
 
 void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {

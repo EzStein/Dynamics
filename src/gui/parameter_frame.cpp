@@ -85,7 +85,9 @@ void parameter_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
   math::vector2d pos(get_window_coordinates(evt));
   if(evt.LeftIsDown()) {
     // Left Drag
-    if(verticalScaling || horizontalScaling) {
+    if(parameterMoving) {
+      appl.set_parameter_position(id, pos);
+    } else if(verticalScaling || horizontalScaling) {
       math::vector2d realPos = axesScalingViewport.real_coordinate_of(pos);
       math::vector2d realLeftMousePos = axesScalingViewport.real_coordinate_of(leftClickMousePos);
       double scale;
@@ -120,15 +122,15 @@ void parameter_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
 void parameter_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
   math::vector2d pos(get_window_coordinates(evt));
   leftClickMousePos = pos;
-  if(appl.get_model().on_parameter_vert_axis(id, leftClickMousePos)) {
+  parameterMoving = false;
+  verticalScaling = false;
+  horizontalScaling = false;
+  if(appl.get_model().on_parameter_position(id, leftClickMousePos)) {
+    parameterMoving = true;
+  } else if(appl.get_model().on_parameter_vert_axis(id, leftClickMousePos)) {
     verticalScaling = true;
-    horizontalScaling = false;
   } else if(appl.get_model().on_parameter_horiz_axis(id, leftClickMousePos)) {
     horizontalScaling = true;
-    verticalScaling = false;
-  } else {
-    horizontalScaling = false;
-    verticalScaling = false;
   }
   axesScalingViewport = appl.get_model().get_parameter_specs(id).viewport;
   moveViewport = appl.get_model().get_parameter_specs(id).viewport;
@@ -182,10 +184,10 @@ void parameter_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   }
   magnificationTimer.Start(kMagnificationTimerWait, wxTIMER_ONE_SHOT);
   totalMagnification *=
-    evt.GetWheelRotation() < 0 ? -1 * kMagnificationRate : kMagnificationRate;
+    evt.GetWheelRotation() < 0 ? 1 / kMagnificationRate : kMagnificationRate;
   math::window2d newViewport(magnificationViewport);
   newViewport.scale_pixel(math::vector2d(totalMagnification,
-						      totalMagnification),
+					 totalMagnification),
 				       magnificationPos);
   appl.set_parameter_viewport(id, newViewport);
 }
@@ -215,6 +217,10 @@ void parameter_frame::set_cursor(const math::vector2d& pos) {
 
 void parameter_frame::refresh_gl_canvas() {
   glCanvas->Refresh();
+}
+
+void parameter_frame::parameter_frame_on_close(wxCloseEvent&) {
+  appl.delete_parameter(id);
 }
 } // namespace gui
 } // namespace dynsolver

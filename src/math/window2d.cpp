@@ -87,7 +87,7 @@ void window2d::set_position(const vector2d& val) {
   position = val;
 }
 
-matrix_4x4 window2d::real_to_ndc() {
+matrix_4x4 window2d::real_to_ndc() const {
   vector2d center(get_center());
   matrix_4x4 mat;
   mat[0][0] = 2.0/span.x();
@@ -98,7 +98,7 @@ matrix_4x4 window2d::real_to_ndc() {
   return mat;
 }
 
-matrix_4x4 window2d::pixel_to_ndc() {
+matrix_4x4 window2d::pixel_to_ndc() const {
   vector2d center(get_center());
   matrix_4x4 mat;
   mat[0][0] = 2.0/size.x();

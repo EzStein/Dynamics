@@ -80,12 +80,12 @@ class window2d {
 
   // This transformation matrix is a 4x4 matrix which maps
   // real coordinates to normalized device coordinates for use in opengl.
-  matrix_4x4 real_to_ndc();
+  matrix_4x4 real_to_ndc() const;
 
   // This transformation matrix is a 4x4 matrix which maps
   // pixel coordinate to normalized device coordinates for use in opengl.
   // In pixel coordinates, the origin is the lower left corner of the screen.
-  matrix_4x4 pixel_to_ndc();
+  matrix_4x4 pixel_to_ndc() const;
 };
 } // namespace dynsolver
 } // namespace math

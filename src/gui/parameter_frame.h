@@ -83,6 +83,10 @@ private:
 
   // The maximum axes scaling allowed.
   static const double kMaxAxesScale;
+
+  // Indicates that a left click drag event corresponds to moving the
+  // parameter position.
+  bool parameterMoving;
   
 public:
   parameter_frame(app& app, parameter_id id, int width, int height);
@@ -97,6 +101,8 @@ public:
   void gl_canvas_on_right_up(wxMouseEvent& evt);
   void gl_canvas_on_paint(wxPaintEvent&);
   void gl_canvas_on_size(wxSizeEvent&);
+
+  virtual void parameter_frame_on_close(wxCloseEvent&) override;
 
   // Called when the mouse wheel ends by a timer.
   void gl_canvas_on_mouse_wheel_end(wxTimerEvent&);

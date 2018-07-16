@@ -62,7 +62,7 @@ app::~app() {
 bool app::OnInit() {
   customLogger = new wxLogStderr();
   // Set wx global logging to output directly to stderr.
-  wxLog::SetActiveTarget(customLogger);
+  //  wxLog::SetActiveTarget(customLogger);
   
   // Initializes the attributes which are used to generate an opengl context.
   glAttributes.Defaults().EndList();
@@ -171,6 +171,7 @@ void app::delete_all_parameter_windows() {
 
 void app::close_application() {
   delete_all_dynamical_windows();
+  delete_all_parameter_windows();
   solutionDialog->Destroy();
   singularPointDialog->Destroy();
   dynamicalDialog->Destroy();
@@ -427,6 +428,20 @@ void app::deselect_isocline() {
   consoleFrame->update_isoclines_list();
 }
 
+void app::set_parameter_position(parameter_id id, const math::vector2d& pos) {
+  modelData->set_parameter_position(id, pos);
+  refresh_dynamical_windows();
+  refresh_parameter_windows();
+  consoleFrame->update_isoclines_list();
+  consoleFrame->update_singular_points_list();
+}
+
+void app::refresh_parameter_windows() {
+  for(std::unordered_map<parameter_id, parameter_frame*>::const_iterator iter
+	= parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
+    iter->second->refresh_gl_canvas();
+  }
+}
 namespace {
 wxGLContext create_context(const wxGLAttributes& glAttributes,
 		    const wxGLContextAttrs& glContextAttributes) {
