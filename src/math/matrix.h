@@ -110,8 +110,14 @@ class matrix {
 
   // Row reduces this matrix and returns the computed determinant.
   // Note that the returned value is only meaningful for square
-  // matrices. If the passed pointer is null, it is ignored.
+  // matrices.
   double rref();
+
+  // Returns a set of linearly independent unit vectors representing the
+  // basis of the null space of this matrix. The empty vector indicates that
+  // the null space is the the set containing zero. The size of each vector
+  // the same as the number of columns of the matrix.
+  std::vector<vector> null_space() const;
 
   // Splits the matrix vectically along some column. Returns the left and right,
   // parts through pointers. The left part has cols number of columns.

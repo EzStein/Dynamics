@@ -17,6 +17,10 @@
 #include "gui/dynamical_dialog.h"
 #include "gui/isocline_dialog.h"
 #include "gui/parameter_dialog.h"
+#include "gui/separatrix_dialog.h"
+#include "gui/hopf_bifurcation_dialog.h"
+#include "gui/saddle_node_bifurcation_dialog.h"
+#include "math/eigenvalue.h"
 
 namespace dynsolver {
 namespace gui {
@@ -62,7 +66,7 @@ app::~app() {
 bool app::OnInit() {
   customLogger = new wxLogStderr();
   // Set wx global logging to output directly to stderr.
-  //  wxLog::SetActiveTarget(customLogger);
+  wxLog::SetActiveTarget(customLogger);
   
   // Initializes the attributes which are used to generate an opengl context.
   glAttributes.Defaults().EndList();
@@ -132,6 +136,9 @@ bool app::OnInit() {
   dynamicalDialog = new dynamical_dialog(*this);
   isoclineDialog = new isocline_dialog(*this);
   parameterDialog = new parameter_dialog(*this);
+  separatrixDialog = new separatrix_dialog(*this);
+  hopfBifurcationDialog = new hopf_bifurcation_dialog(*this);
+  saddleNodeBifurcationDialog = new saddle_node_bifurcation_dialog(*this);
   
   return true;
 }
@@ -178,6 +185,9 @@ void app::close_application() {
   consoleFrame->Destroy();
   isoclineDialog->Destroy();
   parameterDialog->Destroy();
+  separatrixDialog->Destroy();
+  hopfBifurcationDialog->Destroy();
+  saddleNodeBifurcationDialog->Destroy();
 }
 
 void app::add_dynamical(const dynamical_specs& spec) {
@@ -269,6 +279,17 @@ parameter_dialog* app::get_parameter_dialog() const {
   return parameterDialog;
 }
 
+separatrix_dialog* app::get_separatrix_dialog() const {
+  return separatrixDialog;
+}
+
+hopf_bifurcation_dialog* app::get_hopf_bifurcation_dialog() const {
+  return hopfBifurcationDialog;
+}
+saddle_node_bifurcation_dialog* app::get_saddle_node_bifurcation_dialog() const {
+  return saddleNodeBifurcationDialog;
+}
+
 const model& app::get_model() const {
   return *modelData;
 }
@@ -328,6 +349,32 @@ bool app::add_singular_point(const singular_point_specs& spec) {
   return success;
 }
 
+void app::add_separatrix(const separatrix_specs& specs) {
+  modelData->add_separatrix(specs);
+  refresh_dynamical_windows();
+  consoleFrame->update_separatrices_list();
+}
+
+bool app::add_hopf_bifurcation(const hopf_bifurcation_specs& specs) {
+  bool success = modelData->add_hopf_bifurcation(specs);
+  if(success) {
+    refresh_parameter_windows();
+    consoleFrame->update_hopf_bifurcation_list();
+  }
+  return success;
+}
+
+bool app::add_saddle_node_bifurcation(const saddle_node_bifurcation_specs& specs) {
+  bool success = modelData->add_saddle_node_bifurcation(specs);
+  if(success) {
+    refresh_parameter_windows();
+    consoleFrame->update_saddle_node_bifurcation_list();
+  }
+  return success;
+}
+
+
+
 bool app::compile(const std::string& varDiffName,
 		  const std::vector<std::string>& dynamicalVarNames,
 		  const std::vector<std::string>& parameterNames,
@@ -359,6 +406,18 @@ void app::set_solution_specs(solution_id id,
   consoleFrame->update_solutions_list();
 }
 
+void app::delete_hopf_bifurcation(hopf_bifurcation_id id) {
+  modelData->delete_hopf_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_hopf_bifurcation_list();
+}
+
+void app::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
+  modelData->delete_saddle_node_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_node_bifurcation_list();
+}
+
 void app::delete_solution(solution_id id) {
   modelData->delete_solution(id);
   refresh_dynamical_windows();
@@ -377,7 +436,13 @@ void app::delete_isocline(isocline_id id) {
   consoleFrame->update_isoclines_list();
 }
 
-void app::select_object(dynamical_id id, int x, int y) {
+void app::delete_separatrix(separatrix_id id) {
+  modelData->delete_separatrix(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_separatrices_list();
+}
+
+void app::select_dynamical_object(dynamical_id id, int x, int y) {
   if(modelData->select_singular_point(id, x, y)) {
     consoleFrame->update_singular_points_list();
     refresh_dynamical_windows();
@@ -391,6 +456,19 @@ void app::select_object(dynamical_id id, int x, int y) {
     deselect_isocline();
     deselect_solution();
     deselect_singular_point();
+  }
+}
+
+void app::select_parameter_object(parameter_id id, int x, int y) {
+  if(modelData->select_hopf_bifurcation(id, x, y)) {
+    refresh_parameter_windows();
+    consoleFrame->update_hopf_bifurcation_list();
+  } else if(modelData->select_saddle_node_bifurcation(id, x, y)) {
+    refresh_parameter_windows();
+    consoleFrame->update_saddle_node_bifurcation_list();
+  } else {
+    deselect_hopf_bifurcation();
+    deselect_saddle_node_bifurcation();
   }
 }
 
@@ -412,6 +490,24 @@ void app::select_isocline(isocline_id id) {
   consoleFrame->update_isoclines_list();
 }
 
+void app::select_separatrix(separatrix_id id) {
+  modelData->select_separatrix(id);
+  refresh_dynamical_windows();
+  consoleFrame->update_separatrices_list();
+}
+
+void app::select_hopf_bifurcation(hopf_bifurcation_id id) {
+  modelData->select_hopf_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_hopf_bifurcation_list();
+}
+
+void app::select_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
+  modelData->select_saddle_node_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_node_bifurcation_list();
+}
+
 void app::deselect_solution() {
   modelData->deselect_solution();
   refresh_dynamical_windows();
@@ -428,12 +524,32 @@ void app::deselect_isocline() {
   consoleFrame->update_isoclines_list();
 }
 
+void app::deselect_separatrix() {
+  modelData->deselect_separatrix();
+  refresh_dynamical_windows();
+  consoleFrame->update_separatrices_list();
+}
+
+void app::deselect_hopf_bifurcation() {
+  modelData->deselect_hopf_bifurcation();
+  refresh_parameter_windows();
+  consoleFrame->update_hopf_bifurcation_list();
+}
+				       
+void app::deselect_saddle_node_bifurcation() {
+  modelData->deselect_saddle_node_bifurcation();
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_node_bifurcation_list();
+}
+
 void app::set_parameter_position(parameter_id id, const math::vector2d& pos) {
   modelData->set_parameter_position(id, pos);
   refresh_dynamical_windows();
   refresh_parameter_windows();
   consoleFrame->update_isoclines_list();
   consoleFrame->update_singular_points_list();
+  consoleFrame->update_parameters_data_view_ctrl();
+  consoleFrame->update_separatrices_list();
 }
 
 void app::refresh_parameter_windows() {

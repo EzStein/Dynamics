@@ -13,6 +13,9 @@ typedef size_t parameter_id;
 typedef size_t singular_point_id;
 typedef size_t solution_id;
 typedef size_t isocline_id;
+typedef size_t separatrix_id;
+typedef size_t hopf_bifurcation_id;
+typedef size_t saddle_node_bifurcation_id;
 } // namespace gui
 } // namespace dynsolver
 #endif

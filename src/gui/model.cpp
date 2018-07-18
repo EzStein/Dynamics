@@ -6,6 +6,7 @@
 
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
+#include "math/eigenvalue.h"
 
 #include "parser/syntax_exception.h"
 #include "compiler/expression_parser.h"
@@ -63,6 +64,12 @@ isocline_specs::isocline_specs() : init(1), glColor(0,0.5,0.5,1) { }
 
 singular_point_specs::singular_point_specs() : init(1), glColor(0.5,0,0.5,1) { }
 
+separatrix_specs::separatrix_specs() : glColor(0.5, 0.5, 0, 1) { }
+
+hopf_bifurcation_specs::hopf_bifurcation_specs() : glColor(1.0, 0, 0, 1) { }
+saddle_node_bifurcation_specs::saddle_node_bifurcation_specs()
+  : glColor(0, 0, 1.0, 1) { }
+
 model::parameter_window::parameter_window(model& model,
 					  const parameter_specs& specs)
   : modelData(model), specs(specs),
@@ -78,6 +85,79 @@ model::parameter_window::parameter_window(model& model,
 			   -1, 1, 1, -1 };
   crossVbo.set_data(reinterpret_cast<unsigned char*>(crossData),
 		    8 * sizeof(float));
+}
+
+void model::parameter_window::gen_hopf_bifurcation_vbo(hopf_bifurcation_id id) {
+  int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
+  int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
+  std::vector<float> vboData;
+  const std::list<bifurcation_point>& data
+    = modelData.hopfBifurcations.at(id).data;
+  for(std::list<bifurcation_point>::const_iterator iter = data.begin();
+      iter != data.end(); ++iter) {
+    vboData.push_back(iter->parameters[horizIndex]);
+    vboData.push_back(iter->parameters[vertIndex]);
+  }
+  if(hopfBifurcationData.find(id) == hopfBifurcationData.end()) {
+    gl::buffer buffer =
+      gl::buffer(reinterpret_cast<unsigned char*>(vboData.data()),
+		 data.size() * 2 * sizeof(float), GL_STATIC_DRAW);
+    render_data renderData{buffer, static_cast<GLsizei>(data.size())};
+    hopfBifurcationData.insert(std::make_pair(id, renderData));
+  } else {
+    hopfBifurcationData.at(id).vbo
+      .set_data(reinterpret_cast<unsigned char*>(vboData.data()),
+		data.size() * 2 * sizeof(float));
+    hopfBifurcationData.at(id).vertices = data.size();
+  }
+}
+
+void model::parameter_window::gen_saddle_node_bifurcation_vbo(saddle_node_bifurcation_id id) {
+  int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
+  int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
+  std::vector<float> vboData;
+  const std::list<bifurcation_point>& data
+    = modelData.saddleNodeBifurcations.at(id).data;
+  for(std::list<bifurcation_point>::const_iterator iter = data.begin();
+      iter != data.end(); ++iter) {
+    vboData.push_back(iter->parameters[horizIndex]);
+    vboData.push_back(iter->parameters[vertIndex]);
+  }
+  if(saddleNodeBifurcationData.find(id) == saddleNodeBifurcationData.end()) {
+    gl::buffer buffer =
+      gl::buffer(reinterpret_cast<unsigned char*>(vboData.data()),
+		 data.size() * 2 * sizeof(float), GL_STATIC_DRAW);
+    render_data renderData{buffer, static_cast<GLsizei>(data.size())};
+    saddleNodeBifurcationData.insert(std::make_pair(id, renderData));
+  } else {
+    saddleNodeBifurcationData.at(id).vbo
+      .set_data(reinterpret_cast<unsigned char*>(vboData.data()),
+		data.size() * 2 * sizeof(float));
+    saddleNodeBifurcationData.at(id).vertices = data.size();
+  }
+}
+
+void model::parameter_window::delete_hopf_bifurcation(hopf_bifurcation_id id) {
+  hopfBifurcationData.erase(id);
+}
+void model::parameter_window::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
+  saddleNodeBifurcationData.erase(id);
+}
+
+bool model::parameter_window::select_hopf_bifurcation(int x, int y, hopf_bifurcation_id*) {
+  return false;
+}
+
+bool model::parameter_window::select_saddle_node_bifurcation(int x, int y, saddle_node_bifurcation_id*) {
+  return false;
+}
+
+math::vector model::parameter_window::get_point(const math::vector2d& pos) const {
+  math::vector ret(modelData.parameters, 0.0);
+  math::vector2d real(specs.viewport.real_coordinate_of(pos));
+  ret[modelData.parameterIndex.at(specs.horizAxisVar)] = real[0];
+  ret[modelData.parameterIndex.at(specs.vertAxisVar)] = real[1];
+  return ret;
 }
 
 bool model::parameter_window::on_parameter_position(const math::vector2d& pos) const {
@@ -131,12 +211,51 @@ void model::parameter_window::paint() {
   glBindVertexBuffer(model::k2dVertexBinding, crossVbo.get_handle(),
 		     0, 2 * sizeof(float));
   glDrawArrays(GL_LINES, 0, 4);
-  
+
+  specs.viewport.real_to_ndc().as_float_array(transformationMatrix);
+  glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
+		     1, true, transformationMatrix);
+  draw_hopf_bifurcations();
+  draw_saddle_node_bifurcations();
 
   modelData.draw_axes_2d(specs.viewport, ticksPerLabel,
 			 tickFontSize,
 			 realTickDistanceX, realTickDistanceY,
 			 axesVbo);
+}
+
+void model::parameter_window::draw_hopf_bifurcations() {
+  for(std::unordered_map<hopf_bifurcation_id, render_data>::const_iterator iter
+	= hopfBifurcationData.begin(); iter != hopfBifurcationData.end();
+      ++iter) {
+    color glColor(modelData.hopfBifurcations.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedHopfBifurcationId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo.get_handle(),
+		       0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+
+void model::parameter_window::draw_saddle_node_bifurcations() {
+  for(std::unordered_map<saddle_node_bifurcation_id, render_data>::const_iterator iter
+	= saddleNodeBifurcationData.begin(); iter != saddleNodeBifurcationData.end();
+      ++iter) {
+    color glColor(modelData.saddleNodeBifurcations.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedSaddleNodeBifurcationId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo.get_handle(),
+		       0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
 }
 
 void model::parameter_window::resize(int width, int height) {
@@ -194,12 +313,12 @@ model::dynamical_window::dynamical_window(model& model,
   // Generate VBO's for each solution and update the axes.
   for(solution_const_iter iter = modelData.solutions.begin();
       iter != modelData.solutions.end(); ++iter) {
-    update_solution_vbo(iter->first);
+    gen_solution_vbo(iter->first);
   }
   // Generate a vbo for each isocline
   for(isocline_const_iter iter = modelData.isoclines.begin();
       iter != modelData.isoclines.end(); ++iter) {
-    update_isocline_vbo(iter->first);
+    gen_isocline_vbo(iter->first);
   }
 }
 const dynamical_specs& model::dynamical_window::get_specs() const {
@@ -216,11 +335,11 @@ void model::dynamical_window::set_specs(const dynamical_specs& other) {
     // Update VBO's
     for(solution_const_iter iter = modelData.solutions.begin();
 	iter != modelData.solutions.end(); ++iter) {
-      update_solution_vbo(iter->first);
+      gen_solution_vbo(iter->first);
     }
     for(isocline_const_iter iter = modelData.isoclines.begin();
 	iter != modelData.isoclines.end(); ++iter) {
-      update_isocline_vbo(iter->first);
+      gen_isocline_vbo(iter->first);
     }
   } else {
     specs = other;
@@ -233,6 +352,10 @@ void model::dynamical_window::set_viewport_2d(const math::window2d& val) {
 
 void model::dynamical_window::set_viewport_3d(const math::window3d& val) {
   specs.viewport3d = val;
+}
+
+bool model::dynamical_window::select_separatrix(int x, int y, separatrix_id* id) {
+  return false;
 }
 
 bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
@@ -375,6 +498,7 @@ void model::dynamical_window::draw_isoclines_3d() {
     }
   }
 }
+
 void model::dynamical_window::draw_singular_points_3d() {
   /*  if(specs.xAxisVar != 0 && specs.yAxisVar != 0 && specs.zAxisVar != 0) {
     glUseProgram(modelData.program2d.get_handle());
@@ -457,13 +581,27 @@ void model::dynamical_window::draw_isoclines_2d() {
     }
   }
 }
+void model::dynamical_window::draw_separatrices_2d() {
+  if(specs.horzAxisVar != modelData.varDiffName &&
+     specs.vertAxisVar != modelData.varDiffName) {
+    for(separatrix_data_const_iter iter = separatrixData.begin();
+	iter != separatrixData.end(); ++iter) {
+      color glColor(modelData.separatrices.at(iter->first).specs.glColor);
+      if(iter->first == modelData.selectedSeparatrixId) {
+	glColor.invert();
+      }
+      glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+      glBindVertexBuffer(model::k2dVertexBinding,
+			 iter->second.vbo2d.get_handle(), 0, 2 * sizeof(float));
+      glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+    }
+  }
+}
 void model::dynamical_window::draw_singular_points_2d() {
   // We don't draw it if we are viewing the t axis.
   if(specs.horzAxisVar != modelData.varDiffName &&
      specs.vertAxisVar != modelData.varDiffName) {
-    glBindVertexBuffer(model::k2dVertexBinding,
-		       modelData.circleVbo.get_handle(),
-		       0, 2 * sizeof(float));
     for(model::singular_point_const_iter iter = modelData.singularPoints.begin();
 	iter != modelData.singularPoints.end(); ++iter) {
       color glColor(modelData.singularPoints.at(iter->first).specs.glColor);
@@ -488,7 +626,34 @@ void model::dynamical_window::draw_singular_points_2d() {
        math::matrix_4x4::scale(6, 6)).as_float_array(transformationMatrix);
       glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
 			 1, true, transformationMatrix);
-      glDrawArrays(GL_LINE_LOOP, 0, modelData.circleVboVertices);
+      GLuint handle;
+      GLsizei vertices;
+      switch(iter->second.type) {
+      case singular_point::type::STABLE_NODE:
+      case singular_point::type::UNSTABLE_NODE:
+	handle = modelData.squareVbo.get_handle();
+	vertices = modelData.squareVboVertices;
+	break;
+      case singular_point::type::SADDLE:
+	handle = modelData.triangleVbo.get_handle();
+	vertices = modelData.triangleVboVertices;
+	break;
+      case singular_point::type::STABLE_FOCUS:
+      case singular_point::type::UNSTABLE_FOCUS:
+	handle = modelData.circleVbo.get_handle();
+	vertices = modelData.circleVboVertices;
+	break;
+      case singular_point::type::SADDLE_FOCUS:
+      case singular_point::type::STABLE_FOCUS_NODE:
+      case singular_point::type::UNSTABLE_FOCUS_NODE:
+      case singular_point::type::SADDLE_FOCUS_NODE:
+      default:
+	handle = modelData.starVbo.get_handle();
+	vertices = modelData.starVboVertices;
+      }
+      glBindVertexBuffer(model::k2dVertexBinding,
+			 handle, 0, 2 * sizeof(float));
+      glDrawArrays(GL_LINE_LOOP, 0, vertices);
     }
   }
 }
@@ -720,6 +885,7 @@ void model::dynamical_window::paint() {
 
     draw_solutions_2d();
     draw_isoclines_2d();
+    draw_separatrices_2d();
 
     // Note that these calls changes the transformation uniform.
     draw_singular_points_2d();
@@ -798,19 +964,15 @@ void model::dynamical_window::delete_solution(solution_id id) {
   solutionData.erase(id);
 }
 
-void model::dynamical_window::add_solution(solution_id id) {
-  update_solution_vbo(id);
-}
-
-void model::dynamical_window::add_isocline(isocline_id id) {
-  update_isocline_vbo(id);
+void model::dynamical_window::delete_separatrix(separatrix_id id) {
+  separatrixData.erase(id);
 }
 
 void model::dynamical_window::delete_isocline(isocline_id id) {
   isoclineData.erase(id);
 }
 
-void model::dynamical_window::update_solution_vbo(solution_id id) {
+void model::dynamical_window::gen_solution_vbo(solution_id id) {
   const std::list<dynamical_point>& solution(modelData.solutions.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
@@ -867,12 +1029,46 @@ void model::dynamical_window::update_solution_vbo(solution_id id) {
 		     size2d, GL_DYNAMIC_DRAW);
     gl::buffer vbo3d(reinterpret_cast<unsigned char*>(data3d.data()),
 		     size3d, GL_DYNAMIC_DRAW);
-    solution_data val{vbo2d, vbo3d, points};
+    render_data val{vbo2d, vbo3d, points};
     solutionData.insert(std::make_pair(id, val));
   }
 }
 
-void model::dynamical_window::update_isocline_vbo(isocline_id id) {
+void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
+  const std::list<math::vector>& separatrix(modelData.separatrices.at(id).data);
+  std::vector<float> data2d;
+  std::vector<float> data3d;
+  size_t points = separatrix.size();
+  size_t size2d = 0;
+  size_t size3d = 0;
+  if(specs.horzAxisVar != modelData.varDiffName &&
+     specs.vertAxisVar != modelData.varDiffName) {
+    size2d = points * 2 * sizeof(float);
+    for(std::list<math::vector>::const_iterator point = separatrix.begin();
+	point != separatrix.end(); ++point) {
+      double xReal;
+      double yReal;
+      xReal = (*point)[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
+      yReal = (*point)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
+      data2d.push_back(xReal);
+      data2d.push_back(yReal); 
+    }
+  }
+  // If the render Data already exists.
+  if(separatrixData.find(id) != separatrixData.end()) {
+    separatrixData.at(id).vertices = points;
+    separatrixData.at(id)
+      .vbo2d.set_data(reinterpret_cast<unsigned char *>(data2d.data()), size2d);
+  } else {
+    gl::buffer vbo2d(reinterpret_cast<unsigned char*>(data2d.data()),
+		     size2d, GL_DYNAMIC_DRAW);
+    gl::buffer vbo3d(nullptr, size3d, GL_DYNAMIC_DRAW);
+    render_data val{vbo2d, vbo3d, points};
+    separatrixData.insert(std::make_pair(id, val));
+  }
+}
+
+void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
   const std::list<math::vector>& isocline(modelData.isoclines.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
@@ -922,7 +1118,7 @@ void model::dynamical_window::update_isocline_vbo(isocline_id id) {
 		     size2d, GL_DYNAMIC_DRAW);
     gl::buffer vbo3d(reinterpret_cast<unsigned char*>(data3d.data()),
 		     size3d, GL_DYNAMIC_DRAW);
-    isocline_data val{vbo2d, vbo3d, points};
+    render_data val{vbo2d, vbo3d, points};
     isoclineData.insert(std::make_pair(id, val));
   }
 }
@@ -977,17 +1173,27 @@ const parameter_id model::kNoParameterId = 0;
 const solution_id model::kNoSolutionId = 0;
 const singular_point_id model::kNoSingularPointId = 0;
 const isocline_id model::kNoIsoclineId = 0;
+const separatrix_id model::kNoSeparatrixId = 0;
+const hopf_bifurcation_id model::kNoHopfBifurcationId = 0;
+const saddle_node_bifurcation_id model::kNoSaddleNodeBifurcationId = 0;
 
 model::model() : font(constants::kDefaultFontFilePath),
 		 dynamicalVars(0),
+		 parameters(0),
 		 selectedSolutionId(kNoSolutionId),
 		 selectedSingularPointId(kNoSingularPointId),
 		 selectedIsoclineId(kNoIsoclineId),
+		 selectedSeparatrixId(kNoSeparatrixId),
+		 selectedHopfBifurcationId(kNoHopfBifurcationId),
+		 selectedSaddleNodeBifurcationId(kNoSaddleNodeBifurcationId),
 		 uniqueDynamicalId(kNoDynamicalId),
 		 uniqueParameterId(kNoParameterId),
 		 uniqueSolutionId(kNoSolutionId),
 		 uniqueSingularPointId(kNoSingularPointId),
 		 uniqueIsoclineId(kNoIsoclineId),
+		 uniqueSeparatrixId(kNoSeparatrixId),
+		 uniqueHopfBifurcationId(kNoHopfBifurcationId),
+		 uniqueSaddleNodeBifurcationId(kNoSaddleNodeBifurcationId),
 		 compiled(false),
 		 program2d(build_shaders_2d()),
 		 programPath3d(build_shaders_path_3d()),
@@ -1003,7 +1209,10 @@ model::model() : font(constants::kDefaultFontFilePath),
 		 kPath3dColorUniformLocation
 		 (glGetUniformLocation(programPath3d.get_handle(),
 				       kPath3dColorUniform.c_str())),
-		 circleVbo(nullptr, 0, GL_STATIC_DRAW) {
+		 circleVbo(nullptr, 0, GL_STATIC_DRAW),
+		 triangleVbo(nullptr, 0, GL_STATIC_DRAW),
+		 squareVbo(nullptr, 0, GL_STATIC_DRAW),
+		 starVbo(nullptr, 0, GL_STATIC_DRAW) {
   glUseProgram(program2d.get_handle());
   glBindVertexArray(vao2d.get_handle());
   glEnableVertexAttribArray(k2dPositionAttribute);
@@ -1048,6 +1257,29 @@ model::model() : font(constants::kDefaultFontFilePath),
   data.push_back(0.0);
   circleVbo.set_data(reinterpret_cast<unsigned char*>(data.data()),
 		     circleVboVertices * 2 * sizeof(GLfloat));
+
+  // Initialize triangle vbo
+
+  GLfloat triangleData[6] = {
+    -1, -1, 1, -1, 0, 1
+  };
+  triangleVboVertices = 3;
+  triangleVbo.set_data(reinterpret_cast<unsigned char*>(triangleData),
+		       triangleVboVertices * 2 * sizeof(GLfloat));
+
+  GLfloat squareData[8] = {
+    -1, -1, 1, -1, 1, 1, -1, 1
+  };
+  squareVboVertices = 4;
+  squareVbo.set_data(reinterpret_cast<unsigned char*>(squareData),
+		     squareVboVertices * 2 * sizeof(GLfloat));
+
+  GLfloat starData[16] = {
+    -1, -1, 0, -0.5, 1, -1, 0.5, 0, 1, 1, 0, 0.5, -1, 1, -0.5, 0
+  };
+  starVboVertices = 8;
+  starVbo.set_data(reinterpret_cast<unsigned char*>(starData),
+		   starVboVertices * 2 * sizeof(GLfloat));
 }
 
 void model::set_no_compile() {
@@ -1056,7 +1288,8 @@ void model::set_no_compile() {
   solutions.clear();
   singularPoints.clear();
   system.clear();
-  jacobian.clear();
+  partials.clear();
+  doublePartials.clear();
   expressions.clear();
 }
 
@@ -1064,6 +1297,18 @@ void model::set_no_compile() {
 const std::unordered_map<singular_point_id, singular_point>&
 model::get_singular_points() const {
   return singularPoints;
+}
+
+void model::add_separatrix(const separatrix_specs& specs) {
+  ++uniqueSeparatrixId;
+  separatrices.insert(std::make_pair(uniqueSeparatrixId,
+				     separatrix{specs, std::list<math::vector>()}));
+  generate_separatrix_data(uniqueSeparatrixId);
+  // We now need to update the VBO's of each window.
+  for(dynamical_iter iter = dynamicalWindows.begin();
+      iter != dynamicalWindows.end(); ++iter) {
+    iter->second.gen_separatrix_vbo(uniqueSeparatrixId);
+  }
 }
 
 void model::add_solution(const solution_specs& spec) {
@@ -1075,7 +1320,7 @@ void model::add_solution(const solution_specs& spec) {
   // We now need to update the VBO's of each window.
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
-    iter->second.add_solution(uniqueSolutionId);
+    iter->second.gen_solution_vbo(uniqueSolutionId);
   }
 }
 
@@ -1088,7 +1333,7 @@ bool model::add_isocline(const isocline_specs& spec) {
     // We now need to update the VBO's of each window.
     for(dynamical_iter iter = dynamicalWindows.begin();
 	iter != dynamicalWindows.end(); ++iter) {
-      iter->second.add_isocline(uniqueIsoclineId);
+      iter->second.gen_isocline_vbo(uniqueIsoclineId);
     }
     return true;
   } else {
@@ -1114,6 +1359,36 @@ bool model::add_singular_point(const singular_point_specs& specs) {
   }
 }
 
+bool model::add_hopf_bifurcation(const hopf_bifurcation_specs& specs) {
+  ++uniqueHopfBifurcationId;
+  hopfBifurcations.insert(std::make_pair(uniqueHopfBifurcationId,
+					 hopf_bifurcation{specs,
+					     std::list<bifurcation_point>()}));
+  bool success = generate_hopf_bifurcation_data(uniqueHopfBifurcationId);
+  if(success) {
+    return true;
+  } else {
+    hopfBifurcations.erase(uniqueHopfBifurcationId);
+    --uniqueHopfBifurcationId;
+    return false;
+  }
+}
+
+bool model::add_saddle_node_bifurcation(const saddle_node_bifurcation_specs& specs) {
+  ++uniqueSaddleNodeBifurcationId;
+  saddleNodeBifurcations.insert(std::make_pair(uniqueSaddleNodeBifurcationId,
+					       saddle_node_bifurcation{specs,
+						   std::list<bifurcation_point>()}));
+  bool success = generate_saddle_node_bifurcation_data(uniqueSaddleNodeBifurcationId);
+  if(success) {
+    return true;
+  } else {
+    saddleNodeBifurcations.erase(uniqueSaddleNodeBifurcationId);
+    --uniqueSaddleNodeBifurcationId;
+    return false;
+  }
+}
+
 bool model::generate_singular_point_data(singular_point_id id) {
   singular_point_specs specs = singularPoints.at(id).specs;
   std::vector<compiler::function<double, const double*>> systemFunctions;
@@ -1122,9 +1397,11 @@ bool model::generate_singular_point_data(singular_point_id id) {
     systemFunctions.push_back(iter->function);
   }
   std::vector<compiler::function<double, const double*>> jacobianFunctions;
-  for(std::vector<expression>::const_iterator iter = jacobian.begin();
-      iter != jacobian.end(); ++iter) {
-    jacobianFunctions.push_back(iter->function);
+  for(int r = 0; r != dynamicalVars; ++r) {
+    for(int c = 0; c != dynamicalVars; ++c) {
+      jacobianFunctions.push_back(partials[r][dynamicalIndexToSymbol[c]]
+				  .function);
+    }
   }
   std::vector<int> indices;
   math::vector init(symbolsToIndex.size());
@@ -1149,6 +1426,67 @@ bool model::generate_singular_point_data(singular_point_id id) {
   }
   singularPoints.at(id).specs = newSpecs;
   singularPoints.at(id).position = newSpecs.init;
+  std::vector<double> data(symbolsToIndex.size());
+  data[varDiffIndex] = 0; // This value is ignored for autonomous systems.
+  for(int i = 0; i != dynamicalVars; ++i) {
+    data[dynamicalIndexToSymbol[i]] = newSpecs.init[i];
+  }
+  for(int i = 0; i != parameters; ++i) {
+    data[parameterIndexToSymbol[i]] = parameterPosition[i];
+  }
+  // We now compute the jacobian matrix at this point and
+  // evaluate its eigenvalues.
+  math::square_matrix mat(dynamicalVars);
+  for(int r = 0; r != dynamicalVars; ++r) {
+    for(int c = 0; c != dynamicalVars; ++c) {
+      mat[r][c] = partials[r][dynamicalIndexToSymbol[c]].function(data.data());
+    }
+  }
+  std::vector<math::eigenvalue> eigenvalues = mat.find_eigenvalues();
+  singularPoints.at(id).eigenvalues = eigenvalues;
+  // Compute the type of the singular point.
+  // We first check whether they are all real or all complex, or mixed.
+  bool foundReal(false);
+  bool foundNonReal(false);
+  for(int i = 0; i != eigenvalues.size(); ++i) {
+    bool isReal = eigenvalues[i].get_value().get_root().is_real();
+    foundReal |= isReal;
+    foundNonReal |= !isReal;
+  }
+  bool foundPositive(false);
+  bool foundNegative(false);
+  for(int i = 0; i != eigenvalues.size(); ++i) {
+    bool isPositive = eigenvalues[i].get_value().get_root().real() > 0;
+    foundPositive |= isPositive;
+    foundNegative |= !isPositive;
+  }
+  enum singular_point::type type;
+  if(foundReal && !foundNonReal) {
+    if(!foundPositive && foundNegative) {
+      type = singular_point::type::STABLE_NODE;
+    } else if(foundPositive && !foundNegative) {
+      type = singular_point::type::UNSTABLE_NODE;
+    } else {
+      type = singular_point::type::SADDLE;
+    }
+  } else if(!foundReal && foundNonReal) {
+    if(!foundPositive && foundNegative) {
+      type = singular_point::type::STABLE_FOCUS;
+    } else if(foundPositive && !foundNegative) {
+      type = singular_point::type::UNSTABLE_FOCUS;
+    } else {
+      type = singular_point::type::SADDLE_FOCUS;
+    }
+  } else {
+    if(!foundPositive && foundNegative) {
+      type = singular_point::type::STABLE_FOCUS_NODE;
+    } else if(foundPositive && !foundNegative) {
+      type = singular_point::type::UNSTABLE_FOCUS_NODE;
+    } else {
+      type = singular_point::type::SADDLE_FOCUS_NODE;
+    }
+  }
+  singularPoints.at(id).type = type;
   return true;
 }
 
@@ -1214,29 +1552,44 @@ bool model::compile(const std::string& newVarDiffName,
 						 newSymbolsToIndex,
 						 newIndexToSymbols));
   std::vector<expression> newSystem;
-  std::vector<expression> newJacobian;
-
   compiler::expression_parser parse;
-  for(const std::string& expr : newExpressions) {
+  std::vector<std::vector<std::vector<expression>>> newDoublePartials;
+  std::vector<std::vector<expression>> newPartials;
+  for(int exprIndex = 0; exprIndex != newDynamicalVars; ++exprIndex) {
     AST ast;
     try {
-      ast = parse.parse(expr, symbolTable);
+      ast = parse.parse(newExpressions[exprIndex], symbolTable);
     } catch (const parser::syntax_exception& exc) {
       return false;
     }
     compiler::function<double, const double*> function = ast.compile();
     newSystem.push_back(expression{ast, function});
-    for(const std::string& var : newDynamicalVarNames) {
-      AST diffAst = AST(ast).differentiate(var);
-      compiler::function<double, const double*> diffFunction = diffAst.compile();
-      newJacobian.push_back(expression{diffAst, diffFunction});
+    newPartials.push_back(std::vector<expression>());
+    newDoublePartials.push_back(std::vector<std::vector<expression>>());
+    for(int partial1 = 0; partial1 != newSymbolsToIndex.size(); ++partial1) {
+      std::string partialVar = newIndexToSymbols.at(partial1);
+      AST partialAst = AST(ast).differentiate(partialVar);
+      compiler::function<double, const double*> partialFunction
+      	= partialAst.compile();
+      expression partialExpr{partialAst, partialFunction};
+      newPartials[exprIndex].push_back(partialExpr);
+      newDoublePartials[exprIndex].push_back(std::vector<expression>());
+      for(int partial2 = 0; partial2 != newSymbolsToIndex.size(); ++partial2) {
+	std::string doublePartialVar = newIndexToSymbols.at(partial2);
+	AST doublePartialAst = AST(partialAst).differentiate(doublePartialVar);
+	compiler::function<double, const double*> doublePartialFunction
+		  = doublePartialAst.compile();
+	 expression doublePartialExpr{doublePartialAst, doublePartialFunction};
+	 newDoublePartials[exprIndex][partial1].push_back(doublePartialExpr);
+      }
     }
   }
 
   // We have successfully compiled!
   // We may now update our state.
   system = newSystem;
-  jacobian = newJacobian;
+  partials = newPartials;
+  doublePartials = newDoublePartials;
   expressions = newExpressions;
   dynamicalVars = newDynamicalVars;
   dynamicalVarNames = newDynamicalVarNames;
@@ -1371,7 +1724,7 @@ void model::set_solution_specs(solution_id id,
   generate_solution_data(id);
   for(std::unordered_map<dynamical_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
-    iter->second.update_solution_vbo(id);
+    iter->second.gen_solution_vbo(id);
   }
 }
 
@@ -1388,6 +1741,29 @@ void model::delete_solution(solution_id id) {
   for(std::unordered_map<dynamical_id, dynamical_window>::iterator iter
 	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
     iter->second.delete_solution(id);
+  }
+}
+
+void model::delete_separatrix(separatrix_id id) {
+  separatrices.erase(id);
+  for(std::unordered_map<dynamical_id, dynamical_window>::iterator iter
+	= dynamicalWindows.begin(); iter != dynamicalWindows.end(); ++iter) {
+    iter->second.delete_separatrix(id);
+  }
+}
+
+void model::delete_hopf_bifurcation(hopf_bifurcation_id id) {
+  hopfBifurcations.erase(id);
+  for(std::unordered_map<parameter_id, parameter_window>::iterator iter
+	= parameterWindows.begin(); iter != parameterWindows.end(); ++iter) {
+    iter->second.delete_hopf_bifurcation(id);
+  }
+}
+void model::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
+  saddleNodeBifurcations.erase(id);
+  for(std::unordered_map<parameter_id, parameter_window>::iterator iter
+	= parameterWindows.begin(); iter != parameterWindows.end(); ++iter) {
+    iter->second.delete_saddle_node_bifurcation(id);
   }
 }
 
@@ -1451,6 +1827,10 @@ bool model::select_solution(dynamical_id id, int x, int y) {
   return dynamicalWindows.at(id).select_solution(x, y, &selectedSolutionId);
 }
 
+bool model::select_separatrix(dynamical_id id, int x, int y) {
+  return dynamicalWindows.at(id).select_separatrix(x, y, &selectedSeparatrixId);
+}
+
 bool model::select_isocline(dynamical_id id, int x, int y) {
   return dynamicalWindows.at(id).select_isocline(x, y, &selectedIsoclineId);
 }
@@ -1458,6 +1838,20 @@ bool model::select_isocline(dynamical_id id, int x, int y) {
 bool model::select_singular_point(dynamical_id id, int x, int y) {
   return dynamicalWindows.at(id)
     .select_singular_point(x, y, &selectedSingularPointId);
+}
+
+bool model::select_hopf_bifurcation(parameter_id id, int x, int y) {
+  return parameterWindows.at(id)
+    .select_hopf_bifurcation(x, y, &selectedHopfBifurcationId);
+}
+
+bool model::select_saddle_node_bifurcation(parameter_id id, int x, int y) {
+  return parameterWindows.at(id)
+    .select_saddle_node_bifurcation(x, y, &selectedSaddleNodeBifurcationId);
+}
+
+void model::deselect_separatrix() {
+  selectedSeparatrixId = kNoSeparatrixId;
 }
 
 void model::deselect_solution() {
@@ -1472,6 +1866,18 @@ void model::deselect_singular_point() {
   selectedSingularPointId = kNoSingularPointId;
 }
 
+void model::deselect_hopf_bifurcation() {
+  selectedHopfBifurcationId = kNoHopfBifurcationId;
+}
+
+void model::deselect_saddle_node_bifurcation() {
+  selectedSaddleNodeBifurcationId = kNoSaddleNodeBifurcationId;
+}
+
+void model::select_separatrix(separatrix_id id) {
+  selectedSeparatrixId = id;
+}
+
 void model::select_solution(solution_id id) {
   selectedSolutionId = id;
 }
@@ -1480,6 +1886,14 @@ void model::select_singular_point(singular_point_id id) {
 }
 void model::select_isocline(isocline_id id) {
   selectedIsoclineId = id;
+}
+
+void model::select_hopf_bifurcation(hopf_bifurcation_id id) {
+  selectedHopfBifurcationId = id;
+}
+
+void model::select_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
+  selectedSaddleNodeBifurcationId = id;
 }
 
 solution_id model::get_selected_solution() const {
@@ -1494,12 +1908,133 @@ singular_point_id model::get_selected_singular_point() const {
   return selectedSingularPointId;
 }
 
+separatrix_id model::get_selected_separatrix() const {
+  return selectedSeparatrixId;
+}
+
+hopf_bifurcation_id model::get_selected_hopf_bifurcation() const {
+  return selectedHopfBifurcationId;
+}
+
+saddle_node_bifurcation_id model::get_selected_saddle_node_bifurcation() const {
+  return selectedSaddleNodeBifurcationId;
+}
+
+const std::unordered_map<separatrix_id, separatrix>&
+model::get_separatrices() const {
+  return separatrices;
+}
+
 const std::unordered_map<solution_id, solution>& model::get_solutions() const {
   return solutions;
 }
 
 const std::unordered_map<isocline_id, isocline>& model::get_isoclines() const {
   return isoclines;
+}
+
+const std::unordered_map<hopf_bifurcation_id, hopf_bifurcation>&
+model::get_hopf_bifurcations() const {
+  return hopfBifurcations;
+}
+
+const std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>&
+model::get_saddle_node_bifurcations() const {
+  return saddleNodeBifurcations;
+}
+
+bool model::generate_separatrix_data(separatrix_id id) {
+  // We first verify that the singular point associated with this separatrix
+  // still exists and is still a saddle.
+  const separatrix_specs& specs = separatrices.at(id).specs;
+  
+  if(singularPoints.find(specs.singularPoint) == singularPoints.end()) {
+    return false;
+  }
+  const singular_point& singularPoint = singularPoints.at(specs.singularPoint);
+  if(singularPoint.eigenvalues.size() != 2 ||
+     !singularPoint.eigenvalues[0].get_value().get_root().is_real() ||
+     !singularPoint.eigenvalues[1].get_value().get_root().is_real() ||
+     singularPoint.eigenvalues[0].get_value().get_root().real()
+     * singularPoint.eigenvalues[1].get_value().get_root().real() >= 0) {
+    return false;
+  }
+  // We first generate the initial conditions for euler's method.
+  math::vector init(symbolsToIndex.size());
+  init[varDiffIndex] = 0; // This is ignored by the functions.
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = parameterPosition[i];
+  }
+  // We are working in 2 dimensions. For a stable separatrix, our starting
+  // conditions should be a slight perturbation along the stable eigenvector
+  // we should move in the negative t direction.
+  int direction;
+  int index;
+  if(specs.type == separatrix_specs::type::STABLE) {
+    direction = -1;
+    if(singularPoint.eigenvalues[0].get_value().get_root().real() < 0) {
+      index = 0;
+    } else {
+      index = 1;
+    }
+  } else {
+    direction = 1;
+    if(singularPoint.eigenvalues[0].get_value().get_root().real() > 0) {
+      index = 0;
+    } else {
+      index = 1;
+    }
+  }
+  double multiplier = 1e-5;
+  init[dynamicalIndexToSymbol[0]]
+    = singularPoint.position[0]
+    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
+  init[dynamicalIndexToSymbol[1]]
+    = singularPoint.position[1]
+    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+
+  // We now perform euler's method.
+  std::list<math::vector> points;
+  std::vector<compiler::function<double, const double*>> systemFunctions;
+  for(std::vector<expression>::const_iterator iter = system.begin();
+      iter != system.end(); ++iter) {
+    systemFunctions.push_back(iter->function);
+  }
+  while(std::abs(init[varDiffIndex]) <= specs.time) {
+    math::vector vars(2);
+    vars[0] = init[dynamicalIndexToSymbol[0]];
+    vars[1] = init[dynamicalIndexToSymbol[1]];
+    points.push_back(vars);
+    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
+		varDiffIndex, init);
+  }
+  // Now we reset to the opposate eigenvector. We still traverse in the
+  // same direction
+  init[varDiffIndex] = 0;
+  init[dynamicalIndexToSymbol[0]]
+    = singularPoint.position[0]
+    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
+  init[dynamicalIndexToSymbol[1]]
+    = singularPoint.position[1]
+    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+  
+  while(std::abs(init[varDiffIndex]) <= specs.time) {
+    math::vector vars(2);
+    vars[0] = init[dynamicalIndexToSymbol[0]];
+    vars[1] = init[dynamicalIndexToSymbol[1]];
+    points.push_front(vars);
+    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
+		varDiffIndex, init);
+  }
+  separatrices.at(id).data = points;
+  return true;
+}
+
+bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id) {
+  return false;
+}
+bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id) {
+  return false;
 }
 
 bool model::generate_isocline_data(isocline_id id) {
@@ -1543,7 +2078,8 @@ bool model::generate_isocline_data(isocline_id id) {
     });
   for(int r = 0; r != dynamicalVars; ++r) {
     for(int c = 0; c != dynamicalVars; ++c) {
-      jacobianFunctions.push_back(jacobian[r*dynamicalVars + c].function);
+      jacobianFunctions.push_back(partials[r][dynamicalIndexToSymbol[c]]
+				  .function);
     }
     jacobianFunctions.push_back([&, r](const double*) -> double {
 	return -specs.direction[r];
@@ -1772,16 +2308,33 @@ void model::set_parameter_position(parameter_id id, const math::vector2d& pos) {
       iter != toRemoveSingularPoint.end(); ++iter) {
     delete_singular_point(*iter);
   }
+  // Now that we have removed the singular points, we update and potentially
+  // remove separatrices.
+  std::vector<separatrix_id> toRemoveSeparatrix;
+  for(separatrix_const_iter iter = separatrices.begin();
+      iter != separatrices.end(); ++iter) {
+    if(!generate_separatrix_data(iter->first)) {
+      toRemoveSeparatrix.push_back(iter->first);
+    }
+  }
+  for(std::vector<separatrix_id>::const_iterator iter
+	= toRemoveSeparatrix.begin(); iter != toRemoveSeparatrix.end(); ++iter) {
+    delete_separatrix(*iter);
+  }
   // We now update the VBO's of all the dynamical/parameter windows
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
     for(solution_const_iter sol = solutions.begin();
 	sol != solutions.end(); ++sol) {
-      iter->second.update_solution_vbo(sol->first);
+      iter->second.gen_solution_vbo(sol->first);
     }
     for(isocline_const_iter iso = isoclines.begin();
 	iso != isoclines.end(); ++iso) {
-      iter->second.update_isocline_vbo(iso->first);
+      iter->second.gen_isocline_vbo(iso->first);
+    }
+    for(separatrix_const_iter sep = separatrices.begin();
+	sep != separatrices.end(); ++sep) {
+      iter->second.gen_separatrix_vbo(sep->first);
     }
   }
 }
@@ -1794,6 +2347,15 @@ bool model::on_parameter_position(parameter_id id, const math::vector2d& pos) co
 // in this dynamical window.
 dynamical_point model::get_dynamical_point(dynamical_id id, const math::vector2d& pos) const {
   return dynamicalWindows.at(id).get_point(pos);
+}
+
+math::vector model::get_parameter_point(parameter_id id,
+					const math::vector2d& pos) const {
+  return parameterWindows.at(id).get_point(pos);
+}
+
+const math::vector& model::get_parameter_position() const {
+  return parameterPosition;
 }
 } // namespace gui
 } // namespace dynslover

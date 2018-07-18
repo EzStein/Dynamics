@@ -27,10 +27,6 @@ class square_matrix : public matrix {
   // Returns true if the matrix is invertible.
   bool invertable() const;
 
-  // Computes the eigenvalues of this matrix. Returns a vector of these
-  // eigenvalues, counting multiplicities, in no particular order.
-  std::vector<double> eigenvalues() const;
-
   // Inverts this matrix if possible. If the matrix is not invertiable,
   // returns false and does not alter the matrix.
   bool invert();

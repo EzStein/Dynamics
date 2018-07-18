@@ -20,19 +20,21 @@
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/dataview.h>
-#include <wx/stattext.h>
-#include <wx/combobox.h>
 #include <wx/sizer.h>
-#include <wx/button.h>
 #include <wx/statbox.h>
+#include <wx/textctrl.h>
+#include <wx/button.h>
+#include <wx/stattext.h>
 #include <wx/panel.h>
 #include <wx/notebook.h>
-#include <wx/statusbr.h>
+#include <wx/grid.h>
 #include <wx/frame.h>
+#include <wx/statusbr.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
 #include <wx/dialog.h>
 #include <wx/radiobox.h>
+#include <wx/combobox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -56,6 +58,12 @@ class console_frame_base : public wxFrame
 		wxMenu* m_menu2;
 		wxMenuItem* solutionMenuItem;
 		wxMenuItem* singularPointMenuItem;
+		wxMenuItem* isoclineMenuItem;
+		wxMenuItem* separatricesMenuItem;
+		wxMenuItem* hopfBifurcationMenuItem;
+		wxMenuItem* saddleNodeBifurcationMenuItem;
+		wxMenuItem* limitCycleBifurcationMenuItem;
+		wxMenuItem* saddleConnectionBifurcationMenuItem;
 		wxMenu* m_menu4;
 		wxMenuItem* newDynamicalMenuItem;
 		wxMenuItem* newParameterMenuItem;
@@ -65,27 +73,53 @@ class console_frame_base : public wxFrame
 		wxNotebook* m_notebook4;
 		wxPanel* bSizer18;
 		wxDataViewListCtrl* equationsDataViewCtrl;
-		wxStaticText* m_staticText1;
-		wxComboBox* variablesComboBox;
-		wxStaticText* m_staticText2;
-		wxComboBox* parametersComboBox;
+		wxDataViewColumn* m_dataViewListColumn16;
+		wxTextCtrl* variablesTextCtrl;
+		wxDataViewListCtrl* variableNamesDataViewCtrl;
+		wxDataViewColumn* m_dataViewListColumn5;
+		wxTextCtrl* parametersTextCtrl;
+		wxDataViewListCtrl* parameterNamesDataViewCtrl;
+		wxDataViewColumn* m_dataViewListColumn51;
 		wxButton* compileButton;
+		wxStaticText* m_staticText3;
+		wxTextCtrl* varDiffTextCtrl;
 		wxPanel* m_panel13;
-		wxDataViewListCtrl* m_dataViewListCtrl10;
-		wxDataViewListCtrl* m_dataViewListCtrl11;
+		wxDataViewListCtrl* compiledParametersDataViewCtrl;
+		wxDataViewColumn* m_dataViewListColumn3;
+		wxDataViewListCtrl* compiledEquationsDataViewCtrl;
+		wxDataViewColumn* m_dataViewListColumn1;
+		wxDataViewColumn* m_dataViewListColumn17;
 		wxNotebook* m_notebook2;
 		wxPanel* m_panel5;
 		wxDataViewListCtrl* solutionsDataViewCtrl;
 		wxButton* solutionsEditButton;
 		wxButton* solutionsDeleteButton;
+		wxGrid* m_grid1;
 		wxPanel* m_panel6;
 		wxDataViewListCtrl* singularPointsDataViewCtrl;
+		wxButton* m_button19;
 		wxButton* singularPointsDeleteButton;
+		wxPanel* m_panel14;
+		wxDataViewListCtrl* separatricesDataViewCtrl;
+		wxDataViewColumn* m_dataViewListColumn7;
+		wxButton* m_button20;
+		wxButton* m_button21;
+		wxGrid* m_grid11;
 		wxPanel* m_panel7;
 		wxDataViewListCtrl* isoclinesDataViewCtrl;
 		wxButton* isoclinesEditButton;
 		wxButton* isoclinesDeleteButton;
-		wxStatusBar* statusBar;
+		wxGrid* m_grid12;
+		wxPanel* m_panel15;
+		wxDataViewListCtrl* hopfBifurcationsDataViewCtrl;
+		wxButton* m_button22;
+		wxButton* m_button23;
+		wxGrid* m_grid13;
+		wxPanel* m_panel16;
+		wxDataViewListCtrl* saddleNodeBifurcationsDataViewCtrl;
+		wxButton* m_button24;
+		wxButton* m_button25;
+		wxGrid* m_grid14;
 		wxMenu* m_menu22;
 		
 		// Virtual event handlers, overide them in your derived class
@@ -94,25 +128,32 @@ class console_frame_base : public wxFrame
 		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void separatrices_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void hopf_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void saddle_node_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void limit_cycle_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
+		virtual void saddle_connection_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void new_dynamical_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void new_parameter_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void close_dynamical_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void close_parameter_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
-		virtual void variables_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
-		virtual void variables_combo_box_on_kill_focus( wxFocusEvent& event ) = 0;
-		virtual void variables_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
-		virtual void parameters_combo_box_on_combo_box( wxCommandEvent& event ) = 0;
-		virtual void parameters_combo_box_on_text_enter( wxCommandEvent& event ) = 0;
+		virtual void van_der_pol_example_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void variables_text_ctrl_on_text_enter( wxCommandEvent& event ) = 0;
+		virtual void variable_names_data_view_ctrl_on_value_changed( wxDataViewEvent& event ) = 0;
+		virtual void parameters_text_ctrl_on_text_enter( wxCommandEvent& event ) = 0;
 		virtual void compile_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void solutions_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void solutions_edit_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void solutions_delete_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void singular_points_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void singular_points_delete_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void separatrices_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void isoclines_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void isoclines_edit_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void isoclines_delete_button_on_button_click( wxCommandEvent& event ) = 0;
+		virtual void hopf_bifurcations_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
+		virtual void saddle_node_bifurcations_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		
 	
 	public:
@@ -193,23 +234,27 @@ class parameter_frame_base : public wxFrame
 		wxMenuItem* editMenuItem;
 		wxStatusBar* m_statusBar3;
 		wxPanel* m_panel11;
-		wxMenu* m_menu10;
+		wxMenu* parameterPopupMenu;
 		wxBoxSizer* parameterWindowBox;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void parameter_frame_on_close( wxCloseEvent& event ) { event.Skip(); }
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void hopf_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void saddle_node_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void limit_cycle_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void saddle_connection_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
 		
 	
 	public:
 		
-		parameter_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 845,713 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		parameter_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter Space"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 845,713 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		
 		~parameter_frame_base();
 		
 		void m_panel11OnContextMenu( wxMouseEvent &event )
 		{
-			m_panel11->PopupMenu( m_menu10, event.GetPosition() );
+			m_panel11->PopupMenu( parameterPopupMenu, event.GetPosition() );
 		}
 	
 };
@@ -233,7 +278,7 @@ class parameter_dialog_base : public wxDialog
 	
 	public:
 		
-		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 627,357 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 627,357 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~parameter_dialog_base();
 	
 };
@@ -291,7 +336,7 @@ class dynamical_dialog_base : public wxDialog
 	
 	public:
 		
-		dynamical_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 661,300 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		dynamical_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Dynamical"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 661,300 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~dynamical_dialog_base();
 	
 };
@@ -325,8 +370,74 @@ class isocline_dialog_base : public wxDialog
 	
 	public:
 		
-		isocline_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		isocline_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Isocline"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~isocline_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class hopf_bifurcation_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class hopf_bifurcation_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxNotebook* m_notebook5;
+		wxPanel* m_panel17;
+		wxDataViewListCtrl* initialVarsDataViewCtrl;
+		wxDataViewListCtrl* initialParametersDataViewCtrl;
+		wxPanel* m_panel18;
+		wxPropertyGrid* m_propertyGrid7;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* spanPGItem;
+		wxPGProperty* searchRadiusPGItem;
+		wxPGProperty* searchIncrementPGItem;
+		wxButton* m_button26;
+		wxButton* m_button27;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		hopf_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~hopf_bifurcation_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class saddle_node_bifurcation_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class saddle_node_bifurcation_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxNotebook* m_notebook5;
+		wxPanel* m_panel17;
+		wxDataViewListCtrl* initialVarsDataViewCtrl;
+		wxDataViewListCtrl* initialParametersDataViewCtrl;
+		wxPanel* m_panel18;
+		wxPropertyGrid* m_propertyGrid7;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* spanPGItem;
+		wxPGProperty* searchRadiusPGItem;
+		wxPGProperty* searchIncrementPGItem;
+		wxButton* m_button26;
+		wxButton* m_button27;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		saddle_node_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~saddle_node_bifurcation_dialog_base();
 	
 };
 
@@ -351,6 +462,36 @@ class singular_point_dialog_base : public wxDialog
 		
 		singular_point_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Singular Point"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,349 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~singular_point_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class separatrix_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class separatrix_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxPropertyGrid* m_propertyGrid6;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* timePGItem;
+		wxStaticText* m_staticText2;
+		wxComboBox* singularPointComboBox;
+		wxStaticText* m_staticText3;
+		wxComboBox* typeComboBox;
+		wxButton* okButton;
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		separatrix_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Separatrix"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,400 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~separatrix_dialog_base();
 	
 };
 

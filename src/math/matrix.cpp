@@ -6,6 +6,7 @@
 #include <sstream>
 #include <utility>
 #include <iostream>
+#include "math/eigenvalue.h"
 
 #include "math/vector.h"
 
@@ -205,6 +206,34 @@ bool matrix::is_identity() const {
     }
   }
   return true;
+}
+
+std::vector<vector> matrix::null_space() const {
+  matrix copy(*this);
+  copy.rref();
+  
+  // This vectors holds the pivot column for the associated row.
+  // That is, pivotCol[row] is the associated pivotCol.
+  std::vector<int> pivotCol;
+  std::vector<vector> basis;
+  int r = 0;
+  for(int c = 0; c != cols; ++c) {
+    if(std::abs(copy[r][c]) < kTolerance) {
+      // We have found a non pivot column
+      vector vec(cols, 0.0);
+      vec[r] = 1;
+      for(int i = 0; i != r; ++i) {
+	vec[pivotCol[i]] = -copy[i][c];
+      }
+      vec.normalize();
+      basis.push_back(vec);
+    } else {
+      // We have found a pivot column
+      pivotCol.push_back(c);
+      ++r;
+    }
+  }
+  return basis;
 }
 
 //

@@ -25,6 +25,10 @@ double& complex::imaginary() {
   return y();
 }
 
+bool complex::is_real() const {
+  return std::abs(imaginary()) < kTolerance;
+}
+
 void complex::conjugate() {
   imaginary() *= -1;
 }

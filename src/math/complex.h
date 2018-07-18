@@ -23,6 +23,9 @@ public:
 
   double norm_squared() const;
 
+  // Returns true if the imaginary part is near zero.
+  bool is_real() const;
+
   std::string to_string() const;
 
   // Converts this number to its principle square root. If a principle square

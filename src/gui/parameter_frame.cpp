@@ -4,6 +4,10 @@
 
 #include "gui/app.h"
 
+#include <wx/msgdlg.h>
+#include "gui/hopf_bifurcation_dialog.h"
+#include "gui/saddle_node_bifurcation_dialog.h"
+
 namespace dynsolver {
 namespace gui {
 
@@ -145,6 +149,7 @@ void parameter_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_left_mouse_click(const math::vector2d& pos) {
+  PopupMenu(parameterPopupMenu);
 }
 
 void parameter_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
@@ -221,6 +226,46 @@ void parameter_frame::refresh_gl_canvas() {
 
 void parameter_frame::parameter_frame_on_close(wxCloseEvent&) {
   appl.delete_parameter(id);
+}
+
+void parameter_frame::hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  hopf_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.parameters =
+    appl.get_model().get_parameter_point(id, rightClickMousePos);
+  if(appl.get_hopf_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_hopf_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find hopf bifurcation.",
+				    "Hopf Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
+}
+
+void parameter_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  saddle_node_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.parameters =
+    appl.get_model().get_parameter_point(id, rightClickMousePos);
+  if(appl.get_saddle_node_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_saddle_node_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find saddle-node bifurcation.",
+				    "Hopf Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
+}
+void parameter_frame::limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+}
+void parameter_frame::saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) {
 }
 } // namespace gui
 } // namespace dynsolver

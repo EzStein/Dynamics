@@ -48,9 +48,25 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	singularPointMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Singular Point...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu2->Append( singularPointMenuItem );
 	
-	wxMenuItem* isoclineMenuItem;
 	isoclineMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Isocline...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu2->Append( isoclineMenuItem );
+	
+	separatricesMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Separatrices...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( separatricesMenuItem );
+	
+	m_menu2->AppendSeparator();
+	
+	hopfBifurcationMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Hopf Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( hopfBifurcationMenuItem );
+	
+	saddleNodeBifurcationMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Saddle Node Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( saddleNodeBifurcationMenuItem );
+	
+	limitCycleBifurcationMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Semi-stable Limit Cycle Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( limitCycleBifurcationMenuItem );
+	
+	saddleConnectionBifurcationMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Saddle Connection Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( saddleConnectionBifurcationMenuItem );
 	
 	m_menubar1->Append( m_menu2, wxT("Objects") ); 
 	
@@ -76,6 +92,10 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	lorenzExampleMenuItem = new wxMenuItem( m_menu8, wxID_ANY, wxString( wxT("Lorenz System") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu8->Append( lorenzExampleMenuItem );
 	
+	wxMenuItem* vanDerPolExampleMenuItem;
+	vanDerPolExampleMenuItem = new wxMenuItem( m_menu8, wxID_ANY, wxString( wxT("Van der Pol Oscillator") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu8->Append( vanDerPolExampleMenuItem );
+	
 	m_menubar1->Append( m_menu8, wxT("Examples") ); 
 	
 	this->SetMenuBar( m_menubar1 );
@@ -92,49 +112,53 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer41 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 	
 	equationsDataViewCtrl = new wxDataViewListCtrl( sbSizer41->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn16 = equationsDataViewCtrl->AppendTextColumn( wxT("Variable") );
 	sbSizer41->Add( equationsDataViewCtrl, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizer16;
-	bSizer16 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticText1 = new wxStaticText( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Variables: "), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText1->Wrap( -1 );
-	bSizer16->Add( m_staticText1, 0, wxALL, 10 );
-	
-	variablesComboBox = new wxComboBox( sbSizer41->GetStaticBox(), wxID_ANY, wxT("1"), wxDefaultPosition, wxDefaultSize, 0, NULL, wxTE_PROCESS_ENTER );
-	variablesComboBox->Append( wxT("1") );
-	variablesComboBox->Append( wxT("2") );
-	variablesComboBox->Append( wxT("3") );
-	variablesComboBox->Append( wxT("4") );
-	variablesComboBox->SetSelection( 0 );
-	bSizer16->Add( variablesComboBox, 1, wxALL, 5 );
-	
-	
-	sbSizer41->Add( bSizer16, 0, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizer32;
-	bSizer32 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticText2 = new wxStaticText( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Parameters:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText2->Wrap( -1 );
-	bSizer32->Add( m_staticText2, 0, wxALL, 5 );
-	
-	parametersComboBox = new wxComboBox( sbSizer41->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxTE_PROCESS_ENTER );
-	parametersComboBox->Append( wxT("0") );
-	parametersComboBox->Append( wxT("1") );
-	parametersComboBox->Append( wxT("2") );
-	parametersComboBox->Append( wxT("3") );
-	parametersComboBox->SetSelection( 0 );
-	bSizer32->Add( parametersComboBox, 1, wxALL, 5 );
-	
-	
-	sbSizer41->Add( bSizer32, 0, wxEXPAND, 5 );
-	
-	compileButton = new wxButton( sbSizer41->GetStaticBox(), wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer41->Add( compileButton, 0, wxALL, 5 );
 	
 	
 	bSizer183->Add( sbSizer41, 1, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer42;
+	sbSizer42 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Variables") ), wxVERTICAL );
+	
+	variablesTextCtrl = new wxTextCtrl( sbSizer42->GetStaticBox(), wxID_ANY, wxT("1"), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	sbSizer42->Add( variablesTextCtrl, 0, wxALL, 5 );
+	
+	variableNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer42->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn5 = variableNamesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	sbSizer42->Add( variableNamesDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	
+	bSizer183->Add( sbSizer42, 1, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer6;
+	sbSizer6 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Parameters") ), wxVERTICAL );
+	
+	parametersTextCtrl = new wxTextCtrl( sbSizer6->GetStaticBox(), wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	sbSizer6->Add( parametersTextCtrl, 0, wxALL, 5 );
+	
+	parameterNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer6->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn51 = parameterNamesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	sbSizer6->Add( parameterNamesDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	
+	bSizer183->Add( sbSizer6, 1, wxEXPAND, 5 );
+	
+	compileButton = new wxButton( bSizer18, wxID_ANY, wxT("Compile"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer183->Add( compileButton, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer33;
+	bSizer33 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText3 = new wxStaticText( bSizer18, wxID_ANY, wxT("Variable of Differentiation: "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3->Wrap( -1 );
+	bSizer33->Add( m_staticText3, 0, wxALL, 5 );
+	
+	varDiffTextCtrl = new wxTextCtrl( bSizer18, wxID_ANY, wxT("t"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer33->Add( varDiffTextCtrl, 0, wxALL, 5 );
+	
+	
+	bSizer183->Add( bSizer33, 0, wxEXPAND, 5 );
 	
 	
 	bSizer18->SetSizer( bSizer183 );
@@ -148,8 +172,9 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxStaticBoxSizer* sbSizer4;
 	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Parameters") ), wxVERTICAL );
 	
-	m_dataViewListCtrl10 = new wxDataViewListCtrl( sbSizer4->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer4->Add( m_dataViewListCtrl10, 1, wxEXPAND, 5 );
+	compiledParametersDataViewCtrl = new wxDataViewListCtrl( sbSizer4->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn3 = compiledParametersDataViewCtrl->AppendTextColumn( wxT("Parameter") );
+	sbSizer4->Add( compiledParametersDataViewCtrl, 1, wxEXPAND, 5 );
 	
 	
 	bSizer34->Add( sbSizer4, 1, wxEXPAND, 5 );
@@ -157,8 +182,10 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxStaticBoxSizer* sbSizer5;
 	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 	
-	m_dataViewListCtrl11 = new wxDataViewListCtrl( sbSizer5->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer5->Add( m_dataViewListCtrl11, 1, wxEXPAND, 5 );
+	compiledEquationsDataViewCtrl = new wxDataViewListCtrl( sbSizer5->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn1 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Variable") );
+	m_dataViewListColumn17 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Expression") );
+	sbSizer5->Add( compiledEquationsDataViewCtrl, 1, wxEXPAND, 5 );
 	
 	
 	bSizer34->Add( sbSizer5, 1, wxEXPAND, 5 );
@@ -191,6 +218,38 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	
 	bSizer182->Add( bSizer181, 0, wxEXPAND, 5 );
 	
+	wxStaticBoxSizer* sbSizer61;
+	sbSizer61 = new wxStaticBoxSizer( new wxStaticBox( m_panel5, wxID_ANY, wxT("Data") ), wxVERTICAL );
+	
+	m_grid1 = new wxGrid( sbSizer61->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	m_grid1->CreateGrid( 0, 0 );
+	m_grid1->EnableEditing( false );
+	m_grid1->EnableGridLines( true );
+	m_grid1->EnableDragGridSize( false );
+	m_grid1->SetMargins( 0, 0 );
+	
+	// Columns
+	m_grid1->EnableDragColMove( false );
+	m_grid1->EnableDragColSize( true );
+	m_grid1->SetColLabelSize( 30 );
+	m_grid1->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	m_grid1->EnableDragRowSize( true );
+	m_grid1->SetRowLabelSize( 80 );
+	m_grid1->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	m_grid1->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	sbSizer61->Add( m_grid1, 1, wxEXPAND, 5 );
+	
+	
+	bSizer182->Add( sbSizer61, 1, wxEXPAND, 5 );
+	
 	
 	m_panel5->SetSizer( bSizer182 );
 	m_panel5->Layout();
@@ -206,6 +265,9 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	wxBoxSizer* bSizer19;
 	bSizer19 = new wxBoxSizer( wxHORIZONTAL );
 	
+	m_button19 = new wxButton( m_panel6, wxID_ANY, wxT("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer19->Add( m_button19, 0, wxALL, 5 );
+	
 	singularPointsDeleteButton = new wxButton( m_panel6, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer19->Add( singularPointsDeleteButton, 0, wxALL, 5 );
 	
@@ -217,6 +279,63 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel6->Layout();
 	bSizer20->Fit( m_panel6 );
 	m_notebook2->AddPage( m_panel6, wxT("Singular Points"), false );
+	m_panel14 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer37;
+	bSizer37 = new wxBoxSizer( wxVERTICAL );
+	
+	separatricesDataViewCtrl = new wxDataViewListCtrl( m_panel14, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_dataViewListColumn7 = separatricesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	bSizer37->Add( separatricesDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer371;
+	bSizer371 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button20 = new wxButton( m_panel14, wxID_ANY, wxT("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer371->Add( m_button20, 0, wxALL, 5 );
+	
+	m_button21 = new wxButton( m_panel14, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer371->Add( m_button21, 0, wxALL, 5 );
+	
+	
+	bSizer37->Add( bSizer371, 0, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer611;
+	sbSizer611 = new wxStaticBoxSizer( new wxStaticBox( m_panel14, wxID_ANY, wxT("Data") ), wxVERTICAL );
+	
+	m_grid11 = new wxGrid( sbSizer611->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	m_grid11->CreateGrid( 0, 0 );
+	m_grid11->EnableEditing( false );
+	m_grid11->EnableGridLines( true );
+	m_grid11->EnableDragGridSize( false );
+	m_grid11->SetMargins( 0, 0 );
+	
+	// Columns
+	m_grid11->EnableDragColMove( false );
+	m_grid11->EnableDragColSize( true );
+	m_grid11->SetColLabelSize( 30 );
+	m_grid11->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	m_grid11->EnableDragRowSize( true );
+	m_grid11->SetRowLabelSize( 80 );
+	m_grid11->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	m_grid11->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	sbSizer611->Add( m_grid11, 1, wxEXPAND, 5 );
+	
+	
+	bSizer37->Add( sbSizer611, 1, wxEXPAND, 5 );
+	
+	
+	m_panel14->SetSizer( bSizer37 );
+	m_panel14->Layout();
+	bSizer37->Fit( m_panel14 );
+	m_notebook2->AddPage( m_panel14, wxT("Separatrices"), false );
 	m_panel7 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer191;
 	bSizer191 = new wxBoxSizer( wxVERTICAL );
@@ -236,18 +355,161 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	
 	bSizer191->Add( bSizer201, 0, wxEXPAND, 5 );
 	
+	wxStaticBoxSizer* sbSizer612;
+	sbSizer612 = new wxStaticBoxSizer( new wxStaticBox( m_panel7, wxID_ANY, wxT("Data") ), wxVERTICAL );
+	
+	m_grid12 = new wxGrid( sbSizer612->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	m_grid12->CreateGrid( 0, 0 );
+	m_grid12->EnableEditing( false );
+	m_grid12->EnableGridLines( true );
+	m_grid12->EnableDragGridSize( false );
+	m_grid12->SetMargins( 0, 0 );
+	
+	// Columns
+	m_grid12->EnableDragColMove( false );
+	m_grid12->EnableDragColSize( true );
+	m_grid12->SetColLabelSize( 30 );
+	m_grid12->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	m_grid12->EnableDragRowSize( true );
+	m_grid12->SetRowLabelSize( 80 );
+	m_grid12->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	m_grid12->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	sbSizer612->Add( m_grid12, 1, wxEXPAND, 5 );
+	
+	
+	bSizer191->Add( sbSizer612, 1, wxEXPAND, 5 );
+	
 	
 	m_panel7->SetSizer( bSizer191 );
 	m_panel7->Layout();
 	bSizer191->Fit( m_panel7 );
-	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), true );
+	m_notebook2->AddPage( m_panel7, wxT("Isoclines"), false );
+	m_panel15 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer38;
+	bSizer38 = new wxBoxSizer( wxVERTICAL );
 	
-	bSizer4->Add( m_notebook2, 1, wxEXPAND | wxALL, 5 );
+	hopfBifurcationsDataViewCtrl = new wxDataViewListCtrl( m_panel15, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer38->Add( hopfBifurcationsDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer39;
+	bSizer39 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button22 = new wxButton( m_panel15, wxID_ANY, wxT("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer39->Add( m_button22, 0, wxALL, 5 );
+	
+	m_button23 = new wxButton( m_panel15, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer39->Add( m_button23, 0, wxALL, 5 );
+	
+	
+	bSizer38->Add( bSizer39, 0, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer613;
+	sbSizer613 = new wxStaticBoxSizer( new wxStaticBox( m_panel15, wxID_ANY, wxT("Data") ), wxVERTICAL );
+	
+	m_grid13 = new wxGrid( sbSizer613->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	m_grid13->CreateGrid( 0, 0 );
+	m_grid13->EnableEditing( false );
+	m_grid13->EnableGridLines( true );
+	m_grid13->EnableDragGridSize( false );
+	m_grid13->SetMargins( 0, 0 );
+	
+	// Columns
+	m_grid13->EnableDragColMove( false );
+	m_grid13->EnableDragColSize( true );
+	m_grid13->SetColLabelSize( 30 );
+	m_grid13->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	m_grid13->EnableDragRowSize( true );
+	m_grid13->SetRowLabelSize( 80 );
+	m_grid13->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	m_grid13->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	sbSizer613->Add( m_grid13, 1, wxEXPAND, 5 );
+	
+	
+	bSizer38->Add( sbSizer613, 1, wxEXPAND, 5 );
+	
+	
+	m_panel15->SetSizer( bSizer38 );
+	m_panel15->Layout();
+	bSizer38->Fit( m_panel15 );
+	m_notebook2->AddPage( m_panel15, wxT("Hopf Bifurcations"), true );
+	m_panel16 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer40;
+	bSizer40 = new wxBoxSizer( wxVERTICAL );
+	
+	saddleNodeBifurcationsDataViewCtrl = new wxDataViewListCtrl( m_panel16, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer40->Add( saddleNodeBifurcationsDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer41;
+	bSizer41 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button24 = new wxButton( m_panel16, wxID_ANY, wxT("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer41->Add( m_button24, 0, wxALL, 5 );
+	
+	m_button25 = new wxButton( m_panel16, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer41->Add( m_button25, 0, wxALL, 5 );
+	
+	
+	bSizer40->Add( bSizer41, 0, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer614;
+	sbSizer614 = new wxStaticBoxSizer( new wxStaticBox( m_panel16, wxID_ANY, wxT("Data") ), wxVERTICAL );
+	
+	m_grid14 = new wxGrid( sbSizer614->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	m_grid14->CreateGrid( 0, 0 );
+	m_grid14->EnableEditing( false );
+	m_grid14->EnableGridLines( true );
+	m_grid14->EnableDragGridSize( false );
+	m_grid14->SetMargins( 0, 0 );
+	
+	// Columns
+	m_grid14->EnableDragColMove( false );
+	m_grid14->EnableDragColSize( true );
+	m_grid14->SetColLabelSize( 30 );
+	m_grid14->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	m_grid14->EnableDragRowSize( true );
+	m_grid14->SetRowLabelSize( 80 );
+	m_grid14->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	m_grid14->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	sbSizer614->Add( m_grid14, 1, wxEXPAND, 5 );
+	
+	
+	bSizer40->Add( sbSizer614, 1, wxEXPAND, 5 );
+	
+	
+	m_panel16->SetSizer( bSizer40 );
+	m_panel16->Layout();
+	bSizer40->Fit( m_panel16 );
+	m_notebook2->AddPage( m_panel16, wxT("Saddle-Node Bifurcations"), false );
+	
+	bSizer4->Add( m_notebook2, 2, wxEXPAND | wxALL, 5 );
 	
 	
 	this->SetSizer( bSizer4 );
 	this->Layout();
-	statusBar = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
 	m_menu22 = new wxMenu();
 	this->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( console_frame_base::console_frame_baseOnContextMenu ), NULL, this ); 
 	
@@ -260,25 +522,32 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
+	this->Connect( separatricesMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
+	this->Connect( hopfBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
+	this->Connect( saddleNodeBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
+	this->Connect( limitCycleBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
+	this->Connect( saddleConnectionBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
 	this->Connect( newDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
 	this->Connect( newParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
 	this->Connect( closeDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
 	this->Connect( closeParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
 	this->Connect( lorenzExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	variablesComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::variables_combo_box_on_combo_box ), NULL, this );
-	variablesComboBox->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( console_frame_base::variables_combo_box_on_kill_focus ), NULL, this );
-	variablesComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_combo_box_on_text_enter ), NULL, this );
-	parametersComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_combo_box ), NULL, this );
-	parametersComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_text_enter ), NULL, this );
+	this->Connect( vanDerPolExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ) );
+	variablesTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
+	variableNamesDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
+	parametersTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
 	compileButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	solutionsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::solutions_data_view_ctrl_on_selection_changed ), NULL, this );
 	solutionsEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_edit_button_on_button_click ), NULL, this );
 	solutionsDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_delete_button_on_button_click ), NULL, this );
 	singularPointsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::singular_points_data_view_ctrl_on_selection_changed ), NULL, this );
 	singularPointsDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::singular_points_delete_button_on_button_click ), NULL, this );
+	separatricesDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::separatrices_data_view_ctrl_on_selection_changed ), NULL, this );
 	isoclinesDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::isoclines_data_view_ctrl_on_selection_changed ), NULL, this );
 	isoclinesEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::isoclines_edit_button_on_button_click ), NULL, this );
 	isoclinesDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::isoclines_delete_button_on_button_click ), NULL, this );
+	hopfBifurcationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::hopf_bifurcations_data_view_ctrl_on_selection_changed ), NULL, this );
+	saddleNodeBifurcationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::saddle_node_bifurcations_data_view_ctrl_on_selection_changed ), NULL, this );
 }
 
 console_frame_base::~console_frame_base()
@@ -289,25 +558,32 @@ console_frame_base::~console_frame_base()
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	variablesComboBox->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::variables_combo_box_on_combo_box ), NULL, this );
-	variablesComboBox->Disconnect( wxEVT_KILL_FOCUS, wxFocusEventHandler( console_frame_base::variables_combo_box_on_kill_focus ), NULL, this );
-	variablesComboBox->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_combo_box_on_text_enter ), NULL, this );
-	parametersComboBox->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_combo_box ), NULL, this );
-	parametersComboBox->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_combo_box_on_text_enter ), NULL, this );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ) );
+	variablesTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
+	variableNamesDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
+	parametersTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
 	compileButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::compile_button_on_button_click ), NULL, this );
 	solutionsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::solutions_data_view_ctrl_on_selection_changed ), NULL, this );
 	solutionsEditButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_edit_button_on_button_click ), NULL, this );
 	solutionsDeleteButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::solutions_delete_button_on_button_click ), NULL, this );
 	singularPointsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::singular_points_data_view_ctrl_on_selection_changed ), NULL, this );
 	singularPointsDeleteButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::singular_points_delete_button_on_button_click ), NULL, this );
+	separatricesDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::separatrices_data_view_ctrl_on_selection_changed ), NULL, this );
 	isoclinesDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::isoclines_data_view_ctrl_on_selection_changed ), NULL, this );
 	isoclinesEditButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::isoclines_edit_button_on_button_click ), NULL, this );
 	isoclinesDeleteButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( console_frame_base::isoclines_delete_button_on_button_click ), NULL, this );
+	hopfBifurcationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::hopf_bifurcations_data_view_ctrl_on_selection_changed ), NULL, this );
+	saddleNodeBifurcationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::saddle_node_bifurcations_data_view_ctrl_on_selection_changed ), NULL, this );
 	
 	delete m_menu22; 
 }
@@ -437,14 +713,22 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	m_panel11 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	m_panel11->Hide();
 	
-	m_menu10 = new wxMenu();
-	wxMenuItem* m_menuItem26;
-	m_menuItem26 = new wxMenuItem( m_menu10, wxID_ANY, wxString( wxT("Hopf Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu10->Append( m_menuItem26 );
+	parameterPopupMenu = new wxMenu();
+	wxMenuItem* hopfBifurcationMenuItem;
+	hopfBifurcationMenuItem = new wxMenuItem( parameterPopupMenu, wxID_ANY, wxString( wxT("Hopf Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	parameterPopupMenu->Append( hopfBifurcationMenuItem );
 	
-	wxMenuItem* m_menuItem27;
-	m_menuItem27 = new wxMenuItem( m_menu10, wxID_ANY, wxString( wxT("Saddle Node Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu10->Append( m_menuItem27 );
+	wxMenuItem* saddleNodeBifurcationMenuItem;
+	saddleNodeBifurcationMenuItem = new wxMenuItem( parameterPopupMenu, wxID_ANY, wxString( wxT("Saddle Node Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	parameterPopupMenu->Append( saddleNodeBifurcationMenuItem );
+	
+	wxMenuItem* limitCycleBifurcationMenuItem;
+	limitCycleBifurcationMenuItem = new wxMenuItem( parameterPopupMenu, wxID_ANY, wxString( wxT("Semi-stable Limit Cycle Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	parameterPopupMenu->Append( limitCycleBifurcationMenuItem );
+	
+	wxMenuItem* saddleConnectionBifurcationMenuItem;
+	saddleConnectionBifurcationMenuItem = new wxMenuItem( parameterPopupMenu, wxID_ANY, wxString( wxT("Saddle Connection Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
+	parameterPopupMenu->Append( saddleConnectionBifurcationMenuItem );
 	
 	m_panel11->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::m_panel11OnContextMenu ), NULL, this ); 
 	
@@ -467,6 +751,10 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
 	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
+	this->Connect( hopfBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::hopf_bifurcation_menu_item_on_selection ) );
+	this->Connect( saddleNodeBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
+	this->Connect( limitCycleBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
+	this->Connect( saddleConnectionBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
 }
 
 parameter_frame_base::~parameter_frame_base()
@@ -474,8 +762,12 @@ parameter_frame_base::~parameter_frame_base()
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::hopf_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
 	
-	delete m_menu10; 
+	delete parameterPopupMenu; 
 }
 
 parameter_dialog_base::parameter_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
@@ -724,6 +1016,152 @@ isocline_dialog_base::~isocline_dialog_base()
 	
 }
 
+hopf_bifurcation_dialog_base::hopf_bifurcation_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer42;
+	bSizer42 = new wxBoxSizer( wxVERTICAL );
+	
+	m_notebook5 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel17 = new wxPanel( m_notebook5, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer43;
+	bSizer43 = new wxBoxSizer( wxVERTICAL );
+	
+	initialVarsDataViewCtrl = new wxDataViewListCtrl( m_panel17, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer43->Add( initialVarsDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	initialParametersDataViewCtrl = new wxDataViewListCtrl( m_panel17, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer43->Add( initialParametersDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	
+	m_panel17->SetSizer( bSizer43 );
+	m_panel17->Layout();
+	bSizer43->Fit( m_panel17 );
+	m_notebook5->AddPage( m_panel17, wxT("Initial"), false );
+	m_panel18 = new wxPanel( m_notebook5, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer44;
+	bSizer44 = new wxBoxSizer( wxVERTICAL );
+	
+	m_propertyGrid7 = new wxPropertyGrid(m_panel18, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_SPLITTER_AUTO_CENTER);
+	incrementPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
+	spanPGItem = m_propertyGrid7->Append( new wxIntProperty( wxT("Span"), wxT("Span") ) ); 
+	searchRadiusPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Search Radius"), wxT("Search Radius") ) ); 
+	searchIncrementPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Search Increment"), wxT("Search Increment") ) ); 
+	bSizer44->Add( m_propertyGrid7, 1, wxEXPAND, 5 );
+	
+	
+	m_panel18->SetSizer( bSizer44 );
+	m_panel18->Layout();
+	bSizer44->Fit( m_panel18 );
+	m_notebook5->AddPage( m_panel18, wxT("Properties"), false );
+	
+	bSizer42->Add( m_notebook5, 1, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer45;
+	bSizer45 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button26 = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer45->Add( m_button26, 0, wxALL, 5 );
+	
+	m_button27 = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer45->Add( m_button27, 0, wxALL, 5 );
+	
+	
+	bSizer42->Add( bSizer45, 0, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer42 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_button26->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( hopf_bifurcation_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button27->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( hopf_bifurcation_dialog_base::cancel_button_on_button_click ), NULL, this );
+}
+
+hopf_bifurcation_dialog_base::~hopf_bifurcation_dialog_base()
+{
+	// Disconnect Events
+	m_button26->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( hopf_bifurcation_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button27->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( hopf_bifurcation_dialog_base::cancel_button_on_button_click ), NULL, this );
+	
+}
+
+saddle_node_bifurcation_dialog_base::saddle_node_bifurcation_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer42;
+	bSizer42 = new wxBoxSizer( wxVERTICAL );
+	
+	m_notebook5 = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel17 = new wxPanel( m_notebook5, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer43;
+	bSizer43 = new wxBoxSizer( wxVERTICAL );
+	
+	initialVarsDataViewCtrl = new wxDataViewListCtrl( m_panel17, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer43->Add( initialVarsDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	initialParametersDataViewCtrl = new wxDataViewListCtrl( m_panel17, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer43->Add( initialParametersDataViewCtrl, 1, wxEXPAND, 5 );
+	
+	
+	m_panel17->SetSizer( bSizer43 );
+	m_panel17->Layout();
+	bSizer43->Fit( m_panel17 );
+	m_notebook5->AddPage( m_panel17, wxT("Initial"), true );
+	m_panel18 = new wxPanel( m_notebook5, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer44;
+	bSizer44 = new wxBoxSizer( wxVERTICAL );
+	
+	m_propertyGrid7 = new wxPropertyGrid(m_panel18, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_SPLITTER_AUTO_CENTER);
+	incrementPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
+	spanPGItem = m_propertyGrid7->Append( new wxIntProperty( wxT("Span"), wxT("Span") ) ); 
+	searchRadiusPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Search Radius"), wxT("Search Radius") ) ); 
+	searchIncrementPGItem = m_propertyGrid7->Append( new wxFloatProperty( wxT("Search Increment"), wxT("Search Increment") ) ); 
+	bSizer44->Add( m_propertyGrid7, 1, wxEXPAND, 5 );
+	
+	
+	m_panel18->SetSizer( bSizer44 );
+	m_panel18->Layout();
+	bSizer44->Fit( m_panel18 );
+	m_notebook5->AddPage( m_panel18, wxT("Properties"), false );
+	
+	bSizer42->Add( m_notebook5, 1, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer45;
+	bSizer45 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button26 = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer45->Add( m_button26, 0, wxALL, 5 );
+	
+	m_button27 = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer45->Add( m_button27, 0, wxALL, 5 );
+	
+	
+	bSizer42->Add( bSizer45, 0, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer42 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	m_button26->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( saddle_node_bifurcation_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button27->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( saddle_node_bifurcation_dialog_base::cancel_button_on_button_click ), NULL, this );
+}
+
+saddle_node_bifurcation_dialog_base::~saddle_node_bifurcation_dialog_base()
+{
+	// Disconnect Events
+	m_button26->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( saddle_node_bifurcation_dialog_base::ok_button_on_button_click ), NULL, this );
+	m_button27->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( saddle_node_bifurcation_dialog_base::cancel_button_on_button_click ), NULL, this );
+	
+}
+
 singular_point_dialog_base::singular_point_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -762,5 +1200,77 @@ singular_point_dialog_base::~singular_point_dialog_base()
 	// Disconnect Events
 	addButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( singular_point_dialog_base::add_button_on_button_click ), NULL, this );
 	cancelButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( singular_point_dialog_base::cancel_button_on_button_click ), NULL, this );
+	
+}
+
+separatrix_dialog_base::separatrix_dialog_base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer32;
+	bSizer32 = new wxBoxSizer( wxVERTICAL );
+	
+	m_propertyGrid6 = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE);
+	incrementPGItem = m_propertyGrid6->Append( new wxFloatProperty( wxT("Increment"), wxT("Increment") ) ); 
+	timePGItem = m_propertyGrid6->Append( new wxFloatProperty( wxT("Time"), wxT("Time") ) ); 
+	bSizer32->Add( m_propertyGrid6, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer34;
+	bSizer34 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText2 = new wxStaticText( this, wxID_ANY, wxT("Singular Point:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2->Wrap( -1 );
+	bSizer34->Add( m_staticText2, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	singularPointComboBox = new wxComboBox( this, wxID_ANY, wxT("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY ); 
+	bSizer34->Add( singularPointComboBox, 0, wxALL, 5 );
+	
+	
+	bSizer32->Add( bSizer34, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer36;
+	bSizer36 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText3 = new wxStaticText( this, wxID_ANY, wxT("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3->Wrap( -1 );
+	bSizer36->Add( m_staticText3, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	typeComboBox = new wxComboBox( this, wxID_ANY, wxT("STABLE"), wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY );
+	typeComboBox->Append( wxT("STABLE") );
+	typeComboBox->Append( wxT("UNSTABLE") );
+	typeComboBox->SetSelection( 0 );
+	bSizer36->Add( typeComboBox, 0, wxALL, 5 );
+	
+	
+	bSizer32->Add( bSizer36, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer33;
+	bSizer33 = new wxBoxSizer( wxHORIZONTAL );
+	
+	okButton = new wxButton( this, wxID_ANY, wxT("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer33->Add( okButton, 0, wxALL, 5 );
+	
+	cancelButton = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer33->Add( cancelButton, 0, wxALL, 5 );
+	
+	
+	bSizer32->Add( bSizer33, 0, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer32 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+	
+	// Connect Events
+	okButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( separatrix_dialog_base::ok_button_on_button_click ), NULL, this );
+	cancelButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( separatrix_dialog_base::cancel_button_on_button_click ), NULL, this );
+}
+
+separatrix_dialog_base::~separatrix_dialog_base()
+{
+	// Disconnect Events
+	okButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( separatrix_dialog_base::ok_button_on_button_click ), NULL, this );
+	cancelButton->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( separatrix_dialog_base::cancel_button_on_button_click ), NULL, this );
 	
 }

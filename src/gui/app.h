@@ -26,7 +26,9 @@ class singular_point_dialog;
 class dynamical_dialog;
 class parameter_dialog;
 class isocline_dialog;
-struct solution_specs;
+class separatrix_dialog;
+class hopf_bifurcation_dialog;
+class saddle_node_bifurcation_dialog;
 
 // WxWidgets will call the OnInit method of this class on program startup.
 // This class handles communication between all the windows and dialogs.
@@ -69,6 +71,9 @@ class app : public wxApp {
   dynamical_dialog* dynamicalDialog;
   parameter_dialog* parameterDialog;
   isocline_dialog* isoclineDialog;
+  separatrix_dialog* separatrixDialog;
+  hopf_bifurcation_dialog* hopfBifurcationDialog;
+  saddle_node_bifurcation_dialog* saddleNodeBifurcationDialog;
   
  public:
   app();
@@ -133,6 +138,9 @@ class app : public wxApp {
   dynamical_dialog* get_dynamical_dialog() const;
   isocline_dialog* get_isocline_dialog() const;
   parameter_dialog* get_parameter_dialog() const;
+  separatrix_dialog* get_separatrix_dialog() const;
+  hopf_bifurcation_dialog* get_hopf_bifurcation_dialog() const;
+  saddle_node_bifurcation_dialog* get_saddle_node_bifurcation_dialog() const;
 
   // Returns a const model that the GUI's will use to update their
   // displays.
@@ -167,6 +175,11 @@ class app : public wxApp {
   // Attempts to add the isocline returning true on success.
   bool add_isocline(const isocline_specs&);
 
+  void add_separatrix(const separatrix_specs&);
+
+  bool add_hopf_bifurcation(const hopf_bifurcation_specs&);
+  bool add_saddle_node_bifurcation(const saddle_node_bifurcation_specs&);
+
   // Delete
   // Deletes the solution. and updates the necessary frames
   void delete_solution(solution_id);
@@ -174,6 +187,12 @@ class app : public wxApp {
   void delete_singular_point(solution_id id);
 
   void delete_isocline(isocline_id id);
+
+  void delete_separatrix(separatrix_id id);
+
+  void delete_hopf_bifurcation(hopf_bifurcation_id id);
+  
+  void delete_saddle_node_bifurcation(saddle_node_bifurcation_id id);
 
   // Update
   // Changes the existing solution.
@@ -184,17 +203,25 @@ class app : public wxApp {
   // by the coordnates x, y and the dynamical window given by id.
   // It attempts to select objects in this order:
   // singular_point, solution, isocline.
-  void select_object(dynamical_id id, int x, int y);
+  void select_dynamical_object(dynamical_id id, int x, int y);
+  void select_parameter_object(parameter_id id, int x, int y);
+  
 
   // Programatically selects an object.
   void select_solution(solution_id id);
   void select_singular_point(singular_point_id id);
   void select_isocline(isocline_id id);
+  void select_separatrix(separatrix_id id);
+  void select_hopf_bifurcation(hopf_bifurcation_id id);
+  void select_saddle_node_bifurcation(saddle_node_bifurcation_id id);
 
   // Deselects the object programatically
   void deselect_solution();
   void deselect_singular_point();
   void deselect_isocline();
+  void deselect_separatrix();
+  void deselect_hopf_bifurcation();
+  void deselect_saddle_node_bifurcation();
 
   // Sets the parameter position according to the position provided in window
   // coordinates. Updates all parameter and dynamical windows accordingly.

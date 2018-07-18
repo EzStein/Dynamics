@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <unordered_set>
 
 #include <wx/msgdlg.h>
 
@@ -11,17 +12,36 @@
 #include "gui/solution_dialog.h"
 #include "gui/isocline_dialog.h"
 #include "gui/parameter_dialog.h"
+#include "gui/separatrix_dialog.h"
+#include "gui/hopf_bifurcation_dialog.h"
+#include "gui/saddle_node_bifurcation_dialog.h"
+
+#include "regex/nfa.h"
 
 #include "util/util.h"
 
 namespace dynsolver {
 namespace gui {
 
-console_frame::console_frame(app& app) : console_frame_base(nullptr, wxID_ANY, "Console"),
-					 appl(app), variablesComboBoxValue("") {
+console_frame::console_frame(app& app)
+  : console_frame_base(nullptr, wxID_ANY, "Console"), appl(app) {
   // Add in widgets and setup events not already done in console_frame_base.
-  equationsDataViewCtrl->AppendTextColumn("Variable");
   equationsDataViewCtrl->AppendTextColumn("Expression", wxDATAVIEW_CELL_EDITABLE);
+
+  parameterNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
+
+  variableNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
+  compiledParametersDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
+  
+  wxVector<wxVariant> data;
+  data.push_back("x' = ");
+  data.push_back("");
+  equationsDataViewCtrl->AppendItem(data);
+  
+  data.clear();
+  data.push_back("0");
+  data.push_back("x");
+  variableNamesDataViewCtrl->AppendItem(data);
 
   solutionsDataViewCtrl->AppendTextColumn("ID");
   solutionsDataViewCtrl->AppendTextColumn("Increment");
@@ -36,28 +56,168 @@ console_frame::console_frame(app& app) : console_frame_base(nullptr, wxID_ANY, "
   singularPointsDeleteButton->Disable();
   isoclinesDeleteButton->Disable();
   isoclinesEditButton->Disable();
+
+  variables = 1;
+  variablesTextCtrlValue = "1";
+  variablesTextCtrl->SetValue(variablesTextCtrlValue);
+  parameters = 0;
+  parametersTextCtrlValue = "0";
+  parametersTextCtrl->SetValue(parametersTextCtrlValue);
+}
+
+void console_frame::variable_names_data_view_ctrl_on_value_changed(wxDataViewEvent& evt) {
+  int row = variableNamesDataViewCtrl->ItemToRow(evt.GetItem());
+  std::string newValue = variableNamesDataViewCtrl->GetTextValue(row, 1).ToStdString();
+  equationsDataViewCtrl->SetTextValue(newValue + "' = ", row, 0);
+}
+
+void console_frame::variables_text_ctrl_on_text_enter(wxCommandEvent&) {
+  std::string value = variablesTextCtrl->GetValue().ToStdString();
+  int newVariables;
+  if(!util::has_only_digits(value)) {
+    variablesTextCtrl->SetValue(variablesTextCtrlValue);
+    return;
+  }
+  try {
+    newVariables = std::stoi(value);
+  } catch(const std::invalid_argument& exc) {
+    variablesTextCtrl->SetValue(variablesTextCtrlValue);
+    return;
+  } catch(const std::out_of_range& exc) {
+    variablesTextCtrl->SetValue(variablesTextCtrlValue);
+    return;
+  }
+  if(newVariables < 1) {
+    variablesTextCtrl->SetValue(variablesTextCtrlValue);
+    return;
+  }
+  variablesTextCtrlValue = value;
+  if(variables == newVariables)
+    return;
+  
+  variables = newVariables;
+    
+  // Update equationsDataViewCtrl and variablesDataViewCtrl
+  std::vector<std::string> defaultVarNames(variables);
+  switch(variables) {
+  case 4:
+    defaultVarNames[3] = "w";
+  case 3:
+    defaultVarNames[2] = "z";
+  case 2:
+    defaultVarNames[1] = "y";
+  case 1:
+    defaultVarNames[0] = "x";
+    break;
+  default:
+    for(int i = 0; i != variables; ++i) {
+      defaultVarNames[i] = "x" + std::to_string(i);
+    }
+  }
+  variableNamesDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != variables; ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(std::to_string(i));
+    data.push_back(defaultVarNames[i]);
+    variableNamesDataViewCtrl->AppendItem(data);
+  }
+  equationsDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != variables; ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(variableNamesDataViewCtrl->GetTextValue(i, 1) + "' = ");
+    data.push_back("");
+    equationsDataViewCtrl->AppendItem(data);
+  }
+}
+
+void console_frame::parameters_text_ctrl_on_text_enter(wxCommandEvent&) {
+  std::string value = parametersTextCtrl->GetValue().ToStdString();
+  int newParameters;
+  if(!util::has_only_digits(value)) {
+    parametersTextCtrl->SetValue(parametersTextCtrlValue);
+    return;
+  }
+  try {
+    newParameters = std::stoi(value);
+  } catch(const std::invalid_argument& exc) {
+    parametersTextCtrl->SetValue(parametersTextCtrlValue);
+    return;
+  } catch(const std::out_of_range& exc) {
+    parametersTextCtrl->SetValue(parametersTextCtrlValue);
+    return;
+  }
+  if(newParameters < 0) {
+    parametersTextCtrl->SetValue(parametersTextCtrlValue);
+    return;
+  }
+  parametersTextCtrlValue = value;
+  if(parameters == newParameters)
+    return;
+  
+  parameters = newParameters;
+
+  std::vector<std::string> defaultParameterNames(parameters);
+  switch(parameters) {
+  case 4:
+    defaultParameterNames[3] = "d";
+  case 3:
+    defaultParameterNames[2] = "c";
+  case 2:
+    defaultParameterNames[1] = "b";
+  case 1:
+    defaultParameterNames[0] = "a";
+    break;
+  default:
+    for(int i = 0; i != parameters; ++i) {
+      defaultParameterNames[i] = "a" + std::to_string(i);
+    }
+  }
+  parameterNamesDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != parameters; ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(std::to_string(i));
+    data.push_back(defaultParameterNames[i]);
+    parameterNamesDataViewCtrl->AppendItem(data);
+  }
 }
 
 console_frame::~console_frame() { }
 
 void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) {
-  variablesComboBox->SetValue("3");
-  parametersComboBox->SetValue("3");
+  variablesTextCtrl->SetValue("3");
+  parametersTextCtrl->SetValue("3");
   
   equationsDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
   data.push_back(wxVariant("x"));
-  data.push_back(wxVariant("a1*(y-x)"));
+  data.push_back(wxVariant("a*(y-x)"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
   data.push_back(wxVariant("y"));
-  data.push_back(wxVariant("x*(a2-z)-y"));
+  data.push_back(wxVariant("x*(b-z)-y"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
   data.push_back(wxVariant("z"));
-  data.push_back(wxVariant("x*y-z*a3"));
+  data.push_back(wxVariant("x*y-z*c"));
   equationsDataViewCtrl->AppendItem(data);
   data.clear();
+
+  compileButton->Enable();
+}
+
+void console_frame::van_der_pol_example_on_menu_selection(wxCommandEvent&) {
+  variablesTextCtrl->SetValue("2");
+  parametersTextCtrl->SetValue("2");
+  
+  equationsDataViewCtrl->DeleteAllItems();
+  wxVector<wxVariant> data;
+  data.push_back(wxVariant("x"));
+  data.push_back(wxVariant("a*(1-y^2)*x-y"));
+  equationsDataViewCtrl->AppendItem(data);
+  data.clear();
+  data.push_back(wxVariant("y"));
+  data.push_back(wxVariant("x"));
+  equationsDataViewCtrl->AppendItem(data);
 
   compileButton->Enable();
 }
@@ -131,28 +291,42 @@ void console_frame::console_frame_on_close(wxCloseEvent& evt) {
 }
 
 void console_frame::set_no_compile() {
-  variablesComboBox->SetValue("");
-  compileButton->Disable();
-  equationsDataViewCtrl->DeleteAllItems();
   newDynamicalMenuItem->Enable(false);
   newParameterMenuItem->Enable(false);
   solutionMenuItem->Enable(false);
   singularPointMenuItem->Enable(false);
+  isoclineMenuItem->Enable(false);
   saveMenuItem->Enable(false);
   saveAsMenuItem->Enable(false);
   closeMenuItem->Enable(false);
+  separatricesMenuItem->Enable(false);
+  hopfBifurcationMenuItem->Enable(false);
+  saddleNodeBifurcationMenuItem->Enable(false);
+  limitCycleBifurcationMenuItem->Enable(false);
+  saddleConnectionBifurcationMenuItem->Enable(false);
   solutionsDataViewCtrl->DeleteAllItems();
   singularPointsDataViewCtrl->DeleteAllItems();
   isoclinesDataViewCtrl->DeleteAllItems();
+  separatricesDataViewCtrl->DeleteAllItems();
 }
 
 void console_frame::set_yes_compile() {
   newDynamicalMenuItem->Enable(true);
   solutionMenuItem->Enable(true);
   singularPointMenuItem->Enable(true);
+  isoclineMenuItem->Enable(true);
   saveMenuItem->Enable(true);
   saveAsMenuItem->Enable(true);
   closeMenuItem->Enable(true);
+  if(appl.get_model().get_dynamical_dimension() == 2) {
+    separatricesMenuItem->Enable(true);
+    if(appl.get_model().get_parameters() == 2) {
+      hopfBifurcationMenuItem->Enable(true);
+      saddleNodeBifurcationMenuItem->Enable(true);
+      limitCycleBifurcationMenuItem->Enable(true);
+      saddleConnectionBifurcationMenuItem->Enable(true);
+    }
+  }
 
   if(appl.get_model().get_parameters() >= 2) {
     newParameterMenuItem->Enable(true);
@@ -170,16 +344,23 @@ void console_frame::set_yes_compile() {
 }
 
 void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
+  regex::nfa nfa("\\a+\\d*");
   // We first verify that each expression is nonempty
-  int variables = equationsDataViewCtrl->GetItemCount();
-  if(variables < 1) {
-    assert(false);
-    return;
-  }
+  int variables = variableNamesDataViewCtrl->GetItemCount();
   std::vector<std::string> expressions;
   std::vector<std::string> dynamicalVarNames;
   for(int row = 0; row != variables; ++row) {
-    dynamicalVarNames.push_back(equationsDataViewCtrl->GetTextValue(row, 0).ToStdString());
+    std::string name(variableNamesDataViewCtrl->GetTextValue(row, 1).ToStdString());
+    if(!nfa.accepts(name)) {
+      wxMessageDialog messageDialog(nullptr,
+				    "Variable number " + std::to_string(row) +
+				    "is not a valid variable name!",
+				    "Error", wxOK);
+      messageDialog.ShowModal();
+      return;
+    }
+    dynamicalVarNames.push_back(name);
+    
     std::string value(equationsDataViewCtrl->GetTextValue(row, 1));
 
     expressions.push_back(value);
@@ -190,121 +371,82 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
       return;
     }
   }
-  
-  
+
   std::vector<std::string> parameterNames;
-  int params = std::stoi(parametersComboBox->GetValue().ToStdString());
-  for(int i = 0; i != params; ++i) {
-    parameterNames.push_back("a" + std::to_string(i + 1));
+  for(int row = 0; row != parameters; ++row) {
+    std::string name(parameterNamesDataViewCtrl->GetTextValue(row, 1).ToStdString());
+    if(!nfa.accepts(name)) {
+      wxMessageDialog messageDialog(nullptr,
+				    "Parameter number " + std::to_string(row) +
+				    "is not a valid parameter name!",
+				    "Error", wxOK);
+      messageDialog.ShowModal();
+      return;
+    }
+    parameterNames.push_back(name);
   }
-  std::string varDiffName("t");
+
+  
+  std::string varDiffName(varDiffTextCtrl->GetValue().ToStdString());
+  if(!nfa.accepts(varDiffName)) {
+    wxMessageDialog messageDialog(nullptr,
+				  "The variable of differentiation is not a valid "
+				  "variable name!",
+				  "Error", wxOK);
+    messageDialog.ShowModal();
+    return;
+  }
+  std::unordered_set<std::string> duplicates;
+  for(const std::string& name : dynamicalVarNames) {
+    if(duplicates.find(name) != duplicates.end()) {
+      wxMessageDialog messageDialog(nullptr,
+				    "Duplicate name!",
+				    "Error", wxOK);
+      messageDialog.ShowModal();
+      return;
+    }
+    duplicates.insert(name);
+  }
+  for(const std::string& name : parameterNames) {
+    if(duplicates.find(name) != duplicates.end()) {
+      wxMessageDialog messageDialog(nullptr,
+				    "Duplicate name!",
+				    "Error", wxOK);
+      messageDialog.ShowModal();
+      return;
+    }
+    duplicates.insert(name);
+  }
+  if(duplicates.find(varDiffName) != duplicates.end()) {
+    wxMessageDialog messageDialog(nullptr,
+				  "Duplicate name!",
+				  "Error", wxOK);
+    messageDialog.ShowModal();
+    return;
+  }
+  
   if(!appl.compile(varDiffName, dynamicalVarNames,
 		   parameterNames, expressions)) {
     wxMessageDialog messageDialog(nullptr, "The Compilation Failed!",
 				  "Compilation Error", wxOK);
     messageDialog.ShowModal();
-  }
-}
-
-void console_frame::read_variables_combo_box_input() {
-  int variables(0);
-  std::string variablesString(variablesComboBox->GetValue().ToStdString());
-  if(!util::has_only_digits(variablesString)) {
-    variablesComboBox->SetValue(variablesComboBoxValue);
     return;
   }
-  try {
-    variables = std::stoi(variablesString);
-  } catch(const std::invalid_argument& exc) {
-    variablesComboBox->SetValue(variablesComboBoxValue);
-    return;
-  } catch(const std::out_of_range& exc) {
-    variablesComboBox->SetValue(variablesComboBoxValue);
-    return;
+  
+  compiledEquationsDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(equationsDataViewCtrl->GetTextValue(i, 0));
+    data.push_back(equationsDataViewCtrl->GetTextValue(i, 1));
+    compiledEquationsDataViewCtrl->AppendItem(data);
   }
-
-  if(variables <= 0) {
-    variablesComboBox->SetValue(variablesComboBoxValue);
-    return;
+  compiledParametersDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != appl.get_model().get_parameters(); ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(appl.get_model().get_parameter_names()[i]);
+    data.push_back(std::to_string(appl.get_model().get_parameter_position()[i]));
+    compiledParametersDataViewCtrl->AppendItem(data);
   }
-  variablesComboBoxValue = variablesString;
-  update_equations_data_view_ctrl(variables);
-}
-
-void console_frame::variables_combo_box_on_text_enter(wxCommandEvent& evt) {
-  SetFocus(); // Sets the focus to the underlying frame.
-  // No need to do anything since the text box loses focus anyway after this
-  // event is called.
-}
-
-void console_frame::variables_combo_box_on_kill_focus(wxFocusEvent& evt) {
-  read_variables_combo_box_input();
-}
-
-void console_frame::variables_combo_box_on_combo_box(wxCommandEvent& evt) {
-  int variables(std::stoi(variablesComboBox->GetValue().ToStdString()));
-  update_equations_data_view_ctrl(variables);
-}
-
-void console_frame::update_equations_data_view_ctrl(int variables) {
-  assert(variables >= 1);
-  if(variables == equationsDataViewCtrl->GetItemCount()) return;
-  equationsDataViewCtrl->DeleteAllItems();
-
-  if(variables == 1) {
-    wxVector<wxVariant> data;
-    data.push_back("x");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-  } else if(variables == 2) {
-    wxVector<wxVariant> data;
-    data.push_back("x");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("y");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-  } else if(variables == 3) {
-    wxVector<wxVariant> data;
-    data.push_back("x");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("y");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("z");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-  } else if(variables == 4) {
-    wxVector<wxVariant> data;
-    data.push_back("x");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("y");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("z");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-    data.clear();
-    data.push_back("w");
-    data.push_back("");
-    equationsDataViewCtrl->AppendItem(data);
-  } else {
-    for(int i = 0; i != variables; ++i) {
-      wxVector<wxVariant> data;
-      data.push_back(wxVariant("x" + std::to_string(i+1)));
-      data.push_back(wxVariant(""));
-      equationsDataViewCtrl->AppendItem(data);
-      data.clear();
-    }
-  }
-  compileButton->Enable();
 }
 
 void console_frame::solutions_data_view_ctrl_on_selection_changed(wxDataViewEvent& evt) {
@@ -312,6 +454,14 @@ void console_frame::solutions_data_view_ctrl_on_selection_changed(wxDataViewEven
     appl.select_solution(get_selected_solution());
   } else {
     appl.deselect_solution();
+  }
+}
+
+void console_frame::separatrices_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
+  if(separatricesDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    appl.select_separatrix(get_selected_separatrix());
+  } else {
+    appl.deselect_separatrix();
   }
 }
 
@@ -440,9 +590,19 @@ void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) 
   }
 }
 
+void console_frame::separatrices_menu_item_on_menu_selection(wxCommandEvent&) {
+  separatrix_specs specs;
+  specs.inc = 0.01;
+  specs.time = 40;
+  specs.type = separatrix_specs::type::STABLE;
+  if(appl.get_separatrix_dialog()->show_dialog(specs)) {
+    appl.add_separatrix(specs);
+  }
+}
+
 void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   isocline_specs specs;
-  specs.inc = 0.01;
+  specs.inc = 0.1;
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
@@ -470,6 +630,25 @@ void console_frame::solutions_delete_button_on_button_click(wxCommandEvent&) {
   appl.delete_solution(get_selected_solution());
 }
 
+separatrix_id console_frame::get_selected_separatrix() {
+  wxVariant value;
+  separatricesDataViewCtrl->GetValue(value, separatricesDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+
+hopf_bifurcation_id console_frame::get_selected_hopf_bifurcation() {
+  wxVariant value;
+  hopfBifurcationsDataViewCtrl->GetValue(value, hopfBifurcationsDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+
+saddle_node_bifurcation_id console_frame::get_selected_saddle_node_bifurcation() {
+  wxVariant value;
+  saddleNodeBifurcationsDataViewCtrl
+    ->GetValue(value, saddleNodeBifurcationsDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+
 solution_id console_frame::get_selected_solution() {
   wxVariant value;
   solutionsDataViewCtrl->GetValue(value, solutionsDataViewCtrl->GetSelectedRow(), 0);
@@ -495,9 +674,104 @@ void console_frame::singular_points_delete_button_on_button_click(wxCommandEvent
   appl.delete_singular_point(get_selected_singular_point());
 }
 
-void console_frame::parameters_combo_box_on_combo_box(wxCommandEvent&) {
+void console_frame::update_parameters_data_view_ctrl() {
+  compiledParametersDataViewCtrl->DeleteAllItems();
+  for(int i = 0; i != appl.get_model().get_parameters(); ++i) {
+    wxVector<wxVariant> data;
+    data.push_back(appl.get_model().get_parameter_names()[i]);
+    data.push_back(std::to_string(appl.get_model().get_parameter_position()[i]));
+    compiledParametersDataViewCtrl->AppendItem(data);
+  }
 }
-void console_frame::parameters_combo_box_on_text_enter(wxCommandEvent&) {
+
+void console_frame::update_separatrices_list() {
+  separatricesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
+  separatricesDataViewCtrl->DeleteAllItems();
+  for(std::unordered_map<separatrix_id, separatrix>::const_iterator iter
+	= appl.get_model().get_separatrices().begin();
+      iter != appl.get_model().get_separatrices().end(); ++iter) {
+    wxVector<wxVariant> data;
+    data.push_back(std::to_string(iter->first));
+    separatricesDataViewCtrl->AppendItem(data);
+  }
+  separatricesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
+}
+
+void console_frame::update_hopf_bifurcation_list() {
+  hopfBifurcationsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
+  hopfBifurcationsDataViewCtrl->DeleteAllItems();
+  for(std::unordered_map<hopf_bifurcation_id, hopf_bifurcation>::const_iterator iter
+	= appl.get_model().get_hopf_bifurcations().begin();
+      iter != appl.get_model().get_hopf_bifurcations().end(); ++iter) {
+    wxVector<wxVariant> data;
+    data.push_back(std::to_string(iter->first));
+    hopfBifurcationsDataViewCtrl->AppendItem(data);
+  }
+  hopfBifurcationsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
+}
+void console_frame::update_saddle_node_bifurcation_list() {
+  saddleNodeBifurcationsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
+  saddleNodeBifurcationsDataViewCtrl->DeleteAllItems();
+  for(std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>::const_iterator iter
+	= appl.get_model().get_saddle_node_bifurcations().begin();
+      iter != appl.get_model().get_saddle_node_bifurcations().end(); ++iter) {
+    wxVector<wxVariant> data;
+    data.push_back(std::to_string(iter->first));
+    saddleNodeBifurcationsDataViewCtrl->AppendItem(data);
+  }
+  saddleNodeBifurcationsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
+}
+
+void console_frame::hopf_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
+    if(hopfBifurcationsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    appl.select_hopf_bifurcation(get_selected_hopf_bifurcation());
+  } else {
+    appl.deselect_hopf_bifurcation();
+  }
+}
+void console_frame::saddle_node_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
+  if(saddleNodeBifurcationsDataViewCtrl->GetSelectedRow() != wxNOT_FOUND) {
+    appl.select_saddle_node_bifurcation(get_selected_saddle_node_bifurcation());
+  } else {
+    appl.deselect_saddle_node_bifurcation();
+  }
+}
+
+void console_frame::hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  hopf_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.parameters = math::vector(2, 0.0);
+  if(appl.get_hopf_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_hopf_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find hopf bifurcation.",
+				    "Hopf Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
+}
+void console_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  saddle_node_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.parameters = math::vector(2, 0.0);
+  if(appl.get_saddle_node_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_saddle_node_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find saddle-node bifurcation.",
+				    "Hopf Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
+}
+void console_frame::limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+}
+void console_frame::saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) {
 }
 } // namespace gui
 } // namespace dynsolver

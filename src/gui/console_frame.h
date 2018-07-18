@@ -14,20 +14,21 @@ class console_frame : public console_frame_base {
  private:
   app& appl;
 
-  // Holds the value of the variables combo box.
+  // Holds the value of the variables/parameters text ctrl string and value.
   // It is updated only when a new value is validated.
-  std::string variablesComboBoxValue;
+  int variables;
+  int parameters;
+  std::string variablesTextCtrlValue;
+  std::string parametersTextCtrlValue;
   
  public:
   console_frame(app&);
   virtual ~console_frame();
   virtual void compile_button_on_button_click(wxCommandEvent&) override;
-  virtual void variables_combo_box_on_combo_box(wxCommandEvent&) override;
-  virtual void variables_combo_box_on_text_enter(wxCommandEvent&) override;
-  virtual void parameters_combo_box_on_combo_box(wxCommandEvent&) override;
-  virtual void parameters_combo_box_on_text_enter(wxCommandEvent&) override;
-  virtual void variables_combo_box_on_kill_focus(wxFocusEvent&) override;
   virtual void console_frame_on_close(wxCloseEvent&) override;
+  virtual void variable_names_data_view_ctrl_on_value_changed(wxDataViewEvent&) override;
+  virtual void variables_text_ctrl_on_text_enter(wxCommandEvent&) override;
+  virtual void parameters_text_ctrl_on_text_enter(wxCommandEvent&) override;
   virtual void new_dynamical_menu_item_on_selection(wxCommandEvent&) override;
   virtual void close_dynamical_menu_item_on_selection(wxCommandEvent&) override;
   virtual void new_parameter_menu_item_on_selection(wxCommandEvent&) override;
@@ -45,6 +46,16 @@ class console_frame : public console_frame_base {
   virtual void isoclines_edit_button_on_button_click(wxCommandEvent&) override;
   virtual void isoclines_delete_button_on_button_click(wxCommandEvent&) override;
   virtual void isoclines_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  virtual void van_der_pol_example_on_menu_selection(wxCommandEvent&) override;
+  virtual void separatrices_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  virtual void hopf_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  virtual void saddle_node_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
+  
+  virtual void separatrices_menu_item_on_menu_selection(wxCommandEvent&) override;
+  virtual void hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();
@@ -54,19 +65,19 @@ class console_frame : public console_frame_base {
   void update_solutions_list();
   void update_singular_points_list();
   void update_isoclines_list();
+  void update_parameters_data_view_ctrl();
+  void update_separatrices_list();
+  void update_hopf_bifurcation_list();
+  void update_saddle_node_bifurcation_list();
   
 private:
-  // Clears the list of equations in the data view ctrl and adds
-  // the provided number of empty items to it. Requires that variables
-  // is greater than or equal to 1.
-  void update_equations_data_view_ctrl(int variables);
-
-  void read_variables_combo_box_input();
-
   // Returns the id of the selected solution.
   solution_id get_selected_solution();
   singular_point_id get_selected_singular_point();
   isocline_id get_selected_isocline();
+  separatrix_id get_selected_separatrix();
+  hopf_bifurcation_id get_selected_hopf_bifurcation();
+  saddle_node_bifurcation_id get_selected_saddle_node_bifurcation();
 };
 } // namespace gui
 } // namespace dynsolver

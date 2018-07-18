@@ -103,8 +103,28 @@ struct singular_point_specs {
 };
 
 struct singular_point {
+  enum class type {
+    STABLE_NODE,  // All real and same sign -
+    UNSTABLE_NODE, // All real and same sign +
+    SADDLE, // All real, opposate signs.
+    
+    STABLE_FOCUS, // All Non-real, neagitve real part
+    UNSTABLE_FOCUS, // All non-real positive real part
+    SADDLE_FOCUS, // All non-real mixed real part
+    
+    STABLE_FOCUS_NODE, // Mixed real and non-real, same real part sign, -
+    UNSTABLE_FOCUS_NODE, // Mixed real and non-real, same real part sign, +
+    SADDLE_FOCUS_NODE // Mixed real and non-real, different real part signs.
+    
+  };
   singular_point_specs specs;
   math::vector position;
+  
+  // A list of eigenvalues and their corresponding eigenvectors
+  // for the linearization of the vector field at this point.
+  std::vector<math::eigenvalue> eigenvalues;
+
+  type type;
 };
 
 struct isocline_specs {
@@ -143,6 +163,83 @@ struct isocline {
   // This is the data representing the isocline. It is ordered so that it
   // may be drawn in a single GL_LINE_STRIP primative.
   std::list<math::vector> data;
+};
+
+struct separatrix_specs {
+  separatrix_specs();
+  
+  // Whether this is a stable or unstable separatrix.
+  enum class type {
+    STABLE, UNSTABLE
+  };
+  type type;
+  
+  // The singular point associated with this separatrix.
+  singular_point_id singularPoint;
+
+  // Euler's method stuff
+  // Positive increment for euler's method.
+  double inc;
+
+  // If an unstable separatrix this is the amount of
+  // positive time to run the separatrix. For a stable separatrix,
+  // this is the amount of negative time to run the separatrix.
+  double time;
+
+  color glColor;
+};
+
+struct separatrix {
+  separatrix_specs specs;
+  // A list of vectors where the vectors hold the dynamical variables
+  // in the order given by dynamicalVarNames. Does not hold the variable
+  // of differentiation.
+  std::list<math::vector> data;
+};
+
+// Represent a point in the dynamical and parameter space.
+// Does not include the variable of differentiation t.
+struct bifurcation_point {
+  math::vector dynamicalVars;
+  math::vector parameters;
+}; 
+
+struct hopf_bifurcation_specs {
+  hopf_bifurcation_specs();
+  bifurcation_point init;
+  
+  double inc;
+
+  int span;
+
+  double searchRadius;
+  double searchInc;
+
+  color glColor;
+};
+
+struct hopf_bifurcation {
+  hopf_bifurcation_specs specs;
+  std::list<bifurcation_point> data;
+};
+
+struct saddle_node_bifurcation_specs {
+  saddle_node_bifurcation_specs();
+  bifurcation_point init;
+  
+  double inc;
+  
+  int span;
+
+  double searchRadius;
+  double searchInc;
+
+  color glColor;
+};
+
+struct saddle_node_bifurcation {
+  saddle_node_bifurcation_specs specs;
+  std::list<bifurcation_point> data;
 };
 
 // Used to pass to and from the dynamical window dialog to obtain
@@ -203,6 +300,16 @@ class model {
     double tickFontSize;
     gl::buffer crossVbo;
     GLsizei crossVboVertices;
+
+    // Represents the render data for a bifurcation.
+    struct render_data {
+      gl::buffer vbo;
+      GLsizei vertices;
+    };
+
+    std::unordered_map<hopf_bifurcation_id, render_data> hopfBifurcationData;
+    std::unordered_map<saddle_node_bifurcation_id, render_data>
+    saddleNodeBifurcationData;
     
   public:
     parameter_window(model&, const parameter_specs& spec);
@@ -230,6 +337,22 @@ class model {
     
     // Gets and sets the specifications.
     const parameter_specs& get_specs() const;
+
+    void gen_hopf_bifurcation_vbo(hopf_bifurcation_id);
+    void gen_saddle_node_bifurcation_vbo(saddle_node_bifurcation_id);
+
+    void delete_hopf_bifurcation(hopf_bifurcation_id);
+    void delete_saddle_node_bifurcation(saddle_node_bifurcation_id);
+
+    bool select_hopf_bifurcation(int x, int y, hopf_bifurcation_id*);
+    bool select_saddle_node_bifurcation(int x, int y, saddle_node_bifurcation_id*);
+
+    math::vector get_point(const math::vector2d&) const;
+
+  private:
+    void draw_hopf_bifurcations();
+    void draw_saddle_node_bifurcations();
+    
   };
   
   // Represents information associated with an instance of a dynamical window.
@@ -248,7 +371,7 @@ class model {
 
     // Each solution is associated with render data containing a VBO each for
     // its 2d and 3d rendering.
-    struct solution_data {
+    struct render_data {
       // The 2d vbo is stores the projection of a solution onto the plane that
       // is currently being viewed. Each vertex contains one attribute of 2
       // floats. Thus the stride is also 2 floats.
@@ -263,22 +386,12 @@ class model {
       size_t vertices;
     };
 
-    struct isocline_data {
-      // This vbo stores the 2d vertex data used to render a given isocline.
-      // Each vertex contains one attribute of 2 floats. The stride is thus 2.
-      gl::buffer vbo2d;
-
-      // A vbo for the vertex data for 3d rendering of the isocline.
-      // Each vertex contains one attribute of 3 floats.
-      gl::buffer vbo3d;
-
-      size_t vertices;
-    };
-
     // Maps each solution to its render data.
-    std::unordered_map<solution_id, solution_data> solutionData;
+    std::unordered_map<solution_id, render_data> solutionData;
 
-    std::unordered_map<isocline_id, isocline_data> isoclineData;
+    std::unordered_map<isocline_id, render_data> isoclineData;
+
+    std::unordered_map<separatrix_id, render_data> separatrixData;
 
     // The number of ticks between each labeled tick.
     int ticksPerLabel;
@@ -317,19 +430,14 @@ class model {
     // Gets and sets the specifications.
     const dynamical_specs& get_specs() const;
 
-    // Add
-    // Adds a solution to this dynamical frame by adding a new solution vbo.
-    void add_solution(solution_id);
-
-    // Adds an isocline to this dynamical frame by adding a new isocline vbo.
-    void add_isocline(isocline_id);
-
     // Delete
     // Deletes the VBO associated with the given solution.
     void delete_solution(solution_id);
 
     // Deletes the isocline's render data.
     void delete_isocline(isocline_id);
+
+    void delete_separatrix(separatrix_id);
 
     // Select
     // Attempts to select the solution near the mouse cursor at position,
@@ -338,16 +446,19 @@ class model {
     bool select_solution(int x, int y, solution_id* id);
     bool select_isocline(int x, int y, isocline_id* id);
     bool select_singular_point(int x, int y, singular_point_id* id);
+    bool select_separatrix(int x, int y, separatrix_id* id);
 
     dynamical_point get_point(const math::vector2d& pos) const;
 
     // Generates a VBO for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
-    void update_solution_vbo(solution_id);
+    void gen_solution_vbo(solution_id);
 
     // Generates a VBo for the corresponding isocline data and id.
     // Replaces the VBO for that ID if it already exists.
-    void update_isocline_vbo(isocline_id);
+    void gen_isocline_vbo(isocline_id);
+
+    void gen_separatrix_vbo(separatrix_id);
 
   private:
     // Draw
@@ -359,13 +470,17 @@ class model {
     void draw_solutions_2d();
     void draw_isoclines_2d();
     void draw_singular_points_2d();
+    void draw_separatrices_2d();
     
     
-    typedef std::unordered_map<solution_id, solution_data>::const_iterator
+    typedef std::unordered_map<solution_id, render_data>::const_iterator
     solution_data_const_iter;
 
-    typedef std::unordered_map<solution_id, isocline_data>::const_iterator
+    typedef std::unordered_map<solution_id, render_data>::const_iterator
     isocline_data_const_iter;
+
+    typedef std::unordered_map<separatrix_id, render_data>::const_iterator
+    separatrix_data_const_iter;
   };
 
   // Model Class
@@ -403,6 +518,7 @@ class model {
   // The size is the number of dynamical variables, and it is ordered according
   // to the ordering in dynamicalVarNames.
   std::vector<std::string> expressions;
+
 
   // This maps symbols in the compiled expression to the index that they are
   // associated with. That is, the index of the double array that is passed,
@@ -450,12 +566,19 @@ class model {
   // Each index in the system corresponds to the order that the dynamical
   // variable appears in dynamicalVarNames.
   std::vector<expression> system;
-  
-  // The jacobian of the system of equations stored in ROW-MAJOR order.
-  // The size is d^2.
-  // The order of expressions in the jacobian corresponds to the order that
-  // each dynamical variable appears in dynamicalVarNames.
-  std::vector<expression> jacobian;
+
+  // A double array of partial derivatives of the expressions.
+  // The first index indicates the expression as ordered in
+  // dynamicalVarIndex. The second index indicates the variable
+  // as ordered in symbolToIndex.
+  std::vector<std::vector<expression>> partials;
+
+  // The first index is the index of the dynamical expression.
+  // The second two indexes refer to the two variables of
+  // differentiation. This first (leftmost) is the first
+  // partial application,
+  // and the second (rightmost) is the second partial application.
+  std::vector<std::vector<std::vector<expression>>> doublePartials;
 
   // Each dynamical and parameter window will have an id. The id is associated
   // with the some information in the following maps. The id is also used to
@@ -474,6 +597,10 @@ class model {
   std::unordered_map<solution_id, solution> solutions;
   std::unordered_map<singular_point_id, singular_point> singularPoints;
   std::unordered_map<isocline_id, isocline> isoclines;
+  std::unordered_map<separatrix_id, separatrix> separatrices;
+  std::unordered_map<hopf_bifurcation_id, hopf_bifurcation> hopfBifurcations;
+  std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>
+  saddleNodeBifurcations;
 
   // This value indicates which object is currently selected. If the value is
   // set to one of the kNoId constants above, then no object of that type is
@@ -481,6 +608,9 @@ class model {
   solution_id selectedSolutionId;
   singular_point_id selectedSingularPointId;
   isocline_id selectedIsoclineId;
+  separatrix_id selectedSeparatrixId;
+  hopf_bifurcation_id selectedHopfBifurcationId;
+  saddle_node_bifurcation_id selectedSaddleNodeBifurcationId;
 
   // These unique id's are all greater than or equal to any id's mapped in the
   // corresponding maps. When adding a new value, the unique id is incremented
@@ -490,8 +620,10 @@ class model {
   solution_id uniqueSolutionId;
   singular_point_id uniqueSingularPointId;
   isocline_id uniqueIsoclineId;
+  separatrix_id uniqueSeparatrixId;
+  hopf_bifurcation_id uniqueHopfBifurcationId;
+  saddle_node_bifurcation_id uniqueSaddleNodeBifurcationId;
   
-
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
@@ -506,7 +638,6 @@ class model {
   
   const GLuint k2dTransformationUniformLocation;
   const GLuint k2dColorUniformLocation;
-
   const GLuint kPath3dTransformationUniformLocation;
   const GLuint kPath3dColorUniformLocation;
 
@@ -514,6 +645,15 @@ class model {
   gl::buffer circleVbo;
   // The number of vertices stored in the circle vbo.
   GLsizei circleVboVertices;
+
+  gl::buffer triangleVbo;
+  GLsizei triangleVboVertices;
+
+  gl::buffer squareVbo;
+  GLsizei squareVboVertices;
+
+  gl::buffer starVbo;
+  GLsizei starVboVertices;
 
   // Private functions.
   std::vector<gl::shader> build_shaders_2d();
@@ -533,6 +673,15 @@ class model {
   // find an isocline for that data, returns false.
   bool generate_singular_point_data(singular_point_id id);
 
+  // Attempts to generate the separatrix data. This may fail, if
+  // the singular point associated with the separatrix no longer exists or
+  // if the singular point is no longer a saddle.
+  // If so, this function returns false and does not modify the separatrix.
+  bool generate_separatrix_data(separatrix_id id);
+
+  bool generate_hopf_bifurcation_data(hopf_bifurcation_id);
+  bool generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id);
+
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
   typedef std::unordered_map<dynamical_id, dynamical_window>::const_iterator
@@ -541,6 +690,8 @@ class model {
   singular_point_const_iter;
   typedef std::unordered_map<isocline_id, isocline>::const_iterator
   isocline_const_iter;
+  typedef std::unordered_map<separatrix_id, separatrix>::const_iterator
+  separatrix_const_iter;
 
   typedef std::unordered_map<solution_id, solution>::iterator
   solution_iter;
@@ -550,6 +701,8 @@ class model {
   singular_point_iter;
   typedef std::unordered_map<isocline_id, isocline>::iterator
   isocline_iter;
+  typedef std::unordered_map<separatrix_id, separatrix>::iterator
+  separatrix_iter;
   
 public:
   // This value is never mapped. Usually this is set to 0.
@@ -558,6 +711,9 @@ public:
   static const solution_id kNoSolutionId;
   static const singular_point_id kNoSingularPointId;
   static const isocline_id kNoIsoclineId;
+  static const separatrix_id kNoSeparatrixId;
+  static const hopf_bifurcation_id kNoHopfBifurcationId;
+  static const saddle_node_bifurcation_id kNoSaddleNodeBifurcationId;
   
   // The maximal distance between two axis ticks in pixels. If the number of
   // axis tickets jumps above the maximum, then the number of tickets are
@@ -622,6 +778,11 @@ public:
   // if the isocline could not be found with the given conditions.
   bool add_isocline(const isocline_specs& specs);
 
+  void add_separatrix(const separatrix_specs& specs);
+
+  bool add_hopf_bifurcation(const hopf_bifurcation_specs&);
+  bool add_saddle_node_bifurcation(const saddle_node_bifurcation_specs&);
+
 
   // Delete
   // Deletes all the data associated with the given window and removes
@@ -639,6 +800,11 @@ public:
   // Deletes the isocline.
   void delete_isocline(isocline_id);
 
+  void delete_separatrix(separatrix_id);
+
+  void delete_hopf_bifurcation(hopf_bifurcation_id);
+  void delete_saddle_node_bifurcation(saddle_node_bifurcation_id);
+
   // Select
   // Attempts to select the solution below the cursor at x, y in the dynamical
   // window given by id. On success, returns true. The solution found can be
@@ -651,11 +817,17 @@ public:
   // singular points
   bool select_isocline(dynamical_id, int x, int y);
   bool select_singular_point(dynamical_id, int x, int y);
+  bool select_separatrix(dynamical_id, int x, int y);
+  bool select_hopf_bifurcation(parameter_id, int, int);
+  bool select_saddle_node_bifurcation(parameter_id, int, int);
 
   // Selects the object directly
   void select_solution(solution_id id);
   void select_singular_point(singular_point_id id);
   void select_isocline(isocline_id id);
+  void select_separatrix(separatrix_id id);
+  void select_hopf_bifurcation(hopf_bifurcation_id);
+  void select_saddle_node_bifurcation(saddle_node_bifurcation_id);
 
   // Deselects the solution that is currently selected. Does nothing if no
   // solution is selected.
@@ -665,6 +837,10 @@ public:
   // singular points.
   void deselect_isocline();
   void deselect_singular_point();
+  void deselect_separatrix();
+  void deselect_hopf_bifurcation();
+  void deselect_saddle_node_bifurcation();
+
 
   // Update: Some specs need to be dynamically updated. More fine grained
   // control is provided if such functions are common.
@@ -700,12 +876,20 @@ public:
   const std::unordered_map<singular_point_id, singular_point>&
   get_singular_points() const;
   const std::unordered_map<isocline_id, isocline>& get_isoclines() const;
+  const std::unordered_map<separatrix_id, separatrix>& get_separatrices() const;
+  const std::unordered_map<hopf_bifurcation_id, hopf_bifurcation>&
+  get_hopf_bifurcations() const;
+  const std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>&
+  get_saddle_node_bifurcations() const;
 
   // Returns the selected id for the given object or kNoId if no such
   // object is selected.
   solution_id get_selected_solution() const;
   isocline_id get_selected_isocline() const;
   singular_point_id get_selected_singular_point() const;
+  separatrix_id get_selected_separatrix() const;
+  hopf_bifurcation_id get_selected_hopf_bifurcation() const;
+  saddle_node_bifurcation_id get_selected_saddle_node_bifurcation() const;
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
@@ -728,6 +912,7 @@ public:
   // Returns the dynamical point associated with the given mouse position
   // in this dynamical window.
   dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
+  math::vector get_parameter_point(parameter_id, const math::vector2d& pos) const;
 
   // Sets the parameter position and updates all solutions, isoclines, and
   // singular points and their vbo's.
@@ -736,6 +921,8 @@ public:
   // Returns true if the mouse cursor specified by pos is near the parameter
   // position.
   bool on_parameter_position(parameter_id id, const math::vector2d& pos) const;
+
+  const math::vector& get_parameter_position() const;
 };
 } // namespace gui
 } // namespace dynsolver

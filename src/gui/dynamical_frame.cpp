@@ -190,7 +190,7 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
      && std::abs(leftClickMouseY - posY) <= tolerance) {
     // A mouse click occured. We now attempt to find and select
     // an object.
-    appl.select_object(id, posX, posY);
+    appl.select_dynamical_object(id, posX, posY);
   }
 
   leftClickMouseX = posX;

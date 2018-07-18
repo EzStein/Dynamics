@@ -24,7 +24,7 @@ class function {
  public:
   // Constructs a function from the bytecode provided. This is done by
   // allocating executable memory and writing the bytecode into that memory.
-  function(const std::vector<unsigned char>&);
+  explicit function(const std::vector<unsigned char>&);
 
   // Destructor
   ~function();

@@ -103,6 +103,11 @@ public:
   void gl_canvas_on_size(wxSizeEvent&);
 
   virtual void parameter_frame_on_close(wxCloseEvent&) override;
+  virtual void hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  
 
   // Called when the mouse wheel ends by a timer.
   void gl_canvas_on_mouse_wheel_end(wxTimerEvent&);

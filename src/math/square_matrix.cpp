@@ -1,9 +1,11 @@
 #include "math/square_matrix.h"
 
 #include <cassert>
+#include <cmath>
 #include "math/poly_matrix.h"
 #include "math/polynomial.h"
 #include "math/eigenvalue.h"
+#include "math/util.h"
 
 namespace dynsolver {
 namespace math {
@@ -56,7 +58,7 @@ square_matrix square_matrix::identity_matrix(int size) {
 // We shall use a simple (Non optimized) qr decomposition
 // iteration to find the eigenvalues. Currently this works only,
 // when all eigenvalues have distinct size.
-std::vector<double> square_matrix::eigenvalues() const {
+/*std::vector<double> square_matrix::eigenvalues() const {
   static const double tolerance = 1e-10;
   int size = rows;
   matrix acc(*this);
@@ -81,7 +83,7 @@ std::vector<double> square_matrix::eigenvalues() const {
     values.push_back(acc[i][i]);
   }
   return values;
-}
+  }*/
 
 square_matrix square_matrix::operator+(const square_matrix& rhs) const {
   square_matrix mat(*this);
@@ -114,7 +116,55 @@ square_matrix square_matrix::operator/(double scal) const {
 }
 
 std::vector<eigenvalue> square_matrix::find_eigenvalues() const {
-  const double tolerance = 1e-10;
+  const double tolerance = 1e-30;
+  if(size() == 2) {
+    double a = 1;
+    double b = -(*this)[0][0] - (*this)[1][1];
+    double c = (*this)[0][0] * (*this)[1][1] - (*this)[1][0] * (*this)[0][1];
+    double discriminant = b*b - 4 * a * c;
+    if(std::abs(discriminant) < tolerance) {
+      // Double root
+      double root = -b / 2 * a;
+      std::vector<vector>
+	basis((*this - identity_matrix(2) * root).null_space());
+      std::vector<eigenvalue> ret;
+      ret.push_back(eigenvalue(poly_root(complex(root, 0), 2), basis));
+      return ret;
+    } else if(discriminant > 0) {
+      // Real case distinct
+      double val1 = (-b + std::sqrt(discriminant)) / 2 * a;
+      double val2 = (-b - std::sqrt(discriminant)) / 2 * a;
+      std::vector<vector>
+	basis1((*this - identity_matrix(2) * val1).null_space());
+      std::vector<vector>
+	basis2((*this - identity_matrix(2) * val2).null_space());
+      assert(basis1.size() == 1);
+      assert(basis2.size() == 1);
+      std::vector<eigenvalue> ret;
+      std::vector<vector> vectors;
+      vectors.push_back(basis1[0]);
+      ret.push_back(eigenvalue(poly_root(complex(val1, 0), 1), vectors));
+      vectors.clear();
+      vectors.push_back(basis2[0]);
+      ret.push_back(eigenvalue(poly_root(complex(val2, 0), 1), vectors));
+      return ret;
+    } else {
+      // Complex case distinct
+      complex discriminantComplex(discriminant, 0);
+      discriminantComplex.sqrt();
+      complex val1 = (complex(-b, 0) + discriminantComplex) / complex(2 * a, 0);
+      complex val2 = (complex(-b, 0) - discriminantComplex) / complex(2 * a, 0);
+      std::vector<eigenvalue> ret;
+      ret.push_back(eigenvalue(poly_root(val1, 1), std::vector<vector>()));
+      ret.push_back(eigenvalue(poly_root(val2, 1), std::vector<vector>()));
+      return ret;
+    }
+  } else {
+    return std::vector<eigenvalue>();
+  }
+  
+  /*  const double tolerance = 1e-10;
+  
   // We first perform iterative QR decomposition
   square_matrix mat(*this);
   const int maxIterations = 100;
@@ -154,7 +204,7 @@ std::vector<eigenvalue> square_matrix::find_eigenvalues() const {
     }
     start = r;
   }
-  return values;
+  return values;*/
 }
 } // namespace math
 } // namespace dynslover
