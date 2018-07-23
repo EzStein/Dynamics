@@ -120,6 +120,21 @@ class console_frame_base : public wxFrame
 		wxButton* m_button24;
 		wxButton* m_button25;
 		wxGrid* m_grid14;
+		wxPanel* m_panel161;
+		wxDataViewListCtrl* limitCycleBifurcationsDataViewCtrl;
+		wxButton* m_button241;
+		wxButton* m_button251;
+		wxGrid* m_grid141;
+		wxPanel* m_panel162;
+		wxDataViewListCtrl* saddleConnectionBifurcationsDataViewCtrl;
+		wxButton* m_button242;
+		wxButton* m_button252;
+		wxGrid* m_grid142;
+		wxPanel* m_panel163;
+		wxDataViewListCtrl* periodicSolutionBifurcationsDataViewCtrl;
+		wxButton* m_button243;
+		wxButton* m_button253;
+		wxGrid* m_grid143;
 		wxMenu* m_menu22;
 		
 		// Virtual event handlers, overide them in your derived class
@@ -405,6 +420,78 @@ class hopf_bifurcation_dialog_base : public wxDialog
 		
 		hopf_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE ); 
 		~hopf_bifurcation_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class saddle_connection_bifurcation_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class saddle_connection_bifurcation_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxNotebook* m_notebook5;
+		wxPanel* m_panel17;
+		wxDataViewListCtrl* initialParametersDataViewCtrl;
+		wxPanel* m_panel18;
+		wxPropertyGrid* saddleConnectionPG;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* spanPGItem;
+		wxPGProperty* searchRadiusPGItem;
+		wxPGProperty* searchIncrementPGItem;
+		wxStaticText* m_staticText10;
+		wxComboBox* separatrix1ComboBox;
+		wxStaticText* m_staticText11;
+		wxComboBox* separatrix2ComboBox;
+		wxButton* m_button26;
+		wxButton* m_button27;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		saddle_connection_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 513,372 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~saddle_connection_bifurcation_dialog_base();
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class limit_cycle_bifurcation_dialog_base
+///////////////////////////////////////////////////////////////////////////////
+class limit_cycle_bifurcation_dialog_base : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxNotebook* m_notebook5;
+		wxPanel* m_panel17;
+		wxDataViewListCtrl* initialParametersDataViewCtrl;
+		wxPanel* m_panel18;
+		wxPropertyGrid* limitCyclePG;
+		wxPGProperty* incrementPGItem;
+		wxPGProperty* spanPGItem;
+		wxPGProperty* searchRadiusPGItem;
+		wxPGProperty* searchIncrementPGItem;
+		wxStaticText* m_staticText10;
+		wxComboBox* limitCycle1ComboBox;
+		wxStaticText* m_staticText11;
+		wxComboBox* limitCycle2ComboBox;
+		wxButton* m_button26;
+		wxButton* m_button27;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
+		
+	
+	public:
+		
+		limit_cycle_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 584,395 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~limit_cycle_bifurcation_dialog_base();
 	
 };
 

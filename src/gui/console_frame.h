@@ -69,6 +69,8 @@ class console_frame : public console_frame_base {
   void update_separatrices_list();
   void update_hopf_bifurcation_list();
   void update_saddle_node_bifurcation_list();
+  void update_limit_cycle_bifurcation_list();
+  void update_saddle_connection_bifurcation_list();
   
 private:
   // Returns the id of the selected solution.
@@ -78,6 +80,11 @@ private:
   separatrix_id get_selected_separatrix();
   hopf_bifurcation_id get_selected_hopf_bifurcation();
   saddle_node_bifurcation_id get_selected_saddle_node_bifurcation();
+  limit_cycle_bifurcation_id get_selected_limit_cycle_bifurcation();
+  saddle_connection_bifurcation_id get_selected_saddle_connection_bifurcation();
+
+  void parameters_text_ctrl_process_enter();
+  void variables_text_ctrl_process_enter();
 };
 } // namespace gui
 } // namespace dynsolver

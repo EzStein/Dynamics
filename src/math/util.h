@@ -4,10 +4,14 @@
 #include "math/vector.h"
 #include "math/matrix.h"
 #include "math/square_matrix.h"
+#include "math/matrix_2x2.h"
+#include "math/vector2d.h"
 
 #include <cassert>
 #include <vector>
 #include <iostream>
+#include <list>
+#include <unordered_set>
 
 namespace dynsolver {
 namespace math {
@@ -19,6 +23,10 @@ namespace math {
 // are the same.
 bool solve_linear(const square_matrix& matrix,
 		  const vector& vec, vector* solution);
+
+// Returns the subvector formed by extracting in order the elements of vec
+// given by the indices.
+vector extract_vector(const vector& vec, const std::vector<int>& indices);
 
 
 // Updates the vector accordingly.
@@ -52,6 +60,8 @@ bool newton_method(const std::vector<FUNCTION>& functions,
 		   const std::vector<FUNCTION>& jacobian,
 		   const std::vector<int>& varIndices,
 		   math::vector& input) {
+  assert(varIndices.size() == functions.size());
+  assert(varIndices.size() * varIndices.size() == jacobian.size());
   static const int maxIterations(100);
   static const int holdIterations(5);
   static const double tolerance(1e-10);
@@ -124,6 +134,164 @@ bool newton_iteration(const std::vector<FUNCTION>& functions,
   }
   return true;
 }
+
+// Computes the derivative of the provided function at the input with
+// respect to the variable provided.
+template<class FUNCTION>
+double derivative(const FUNCTION& function,
+		  const math::vector& input,
+		  int var) {
+  math::vector in(input);
+  double delta = 1e-6;
+  double a = function(in.data());
+  in[var] += delta;
+  double b = function(in.data());
+  return (b - a) / delta;
+}
+
+// If success is false, then data is the empty list.
+// Otherwise, data contains the found path.
+struct find_implicit_path_ret {
+  std::list<vector> data = std::list<vector>();
+  bool success = false;
+};
+
+// Computes an implicitly defined path. The system is a system of n - 1
+// equations in n unkowns. The jacobian is the its corresponding jacobian (in
+// this case, it is an n - 1 by n matrix).
+// Init is the initial input to the functions for use in newton's method.
+// Indices associates each variable in system/jacobian to its corresponding
+// index in the init vector (the init vector may contain more than n entries
+// indicating that some entries are constants). Constraint vars indicate
+// the set of variables used to in the constraint equation.
+// is given by system. We return a list of vectors indicating the path in the
+// system variables in the order given by the system variables. This path
+// excludes extra "constant" variables defined in the init vector.
+template<class FUNCTION> find_implicit_path_ret
+find_implicit_path(const std::vector<FUNCTION>& systemIn,
+		   const std::vector<FUNCTION>& jacobianIn,
+		   const math::vector& init,
+		   const std::vector<int>& indices,
+		   const std::unordered_set<int>& constraintVars,
+		   const double searchRadius,
+		   const double searchIncrement,
+		   const double constraintRadius,
+		   const int span) {
+  std::vector<FUNCTION> system(systemIn);
+
+  // We add the constraint equation to the system.
+  double currentRadius;
+  vector current;
+  system.push_back([&](const double* arr)->double{
+      double acc = 0;
+      for(int var : constraintVars) {
+	double val = arr[indices[var]] - current[indices[var]];
+	acc += val * val;
+
+      }
+      acc -= currentRadius * currentRadius;
+      return acc;
+    });
+
+  std::vector<FUNCTION> jacobian(jacobianIn);
+  // We update the jacobian appropriately.
+  for(int var = 0; var != indices.size(); ++var) {
+    if(constraintVars.find(var) == constraintVars.end()) {
+      jacobian.push_back([&, var](const double*)->double {
+	  return 0;
+	});
+    } else {
+      jacobian.push_back([&, var](const double* arr)->double {
+	  return 2 * (arr[indices[var]] - current[indices[var]]);
+	});
+    }
+  }
+  
+  bool found = false;
+  math::vector start(init);
+  current = init;
+  // We peturb the vector slightly.
+  for(int var : constraintVars) {
+    start[var] += 0.01;
+  }
+  // We search in a radial direction.
+  for(currentRadius = constraintRadius; currentRadius <= searchRadius;
+      currentRadius += searchIncrement) {
+    found = newton_method(system, jacobian, indices, start);
+    if(found) {
+      break;
+    }
+  }
+  if(!found) return find_implicit_path_ret();
+  
+  math::vector prev(start);
+  current = start;
+  currentRadius = constraintRadius;
+  
+  std::list<math::vector> points;
+  points.push_back(extract_vector(current, indices));
+  bool first = true;
+  for(int i = 0; i != span; ++i) {
+    math::vector next(current);
+    
+    // Perturb the initial condition so it is in the direction we expect.
+    for(int var : constraintVars) {
+      double change = current[indices[var]] - prev[indices[var]];
+      if(first) change = 0.1;
+      next[indices[var]] += change;
+    }
+
+    bool success = newton_method(system, jacobian, indices, next);
+    if(!success || (next.distance(current) >= next.distance(prev) && !first)) {
+      break;
+    }
+    first = false;
+    
+    points.push_back(extract_vector(next, indices));
+
+    prev = current;
+    current = next;
+  }
+  if(points.size() == 1) return find_implicit_path_ret();
+    
+  current = start;
+  prev = start;
+  for(int i = 0; i != indices.size(); ++i) {
+    prev[indices[i]] = (*(++points.begin()))[i];
+  }
+  
+  for(int i = 0; i != span; ++i) {
+    math::vector next(current);
+    // Perturb the initial condition so it is in the direction we expect.
+    for(int var : constraintVars) {
+      next[indices[var]] += current[indices[var]] - prev[indices[var]];
+    }
+    bool success = newton_method(system, jacobian, indices, next);
+    if(!success || next.distance(current) >= next.distance(prev)) {
+      break;
+    }
+    
+    points.push_front(extract_vector(next, indices));
+
+    prev = current;
+    current = next;
+  }
+  find_implicit_path_ret ret;
+  ret.data = points;
+  ret.success = true;
+  return ret;
+}
+
+// Computes the intersection between the two lines defined as,
+// A1 to B1 and A2 to B2.
+vector2d intersect(const vector2d& A1, const vector2d& A2,
+		   const vector2d& B1, const vector2d& B2);
+
+// Determines whether the points A1, and A2 lie on either side of the
+// line B1 to B2.
+bool splits(const vector2d& A1, const vector2d& A2,
+	    const vector2d& B1, const vector2d& B2);
+
 } // namespace math
 } // namespace dynsolver
 #endif

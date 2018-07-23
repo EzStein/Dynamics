@@ -206,10 +206,10 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 
 void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   isocline_specs specs;
-  specs.inc = 0.01;
-  specs.span = 100;
+  specs.inc = 0.1;
+  specs.span = 200;
   specs.searchRadius = 10;
-  specs.searchInc = 1;
+  specs.searchInc = 0.1;
   specs.direction =
     math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
   dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,

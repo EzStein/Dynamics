@@ -67,8 +67,15 @@ singular_point_specs::singular_point_specs() : init(1), glColor(0.5,0,0.5,1) { }
 separatrix_specs::separatrix_specs() : glColor(0.5, 0.5, 0, 1) { }
 
 hopf_bifurcation_specs::hopf_bifurcation_specs() : glColor(1.0, 0, 0, 1) { }
+
 saddle_node_bifurcation_specs::saddle_node_bifurcation_specs()
   : glColor(0, 0, 1.0, 1) { }
+
+limit_cycle_bifurcation_specs::limit_cycle_bifurcation_specs()
+  : glColor(1.0, 1.0, 0, 1) { }
+
+saddle_connection_bifurcation_specs::saddle_connection_bifurcation_specs()
+  : glColor(0, 1.0, 1.0, 1) { }
 
 model::parameter_window::parameter_window(model& model,
 					  const parameter_specs& specs)
@@ -91,12 +98,12 @@ void model::parameter_window::gen_hopf_bifurcation_vbo(hopf_bifurcation_id id) {
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<bifurcation_point>& data
+  const std::list<math::vector>& data
     = modelData.hopfBifurcations.at(id).data;
-  for(std::list<bifurcation_point>::const_iterator iter = data.begin();
+  for(std::list<math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
-    vboData.push_back(iter->parameters[horizIndex]);
-    vboData.push_back(iter->parameters[vertIndex]);
+    vboData.push_back((*iter)[horizIndex]);
+    vboData.push_back((*iter)[vertIndex]);
   }
   if(hopfBifurcationData.find(id) == hopfBifurcationData.end()) {
     gl::buffer buffer =
@@ -116,12 +123,12 @@ void model::parameter_window::gen_saddle_node_bifurcation_vbo(saddle_node_bifurc
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<bifurcation_point>& data
+  const std::list<math::vector>& data
     = modelData.saddleNodeBifurcations.at(id).data;
-  for(std::list<bifurcation_point>::const_iterator iter = data.begin();
+  for(std::list<math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
-    vboData.push_back(iter->parameters[horizIndex]);
-    vboData.push_back(iter->parameters[vertIndex]);
+    vboData.push_back((*iter)[horizIndex]);
+    vboData.push_back((*iter)[vertIndex]);
   }
   if(saddleNodeBifurcationData.find(id) == saddleNodeBifurcationData.end()) {
     gl::buffer buffer =
@@ -137,11 +144,68 @@ void model::parameter_window::gen_saddle_node_bifurcation_vbo(saddle_node_bifurc
   }
 }
 
+void model::parameter_window::gen_limit_cycle_bifurcation_vbo(limit_cycle_bifurcation_id id) {
+  int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
+  int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
+  std::vector<float> vboData;
+  const std::list<math::vector>& data
+    = modelData.limitCycleBifurcations.at(id).data;
+  for(std::list<math::vector>::const_iterator iter = data.begin();
+      iter != data.end(); ++iter) {
+    vboData.push_back((*iter)[horizIndex]);
+    vboData.push_back((*iter)[vertIndex]);
+  }
+  if(limitCycleBifurcationData.find(id) == limitCycleBifurcationData.end()) {
+    gl::buffer buffer =
+      gl::buffer(reinterpret_cast<unsigned char*>(vboData.data()),
+		 data.size() * 2 * sizeof(float), GL_STATIC_DRAW);
+    render_data renderData{buffer, static_cast<GLsizei>(data.size())};
+    limitCycleBifurcationData.insert(std::make_pair(id, renderData));
+  } else {
+    limitCycleBifurcationData.at(id).vbo
+      .set_data(reinterpret_cast<unsigned char*>(vboData.data()),
+		data.size() * 2 * sizeof(float));
+    limitCycleBifurcationData.at(id).vertices = data.size();
+  }
+}
+
+
+void model::parameter_window::gen_saddle_connection_bifurcation_vbo(saddle_connection_bifurcation_id id) {
+  int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
+  int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
+  std::vector<float> vboData;
+  const std::list<math::vector>& data
+    = modelData.saddleConnectionBifurcations.at(id).data;
+  for(std::list<math::vector>::const_iterator iter = data.begin();
+      iter != data.end(); ++iter) {
+    vboData.push_back((*iter)[horizIndex]);
+    vboData.push_back((*iter)[vertIndex]);
+  }
+  if(saddleConnectionBifurcationData.find(id) == saddleConnectionBifurcationData.end()) {
+    gl::buffer buffer =
+      gl::buffer(reinterpret_cast<unsigned char*>(vboData.data()),
+		 data.size() * 2 * sizeof(float), GL_STATIC_DRAW);
+    render_data renderData{buffer, static_cast<GLsizei>(data.size())};
+    saddleConnectionBifurcationData.insert(std::make_pair(id, renderData));
+  } else {
+    saddleConnectionBifurcationData.at(id).vbo
+      .set_data(reinterpret_cast<unsigned char*>(vboData.data()),
+		data.size() * 2 * sizeof(float));
+    saddleConnectionBifurcationData.at(id).vertices = data.size();
+  }
+}
+
 void model::parameter_window::delete_hopf_bifurcation(hopf_bifurcation_id id) {
   hopfBifurcationData.erase(id);
 }
 void model::parameter_window::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
   saddleNodeBifurcationData.erase(id);
+}
+void model::parameter_window::delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id id) {
+  saddleConnectionBifurcationData.erase(id);
+}
+void model::parameter_window::delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id id) {
+  limitCycleBifurcationData.erase(id);
 }
 
 bool model::parameter_window::select_hopf_bifurcation(int x, int y, hopf_bifurcation_id*) {
@@ -149,6 +213,14 @@ bool model::parameter_window::select_hopf_bifurcation(int x, int y, hopf_bifurca
 }
 
 bool model::parameter_window::select_saddle_node_bifurcation(int x, int y, saddle_node_bifurcation_id*) {
+  return false;
+}
+
+bool model::parameter_window::select_limit_cycle_bifurcation(int x, int y, limit_cycle_bifurcation_id*) {
+  return false;
+}
+
+bool model::parameter_window::select_saddle_connection_bifurcation(int x, int y, saddle_connection_bifurcation_id*) {
   return false;
 }
 
@@ -193,6 +265,11 @@ void model::parameter_window::paint() {
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  modelData.draw_axes_2d(specs.viewport, ticksPerLabel,
+			 tickFontSize,
+			 realTickDistanceX, realTickDistanceY,
+			 axesVbo);
+
   glUseProgram(modelData.program2d.get_handle());
   glBindVertexArray(modelData.vao2d.get_handle());
 
@@ -217,14 +294,12 @@ void model::parameter_window::paint() {
 		     1, true, transformationMatrix);
   draw_hopf_bifurcations();
   draw_saddle_node_bifurcations();
-
-  modelData.draw_axes_2d(specs.viewport, ticksPerLabel,
-			 tickFontSize,
-			 realTickDistanceX, realTickDistanceY,
-			 axesVbo);
+  draw_limit_cycle_bifurcations();
+  draw_saddle_connection_bifurcations();
 }
 
 void model::parameter_window::draw_hopf_bifurcations() {
+
   for(std::unordered_map<hopf_bifurcation_id, render_data>::const_iterator iter
 	= hopfBifurcationData.begin(); iter != hopfBifurcationData.end();
       ++iter) {
@@ -247,6 +322,40 @@ void model::parameter_window::draw_saddle_node_bifurcations() {
       ++iter) {
     color glColor(modelData.saddleNodeBifurcations.at(iter->first).specs.glColor);
     if(iter->first == modelData.selectedSaddleNodeBifurcationId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo.get_handle(),
+		       0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+
+void model::parameter_window::draw_limit_cycle_bifurcations() {
+  for(std::unordered_map<limit_cycle_bifurcation_id, render_data>::const_iterator iter
+	= limitCycleBifurcationData.begin(); iter != limitCycleBifurcationData.end();
+      ++iter) {
+    color glColor(modelData.limitCycleBifurcations.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedLimitCycleBifurcationId) {
+      glColor.invert();
+    }
+    glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
+		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
+    glBindVertexBuffer(model::k2dVertexBinding,
+		       iter->second.vbo.get_handle(),
+		       0, 2 * sizeof(float));
+    glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
+  }
+}
+
+void model::parameter_window::draw_saddle_connection_bifurcations() {
+  for(std::unordered_map<saddle_connection_bifurcation_id, render_data>::const_iterator iter
+	= saddleConnectionBifurcationData.begin(); iter != saddleConnectionBifurcationData.end();
+      ++iter) {
+    color glColor(modelData.saddleConnectionBifurcations.at(iter->first).specs.glColor);
+    if(iter->first == modelData.selectedSaddleConnectionBifurcationId) {
       glColor.invert();
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
@@ -748,7 +857,9 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
   axesVbo.set_data(reinterpret_cast<unsigned char*>(axesVboData.data()),
 		   axesVboData.size()*sizeof(float));
   GLsizei axesVboVertices = axesVboData.size() / 2;
-  
+
+  glUseProgram(program2d.get_handle());
+  glBindVertexArray(vao2d.get_handle());
   // Generate pixel to ndc transform
   viewport.pixel_to_ndc()
     .as_float_array(transformationMatrix);
@@ -876,6 +987,10 @@ void model::dynamical_window::paint() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Set program and transformation.
+    modelData.draw_axes_2d(specs.viewport2d, ticksPerLabel,
+			   tickFontSize,
+			   realTickDistanceX, realTickDistanceY,
+			   axesVbo);
     glUseProgram(modelData.program2d.get_handle());
     glBindVertexArray(modelData.vao2d.get_handle());
     float transformationMatrix[16];
@@ -889,10 +1004,6 @@ void model::dynamical_window::paint() {
 
     // Note that these calls changes the transformation uniform.
     draw_singular_points_2d();
-    modelData.draw_axes_2d(specs.viewport2d, ticksPerLabel,
-			   tickFontSize,
-			   realTickDistanceX, realTickDistanceY,
-			   axesVbo);
   }
 }
   
@@ -1176,6 +1287,8 @@ const isocline_id model::kNoIsoclineId = 0;
 const separatrix_id model::kNoSeparatrixId = 0;
 const hopf_bifurcation_id model::kNoHopfBifurcationId = 0;
 const saddle_node_bifurcation_id model::kNoSaddleNodeBifurcationId = 0;
+const limit_cycle_bifurcation_id model::kNoLimitCycleBifurcationId = 0;
+const saddle_connection_bifurcation_id model::kNoSaddleConnectionBifurcationId = 0;
 
 model::model() : font(constants::kDefaultFontFilePath),
 		 dynamicalVars(0),
@@ -1186,6 +1299,8 @@ model::model() : font(constants::kDefaultFontFilePath),
 		 selectedSeparatrixId(kNoSeparatrixId),
 		 selectedHopfBifurcationId(kNoHopfBifurcationId),
 		 selectedSaddleNodeBifurcationId(kNoSaddleNodeBifurcationId),
+		 selectedLimitCycleBifurcationId(kNoLimitCycleBifurcationId),
+		 selectedSaddleConnectionBifurcationId(kNoSaddleConnectionBifurcationId),
 		 uniqueDynamicalId(kNoDynamicalId),
 		 uniqueParameterId(kNoParameterId),
 		 uniqueSolutionId(kNoSolutionId),
@@ -1194,6 +1309,8 @@ model::model() : font(constants::kDefaultFontFilePath),
 		 uniqueSeparatrixId(kNoSeparatrixId),
 		 uniqueHopfBifurcationId(kNoHopfBifurcationId),
 		 uniqueSaddleNodeBifurcationId(kNoSaddleNodeBifurcationId),
+		 uniqueLimitCycleBifurcationId(kNoLimitCycleBifurcationId),
+		 uniqueSaddleConnectionBifurcationId(kNoSaddleConnectionBifurcationId),
 		 compiled(false),
 		 program2d(build_shaders_2d()),
 		 programPath3d(build_shaders_path_3d()),
@@ -1363,9 +1480,13 @@ bool model::add_hopf_bifurcation(const hopf_bifurcation_specs& specs) {
   ++uniqueHopfBifurcationId;
   hopfBifurcations.insert(std::make_pair(uniqueHopfBifurcationId,
 					 hopf_bifurcation{specs,
-					     std::list<bifurcation_point>()}));
+					     std::list<math::vector>()}));
   bool success = generate_hopf_bifurcation_data(uniqueHopfBifurcationId);
   if(success) {
+    for(parameter_iter iter = parameterWindows.begin();
+	iter != parameterWindows.end(); ++iter) {
+      iter->second.gen_hopf_bifurcation_vbo(uniqueHopfBifurcationId);
+    }
     return true;
   } else {
     hopfBifurcations.erase(uniqueHopfBifurcationId);
@@ -1378,15 +1499,249 @@ bool model::add_saddle_node_bifurcation(const saddle_node_bifurcation_specs& spe
   ++uniqueSaddleNodeBifurcationId;
   saddleNodeBifurcations.insert(std::make_pair(uniqueSaddleNodeBifurcationId,
 					       saddle_node_bifurcation{specs,
-						   std::list<bifurcation_point>()}));
+						   std::list<math::vector>()}));
   bool success = generate_saddle_node_bifurcation_data(uniqueSaddleNodeBifurcationId);
   if(success) {
+    for(parameter_iter iter = parameterWindows.begin();
+	iter != parameterWindows.end(); ++iter) {
+      iter->second.gen_saddle_node_bifurcation_vbo(uniqueSaddleNodeBifurcationId);
+    }
     return true;
   } else {
     saddleNodeBifurcations.erase(uniqueSaddleNodeBifurcationId);
     --uniqueSaddleNodeBifurcationId;
     return false;
   }
+}
+
+bool model::add_limit_cycle_bifurcation(const limit_cycle_bifurcation_specs& specs) {
+  ++uniqueLimitCycleBifurcationId;
+  limitCycleBifurcations.insert(std::make_pair(uniqueLimitCycleBifurcationId,
+					       limit_cycle_bifurcation{specs,
+						   std::list<math::vector>()}));
+  bool success = generate_limit_cycle_bifurcation_data(uniqueLimitCycleBifurcationId);
+  if(success) {
+    for(parameter_iter iter = parameterWindows.begin();
+	iter != parameterWindows.end(); ++iter) {
+      iter->second.gen_limit_cycle_bifurcation_vbo(uniqueLimitCycleBifurcationId);
+    }
+    return true;
+  } else {
+    limitCycleBifurcations.erase(uniqueLimitCycleBifurcationId);
+    --uniqueLimitCycleBifurcationId;
+    return false;
+  }
+}
+
+bool model::add_saddle_connection_bifurcation(const saddle_connection_bifurcation_specs& specs) {
+  ++uniqueSaddleConnectionBifurcationId;
+  saddleConnectionBifurcations.insert(std::make_pair(uniqueSaddleConnectionBifurcationId,
+					       saddle_connection_bifurcation{specs,
+						   std::list<math::vector>()}));
+  bool success = generate_saddle_connection_bifurcation_data(uniqueSaddleConnectionBifurcationId);
+  if(success) {
+    for(parameter_iter iter = parameterWindows.begin();
+	iter != parameterWindows.end(); ++iter) {
+      iter->second.gen_saddle_connection_bifurcation_vbo(uniqueSaddleConnectionBifurcationId);
+    }
+    return true;
+  } else {
+    saddleConnectionBifurcations.erase(uniqueSaddleConnectionBifurcationId);
+    --uniqueSaddleConnectionBifurcationId;
+    return false;
+  }
+}
+
+bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurcation_id id) {
+  // We work in two dimensions with two parameters.
+  // We solve
+  // dist(inter(sep1, trans), inter(sep2, trans)) = 0
+  // This is a system of two variables (a and b). We add a constraint to obtain
+  // the solution.
+  // and some additional constraint. Initially the constraint is a circle about
+  // the initial points.
+  saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
+  std::vector<std::function<double(const double*)>> systemFunctions;
+  std::vector<std::function<double(const double*)>> jacobianFunctions;
+
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return find_separatrix_intersection(specs.separatrix1,
+					  specs.transversalA,
+					  specs.transversalB,
+					  arr[0],
+					  arr[1])
+	.distance(find_separatrix_intersection(specs.separatrix1,
+					       specs.transversalA,
+					       specs.transversalB,
+					       arr[0],
+					       arr[1]));
+    });
+
+  double searchRadius = 0.001;
+  // a^2 + b^2 - r^2 = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      double a = arr[0] - specs.init[0];
+      double b = arr[1] - specs.init[1];
+      return a * a + b * b - searchRadius * searchRadius;
+    });
+
+  // We now build the jacobian.
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector2d vec;
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      return math::derivative(systemFunctions[0], vec, 0);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector2d vec;
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      return math::derivative(systemFunctions[0], vec, 1);
+    });
+  
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 2 * (arr[0] - specs.init[0]);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 2 * (arr[1] - specs.init[0]);
+    });
+  
+  // Setup the initial search vector
+  math::vector init(specs.init);
+  std::vector<int> varIndex;
+  varIndex.push_back(0);
+  varIndex.push_back(1);
+
+  bool found = false;
+  // We search in a radial direction.
+  for(searchRadius = 0.001; searchRadius <= specs.searchRadius;
+      searchRadius += specs.searchInc) {
+    found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
+    if(found) {
+      break;
+    }
+  }
+  if(!found) return false;
+
+  // Now that we have found a start point, we setup a new system with a different,
+  // constraint and jacobian.
+  int constraintVar = 0;
+  double constraintConstant;
+  systemFunctions[1] = [&](const double* arr) -> double {
+    return arr[constraintVar] - constraintConstant;
+  };
+  jacobianFunctions[2] = [&](const double* arr) -> double {
+    return constraintVar == 0 ? 1 : 0;
+  };
+  jacobianFunctions[3] = [&](const double* arr) -> double {
+    return constraintVar == 1 ? 1 : 0;
+  };
+  
+  // we start by sweeping it out.
+  // We first find a constraint variable which is not transverse.
+  math::vector tmp(init);
+  constraintConstant = tmp[constraintVar];
+  constraintConstant += specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != parameters - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constraintConstant = init[constraintVar];
+    constraintConstant += specs.inc;
+    tmp = init;
+  }
+  tmp = init;
+  constraintConstant =  init[constraintVar];
+  constraintConstant -= specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != parameters - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constraintConstant = init[constraintVar];
+    constraintConstant -= specs.inc;
+  }
+  
+  int originalConstraintVar(constraintVar);
+  math::vector original(init);
+  math::vector prev(init);
+  
+  std::list<math::vector> points;
+  int direction = 1;
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != parameters - 1) {
+	++constraintVar;
+      } else {
+	constraintVar = 0;
+      }
+      if(init[constraintVar] - prev[constraintVar] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constraintConstant = init[constraintVar];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(parameters);
+      for(int i = 0; i != parameters; ++i) {
+	vars[i] = init[i];
+      }
+      points.push_back(vars);
+    }
+    constraintConstant += direction * specs.inc;
+  }
+  
+  // Now we sweep out in the other direction.
+  direction = -1;
+  constraintVar = originalConstraintVar;
+  init = original;
+  prev = original;
+  constraintConstant = init[constraintVar];
+  points.reverse();
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != parameters - 1) {
+	++constraintVar;
+      } else {
+	constraintVar = 0;
+      }
+      if(init[constraintVar] - prev[constraintVar] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constraintConstant = init[constraintVar];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(parameters);
+      for(int i = 0; i != parameters; ++i) {
+	vars[i] = init[i];
+      }
+      points.push_back(vars);
+    }
+    constraintConstant += direction * specs.inc;
+  }
+
+  saddleConnectionBifurcations.at(id).data = points;
+  saddleConnectionBifurcations.at(id).specs = specs;
+  return true;
+}
+bool model::generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id) {
+  return false;
 }
 
 bool model::generate_singular_point_data(singular_point_id id) {
@@ -1629,6 +1984,11 @@ bool model::compile(const std::string& newVarDiffName,
   solutions.clear();
   isoclines.clear();
   singularPoints.clear();
+  separatrices.clear();
+  hopfBifurcations.clear();
+  saddleNodeBifurcations.clear();
+  limitCycleBifurcations.clear();
+  saddleConnectionBifurcations.clear();
   compiled = true;
   return true;
 }
@@ -1767,6 +2127,22 @@ void model::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
   }
 }
 
+void model::delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id id) {
+  limitCycleBifurcations.erase(id);
+  for(std::unordered_map<parameter_id, parameter_window>::iterator iter
+	= parameterWindows.begin(); iter != parameterWindows.end(); ++iter) {
+    iter->second.delete_limit_cycle_bifurcation(id);
+  }
+}
+
+void model::delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id id) {
+  saddleConnectionBifurcations.erase(id);
+  for(std::unordered_map<parameter_id, parameter_window>::iterator iter
+	= parameterWindows.begin(); iter != parameterWindows.end(); ++iter) {
+    iter->second.delete_saddle_connection_bifurcation(id);
+  }
+}
+
 void model::generate_solution_data(solution_id id) {
   solution_specs spec(solutions.at(id).specs);
   std::vector<compiler::function<double, const double*>> systemFunctions;
@@ -1850,6 +2226,16 @@ bool model::select_saddle_node_bifurcation(parameter_id id, int x, int y) {
     .select_saddle_node_bifurcation(x, y, &selectedSaddleNodeBifurcationId);
 }
 
+bool model::select_limit_cycle_bifurcation(parameter_id id, int x, int y) {
+  return parameterWindows.at(id)
+    .select_limit_cycle_bifurcation(x, y, &selectedLimitCycleBifurcationId);
+}
+
+bool model::select_saddle_connection_bifurcation(parameter_id id, int x, int y) {
+  return parameterWindows.at(id)
+    .select_saddle_connection_bifurcation(x, y, &selectedSaddleConnectionBifurcationId);
+}
+
 void model::deselect_separatrix() {
   selectedSeparatrixId = kNoSeparatrixId;
 }
@@ -1874,6 +2260,14 @@ void model::deselect_saddle_node_bifurcation() {
   selectedSaddleNodeBifurcationId = kNoSaddleNodeBifurcationId;
 }
 
+void model::deselect_limit_cycle_bifurcation() {
+  selectedLimitCycleBifurcationId = kNoLimitCycleBifurcationId;
+}
+
+void model::deselect_saddle_connection_bifurcation() {
+  selectedSaddleConnectionBifurcationId = kNoSaddleConnectionBifurcationId;
+}
+
 void model::select_separatrix(separatrix_id id) {
   selectedSeparatrixId = id;
 }
@@ -1894,6 +2288,14 @@ void model::select_hopf_bifurcation(hopf_bifurcation_id id) {
 
 void model::select_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
   selectedSaddleNodeBifurcationId = id;
+}
+
+void model::select_limit_cycle_bifurcation(limit_cycle_bifurcation_id id) {
+  selectedLimitCycleBifurcationId = id;
+}
+
+void model::select_saddle_connection_bifurcation(saddle_connection_bifurcation_id id) {
+  selectedSaddleConnectionBifurcationId = id;
 }
 
 solution_id model::get_selected_solution() const {
@@ -1920,6 +2322,14 @@ saddle_node_bifurcation_id model::get_selected_saddle_node_bifurcation() const {
   return selectedSaddleNodeBifurcationId;
 }
 
+limit_cycle_bifurcation_id model::get_selected_limit_cycle_bifurcation() const {
+  return selectedLimitCycleBifurcationId;
+}
+
+saddle_connection_bifurcation_id model::get_selected_saddle_connection_bifurcation() const {
+  return selectedSaddleConnectionBifurcationId;
+}
+
 const std::unordered_map<separatrix_id, separatrix>&
 model::get_separatrices() const {
   return separatrices;
@@ -1942,6 +2352,114 @@ const std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>&
 model::get_saddle_node_bifurcations() const {
   return saddleNodeBifurcations;
 }
+
+const std::unordered_map<saddle_connection_bifurcation_id, saddle_connection_bifurcation>&
+model::get_saddle_connection_bifurcations() const {
+  return saddleConnectionBifurcations;
+}
+
+const std::unordered_map<limit_cycle_bifurcation_id, limit_cycle_bifurcation>&
+model::get_limit_cycle_bifurcations() const {
+  return limitCycleBifurcations;
+}
+
+math::vector2d model::find_separatrix_intersection(separatrix_id id,
+						   const math::vector2d& transversalA,
+						   const math::vector2d& transversalB,
+						   double paramA, double paramB) {
+  const separatrix_specs& specs = separatrices.at(id).specs;
+  const singular_point& singularPoint = singularPoints.at(specs.singularPoint);
+  
+  // We first generate the initial conditions for euler's method.
+  math::vector init(symbolsToIndex.size());
+  init[varDiffIndex] = 0; // This is ignored by the functions.
+  init[parameterIndexToSymbol[0]] = paramA;
+  init[parameterIndexToSymbol[1]] = paramB;
+  
+  // We are working in 2 dimensions. For a stable separatrix, our starting
+  // conditions should be a slight perturbation along the stable eigenvector
+  // we should move in the negative t direction.
+  int direction;
+  int index;
+  if(specs.type == separatrix_specs::type::STABLE) {
+    direction = -1;
+    if(singularPoint.eigenvalues[0].get_value().get_root().real() < 0) {
+      index = 0;
+    } else {
+      index = 1;
+    }
+  } else {
+    direction = 1;
+    if(singularPoint.eigenvalues[0].get_value().get_root().real() > 0) {
+      index = 0;
+    } else {
+      index = 1;
+    }
+  }
+  double multiplier = 1e-5;
+  init[dynamicalIndexToSymbol[0]]
+    = singularPoint.position[0]
+    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
+  init[dynamicalIndexToSymbol[1]]
+    = singularPoint.position[1]
+    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+
+  // We now perform euler's method.
+  std::vector<compiler::function<double, const double*>> systemFunctions;
+  for(std::vector<expression>::const_iterator iter = system.begin();
+      iter != system.end(); ++iter) {
+    systemFunctions.push_back(iter->function);
+  }
+  while(std::abs(init[varDiffIndex]) <= specs.time) {
+    math::vector vars(2);
+    vars[0] = init[dynamicalIndexToSymbol[0]];
+    vars[1] = init[dynamicalIndexToSymbol[1]];
+    math::vector newInit(init);
+    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
+		varDiffIndex, newInit);
+    math::vector2d init2d;
+    init2d[0] = init[dynamicalIndexToSymbol[0]];
+    init2d[1] = init[dynamicalIndexToSymbol[1]];
+    math::vector2d newInit2d;
+    newInit2d[0] = newInit[dynamicalIndexToSymbol[0]];
+    newInit2d[1] = newInit[dynamicalIndexToSymbol[1]];
+    if(math::splits(init2d, newInit2d, transversalA, transversalB)) {
+      return math::intersect(init2d, newInit2d, transversalA, transversalB);
+    }
+    init = newInit;
+  }
+  // Now we reset to the opposate eigenvector. We still traverse in the
+  // same direction
+  init[varDiffIndex] = 0;
+  init[dynamicalIndexToSymbol[0]]
+    = singularPoint.position[0]
+    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
+  init[dynamicalIndexToSymbol[1]]
+    = singularPoint.position[1]
+    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+  
+  while(std::abs(init[varDiffIndex]) <= specs.time) {
+    math::vector vars(2);
+    vars[0] = init[dynamicalIndexToSymbol[0]];
+    vars[1] = init[dynamicalIndexToSymbol[1]];
+    math::vector newInit(init);
+    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
+		varDiffIndex, newInit);
+    math::vector2d init2d;
+    init2d[0] = init[dynamicalIndexToSymbol[0]];
+    init2d[1] = init[dynamicalIndexToSymbol[1]];
+    math::vector2d newInit2d;
+    newInit2d[0] = newInit[dynamicalIndexToSymbol[0]];
+    newInit2d[1] = newInit[dynamicalIndexToSymbol[1]];
+    if(math::splits(init2d, newInit2d, transversalA, transversalB)) {
+      return math::intersect(init2d, newInit2d, transversalA, transversalB);
+    }
+    init = newInit;
+  }
+  std::cout << "No Intersection" << std::endl;
+  return math::vector2d();
+}
+
 
 bool model::generate_separatrix_data(separatrix_id id) {
   // We first verify that the singular point associated with this separatrix
@@ -2030,11 +2548,423 @@ bool model::generate_separatrix_data(separatrix_id id) {
   return true;
 }
 
-bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id) {
-  return false;
+bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
+  // We work in two dimensions with two parameters.
+  // We solve f(x, y, a, b) = 0, g(x, y, a, b) = 0, f_x + g_y = 0,
+  // and some additional constraint. Initially the constraint is a circle about
+  // the initial points.
+  hopf_bifurcation_specs specs = hopfBifurcations.at(id).specs;
+  std::vector<std::function<double(const double*)>> systemFunctions;
+  std::vector<std::function<double(const double*)>> jacobianFunctions;
+
+  // f = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return system[0].function(arr);
+    });
+  // g = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return system[1].function(arr);
+    });
+  // f_x + g_y = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[0]].function(arr)
+	+ partials[1][dynamicalIndexToSymbol[1]].function(arr);
+    });
+
+  double searchRadius = 0.001;
+  // (a-a_0)^2 + (b-b_0)^2 - r^2 = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      double a = arr[parameterIndexToSymbol[0]] - specs.init.parameters[0];
+      double b = arr[parameterIndexToSymbol[1]] - specs.init.parameters[1];
+      return a * a + b * b - searchRadius * searchRadius;
+    });
+
+  // We now build the jacobian.
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[1]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][parameterIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][parameterIndexToSymbol[1]].function(arr);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][dynamicalIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][dynamicalIndexToSymbol[1]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][parameterIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][parameterIndexToSymbol[1]].function(arr);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	doublePartials[0][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[0]]
+	.function(arr)
+	+
+	doublePartials[1][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[0]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	doublePartials[0][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[1]]
+	.function(arr)
+	+
+	doublePartials[1][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[1]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	doublePartials[0][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[0]]
+	.function(arr)
+	+
+	doublePartials[1][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[0]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	doublePartials[0][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[1]]
+	.function(arr)
+	+
+	doublePartials[1][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[1]]
+	.function(arr);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 2 * (arr[parameterIndexToSymbol[0]] - specs.init.parameters[0]);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 2 * (arr[parameterIndexToSymbol[1]] - specs.init.parameters[1]);
+    });
+  
+  // Setup the initial search vector
+  math::vector init(symbolsToIndex.size());
+  std::vector<int> varIndex;
+  init[varDiffIndex] = 0; // This value is ignored by the functions
+  for(int i = 0; i != dynamicalVars; ++i) {
+    init[dynamicalIndexToSymbol[i]] = specs.init.dynamicalVars[i];
+    varIndex.push_back(dynamicalIndexToSymbol[i]);
+  }
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = specs.init.parameters[i];
+    varIndex.push_back(parameterIndexToSymbol[i]);
+  }
+
+  bool found = false;
+  // We search in a radial direction.
+  for(searchRadius = 0.001; searchRadius <= specs.searchRadius;
+      searchRadius += specs.searchInc) {
+    found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
+    if(found) {
+      break;
+    }
+  }
+  if(!found) return false;
+
+  // Now that we have found a start point, we setup a new system with a different,
+  // constraint and jacobian.
+  int constraintVar = 0;
+  double constraintConstant;
+  systemFunctions[systemFunctions.size() - 1]
+    = [&](const double* arr) -> double {
+    return arr[parameterIndexToSymbol[constraintVar]] - constraintConstant;
+  };
+
+  for(int i = 0; i != parameters; ++i) {
+    int index = (dynamicalVars + 1) * (dynamicalVars + parameters)
+      + dynamicalVars + i;
+    jacobianFunctions[index] = [&, i](const double* arr) -> double {
+      return constraintVar == i ? 1 : 0;
+    };
+  }
+  
+  // we start by sweeping it out.
+  // We first find a constraint variable which is not transverse.
+  math::vector tmp(init);
+  constraintConstant = tmp[parameterIndexToSymbol[constraintVar]];
+  constraintConstant += specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != parameters - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constraintConstant = init[parameterIndexToSymbol[constraintVar]];
+    constraintConstant += specs.inc;
+    tmp = init;
+  }
+  tmp = init;
+  constraintConstant =  init[parameterIndexToSymbol[constraintVar]];
+  constraintConstant -= specs.inc;
+  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
+    // It is transverse, so we change the constraint variable.
+    if(constraintVar != parameters - 1) {
+      ++constraintVar;
+    } else {
+      constraintVar = 0;
+    }
+    constraintConstant = init[parameterIndexToSymbol[constraintVar]];
+    constraintConstant -= specs.inc;
+  }
+  
+  int originalConstraintVar(constraintVar);
+  math::vector original(init);
+  math::vector prev(init);
+  
+  std::list<math::vector> points;
+  int direction = 1;
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != parameters - 1) {
+	++constraintVar;
+      } else {
+	constraintVar = 0;
+      }
+      if(init[parameterIndexToSymbol[constraintVar]]
+	 - prev[parameterIndexToSymbol[constraintVar]] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constraintConstant = init[parameterIndexToSymbol[constraintVar]];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(parameters);
+      for(int i = 0; i != parameters; ++i) {
+	vars[i] = init[parameterIndexToSymbol[i]];
+      }
+      points.push_back(vars);
+    }
+    constraintConstant += direction * specs.inc;
+  }
+  
+  // Now we sweep out in the other direction.
+  direction = -1;
+  constraintVar = originalConstraintVar;
+  init = original;
+  prev = original;
+  constraintConstant = init[parameterIndexToSymbol[constraintVar]];
+  points.reverse();
+  for(int i = 0; i != specs.span; ++i) {
+    math::vector newInit(init);
+    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
+      // We don't converge, so we change the constraint.
+      if(constraintVar != parameters - 1) {
+	++constraintVar;
+      } else {
+	constraintVar = 0;
+      }
+      if(init[parameterIndexToSymbol[constraintVar]]
+	 - prev[parameterIndexToSymbol[constraintVar]] > 0) {
+	direction = 1;
+      } else {
+	direction = -1;
+      }
+      constraintConstant = init[parameterIndexToSymbol[constraintVar]];
+    } else {
+      prev = init;
+      init = newInit;
+      // Extract the dynamical variables
+      math::vector vars(parameters);
+      for(int i = 0; i != parameters; ++i) {
+	vars[i] = init[parameterIndexToSymbol[i]];
+      }
+      points.push_back(vars);
+    }
+    constraintConstant += direction * specs.inc;
+  }
+
+  hopfBifurcations.at(id).data = points;
+  hopfBifurcations.at(id).specs = specs;
+  return true;
 }
-bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id) {
-  return false;
+bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id id) {
+  // We work in two dimensions with two parameters.
+  // We solve f(x, y, a, b) = 0, g(x, y, a, b) = 0, f_x * g_y - g_x * f_y = 0,
+  // and some additional constraint. Initially the constraint is a circle about
+  // the initial points.
+  saddle_node_bifurcation_specs specs = saddleNodeBifurcations.at(id).specs;
+  std::vector<std::function<double(const double*)>> systemFunctions;
+  std::vector<std::function<double(const double*)>> jacobianFunctions;
+
+  // f = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return system[0].function(arr);
+    });
+  // g = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return system[1].function(arr);
+    });
+  // f_x * g_y - g_x * f_y = 0
+  systemFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[0]].function(arr)
+	* partials[1][dynamicalIndexToSymbol[1]].function(arr)
+	- partials[1][dynamicalIndexToSymbol[0]].function(arr)
+	* partials[0][dynamicalIndexToSymbol[1]].function(arr);
+    });
+
+  // We now build the jacobian.
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][dynamicalIndexToSymbol[1]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][parameterIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[0][parameterIndexToSymbol[1]].function(arr);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][dynamicalIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][dynamicalIndexToSymbol[1]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][parameterIndexToSymbol[0]].function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return partials[1][parameterIndexToSymbol[1]].function(arr);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	partials[0][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[0]]
+	.function(arr)
+	+
+	partials[1][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[0]]
+	.function(arr)
+	-
+	partials[1][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[0]]
+	.function(arr)
+	-
+	partials[0][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[0]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	partials[0][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[1]]
+	.function(arr)
+	+
+	partials[1][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[1]]
+	.function(arr)
+	-
+	partials[1][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[1]][dynamicalIndexToSymbol[1]]
+	.function(arr)
+	-
+	partials[0][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[0]][dynamicalIndexToSymbol[1]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	partials[0][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[0]]
+	.function(arr)
+	+
+	partials[1][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[0]]
+	.function(arr)
+	-
+	partials[1][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[0]]
+	.function(arr)
+	-
+	partials[0][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[0]]
+	.function(arr);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return
+	partials[0][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[1]]
+	.function(arr)
+	+
+	partials[1][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[1]]
+	.function(arr)
+	-
+	partials[1][dynamicalIndexToSymbol[0]].function(arr) *
+	doublePartials[0][dynamicalIndexToSymbol[1]][parameterIndexToSymbol[1]]
+	.function(arr)
+	-
+	partials[0][dynamicalIndexToSymbol[1]].function(arr) *
+	doublePartials[1][dynamicalIndexToSymbol[0]][parameterIndexToSymbol[1]]
+	.function(arr);
+    });
+
+  
+  
+  // Setup the initial search vector
+  math::vector init(symbolsToIndex.size());
+  std::vector<int> varIndex;
+  init[varDiffIndex] = 0; // This value is ignored by the functions
+  for(int i = 0; i != dynamicalVars; ++i) {
+    init[dynamicalIndexToSymbol[i]] = specs.init.dynamicalVars[i];
+    std::cout << init[dynamicalIndexToSymbol[i]] << std::endl;
+    varIndex.push_back(dynamicalIndexToSymbol[i]);
+  }
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = specs.init.parameters[i];
+    varIndex.push_back(parameterIndexToSymbol[i]);
+  }
+  std::unordered_set<int> constraintVars;
+  constraintVars.insert(2);
+  constraintVars.insert(3);
+
+  math::find_implicit_path_ret ret =
+    math::find_implicit_path(systemFunctions,
+			     jacobianFunctions,
+			     init,
+			     varIndex,
+			     constraintVars,
+			     specs.searchRadius,
+			     specs.searchInc,
+			     specs.inc,
+			     specs.span);
+
+  if(!ret.success) return false;
+
+  std::list<math::vector> points;
+  for(const math::vector& point : ret.data) {
+    math::vector vec(2);
+    vec[0] = point[2];
+    vec[1] = point[3];
+    points.push_back(vec);
+  }
+  saddleNodeBifurcations.at(id).data = points;
+  saddleNodeBifurcations.at(id).specs = specs;
+  return true;
 }
 
 bool model::generate_isocline_data(isocline_id id) {
@@ -2071,11 +3001,7 @@ bool model::generate_isocline_data(isocline_id id) {
 	return system[i].function(arr) - arr[kIndex] * specs.direction[i];
       });
   }
-  int constraintVar;
-  double constant;
-  systemFunctions.push_back([&](const double* arr) -> double {
-      return arr[dynamicalIndexToSymbol[constraintVar]] - constant;
-    });
+  
   for(int r = 0; r != dynamicalVars; ++r) {
     for(int c = 0; c != dynamicalVars; ++c) {
       jacobianFunctions.push_back(partials[r][dynamicalIndexToSymbol[c]]
@@ -2085,15 +3011,7 @@ bool model::generate_isocline_data(isocline_id id) {
 	return -specs.direction[r];
       });
   }
-  for(int i = 0; i != dynamicalVars; ++i) {
-    jacobianFunctions.push_back([&, i](const double*) -> double {
-	return i == constraintVar ? 1 : 0;
-      });
-  }
-  jacobianFunctions.push_back([](const double*) -> double {
-      return 0;
-    });
-
+  
   // Setup the initial search vector
   math::vector init(kIndex + 1);
   init[varDiffIndex] = 0; // This value is ignored by the functions
@@ -2110,144 +3028,25 @@ bool model::generate_isocline_data(isocline_id id) {
   std::vector<int> varIndex(dynamicalIndexToSymbol);
   varIndex.push_back(kIndex);
 
-  bool found = false;
-  // We are now ready to attempt to find a hit. We sweep each constraint
-  // about the starting point in a radius of spec.searchRadius
-  // until we get a hit.
-  for(constraintVar = 0; constraintVar != dynamicalVars; ++constraintVar) {
-    for(constant = specs.init[constraintVar];
-	constant <= specs.init[constraintVar] + specs.searchRadius;
-	constant += specs.searchInc) {
-      found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
-      if(found) {
-	break;
-      }
-    }
-    if(found) {
-      break;
-    }
-    for(constant = specs.init[constraintVar];
-	constant >= specs.init[constraintVar] - specs.searchRadius;
-	constant -= specs.searchInc) {
-      found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
-      if(found) {
-	break;
-      }
-    }
-    if(found) {
-      break;
-    }
-  }
-  if(!found) return false;
-
-  // We've found an isocline. We update the isocline search specification,
-  // to start at the new init value.
+  std::unordered_set<int> constraintVars;
   for(int i = 0; i != dynamicalVars; ++i) {
-    specs.init[i] = init[dynamicalIndexToSymbol[i]];
-  }
-  
-  // we start by sweeping it out.
-  // We first find a constraint variable which is not transverse.
-  math::vector tmp(init);
-  constant = tmp[constraintVar];
-  constant += specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != dynamicalVars - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constant = init[dynamicalIndexToSymbol[constraintVar]];
-    constant += specs.inc;
-    tmp = init;
-  }
-  tmp = init;
-  constant =  init[dynamicalIndexToSymbol[constraintVar]];
-  constant -= specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != dynamicalVars - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constant = init[dynamicalIndexToSymbol[constraintVar]];
-    constant -= specs.inc;
-  }
-  
-  int originalConstraintVar(constraintVar);
-  math::vector original(init);
-  math::vector prev(init);
-  
-  std::list<math::vector> points;
-  int direction = 1;
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != dynamicalVars - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[dynamicalIndexToSymbol[constraintVar]]
-	 - prev[dynamicalIndexToSymbol[constraintVar]] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constant = init[dynamicalIndexToSymbol[constraintVar]];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(dynamicalVars);
-      for(int i = 0; i != dynamicalVars; ++i) {
-	vars[i] = init[dynamicalIndexToSymbol[i]];
-      }
-      points.push_back(vars);
-    }
-    constant += direction * specs.inc;
-  }
-  
-  // Now we sweep out in the other direction.
-  direction = -1;
-  constraintVar = originalConstraintVar;
-  init = original;
-  prev = original;
-  constant = init[dynamicalIndexToSymbol[constraintVar]];
-  points.reverse();
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != dynamicalVars - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[dynamicalIndexToSymbol[constraintVar]]
-	 - prev[dynamicalIndexToSymbol[constraintVar]] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constant = init[dynamicalIndexToSymbol[constraintVar]];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(dynamicalVars);
-      for(int i = 0; i != dynamicalVars; ++i) {
-	vars[i] = init[dynamicalIndexToSymbol[i]];
-      }
-      points.push_back(vars);
-    }
-    constant += direction * specs.inc;
+    constraintVars.insert(i);
   }
 
-  isoclines.at(id).data = points;
+  math::find_implicit_path_ret ret =
+    math::find_implicit_path(systemFunctions,
+			     jacobianFunctions,
+			     init,
+			     varIndex,
+			     constraintVars,
+			     specs.searchRadius,
+			     specs.searchInc,
+			     specs.inc,
+			     specs.span);
+
+  if(!ret.success) return false;
+  
+  isoclines.at(id).data = ret.data;
   isoclines.at(id).specs = specs;
   return true;
 }

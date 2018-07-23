@@ -20,7 +20,10 @@
 #include "gui/separatrix_dialog.h"
 #include "gui/hopf_bifurcation_dialog.h"
 #include "gui/saddle_node_bifurcation_dialog.h"
+#include "gui/limit_cycle_bifurcation_dialog.h"
+#include "gui/saddle_connection_bifurcation_dialog.h"
 #include "math/eigenvalue.h"
+
 
 namespace dynsolver {
 namespace gui {
@@ -139,6 +142,8 @@ bool app::OnInit() {
   separatrixDialog = new separatrix_dialog(*this);
   hopfBifurcationDialog = new hopf_bifurcation_dialog(*this);
   saddleNodeBifurcationDialog = new saddle_node_bifurcation_dialog(*this);
+  limitCycleBifurcationDialog = new limit_cycle_bifurcation_dialog(*this);
+  saddleConnectionBifurcationDialog = new saddle_connection_bifurcation_dialog(*this);
   
   return true;
 }
@@ -188,6 +193,8 @@ void app::close_application() {
   separatrixDialog->Destroy();
   hopfBifurcationDialog->Destroy();
   saddleNodeBifurcationDialog->Destroy();
+  limitCycleBifurcationDialog->Destroy();
+  saddleConnectionBifurcationDialog->Destroy();
 }
 
 void app::add_dynamical(const dynamical_specs& spec) {
@@ -289,6 +296,12 @@ hopf_bifurcation_dialog* app::get_hopf_bifurcation_dialog() const {
 saddle_node_bifurcation_dialog* app::get_saddle_node_bifurcation_dialog() const {
   return saddleNodeBifurcationDialog;
 }
+limit_cycle_bifurcation_dialog* app::get_limit_cycle_bifurcation_dialog() const {
+  return limitCycleBifurcationDialog;
+}
+saddle_connection_bifurcation_dialog* app::get_saddle_connection_bifurcation_dialog() const {
+  return saddleConnectionBifurcationDialog;
+}
 
 const model& app::get_model() const {
   return *modelData;
@@ -373,6 +386,24 @@ bool app::add_saddle_node_bifurcation(const saddle_node_bifurcation_specs& specs
   return success;
 }
 
+bool app::add_saddle_connection_bifurcation(const saddle_connection_bifurcation_specs& specs) {
+  bool success = modelData->add_saddle_connection_bifurcation(specs);
+  if(success) {
+    refresh_parameter_windows();
+    consoleFrame->update_saddle_connection_bifurcation_list();
+  }
+  return success;
+}
+
+bool app::add_limit_cycle_bifurcation(const limit_cycle_bifurcation_specs& specs) {
+  bool success = modelData->add_limit_cycle_bifurcation(specs);
+  if(success) {
+    refresh_parameter_windows();
+    consoleFrame->update_limit_cycle_bifurcation_list();
+  }
+  return success;
+}
+
 
 
 bool app::compile(const std::string& varDiffName,
@@ -416,6 +447,18 @@ void app::delete_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
   modelData->delete_saddle_node_bifurcation(id);
   refresh_parameter_windows();
   consoleFrame->update_saddle_node_bifurcation_list();
+}
+
+void app::delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id id) {
+  modelData->delete_limit_cycle_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_limit_cycle_bifurcation_list();
+}
+
+void app::delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id id) {
+  modelData->delete_saddle_connection_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_connection_bifurcation_list();
 }
 
 void app::delete_solution(solution_id id) {
@@ -466,6 +509,12 @@ void app::select_parameter_object(parameter_id id, int x, int y) {
   } else if(modelData->select_saddle_node_bifurcation(id, x, y)) {
     refresh_parameter_windows();
     consoleFrame->update_saddle_node_bifurcation_list();
+  } else if(modelData->select_limit_cycle_bifurcation(id, x, y)) {
+    refresh_parameter_windows();
+    consoleFrame->update_limit_cycle_bifurcation_list();
+  } else if(modelData->select_saddle_connection_bifurcation(id, x, y)) {
+    refresh_parameter_windows();
+    consoleFrame->update_saddle_connection_bifurcation_list();
   } else {
     deselect_hopf_bifurcation();
     deselect_saddle_node_bifurcation();
@@ -508,6 +557,18 @@ void app::select_saddle_node_bifurcation(saddle_node_bifurcation_id id) {
   consoleFrame->update_saddle_node_bifurcation_list();
 }
 
+void app::select_limit_cycle_bifurcation(limit_cycle_bifurcation_id id) {
+  modelData->select_limit_cycle_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_limit_cycle_bifurcation_list();
+}
+
+void app::select_saddle_connection_bifurcation(saddle_connection_bifurcation_id id) {
+  modelData->select_saddle_connection_bifurcation(id);
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_connection_bifurcation_list();
+}
+
 void app::deselect_solution() {
   modelData->deselect_solution();
   refresh_dynamical_windows();
@@ -540,6 +601,18 @@ void app::deselect_saddle_node_bifurcation() {
   modelData->deselect_saddle_node_bifurcation();
   refresh_parameter_windows();
   consoleFrame->update_saddle_node_bifurcation_list();
+}
+
+void app::deselect_limit_cycle_bifurcation() {
+  modelData->deselect_limit_cycle_bifurcation();
+  refresh_parameter_windows();
+  consoleFrame->update_limit_cycle_bifurcation_list();
+}
+
+void app::deselect_saddle_connection_bifurcation() {
+  modelData->deselect_saddle_connection_bifurcation();
+  refresh_parameter_windows();
+  consoleFrame->update_saddle_connection_bifurcation_list();
 }
 
 void app::set_parameter_position(parameter_id id, const math::vector2d& pos) {

@@ -7,6 +7,8 @@
 #include <wx/msgdlg.h>
 #include "gui/hopf_bifurcation_dialog.h"
 #include "gui/saddle_node_bifurcation_dialog.h"
+#include "gui/limit_cycle_bifurcation_dialog.h"
+#include "gui/saddle_connection_bifurcation_dialog.h"
 
 namespace dynsolver {
 namespace gui {
@@ -149,7 +151,6 @@ void parameter_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_left_mouse_click(const math::vector2d& pos) {
-  PopupMenu(parameterPopupMenu);
 }
 
 void parameter_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
@@ -165,6 +166,7 @@ void parameter_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_right_mouse_click(const math::vector2d& pos) {
+  PopupMenu(parameterPopupMenu);
 }
 
 void parameter_frame::gl_canvas_on_paint(wxPaintEvent&) {
@@ -193,7 +195,7 @@ void parameter_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   math::window2d newViewport(magnificationViewport);
   newViewport.scale_pixel(math::vector2d(totalMagnification,
 					 totalMagnification),
-				       magnificationPos);
+			  magnificationPos);
   appl.set_parameter_viewport(id, newViewport);
 }
 
@@ -266,6 +268,23 @@ void parameter_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEv
 void parameter_frame::limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) {
 }
 void parameter_frame::saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  saddle_connection_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.transversalA = math::vector2d(0.0, 0.0);
+  specs.transversalB = math::vector2d(0.0, 0.0);
+  specs.separatrix1 = model::kNoSeparatrixId;
+  specs.separatrix2 = model::kNoSeparatrixId;
+  specs.init = appl.get_model().get_parameter_point(id, rightClickMousePos);
+  if(appl.get_saddle_connection_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_saddle_connection_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find saddle connection.",
+				    "Saddle Connection Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
 }
 } // namespace gui
 } // namespace dynsolver

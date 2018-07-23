@@ -29,6 +29,8 @@ class isocline_dialog;
 class separatrix_dialog;
 class hopf_bifurcation_dialog;
 class saddle_node_bifurcation_dialog;
+class limit_cycle_bifurcation_dialog;
+class saddle_connection_bifurcation_dialog;
 
 // WxWidgets will call the OnInit method of this class on program startup.
 // This class handles communication between all the windows and dialogs.
@@ -74,6 +76,8 @@ class app : public wxApp {
   separatrix_dialog* separatrixDialog;
   hopf_bifurcation_dialog* hopfBifurcationDialog;
   saddle_node_bifurcation_dialog* saddleNodeBifurcationDialog;
+  limit_cycle_bifurcation_dialog* limitCycleBifurcationDialog;
+  saddle_connection_bifurcation_dialog* saddleConnectionBifurcationDialog;
   
  public:
   app();
@@ -141,7 +145,9 @@ class app : public wxApp {
   separatrix_dialog* get_separatrix_dialog() const;
   hopf_bifurcation_dialog* get_hopf_bifurcation_dialog() const;
   saddle_node_bifurcation_dialog* get_saddle_node_bifurcation_dialog() const;
-
+  limit_cycle_bifurcation_dialog* get_limit_cycle_bifurcation_dialog() const;
+  saddle_connection_bifurcation_dialog* get_saddle_connection_bifurcation_dialog() const;
+  
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model() const;
@@ -179,6 +185,8 @@ class app : public wxApp {
 
   bool add_hopf_bifurcation(const hopf_bifurcation_specs&);
   bool add_saddle_node_bifurcation(const saddle_node_bifurcation_specs&);
+  bool add_limit_cycle_bifurcation(const limit_cycle_bifurcation_specs&);
+  bool add_saddle_connection_bifurcation(const saddle_connection_bifurcation_specs&);
 
   // Delete
   // Deletes the solution. and updates the necessary frames
@@ -193,6 +201,10 @@ class app : public wxApp {
   void delete_hopf_bifurcation(hopf_bifurcation_id id);
   
   void delete_saddle_node_bifurcation(saddle_node_bifurcation_id id);
+
+  void delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id id);
+  
+  void delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id id);
 
   // Update
   // Changes the existing solution.
@@ -214,6 +226,8 @@ class app : public wxApp {
   void select_separatrix(separatrix_id id);
   void select_hopf_bifurcation(hopf_bifurcation_id id);
   void select_saddle_node_bifurcation(saddle_node_bifurcation_id id);
+  void select_limit_cycle_bifurcation(limit_cycle_bifurcation_id id);
+  void select_saddle_connection_bifurcation(saddle_connection_bifurcation_id id);
 
   // Deselects the object programatically
   void deselect_solution();
@@ -222,6 +236,8 @@ class app : public wxApp {
   void deselect_separatrix();
   void deselect_hopf_bifurcation();
   void deselect_saddle_node_bifurcation();
+  void deselect_limit_cycle_bifurcation();
+  void deselect_saddle_connection_bifurcation();
 
   // Sets the parameter position according to the position provided in window
   // coordinates. Updates all parameter and dynamical windows accordingly.

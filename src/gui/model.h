@@ -220,7 +220,7 @@ struct hopf_bifurcation_specs {
 
 struct hopf_bifurcation {
   hopf_bifurcation_specs specs;
-  std::list<bifurcation_point> data;
+  std::list<math::vector> data;
 };
 
 struct saddle_node_bifurcation_specs {
@@ -239,7 +239,67 @@ struct saddle_node_bifurcation_specs {
 
 struct saddle_node_bifurcation {
   saddle_node_bifurcation_specs specs;
-  std::list<bifurcation_point> data;
+  std::list<math::vector> data;
+};
+
+struct saddle_connection_bifurcation_specs {
+  saddle_connection_bifurcation_specs();
+
+  // Holds the initial parameter condition values.
+  math::vector init;
+
+  // The two separatrices which we are attempting to connect.
+  separatrix_id separatrix1;
+  separatrix_id separatrix2;
+
+  // These two vectors define a line in the dynamical space which is transverse
+  // to the saddle separatrices. We minimize the distance between the two
+  // separatrices on this line.
+  math::vector2d transversalA;
+  math::vector2d transversalB;
+  
+  double inc;
+
+  int span;
+
+  double searchRadius;
+  double searchInc;
+
+  color glColor;
+};
+
+struct saddle_connection_bifurcation {
+  saddle_connection_bifurcation_specs specs;
+  std::list<math::vector> data;
+};
+
+struct limit_cycle_bifurcation_specs {
+  limit_cycle_bifurcation_specs();
+  // Holds the initial parameter conditions.
+  math::vector init;
+
+  periodic_solution_id cycle1;
+  periodic_solution_id cycle2;
+
+  // These two vectors define a line in the dynamical space which is transverse
+  // to the limit cycles. We minimize the distance between the two
+  // cycles on this line.
+  math::vector transversalA;
+  math::vector transversalB;
+  
+  double inc;
+
+  int span;
+
+  double searchRadius;
+  double searchInc;
+
+  color glColor;
+};
+
+struct limit_cycle_bifurcation {
+  limit_cycle_bifurcation_specs specs;
+  std::list<math::vector> data;
 };
 
 // Used to pass to and from the dynamical window dialog to obtain
@@ -310,6 +370,10 @@ class model {
     std::unordered_map<hopf_bifurcation_id, render_data> hopfBifurcationData;
     std::unordered_map<saddle_node_bifurcation_id, render_data>
     saddleNodeBifurcationData;
+    std::unordered_map<limit_cycle_bifurcation_id, render_data>
+    limitCycleBifurcationData;
+    std::unordered_map<saddle_connection_bifurcation_id, render_data>
+    saddleConnectionBifurcationData;
     
   public:
     parameter_window(model&, const parameter_specs& spec);
@@ -340,18 +404,26 @@ class model {
 
     void gen_hopf_bifurcation_vbo(hopf_bifurcation_id);
     void gen_saddle_node_bifurcation_vbo(saddle_node_bifurcation_id);
+    void gen_limit_cycle_bifurcation_vbo(limit_cycle_bifurcation_id);
+    void gen_saddle_connection_bifurcation_vbo(saddle_connection_bifurcation_id);
 
     void delete_hopf_bifurcation(hopf_bifurcation_id);
     void delete_saddle_node_bifurcation(saddle_node_bifurcation_id);
+    void delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id);
+    void delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id);
 
     bool select_hopf_bifurcation(int x, int y, hopf_bifurcation_id*);
     bool select_saddle_node_bifurcation(int x, int y, saddle_node_bifurcation_id*);
-
+    bool select_limit_cycle_bifurcation(int x, int y, limit_cycle_bifurcation_id*);
+    bool select_saddle_connection_bifurcation(int x, int y, saddle_connection_bifurcation_id*);
+    
     math::vector get_point(const math::vector2d&) const;
 
   private:
     void draw_hopf_bifurcations();
     void draw_saddle_node_bifurcations();
+    void draw_limit_cycle_bifurcations();
+    void draw_saddle_connection_bifurcations();
     
   };
   
@@ -601,6 +673,10 @@ class model {
   std::unordered_map<hopf_bifurcation_id, hopf_bifurcation> hopfBifurcations;
   std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>
   saddleNodeBifurcations;
+  std::unordered_map<saddle_connection_bifurcation_id, saddle_connection_bifurcation>
+  saddleConnectionBifurcations;
+  std::unordered_map<limit_cycle_bifurcation_id, limit_cycle_bifurcation>
+  limitCycleBifurcations;
 
   // This value indicates which object is currently selected. If the value is
   // set to one of the kNoId constants above, then no object of that type is
@@ -611,6 +687,8 @@ class model {
   separatrix_id selectedSeparatrixId;
   hopf_bifurcation_id selectedHopfBifurcationId;
   saddle_node_bifurcation_id selectedSaddleNodeBifurcationId;
+  limit_cycle_bifurcation_id selectedLimitCycleBifurcationId;
+  saddle_connection_bifurcation_id selectedSaddleConnectionBifurcationId;
 
   // These unique id's are all greater than or equal to any id's mapped in the
   // corresponding maps. When adding a new value, the unique id is incremented
@@ -623,6 +701,8 @@ class model {
   separatrix_id uniqueSeparatrixId;
   hopf_bifurcation_id uniqueHopfBifurcationId;
   saddle_node_bifurcation_id uniqueSaddleNodeBifurcationId;
+  limit_cycle_bifurcation_id uniqueLimitCycleBifurcationId;
+  saddle_connection_bifurcation_id uniqueSaddleConnectionBifurcationId;
   
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
@@ -682,10 +762,20 @@ class model {
   bool generate_hopf_bifurcation_data(hopf_bifurcation_id);
   bool generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id);
 
+  bool generate_saddle_connection_bifurcation_data(saddle_connection_bifurcation_id);
+  bool generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id);
+
+  math::vector2d find_separatrix_intersection(separatrix_id id,
+					      const math::vector2d& transversalA,
+					      const math::vector2d& transversalB,
+					      double paramA, double paramB);
+  
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
   typedef std::unordered_map<dynamical_id, dynamical_window>::const_iterator
   dynamical_const_iter;
+  typedef std::unordered_map<parameter_id, parameter_window>::const_iterator
+  parameter_const_iter;
   typedef std::unordered_map<singular_point_id, singular_point>::const_iterator
   singular_point_const_iter;
   typedef std::unordered_map<isocline_id, isocline>::const_iterator
@@ -697,6 +787,8 @@ class model {
   solution_iter;
   typedef std::unordered_map<dynamical_id, dynamical_window>::iterator
   dynamical_iter;
+  typedef std::unordered_map<parameter_id, parameter_window>::iterator
+  parameter_iter;
   typedef std::unordered_map<singular_point_id, singular_point>::iterator
   singular_point_iter;
   typedef std::unordered_map<isocline_id, isocline>::iterator
@@ -714,6 +806,8 @@ public:
   static const separatrix_id kNoSeparatrixId;
   static const hopf_bifurcation_id kNoHopfBifurcationId;
   static const saddle_node_bifurcation_id kNoSaddleNodeBifurcationId;
+  static const limit_cycle_bifurcation_id kNoLimitCycleBifurcationId;
+  static const saddle_connection_bifurcation_id kNoSaddleConnectionBifurcationId;
   
   // The maximal distance between two axis ticks in pixels. If the number of
   // axis tickets jumps above the maximum, then the number of tickets are
@@ -782,6 +876,8 @@ public:
 
   bool add_hopf_bifurcation(const hopf_bifurcation_specs&);
   bool add_saddle_node_bifurcation(const saddle_node_bifurcation_specs&);
+  bool add_limit_cycle_bifurcation(const limit_cycle_bifurcation_specs&);
+  bool add_saddle_connection_bifurcation(const saddle_connection_bifurcation_specs&);
 
 
   // Delete
@@ -804,6 +900,8 @@ public:
 
   void delete_hopf_bifurcation(hopf_bifurcation_id);
   void delete_saddle_node_bifurcation(saddle_node_bifurcation_id);
+  void delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id);
+  void delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id);
 
   // Select
   // Attempts to select the solution below the cursor at x, y in the dynamical
@@ -820,6 +918,8 @@ public:
   bool select_separatrix(dynamical_id, int x, int y);
   bool select_hopf_bifurcation(parameter_id, int, int);
   bool select_saddle_node_bifurcation(parameter_id, int, int);
+  bool select_limit_cycle_bifurcation(parameter_id, int, int);
+  bool select_saddle_connection_bifurcation(parameter_id, int, int);
 
   // Selects the object directly
   void select_solution(solution_id id);
@@ -828,6 +928,8 @@ public:
   void select_separatrix(separatrix_id id);
   void select_hopf_bifurcation(hopf_bifurcation_id);
   void select_saddle_node_bifurcation(saddle_node_bifurcation_id);
+  void select_limit_cycle_bifurcation(limit_cycle_bifurcation_id);
+  void select_saddle_connection_bifurcation(saddle_connection_bifurcation_id);
 
   // Deselects the solution that is currently selected. Does nothing if no
   // solution is selected.
@@ -840,6 +942,8 @@ public:
   void deselect_separatrix();
   void deselect_hopf_bifurcation();
   void deselect_saddle_node_bifurcation();
+  void deselect_limit_cycle_bifurcation();
+  void deselect_saddle_connection_bifurcation();
 
 
   // Update: Some specs need to be dynamically updated. More fine grained
@@ -881,6 +985,10 @@ public:
   get_hopf_bifurcations() const;
   const std::unordered_map<saddle_node_bifurcation_id, saddle_node_bifurcation>&
   get_saddle_node_bifurcations() const;
+  const std::unordered_map<saddle_connection_bifurcation_id, saddle_connection_bifurcation>&
+  get_saddle_connection_bifurcations() const;
+  const std::unordered_map<limit_cycle_bifurcation_id, limit_cycle_bifurcation>&
+  get_limit_cycle_bifurcations() const;
 
   // Returns the selected id for the given object or kNoId if no such
   // object is selected.
@@ -890,6 +998,9 @@ public:
   separatrix_id get_selected_separatrix() const;
   hopf_bifurcation_id get_selected_hopf_bifurcation() const;
   saddle_node_bifurcation_id get_selected_saddle_node_bifurcation() const;
+  saddle_connection_bifurcation_id get_selected_saddle_connection_bifurcation() const;
+  limit_cycle_bifurcation_id get_selected_limit_cycle_bifurcation() const;
+  
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window

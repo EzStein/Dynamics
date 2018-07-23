@@ -16,6 +16,9 @@ typedef size_t isocline_id;
 typedef size_t separatrix_id;
 typedef size_t hopf_bifurcation_id;
 typedef size_t saddle_node_bifurcation_id;
+typedef size_t limit_cycle_bifurcation_id;
+typedef size_t saddle_connection_bifurcation_id;
+typedef size_t periodic_solution_id;
 } // namespace gui
 } // namespace dynsolver
 #endif

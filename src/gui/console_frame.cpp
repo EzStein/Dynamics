@@ -15,6 +15,8 @@
 #include "gui/separatrix_dialog.h"
 #include "gui/hopf_bifurcation_dialog.h"
 #include "gui/saddle_node_bifurcation_dialog.h"
+#include "gui/saddle_connection_bifurcation_dialog.h"
+#include "gui/limit_cycle_bifurcation_dialog.h"
 
 #include "regex/nfa.h"
 
@@ -72,6 +74,10 @@ void console_frame::variable_names_data_view_ctrl_on_value_changed(wxDataViewEve
 }
 
 void console_frame::variables_text_ctrl_on_text_enter(wxCommandEvent&) {
+  variables_text_ctrl_process_enter();
+}
+
+void console_frame::variables_text_ctrl_process_enter() {
   std::string value = variablesTextCtrl->GetValue().ToStdString();
   int newVariables;
   if(!util::has_only_digits(value)) {
@@ -131,6 +137,10 @@ void console_frame::variables_text_ctrl_on_text_enter(wxCommandEvent&) {
 }
 
 void console_frame::parameters_text_ctrl_on_text_enter(wxCommandEvent&) {
+  parameters_text_ctrl_process_enter();
+}
+
+void console_frame::parameters_text_ctrl_process_enter() {
   std::string value = parametersTextCtrl->GetValue().ToStdString();
   int newParameters;
   if(!util::has_only_digits(value)) {
@@ -185,7 +195,9 @@ console_frame::~console_frame() { }
 
 void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) {
   variablesTextCtrl->SetValue("3");
+  variables_text_ctrl_process_enter();
   parametersTextCtrl->SetValue("3");
+  parameters_text_ctrl_process_enter();
   
   equationsDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
@@ -207,17 +219,12 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
 
 void console_frame::van_der_pol_example_on_menu_selection(wxCommandEvent&) {
   variablesTextCtrl->SetValue("2");
+  variables_text_ctrl_process_enter();
   parametersTextCtrl->SetValue("2");
-  
-  equationsDataViewCtrl->DeleteAllItems();
-  wxVector<wxVariant> data;
-  data.push_back(wxVariant("x"));
-  data.push_back(wxVariant("a*(1-y^2)*x-y"));
-  equationsDataViewCtrl->AppendItem(data);
-  data.clear();
-  data.push_back(wxVariant("y"));
-  data.push_back(wxVariant("x"));
-  equationsDataViewCtrl->AppendItem(data);
+  parameters_text_ctrl_process_enter();
+
+  equationsDataViewCtrl->SetValue(wxVariant("x^2+y^2-a^2"), 0, 1);
+  equationsDataViewCtrl->SetValue(wxVariant("x^2-y^2-b^2"), 1, 1);
 
   compileButton->Enable();
 }
@@ -673,6 +680,20 @@ void console_frame::close_menu_item_on_menu_selection(wxCommandEvent&) {
 void console_frame::singular_points_delete_button_on_button_click(wxCommandEvent&) {
   appl.delete_singular_point(get_selected_singular_point());
 }
+limit_cycle_bifurcation_id console_frame::get_selected_limit_cycle_bifurcation() {
+  wxVariant value;
+  limitCycleBifurcationsDataViewCtrl
+    ->GetValue(value,
+	       limitCycleBifurcationsDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
+saddle_connection_bifurcation_id console_frame::get_selected_saddle_connection_bifurcation() {
+  wxVariant value;
+  saddleConnectionBifurcationsDataViewCtrl
+    ->GetValue(value,
+	       saddleConnectionBifurcationsDataViewCtrl->GetSelectedRow(), 0);
+  return std::stoi(value.GetString().ToStdString());
+}
 
 void console_frame::update_parameters_data_view_ctrl() {
   compiledParametersDataViewCtrl->DeleteAllItems();
@@ -720,6 +741,12 @@ void console_frame::update_saddle_node_bifurcation_list() {
     saddleNodeBifurcationsDataViewCtrl->AppendItem(data);
   }
   saddleNodeBifurcationsDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
+}
+
+void console_frame::update_limit_cycle_bifurcation_list() {
+}
+
+void console_frame::update_saddle_connection_bifurcation_list() {
 }
 
 void console_frame::hopf_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) {
@@ -770,8 +797,40 @@ void console_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEven
   }
 }
 void console_frame::limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  /*  limit_cycle_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.transversalA = math::vector(2, 0.0);
+  specs.transversalB = math::vector(2, 0.0);
+  specs.init = math::vector(2, 0.0);
+  if(appl.get_limit_cycle_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_limit_cycle_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find semi-stable limit cycle",
+				    "Semi-stable limit cycle Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }*/
 }
 void console_frame::saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) {
+  saddle_connection_bifurcation_specs specs;
+  specs.inc = 0.1;
+  specs.span = 100;
+  specs.searchRadius = 10;
+  specs.searchInc = 1;
+  specs.transversalA = math::vector2d(0.0, 0.0);
+  specs.transversalB = math::vector2d(0.0, 0.0);
+  specs.separatrix1 = model::kNoSeparatrixId;
+  specs.separatrix2 = model::kNoSeparatrixId;
+  specs.init = math::vector(2, 0.0);
+  if(appl.get_saddle_connection_bifurcation_dialog()->show_dialog(specs)) {
+    if(!appl.add_saddle_connection_bifurcation(specs)) {
+      wxMessageDialog messageDialog(nullptr, "Could not find saddle connection.",
+				    "Saddle Connection Bifurcation", wxOK);
+      messageDialog.ShowModal();
+    }
+  }
 }
 } // namespace gui
 } // namespace dynsolver
