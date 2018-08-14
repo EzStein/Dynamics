@@ -1,3 +1,4 @@
+
 #ifndef DYNSOLVER_GUI_APP_H_
 #define DYNSOLVER_GUI_APP_H_
 
@@ -182,6 +183,8 @@ class app : public wxApp {
   bool add_isocline(const isocline_specs&);
 
   void add_separatrix(const separatrix_specs&);
+
+  void add_all_separatrices();
 
   bool add_hopf_bifurcation(const hopf_bifurcation_specs&);
   bool add_saddle_node_bifurcation(const saddle_node_bifurcation_specs&);

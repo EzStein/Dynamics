@@ -8,18 +8,26 @@
 #include "math/poly_root.h"
 #include "math/square_matrix.h"
 #include "math/eigenvalue.h"
+#include "compiler/function.h"
+#include "math/util.h"
+
+using namespace dynsolver;
+
+double val(const double* arr) {
+  return arr[0] * arr[0]*arr[0];
+}
+
+double deriv(const double* arr) {
+  return 3 * arr[0] * arr[0];
+}
 
 int main() {
-  int size = 3;
-  dynsolver::math::square_matrix mat(size);
-  for(int i = 0; i != size; ++i) {
-    for(int j = 0; j != size; ++j) {
-      mat[i][j] = i + j;
-    }
-  }
-  std::vector<dynsolver::math::eigenvalue> values(mat.find_eigenvalues());
-  for(int i = 0; i != values.size(); ++i) {
-    std::cout << values[i].get_value().get_root().to_string() << std::endl;
+  for(double i = -3; i <= 3; i += 0.1) {
+    math::vector in(1, i);
+    double computed = math::derivative(val, in, 0);
+    double expected = deriv(in.data());
+    std::cout << "Expected Derivative: " << expected << std::endl;
+    std::cout << "Computed Derivative: " << computed << std::endl;
   }
   return 0;
 }

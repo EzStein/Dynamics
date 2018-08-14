@@ -367,6 +367,7 @@ void str_to_reg(std::string str, reg& regRet, reg_type& regTypeRet, size& sizeRe
 
 std::string token_to_string(int tok) {
   assert("unimplemented");
+  return "";
 }
 
 

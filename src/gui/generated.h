@@ -60,6 +60,7 @@ class console_frame_base : public wxFrame
 		wxMenuItem* singularPointMenuItem;
 		wxMenuItem* isoclineMenuItem;
 		wxMenuItem* separatricesMenuItem;
+		wxMenuItem* m_menuItem33;
 		wxMenuItem* hopfBifurcationMenuItem;
 		wxMenuItem* saddleNodeBifurcationMenuItem;
 		wxMenuItem* limitCycleBifurcationMenuItem;
@@ -144,6 +145,7 @@ class console_frame_base : public wxFrame
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void separatrices_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void draw_all_separatrices_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void hopf_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void saddle_node_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void limit_cycle_bifurcation_menu_item_on_selection( wxCommandEvent& event ) = 0;

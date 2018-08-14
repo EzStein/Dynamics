@@ -1,4 +1,5 @@
 
+
 #include "gui/app.h"
 
 #include <cassert>
@@ -364,6 +365,34 @@ bool app::add_singular_point(const singular_point_specs& spec) {
 
 void app::add_separatrix(const separatrix_specs& specs) {
   modelData->add_separatrix(specs);
+  refresh_dynamical_windows();
+  consoleFrame->update_separatrices_list();
+}
+
+void app::add_all_separatrices() {
+  separatrix_specs specs;
+  specs.inc = 0.01;
+  specs.time = 20;
+  for(std::unordered_map<singular_point_id, singular_point>::const_iterator
+	iter = modelData->get_singular_points().begin();
+      iter != modelData->get_singular_points().end();
+      ++iter) {
+    if(iter->second.type == singular_point::type::SADDLE) {
+      specs.singularPoint = iter->first;
+      specs.type = separatrix_specs::type::STABLE;
+      specs.direction = true;
+      modelData->add_separatrix(specs);
+      specs.type = separatrix_specs::type::STABLE;
+      specs.direction = false;
+      modelData->add_separatrix(specs);
+      specs.type = separatrix_specs::type::UNSTABLE;
+      specs.direction = true;
+      modelData->add_separatrix(specs);
+      specs.type = separatrix_specs::type::UNSTABLE;
+      specs.direction = false;
+      modelData->add_separatrix(specs);
+    }
+  }
   refresh_dynamical_windows();
   consoleFrame->update_separatrices_list();
 }

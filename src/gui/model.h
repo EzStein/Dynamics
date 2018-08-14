@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <stdexcept>
 
 #include <glad/glad.h>
 
@@ -17,6 +18,7 @@
 #include "gl/vertex_array.h"
 #include "gl/font.h"
 #include "gl/text_renderer.h"
+#include "math/util.h"
 
 class wxGLCanvas;
 class wxGLContext;
@@ -80,18 +82,10 @@ struct solution_specs {
   double inc;
 };
 
-struct dynamical_point {
-  // Represents the dynamical variables in the order of dynamicalVarNames vector
-  math::vector vars;
-
-  // The value of the variable of differentiation.
-  double t;
-};
-
 // A specification for drawing a solution through an initial point.
 struct solution {
   solution_specs specs;
-  std::list<dynamical_point> data;
+  std::list<math::dynamical_point> data;
 };
 
 struct singular_point_specs {
@@ -186,6 +180,11 @@ struct separatrix_specs {
   // this is the amount of negative time to run the separatrix.
   double time;
 
+  // This indicates which of the two solutions on the invariant we intend
+  // to draw. True indicates along the unstable eigenvector and false is
+  // along in the opposate direction.
+  bool direction;
+
   color glColor;
 };
 
@@ -194,7 +193,7 @@ struct separatrix {
   // A list of vectors where the vectors hold the dynamical variables
   // in the order given by dynamicalVarNames. Does not hold the variable
   // of differentiation.
-  std::list<math::vector> data;
+  std::list<math::vector2d> data;
 };
 
 // Represent a point in the dynamical and parameter space.
@@ -202,7 +201,41 @@ struct separatrix {
 struct bifurcation_point {
   math::vector dynamicalVars;
   math::vector parameters;
-}; 
+};
+
+struct gen_singular_point_ret {
+  singular_point singularPoint;
+  bool success;
+
+  gen_singular_point_ret();
+  gen_singular_point_ret(const singular_point& singularPoint, bool success);
+};
+
+struct gen_separatrix_ret {
+  singular_point singularPoint;
+  separatrix sep;
+  bool success;
+
+  gen_separatrix_ret();
+  gen_separatrix_ret(const singular_point& singularPoint,
+		     const separatrix& sep,
+		     bool success);
+};
+
+struct find_separatrix_intersection_ret {
+  // The new singular point position.
+  math::vector2d intersection;
+  bool success;
+
+  find_separatrix_intersection_ret();
+  find_separatrix_intersection_ret(const math::vector2d intersection,
+				   bool success);
+};
+
+class no_intersection_found_exception : public std::runtime_error {
+public:
+  no_intersection_found_exception() : std::runtime_error("") { }
+};
 
 struct hopf_bifurcation_specs {
   hopf_bifurcation_specs();
@@ -520,7 +553,7 @@ class model {
     bool select_singular_point(int x, int y, singular_point_id* id);
     bool select_separatrix(int x, int y, separatrix_id* id);
 
-    dynamical_point get_point(const math::vector2d& pos) const;
+    math::dynamical_point get_point(const math::vector2d& pos) const;
 
     // Generates a VBO for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
@@ -759,16 +792,39 @@ class model {
   // If so, this function returns false and does not modify the separatrix.
   bool generate_separatrix_data(separatrix_id id);
 
+  // For the given singular point specification and a given separatrix
+  // specification, this method first finds a singular point, and then
+  // computes its corresponding separatrix at the provided parameter position.
+  // If the singular point could not be found, or it is not a saddle, this
+  // function returns a struct with the success flag set to false. Otherwise,
+  // it returns the separatrix data.
+  gen_separatrix_ret gen_separatrix(const singular_point_specs& singularPointSpecs,
+				    const separatrix_specs& separatrixSpecs,
+				    math::vector parameters);
+
+  // Using the given singular point sepecification, this generates a singular
+  // point with the given parameters.
+  gen_singular_point_ret gen_singular_point(const singular_point_specs&,
+					    const math::vector& parameters);
+
   bool generate_hopf_bifurcation_data(hopf_bifurcation_id);
   bool generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id);
 
   bool generate_saddle_connection_bifurcation_data(saddle_connection_bifurcation_id);
   bool generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id);
 
-  math::vector2d find_separatrix_intersection(separatrix_id id,
-					      const math::vector2d& transversalA,
-					      const math::vector2d& transversalB,
-					      double paramA, double paramB);
+  // Computes the intersection between the provided separatrix and the
+  // transversal at the given parameter position. start is the starting
+  // condition used to search for the new singular point position with the new
+  // parameters.
+  find_separatrix_intersection_ret
+  find_separatrix_intersection(double paramA,
+			       double paramB,
+			       double sing1,
+			       double sing2,
+			       const math::vector2d& transA,
+			       const math::vector2d& transB,
+			       const separatrix_id& id);
   
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
@@ -1022,7 +1078,7 @@ public:
 
   // Returns the dynamical point associated with the given mouse position
   // in this dynamical window.
-  dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
+  math::dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
   math::vector get_parameter_point(parameter_id, const math::vector2d& pos) const;
 
   // Sets the parameter position and updates all solutions, isoclines, and

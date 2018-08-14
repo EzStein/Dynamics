@@ -23,6 +23,27 @@
 namespace dynsolver {
 namespace gui {
 
+gen_singular_point_ret::gen_singular_point_ret()
+  : singularPoint(), success(false) { }
+
+gen_singular_point_ret::gen_singular_point_ret(const singular_point& singularPoint,
+					       bool success)
+  : singularPoint(singularPoint), success(success) { }
+
+gen_separatrix_ret::gen_separatrix_ret() : success(false) { }
+gen_separatrix_ret::gen_separatrix_ret(const singular_point& singularPoint,
+				       const separatrix& sep,
+				       bool success)
+  : singularPoint(singularPoint), sep(sep), success(success) { }
+
+
+find_separatrix_intersection_ret::find_separatrix_intersection_ret()
+  : success(false) { }
+
+find_separatrix_intersection_ret::find_separatrix_intersection_ret
+(const math::vector2d intersection, bool success) : intersection(intersection),
+						    success(success) { }
+
 color::color(double r, double g, double b, double a)
   : r(r), g(g), b(b), a(a) { }
 
@@ -468,7 +489,7 @@ bool model::dynamical_window::select_separatrix(int x, int y, separatrix_id* id)
 }
 
 bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
-  typedef std::list<dynamical_point>::const_iterator point_const_iter;
+  typedef std::list<math::dynamical_point>::const_iterator point_const_iter;
   if(specs.is3d) {
     return false;
   } else {
@@ -1024,9 +1045,9 @@ void model::dynamical_window::resize(int width, int height) {
   specs.viewport3d.set_height(height);
 }
 
-dynamical_point model::dynamical_window::get_point(const math::vector2d& pos) const {
+math::dynamical_point model::dynamical_window::get_point(const math::vector2d& pos) const {
   math::vector2d real = specs.viewport2d.real_coordinate_of(pos);
-  dynamical_point point;
+  math::dynamical_point point;
   point.vars = math::vector(modelData.dynamicalVars, 0.0);
   point.t = 0;
   if(specs.horzAxisVar == modelData.varDiffName) {
@@ -1084,13 +1105,13 @@ void model::dynamical_window::delete_isocline(isocline_id id) {
 }
 
 void model::dynamical_window::gen_solution_vbo(solution_id id) {
-  const std::list<dynamical_point>& solution(modelData.solutions.at(id).data);
+  const std::list<math::dynamical_point>& solution(modelData.solutions.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = solution.size();
   size_t size2d = points * 2 * sizeof(float);
   size_t size3d = points * 3 * sizeof(float);
-  for(std::list<dynamical_point>::const_iterator point = solution.begin();
+  for(std::list<math::dynamical_point>::const_iterator point = solution.begin();
       point != solution.end(); ++point) {
     double xReal;
     double yReal;
@@ -1146,7 +1167,7 @@ void model::dynamical_window::gen_solution_vbo(solution_id id) {
 }
 
 void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
-  const std::list<math::vector>& separatrix(modelData.separatrices.at(id).data);
+  const std::list<math::vector2d>& separatrix(modelData.separatrices.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = separatrix.size();
@@ -1155,7 +1176,7 @@ void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
   if(specs.horzAxisVar != modelData.varDiffName &&
      specs.vertAxisVar != modelData.varDiffName) {
     size2d = points * 2 * sizeof(float);
-    for(std::list<math::vector>::const_iterator point = separatrix.begin();
+    for(std::list<math::vector2d>::const_iterator point = separatrix.begin();
 	point != separatrix.end(); ++point) {
       double xReal;
       double yReal;
@@ -1419,7 +1440,7 @@ model::get_singular_points() const {
 void model::add_separatrix(const separatrix_specs& specs) {
   ++uniqueSeparatrixId;
   separatrices.insert(std::make_pair(uniqueSeparatrixId,
-				     separatrix{specs, std::list<math::vector>()}));
+				     separatrix{specs, std::list<math::vector2d>()}));
   generate_separatrix_data(uniqueSeparatrixId);
   // We now need to update the VBO's of each window.
   for(dynamical_iter iter = dynamicalWindows.begin();
@@ -1431,7 +1452,7 @@ void model::add_separatrix(const separatrix_specs& specs) {
 void model::add_solution(const solution_specs& spec) {
   ++uniqueSolutionId;
   solutions.insert(std::make_pair(uniqueSolutionId,
-				  solution{spec, std::list<dynamical_point>()}));
+				  solution{spec, std::list<math::dynamical_point>()}));
   generate_solution_data(uniqueSolutionId);
   
   // We now need to update the VBO's of each window.
@@ -1553,190 +1574,452 @@ bool model::add_saddle_connection_bifurcation(const saddle_connection_bifurcatio
 }
 
 bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurcation_id id) {
-  // We work in two dimensions with two parameters.
-  // We solve
-  // dist(inter(sep1, trans), inter(sep2, trans)) = 0
-  // This is a system of two variables (a and b). We add a constraint to obtain
-  // the solution.
-  // and some additional constraint. Initially the constraint is a circle about
-  // the initial points.
-  saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
+  // We solve the following system.
+  // f(x1, y1, a, b) = 0
+  // g(x1, y1, a, b) = 0
+  // f(x2, y2, a, b) = 0
+  // g(x2, y2, a, b) = 0
+  // IntersectionDistance(x1, y1, x2, y2, a, b) = 0
+  //
+  // Where (x1, y1) is the position of the singular point of one of the separatrices,
+  // and (x2, y2) is the position of the singular point of another separatrix.
+  // The order of the variables is a, b, x1, y1, x2, y2
+  /*saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
   std::vector<std::function<double(const double*)>> systemFunctions;
+  systemFunctions.push_back([&](const double* arr)->double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return system[0].function(in);
+    });
+  systemFunctions.push_back([&](const double* arr)->double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return system[1].function(in);
+    });
+  systemFunctions.push_back([&](const double* arr)->double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return system[0].function(in);
+    });
+  systemFunctions.push_back([&](const double* arr)->double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return system[1].function(in);
+    });
+  
+  systemFunctions.push_back([&](const double* arr) -> double {
+      find_separatrix_intersection_ret ret1 =
+	find_separatrix_intersection(arr[0],
+				     arr[1],
+				     arr[2],
+				     arr[3],
+				     specs.transversalA,
+				     specs.transversalB,
+				     specs.separatrix1);
+
+      if(!ret1.success) {
+	throw no_intersection_found_exception();
+      }
+      find_separatrix_intersection_ret ret2 =
+	find_separatrix_intersection(arr[0],
+				     arr[1],
+				     arr[4],
+				     arr[5],
+				     specs.transversalA,
+				     specs.transversalB,
+				     specs.separatrix2);
+      if(!ret2.success) {
+	throw no_intersection_found_exception();
+      }
+      double a = specs.transversalA.distance(ret1.intersection);
+      double b = specs.transversalA.distance(ret2.intersection);
+      return b - a;
+    });
+
   std::vector<std::function<double(const double*)>> jacobianFunctions;
 
-  systemFunctions.push_back([&](const double* arr) -> double {
-      return find_separatrix_intersection(specs.separatrix1,
-					  specs.transversalA,
-					  specs.transversalB,
-					  arr[0],
-					  arr[1])
-	.distance(find_separatrix_intersection(specs.separatrix1,
-					       specs.transversalA,
-					       specs.transversalB,
-					       arr[0],
-					       arr[1]));
-    });
-
-  double searchRadius = 0.001;
-  // a^2 + b^2 - r^2 = 0
-  systemFunctions.push_back([&](const double* arr) -> double {
-      double a = arr[0] - specs.init[0];
-      double b = arr[1] - specs.init[1];
-      return a * a + b * b - searchRadius * searchRadius;
-    });
-
-  // We now build the jacobian.
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector2d vec;
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[0][parameterIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[0][parameterIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[0][dynamicalIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[0][dynamicalIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[1][parameterIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[1][parameterIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[1][dynamicalIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[2];
+      in[dynamicalIndexToSymbol[1]] = arr[3];
+      return partials[1][dynamicalIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[0][parameterIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[0][parameterIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[0][dynamicalIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[0][dynamicalIndexToSymbol[1]].function(in);
+    });
+
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[1][parameterIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[1][parameterIndexToSymbol[1]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      return 0;
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[1][dynamicalIndexToSymbol[0]].function(in);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      double in[5];
+      in[varDiffIndex] = 0;
+      in[parameterIndexToSymbol[0]] = arr[0];
+      in[parameterIndexToSymbol[1]] = arr[1];
+      in[dynamicalIndexToSymbol[0]] = arr[4];
+      in[dynamicalIndexToSymbol[1]] = arr[5];
+      return partials[1][dynamicalIndexToSymbol[1]].function(in);
+    });
+  
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 0);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 1);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 2);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 3);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 4);
+    });
+  jacobianFunctions.push_back([&](const double* arr) -> double {
+      math::vector vec(6, 0.0);
+      vec[0] = arr[0];
+      vec[1] = arr[1];
+      vec[2] = arr[2];
+      vec[3] = arr[3];
+      vec[4] = arr[4];
+      vec[5] = arr[5];
+      return math::derivative(systemFunctions[4], vec, 5);
+    });
+  
+  // Setup the initial search vector
+  math::vector init(6, 0.0);
+  init[0] = specs.init[0];
+  init[1] = specs.init[1];
+
+  math::vector p1 =
+    singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
+  init[2] = p1[0];
+  init[3] = p1[1];
+  
+  math::vector p2 =
+    singularPoints.at(separatrices.at(specs.separatrix2).specs.singularPoint).position;
+  init[4] = p2[0];
+  init[5] = p2[1];
+
+  std::cout << "Parameters: " << specs.init.to_string() << std::endl;
+  std::cout << "Singular Point 1: " << p1.to_string() << std::endl;
+  std::cout << "Singular Point 2: " << p2.to_string() << std::endl;
+  
+  std::vector<int> varIndex;
+  varIndex.push_back(0);
+  varIndex.push_back(1);
+  varIndex.push_back(2);
+  varIndex.push_back(3);
+  varIndex.push_back(4);
+  varIndex.push_back(5);
+
+  std::unordered_set<int> constraintVars;
+  constraintVars.insert(0);
+  constraintVars.insert(1); */
+
+  saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
+  std::vector<std::function<double(const double*)>> systemFunctions;
+    math::vector p1 =
+    singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
+  
+  math::vector p2 =
+    singularPoints.at(separatrices.at(specs.separatrix2).specs.singularPoint).position;
+  
+  systemFunctions.push_back([&](const double* arr)->double {
+      find_separatrix_intersection_ret ret1 =
+	find_separatrix_intersection(arr[0],
+				     arr[1],
+				     p1[0],
+				     p1[1],
+				     specs.transversalA,
+				     specs.transversalB,
+				     specs.separatrix1);
+      
+      if(!ret1.success) {
+	throw no_intersection_found_exception();
+      }
+      find_separatrix_intersection_ret ret2 =
+	find_separatrix_intersection(arr[0],
+				     arr[1],
+				     p2[0],
+				     p2[1],
+				     specs.transversalA,
+				     specs.transversalB,
+				     specs.separatrix2);
+      if(!ret2.success) {
+	throw no_intersection_found_exception();
+      }
+      return ret1.intersection.distance(ret2.intersection);
+      //      double a = specs.transversalA.distance(ret1.intersection);
+      //      double b = specs.transversalA.distance(ret2.intersection);
+      //      return b - a;
+    });
+  std::vector<std::function<double(const double*)>> jacobianFunctions;
+  jacobianFunctions.push_back([&](const double* arr)->double {
+      math::vector vec(2, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       return math::derivative(systemFunctions[0], vec, 0);
     });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector2d vec;
+  jacobianFunctions.push_back([&](const double* arr)->double {
+      math::vector vec(2, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       return math::derivative(systemFunctions[0], vec, 1);
     });
-  
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 2 * (arr[0] - specs.init[0]);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 2 * (arr[1] - specs.init[0]);
-    });
-  
-  // Setup the initial search vector
-  math::vector init(specs.init);
+
   std::vector<int> varIndex;
   varIndex.push_back(0);
   varIndex.push_back(1);
 
-  bool found = false;
-  // We search in a radial direction.
-  for(searchRadius = 0.001; searchRadius <= specs.searchRadius;
-      searchRadius += specs.searchInc) {
-    found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
-    if(found) {
-      break;
-    }
-  }
-  if(!found) return false;
+  std::unordered_set<int> constraintVars;
+  constraintVars.insert(0);
+  constraintVars.insert(1);
 
-  // Now that we have found a start point, we setup a new system with a different,
-  // constraint and jacobian.
-  int constraintVar = 0;
-  double constraintConstant;
-  systemFunctions[1] = [&](const double* arr) -> double {
-    return arr[constraintVar] - constraintConstant;
-  };
-  jacobianFunctions[2] = [&](const double* arr) -> double {
-    return constraintVar == 0 ? 1 : 0;
-  };
-  jacobianFunctions[3] = [&](const double* arr) -> double {
-    return constraintVar == 1 ? 1 : 0;
-  };
-  
-  // we start by sweeping it out.
-  // We first find a constraint variable which is not transverse.
-  math::vector tmp(init);
-  constraintConstant = tmp[constraintVar];
-  constraintConstant += specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != parameters - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constraintConstant = init[constraintVar];
-    constraintConstant += specs.inc;
-    tmp = init;
-  }
-  tmp = init;
-  constraintConstant =  init[constraintVar];
-  constraintConstant -= specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != parameters - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constraintConstant = init[constraintVar];
-    constraintConstant -= specs.inc;
-  }
-  
-  int originalConstraintVar(constraintVar);
-  math::vector original(init);
-  math::vector prev(init);
-  
-  std::list<math::vector> points;
-  int direction = 1;
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != parameters - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[constraintVar] - prev[constraintVar] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constraintConstant = init[constraintVar];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(parameters);
-      for(int i = 0; i != parameters; ++i) {
-	vars[i] = init[i];
-      }
-      points.push_back(vars);
-    }
-    constraintConstant += direction * specs.inc;
-  }
-  
-  // Now we sweep out in the other direction.
-  direction = -1;
-  constraintVar = originalConstraintVar;
-  init = original;
-  prev = original;
-  constraintConstant = init[constraintVar];
-  points.reverse();
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != parameters - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[constraintVar] - prev[constraintVar] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constraintConstant = init[constraintVar];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(parameters);
-      for(int i = 0; i != parameters; ++i) {
-	vars[i] = init[i];
-      }
-      points.push_back(vars);
-    }
-    constraintConstant += direction * specs.inc;
+  find_separatrix_intersection_ret ret1 =
+    find_separatrix_intersection(specs.init[0],
+				 specs.init[1],
+				 p1[0],
+				 p1[1],
+				 specs.transversalA,
+				 specs.transversalB,
+				 specs.separatrix1);
+  find_separatrix_intersection_ret ret2 =
+    find_separatrix_intersection(specs.init[0],
+				 specs.init[1],
+				 p2[0],
+				 p2[1],
+				 specs.transversalA,
+				 specs.transversalB,
+				 specs.separatrix2);
+
+  std::cout << "Inter 1: " << ret1.intersection.to_string() << std::endl;
+  std::cout << "Inter 2: " << ret2.intersection.to_string() << std::endl;
+  std::cout << "Dist: "<<systemFunctions[0](specs.init.data()) << std::endl;
+  std::cout << "Deriv A: "<<jacobianFunctions[0](specs.init.data()) << std::endl;
+  std::cout << "Deriv B: "<<jacobianFunctions[1](specs.init.data()) << std::endl;
+  return false;
+  math::find_implicit_path_ret ret;
+  try {
+  ret = math::find_implicit_path(systemFunctions,
+				 jacobianFunctions,
+				 specs.init,
+				 varIndex,
+				 constraintVars,
+				 specs.searchRadius,
+				 specs.searchInc,
+				 specs.inc,
+				 specs.span);
+  } catch(const std::exception& exc) {
+    return false;
   }
 
-  saddleConnectionBifurcations.at(id).data = points;
+  if(!ret.success) {
+    return false;
+  }
+
+  saddleConnectionBifurcations.at(id).data = ret.data;
   saddleConnectionBifurcations.at(id).specs = specs;
   return true;
 }
@@ -1744,8 +2027,9 @@ bool model::generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id) {
   return false;
 }
 
-bool model::generate_singular_point_data(singular_point_id id) {
-  singular_point_specs specs = singularPoints.at(id).specs;
+gen_singular_point_ret
+model::gen_singular_point(const singular_point_specs& specs,
+			  const math::vector& parameterVals) {
   std::vector<compiler::function<double, const double*>> systemFunctions;
   for(std::vector<expression>::const_iterator iter = system.begin();
       iter != system.end(); ++iter) {
@@ -1762,7 +2046,7 @@ bool model::generate_singular_point_data(singular_point_id id) {
   math::vector init(symbolsToIndex.size());
   init[varDiffIndex] = 0; // This value is ignored.
   for(int i = 0; i != parameters; ++i) {
-    init[parameterIndexToSymbol[i]] = parameterPosition[i];
+    init[parameterIndexToSymbol[i]] = parameterVals[i];
   }
   for(int i = 0; i != dynamicalVars; ++i) {
     init[dynamicalIndexToSymbol[i]] = specs.init[i];
@@ -1772,22 +2056,22 @@ bool model::generate_singular_point_data(singular_point_id id) {
   if(!math::newton_method(systemFunctions,
 			  jacobianFunctions, indices,
 			  init)) {
-    return false;
+    std::cout << "Couldn't find singular point" << std::endl;
+    return gen_singular_point_ret{singular_point(), false};
   }
   // We now create a new specification and update it the new init val.
   singular_point_specs newSpecs(specs);
   for(int i = 0; i != dynamicalVars; ++i) {
     newSpecs.init[i] = init[dynamicalIndexToSymbol[i]];
   }
-  singularPoints.at(id).specs = newSpecs;
-  singularPoints.at(id).position = newSpecs.init;
+
   std::vector<double> data(symbolsToIndex.size());
   data[varDiffIndex] = 0; // This value is ignored for autonomous systems.
   for(int i = 0; i != dynamicalVars; ++i) {
     data[dynamicalIndexToSymbol[i]] = newSpecs.init[i];
   }
   for(int i = 0; i != parameters; ++i) {
-    data[parameterIndexToSymbol[i]] = parameterPosition[i];
+    data[parameterIndexToSymbol[i]] = parameterVals[i];
   }
   // We now compute the jacobian matrix at this point and
   // evaluate its eigenvalues.
@@ -1798,7 +2082,6 @@ bool model::generate_singular_point_data(singular_point_id id) {
     }
   }
   std::vector<math::eigenvalue> eigenvalues = mat.find_eigenvalues();
-  singularPoints.at(id).eigenvalues = eigenvalues;
   // Compute the type of the singular point.
   // We first check whether they are all real or all complex, or mixed.
   bool foundReal(false);
@@ -1841,7 +2124,15 @@ bool model::generate_singular_point_data(singular_point_id id) {
       type = singular_point::type::SADDLE_FOCUS_NODE;
     }
   }
-  singularPoints.at(id).type = type;
+  return gen_singular_point_ret
+    {singular_point{newSpecs, newSpecs.init, eigenvalues, type}, true};
+}
+
+bool model::generate_singular_point_data(singular_point_id id) {
+  singular_point_specs specs = singularPoints.at(id).specs;
+  gen_singular_point_ret ret = gen_singular_point(specs, parameterPosition);
+  if(!ret.success) return false;
+  singularPoints.at(id) = ret.singularPoint;
   return true;
 }
 
@@ -2160,43 +2451,11 @@ void model::generate_solution_data(solution_id id) {
   }
   input[varDiffIndex] = spec.tStart;
 
-  std::list<dynamical_point> points;
-  // Fill in forwards
-  while(input[varDiffIndex] <= spec.tMax) {
-    // Extract the dynamical variables and variable of differentiation.
-    math::vector vars(dynamicalVars);
-    for(int i = 0; i != dynamicalVars; ++i) {
-      vars[i] = input[dynamicalIndexToSymbol[i]];
-    }
-    double t = input[varDiffIndex];
-    points.push_back(dynamical_point{vars, t});
-
-    math::euler(systemFunctions, spec.inc, dynamicalIndexToSymbol,
-		varDiffIndex, input);
-  }
-
-  // Reset back to start.
-  for(int i = 0; i != dynamicalVars; ++i) {
-    input[dynamicalIndexToSymbol[i]] = spec.init[i];
-  }
-  input[varDiffIndex] = spec.tStart;
-  
-  // Fill in backwards
-  while(input[varDiffIndex] >= spec.tMin) {
-    // Extract the dynamical variables and variable of differentiation.
-    math::vector vars(dynamicalVars);
-    for(int i = 0; i != dynamicalVars; ++i) {
-      vars[i] = input[dynamicalIndexToSymbol[i]];
-    }
-    double t = input[varDiffIndex];
-    points.push_front(dynamical_point{vars, t});
-    
-    math::euler(systemFunctions, -spec.inc, dynamicalIndexToSymbol,
-		varDiffIndex, input);
-  }
-  
   // Set the data
-  solutions.at(id).data = points;
+  solutions.at(id).data =
+    math::euler_method(systemFunctions, dynamicalIndexToSymbol,
+		       varDiffIndex, input,
+		       spec.inc, spec.tMin, spec.tMax);
 }
 
 bool model::select_solution(dynamical_id id, int x, int y) {
@@ -2363,33 +2622,74 @@ model::get_limit_cycle_bifurcations() const {
   return limitCycleBifurcations;
 }
 
-math::vector2d model::find_separatrix_intersection(separatrix_id id,
-						   const math::vector2d& transversalA,
-						   const math::vector2d& transversalB,
-						   double paramA, double paramB) {
-  const separatrix_specs& specs = separatrices.at(id).specs;
-  const singular_point& singularPoint = singularPoints.at(specs.singularPoint);
+find_separatrix_intersection_ret
+model::find_separatrix_intersection(double paramA,
+				    double paramB,
+				    double sing1,
+				    double sing2,
+				    const math::vector2d& transA,
+				    const math::vector2d& transB,
+				    const separatrix_id& id) {
+  separatrix_specs specs = separatrices.at(id).specs;
+  specs.inc = 0.01;
+  singular_point_specs singularPointSpecs;
+  math::vector initCondition(2);
+  initCondition[0] = sing1;
+  initCondition[1] = sing2;
+  singularPointSpecs.init = initCondition;
+  gen_separatrix_ret ret = gen_separatrix(singularPointSpecs,
+					  specs,
+					  math::vector2d(paramA, paramB));
+  if(!ret.success) {
+    std::cout << "No Separatrix" << std::endl;
+    return find_separatrix_intersection_ret();
+  }
+
+  math::vector2d prev = *(ret.sep.data.begin());
+  math::vector2d orig(prev);
+  for(const math::vector2d& next : ret.sep.data) {
+    if(math::splits(orig, next, transA, transB)) {
+      math::vector2d inter = next;
+      return find_separatrix_intersection_ret(inter,
+					      true);
+    }
+    prev = next;
+  }
+  std::cout << "Fail No Intersection" << std::endl;
+  return find_separatrix_intersection_ret();
+}
+
+gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPointSpecs,
+					 const separatrix_specs& separatrixSpecs,
+					 math::vector parameterVals) {
+  gen_singular_point_ret ret = gen_singular_point(singularPointSpecs,
+						  parameterVals);
+  if(!ret.success) {
+    std::cout << "Fail No Singular Point" << std::endl;
+    return gen_separatrix_ret();
+  }
+  singular_point singularPoint(ret.singularPoint);
+  if(singularPoint.type != singular_point::type::SADDLE) {
+    std::cout << "Fail Not Saddle" << std::endl;
+    return gen_separatrix_ret();
+  }
   
-  // We first generate the initial conditions for euler's method.
   math::vector init(symbolsToIndex.size());
   init[varDiffIndex] = 0; // This is ignored by the functions.
-  init[parameterIndexToSymbol[0]] = paramA;
-  init[parameterIndexToSymbol[1]] = paramB;
-  
+  for(int i = 0; i != parameters; ++i) {
+    init[parameterIndexToSymbol[i]] = parameterVals[i];
+  }
   // We are working in 2 dimensions. For a stable separatrix, our starting
   // conditions should be a slight perturbation along the stable eigenvector
   // we should move in the negative t direction.
-  int direction;
   int index;
-  if(specs.type == separatrix_specs::type::STABLE) {
-    direction = -1;
+  if(separatrixSpecs.type == separatrix_specs::type::STABLE) {
     if(singularPoint.eigenvalues[0].get_value().get_root().real() < 0) {
       index = 0;
     } else {
       index = 1;
     }
   } else {
-    direction = 1;
     if(singularPoint.eigenvalues[0].get_value().get_root().real() > 0) {
       index = 0;
     } else {
@@ -2397,6 +2697,9 @@ math::vector2d model::find_separatrix_intersection(separatrix_id id,
     }
   }
   double multiplier = 1e-5;
+  if(!separatrixSpecs.direction) {
+    multiplier *= -1;
+  }
   init[dynamicalIndexToSymbol[0]]
     = singularPoint.position[0]
     + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
@@ -2404,60 +2707,39 @@ math::vector2d model::find_separatrix_intersection(separatrix_id id,
     = singularPoint.position[1]
     + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
 
-  // We now perform euler's method.
   std::vector<compiler::function<double, const double*>> systemFunctions;
   for(std::vector<expression>::const_iterator iter = system.begin();
       iter != system.end(); ++iter) {
     systemFunctions.push_back(iter->function);
   }
-  while(std::abs(init[varDiffIndex]) <= specs.time) {
-    math::vector vars(2);
-    vars[0] = init[dynamicalIndexToSymbol[0]];
-    vars[1] = init[dynamicalIndexToSymbol[1]];
-    math::vector newInit(init);
-    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
-		varDiffIndex, newInit);
-    math::vector2d init2d;
-    init2d[0] = init[dynamicalIndexToSymbol[0]];
-    init2d[1] = init[dynamicalIndexToSymbol[1]];
-    math::vector2d newInit2d;
-    newInit2d[0] = newInit[dynamicalIndexToSymbol[0]];
-    newInit2d[1] = newInit[dynamicalIndexToSymbol[1]];
-    if(math::splits(init2d, newInit2d, transversalA, transversalB)) {
-      return math::intersect(init2d, newInit2d, transversalA, transversalB);
-    }
-    init = newInit;
+
+  std::list<math::dynamical_point> points;
+  if(separatrixSpecs.type == separatrix_specs::type::STABLE) {
+    points = math::euler_method(systemFunctions,
+				dynamicalIndexToSymbol,
+				varDiffIndex,
+				init,
+				separatrixSpecs.inc,
+				-separatrixSpecs.time,
+				0);
+  } else {
+    points = math::euler_method(systemFunctions,
+				dynamicalIndexToSymbol,
+				varDiffIndex,
+				init,
+				separatrixSpecs.inc,
+				0,
+				separatrixSpecs.time);
   }
-  // Now we reset to the opposate eigenvector. We still traverse in the
-  // same direction
-  init[varDiffIndex] = 0;
-  init[dynamicalIndexToSymbol[0]]
-    = singularPoint.position[0]
-    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
-  init[dynamicalIndexToSymbol[1]]
-    = singularPoint.position[1]
-    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+
+  std::list<math::vector2d> data;
+  for(const math::dynamical_point& point : points) {
+    data.push_back(math::vector2d(point.vars[0], point.vars[1]));
+  }
   
-  while(std::abs(init[varDiffIndex]) <= specs.time) {
-    math::vector vars(2);
-    vars[0] = init[dynamicalIndexToSymbol[0]];
-    vars[1] = init[dynamicalIndexToSymbol[1]];
-    math::vector newInit(init);
-    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
-		varDiffIndex, newInit);
-    math::vector2d init2d;
-    init2d[0] = init[dynamicalIndexToSymbol[0]];
-    init2d[1] = init[dynamicalIndexToSymbol[1]];
-    math::vector2d newInit2d;
-    newInit2d[0] = newInit[dynamicalIndexToSymbol[0]];
-    newInit2d[1] = newInit[dynamicalIndexToSymbol[1]];
-    if(math::splits(init2d, newInit2d, transversalA, transversalB)) {
-      return math::intersect(init2d, newInit2d, transversalA, transversalB);
-    }
-    init = newInit;
-  }
-  std::cout << "No Intersection" << std::endl;
-  return math::vector2d();
+  return gen_separatrix_ret{singularPoint,
+      separatrix{separatrixSpecs, data},
+      true};
 }
 
 
@@ -2470,81 +2752,18 @@ bool model::generate_separatrix_data(separatrix_id id) {
     return false;
   }
   const singular_point& singularPoint = singularPoints.at(specs.singularPoint);
-  if(singularPoint.eigenvalues.size() != 2 ||
-     !singularPoint.eigenvalues[0].get_value().get_root().is_real() ||
-     !singularPoint.eigenvalues[1].get_value().get_root().is_real() ||
-     singularPoint.eigenvalues[0].get_value().get_root().real()
-     * singularPoint.eigenvalues[1].get_value().get_root().real() >= 0) {
+  if(singularPoint.type != singular_point::type::SADDLE) {
     return false;
   }
-  // We first generate the initial conditions for euler's method.
-  math::vector init(symbolsToIndex.size());
-  init[varDiffIndex] = 0; // This is ignored by the functions.
-  for(int i = 0; i != parameters; ++i) {
-    init[parameterIndexToSymbol[i]] = parameterPosition[i];
-  }
-  // We are working in 2 dimensions. For a stable separatrix, our starting
-  // conditions should be a slight perturbation along the stable eigenvector
-  // we should move in the negative t direction.
-  int direction;
-  int index;
-  if(specs.type == separatrix_specs::type::STABLE) {
-    direction = -1;
-    if(singularPoint.eigenvalues[0].get_value().get_root().real() < 0) {
-      index = 0;
-    } else {
-      index = 1;
-    }
-  } else {
-    direction = 1;
-    if(singularPoint.eigenvalues[0].get_value().get_root().real() > 0) {
-      index = 0;
-    } else {
-      index = 1;
-    }
-  }
-  double multiplier = 1e-5;
-  init[dynamicalIndexToSymbol[0]]
-    = singularPoint.position[0]
-    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
-  init[dynamicalIndexToSymbol[1]]
-    = singularPoint.position[1]
-    + multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
 
-  // We now perform euler's method.
-  std::list<math::vector> points;
-  std::vector<compiler::function<double, const double*>> systemFunctions;
-  for(std::vector<expression>::const_iterator iter = system.begin();
-      iter != system.end(); ++iter) {
-    systemFunctions.push_back(iter->function);
-  }
-  while(std::abs(init[varDiffIndex]) <= specs.time) {
-    math::vector vars(2);
-    vars[0] = init[dynamicalIndexToSymbol[0]];
-    vars[1] = init[dynamicalIndexToSymbol[1]];
-    points.push_back(vars);
-    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
-		varDiffIndex, init);
-  }
-  // Now we reset to the opposate eigenvector. We still traverse in the
-  // same direction
-  init[varDiffIndex] = 0;
-  init[dynamicalIndexToSymbol[0]]
-    = singularPoint.position[0]
-    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][0];
-  init[dynamicalIndexToSymbol[1]]
-    = singularPoint.position[1]
-    + -1 * multiplier * singularPoint.eigenvalues[index].get_vectors()[0][1];
+  singular_point_specs singularPointSpecs =
+    singularPoints.at(specs.singularPoint).specs;
+  gen_separatrix_ret ret = gen_separatrix(singularPointSpecs,
+					  specs,
+					  parameterPosition);
+  if(!ret.success) return false;
+  separatrices.at(id) = ret.sep;
   
-  while(std::abs(init[varDiffIndex]) <= specs.time) {
-    math::vector vars(2);
-    vars[0] = init[dynamicalIndexToSymbol[0]];
-    vars[1] = init[dynamicalIndexToSymbol[1]];
-    points.push_front(vars);
-    math::euler(systemFunctions, direction * specs.inc, dynamicalIndexToSymbol,
-		varDiffIndex, init);
-  }
-  separatrices.at(id).data = points;
   return true;
 }
 
@@ -2665,135 +2884,31 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
     varIndex.push_back(parameterIndexToSymbol[i]);
   }
 
-  bool found = false;
-  // We search in a radial direction.
-  for(searchRadius = 0.001; searchRadius <= specs.searchRadius;
-      searchRadius += specs.searchInc) {
-    found = newton_method(systemFunctions, jacobianFunctions, varIndex, init);
-    if(found) {
-      break;
-    }
-  }
-  if(!found) return false;
+  std::unordered_set<int> constraintVars;
+  constraintVars.insert(2);
+  constraintVars.insert(3);
 
-  // Now that we have found a start point, we setup a new system with a different,
-  // constraint and jacobian.
-  int constraintVar = 0;
-  double constraintConstant;
-  systemFunctions[systemFunctions.size() - 1]
-    = [&](const double* arr) -> double {
-    return arr[parameterIndexToSymbol[constraintVar]] - constraintConstant;
-  };
+  math::find_implicit_path_ret ret =
+    math::find_implicit_path(systemFunctions,
+			     jacobianFunctions,
+			     init,
+			     varIndex,
+			     constraintVars,
+			     specs.searchRadius,
+			     specs.searchInc,
+			     specs.inc,
+			     specs.span);
 
-  for(int i = 0; i != parameters; ++i) {
-    int index = (dynamicalVars + 1) * (dynamicalVars + parameters)
-      + dynamicalVars + i;
-    jacobianFunctions[index] = [&, i](const double* arr) -> double {
-      return constraintVar == i ? 1 : 0;
-    };
-  }
-  
-  // we start by sweeping it out.
-  // We first find a constraint variable which is not transverse.
-  math::vector tmp(init);
-  constraintConstant = tmp[parameterIndexToSymbol[constraintVar]];
-  constraintConstant += specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != parameters - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constraintConstant = init[parameterIndexToSymbol[constraintVar]];
-    constraintConstant += specs.inc;
-    tmp = init;
-  }
-  tmp = init;
-  constraintConstant =  init[parameterIndexToSymbol[constraintVar]];
-  constraintConstant -= specs.inc;
-  while(!newton_method(systemFunctions, jacobianFunctions, varIndex, tmp)) {
-    // It is transverse, so we change the constraint variable.
-    if(constraintVar != parameters - 1) {
-      ++constraintVar;
-    } else {
-      constraintVar = 0;
-    }
-    constraintConstant = init[parameterIndexToSymbol[constraintVar]];
-    constraintConstant -= specs.inc;
-  }
-  
-  int originalConstraintVar(constraintVar);
-  math::vector original(init);
-  math::vector prev(init);
-  
+  if(!ret.success) return false;
+
   std::list<math::vector> points;
-  int direction = 1;
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != parameters - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[parameterIndexToSymbol[constraintVar]]
-	 - prev[parameterIndexToSymbol[constraintVar]] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constraintConstant = init[parameterIndexToSymbol[constraintVar]];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(parameters);
-      for(int i = 0; i != parameters; ++i) {
-	vars[i] = init[parameterIndexToSymbol[i]];
-      }
-      points.push_back(vars);
-    }
-    constraintConstant += direction * specs.inc;
+  for(const math::vector& point : ret.data) {
+    math::vector vec(2);
+    vec[0] = point[2];
+    vec[1] = point[3];
+    points.push_back(vec);
   }
   
-  // Now we sweep out in the other direction.
-  direction = -1;
-  constraintVar = originalConstraintVar;
-  init = original;
-  prev = original;
-  constraintConstant = init[parameterIndexToSymbol[constraintVar]];
-  points.reverse();
-  for(int i = 0; i != specs.span; ++i) {
-    math::vector newInit(init);
-    if(!newton_method(systemFunctions, jacobianFunctions, varIndex, newInit)) {
-      // We don't converge, so we change the constraint.
-      if(constraintVar != parameters - 1) {
-	++constraintVar;
-      } else {
-	constraintVar = 0;
-      }
-      if(init[parameterIndexToSymbol[constraintVar]]
-	 - prev[parameterIndexToSymbol[constraintVar]] > 0) {
-	direction = 1;
-      } else {
-	direction = -1;
-      }
-      constraintConstant = init[parameterIndexToSymbol[constraintVar]];
-    } else {
-      prev = init;
-      init = newInit;
-      // Extract the dynamical variables
-      math::vector vars(parameters);
-      for(int i = 0; i != parameters; ++i) {
-	vars[i] = init[parameterIndexToSymbol[i]];
-      }
-      points.push_back(vars);
-    }
-    constraintConstant += direction * specs.inc;
-  }
-
   hopfBifurcations.at(id).data = points;
   hopfBifurcations.at(id).specs = specs;
   return true;
@@ -3144,7 +3259,7 @@ bool model::on_parameter_position(parameter_id id, const math::vector2d& pos) co
 
 // Returns the dynamical point associated with the given mouse position
 // in this dynamical window.
-dynamical_point model::get_dynamical_point(dynamical_id id, const math::vector2d& pos) const {
+math::dynamical_point model::get_dynamical_point(dynamical_id id, const math::vector2d& pos) const {
   return dynamicalWindows.at(id).get_point(pos);
 }
 

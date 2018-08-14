@@ -32,6 +32,11 @@ void separatrix_dialog::set_ui() {
   incrementPGItem->SetValue(specs.inc);
   timePGItem->SetValue(specs.time);
   singularPointComboBox->Clear();
+  if(specs.type == separatrix_specs::type::STABLE) {
+    typeComboBox->SetSelection(0);
+  } else {
+    typeComboBox->SetSelection(1);
+  }
   int row = 0;
   for(std::unordered_map<singular_point_id, singular_point>::const_iterator iter
 	= appl.get_model().get_singular_points().begin();

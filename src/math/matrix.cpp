@@ -13,7 +13,7 @@
 namespace dynsolver {
 namespace math {
 
-matrix::matrix() : array(nullptr) { }
+matrix::matrix() : matrix(1, 1, 0.0) { }
 
 matrix::~matrix() {
   delete[] array;
@@ -23,6 +23,7 @@ matrix::matrix(const std::vector<vector>& vectors) {
   assert(vectors.size() >= 1);
   cols = vectors.size();
   rows = vectors[0].size();
+  array = new double[rows * cols];
   for(int r = 0; r != rows; ++r) {
     for(int c = 0; c != cols; ++c) {
       (*this)[r][c] = vectors[c][r];
@@ -31,13 +32,17 @@ matrix::matrix(const std::vector<vector>& vectors) {
 }
 
 matrix::matrix(const matrix& matrix) : rows(matrix.rows), cols(matrix.cols) {
-  array = new double[rows*cols];
-  std::memcpy(array, matrix.array, rows*cols*sizeof(double));
+  if(matrix.array == nullptr) {
+    array = nullptr;
+  } else {
+    array = new double[rows*cols];
+    std::memcpy(array, matrix.array, rows*cols*sizeof(double));
+  }
 }
 
-matrix::matrix(matrix&& matrix)
-  : array(matrix.array), rows(matrix.rows), cols(matrix.cols) {
-  matrix.array = nullptr;
+matrix::matrix(matrix&& mat)
+  : array(mat.array), rows(mat.rows), cols(mat.cols) {
+  mat.array = nullptr;
 }
 
 matrix& matrix::operator=(const matrix& other) {
@@ -118,10 +123,12 @@ const double* matrix::data() const {
 }
 
 double* matrix::operator[](int row) {
+  assert(0 <= row && row < rows);
   return array + row * cols;
 }
 
 const double* matrix::operator[](int row) const {
+  assert(0 <= row && row < rows);
   return array + row * cols;
 }
 

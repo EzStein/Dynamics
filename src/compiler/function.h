@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstring>
 #include <vector>
+#include <cassert>
 
 #include <sys/mman.h>
 
@@ -43,34 +44,42 @@ class function {
 
 template<class RET_T, class ...ARGS_T>
 function<RET_T, ARGS_T...>::function(const std::vector<unsigned char>& code) :
-    size(0), funcPtr(nullptr) {
+  funcPtr(nullptr), size(0) {
   size = code.size();
   // Allocates readable writable executable memory.
-  funcPtr = reinterpret_cast<unsigned char *>(
-      mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
-  std::copy(code.begin(), code.end(), funcPtr);
+
+  void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
+		 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  assert(ptr != MAP_FAILED);
+  funcPtr = reinterpret_cast<unsigned char *>(ptr);
+  std::memcpy(funcPtr, code.data(), size * sizeof(unsigned char));
 }
 
 template<class RET_T, class ...ARGS_T>
 function<RET_T, ARGS_T...>::~function() {
   // We dealocate the speciall executable memory.
-  if(funcPtr != nullptr)
-    munmap(reinterpret_cast<void*>(funcPtr), size);
+  if(funcPtr != nullptr) {
+    int success = munmap(reinterpret_cast<void*>(funcPtr), size);
+    assert(success == 0);
+    funcPtr = nullptr;
+  }
 }
 
 template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>
 ::function(const function<RET_T, ARGS_T...>& other) :
-    size(0), funcPtr(nullptr) {
+  funcPtr(nullptr), size(0) {
   size = other.size;
-  funcPtr = reinterpret_cast<unsigned char *>(
-      mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+
+  void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
+		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  assert(ptr != MAP_FAILED);
+  funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, other.funcPtr, size);
 }
+
 template<class RET_T, class ...ARGS_T>
 function<RET_T, ARGS_T...>::function(function<RET_T, ARGS_T...>&& other) :
-    size(0), funcPtr(nullptr) {
+  funcPtr(nullptr), size(0) {
   size = other.size;
   funcPtr = other.funcPtr;
   other.funcPtr = nullptr;
@@ -80,11 +89,13 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>&
 function<RET_T, ARGS_T...>
 ::operator=(const function<RET_T, ARGS_T...>& other) {
   if(&other == this) return *this;
-  munmap(reinterpret_cast<void*>(funcPtr), size);
+  int success = munmap(reinterpret_cast<void*>(funcPtr), size);
+  assert(success == 0);
   size = other.size;
-  funcPtr = reinterpret_cast<unsigned char *>(
-      mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+  void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
+		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  assert(ptr != MAP_FAILED);
+  funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, other.funcPtr, size);
   return *this;
 }
@@ -94,7 +105,8 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>&
 function<RET_T, ARGS_T...>
 ::operator=(function<RET_T, ARGS_T...>&& other) {
   if(&other == this) return *this;
-  munmap(reinterpret_cast<void*>(funcPtr), size);
+  int success = munmap(reinterpret_cast<void*>(funcPtr), size);
+  assert(success == 0);
   size = other.size;
   funcPtr = other.funcPtr;
   other.funcPtr = nullptr;
@@ -103,11 +115,11 @@ function<RET_T, ARGS_T...>
 
 template<class RET_T, class ...ARGS_T>
 RET_T function<RET_T, ARGS_T...>::operator()(ARGS_T... args) const {
-  FUNC_PTR_T callableFuncPtr = nullptr;
+  FUNC_PTR_T callableFuncPtr = reinterpret_cast<FUNC_PTR_T>(funcPtr);
   
   // A hack which allows us to point callableFuncPtr to the location
   // pointed to by funcPtr. A simple reinterpret cast would not compile.
-  *reinterpret_cast<void**>(&callableFuncPtr) = funcPtr;
+  // *reinterpret_cast<void**>(&callableFuncPtr) = funcPtr;
   return callableFuncPtr(args...);
 }
 

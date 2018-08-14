@@ -82,7 +82,7 @@ void dynamical_frame::solution_menu_item_on_menu_selection(wxCommandEvent& evt) 
   spec.tMin = -10;
   spec.tMax = 10;
   spec.inc = 0.001;
-  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+  math::dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
 									    rightClickMouseY));
   spec.init = point.vars;
   spec.tStart = point.t;
@@ -137,7 +137,7 @@ void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
 }
 void dynamical_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent& evt) {
   struct singular_point_specs spec;
-  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+  math::dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
 									    rightClickMouseY));
   spec.init = point.vars;
   if(appl.get_singular_point_dialog()->show_dialog(spec)) {
@@ -212,7 +212,7 @@ void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   specs.searchInc = 0.1;
   specs.direction =
     math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
-  dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
+  math::dynamical_point point = appl.get_model().get_dynamical_point(id, math::vector2d(rightClickMouseX,
 									    rightClickMouseY));
   specs.init = point.vars;
   if(appl.get_isocline_dialog()->show_dialog(specs)) {

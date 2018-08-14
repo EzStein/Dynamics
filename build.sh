@@ -1,2 +1,2 @@
 #!/bin/bash
-bear -a make app
+bear -a make -j 4 app

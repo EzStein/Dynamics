@@ -8,6 +8,7 @@
 #include "math/vector2d.h"
 
 #include <cassert>
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include <list>
@@ -50,6 +51,55 @@ void euler(const std::vector<FUNCTION>& vectorField,
   input[varDiff] += inc;
 }
 
+struct dynamical_point {
+  // Represents the dynamical variables in the order of dynamicalVarNames vector
+  math::vector vars;
+
+  // The value of the variable of differentiation.
+  double t;
+};
+
+template<class FUNCTION> 
+std::list<dynamical_point> euler_method(const std::vector<FUNCTION>& vectorField,
+					const std::vector<int>& indices,
+					int varDiff,
+					const vector& init,
+					double inc,
+					double tMin,
+					double tMax) {
+  math::vector current(init);
+  std::list<dynamical_point> points;
+  // Fill in forwards
+  while(current[varDiff] <= tMax) {
+    // Extract the dynamical variables and variable of differentiation.
+    math::vector vars(indices.size());
+    for(int i = 0; i != indices.size(); ++i) {
+      vars[i] = current[indices[i]];
+    }
+    double t = current[varDiff];
+    points.push_back(dynamical_point{vars, t});
+    
+    math::euler(vectorField, inc, indices, varDiff, current);
+  }
+  
+  current = init;
+  
+  // Fill in backwards
+  while(current[varDiff] >= tMin) {
+    // Extract the dynamical variables and variable of differentiation.
+    math::vector vars(indices.size());
+    for(int i = 0; i != indices.size(); ++i) {
+      vars[i] = current[indices[i]];
+    }
+    double t = current[varDiff];
+    points.push_front(dynamical_point{vars, t});
+    
+    math::euler(vectorField, -inc, indices, varDiff, current);
+  }
+  
+  return points;
+}
+
 // Continually performs newton iterations until either the max number of
 // iterations has been reached, or the orbit has not remained within a
 // small ball for a a certain number of iterations.
@@ -74,6 +124,7 @@ bool newton_method(const std::vector<FUNCTION>& functions,
   vector previous(input);
   vector next(input);
   while(i != maxIterations && holdCount != holdIterations) {
+    //    std::cout << next.to_string() << std::endl;
     if(!newton_iteration(functions, jacobian, varIndices, next)) {
       return false;
     }
@@ -107,7 +158,6 @@ bool newton_iteration(const std::vector<FUNCTION>& functions,
   assert(!functions.empty());
   assert(functions.size() * functions.size() == jacobianFunction.size());
   assert(functions.size() == varIndex.size());
-  
   int dimension = functions.size();
   
   // Evaluate the jacobian at the initial point.
@@ -125,7 +175,11 @@ bool newton_iteration(const std::vector<FUNCTION>& functions,
   }
   
   vector increment;
+  //  std::cout << "Params: " << input.to_string() << std::endl;
+  //  std::cout << "Image: " << (image * -1).to_string() << std::endl;
+  //  std::cout << "Jacobian: " << jacobian.to_string() << std::endl;
   if(!solve_linear(jacobian, image, &increment)) return false;
+  //  std::cout << "Increment: " << increment.to_string() << std::endl;
   
   // Compute the result as initial + b. Note that we only update the values of
   // initial corresponding with dependent variables.
@@ -142,11 +196,12 @@ double derivative(const FUNCTION& function,
 		  const math::vector& input,
 		  int var) {
   math::vector in(input);
-  double delta = 1e-6;
+  double delta = 0.01;
+  in[var] -= delta;
   double a = function(in.data());
-  in[var] += delta;
+  in[var] += 2*delta;
   double b = function(in.data());
-  return (b - a) / delta;
+  return (b-a) / (2 * delta);
 }
 
 // If success is false, then data is the empty list.
@@ -212,7 +267,7 @@ find_implicit_path(const std::vector<FUNCTION>& systemIn,
   current = init;
   // We peturb the vector slightly.
   for(int var : constraintVars) {
-    start[var] += 0.01;
+    start[var] += 0.1;
   }
   // We search in a radial direction.
   for(currentRadius = constraintRadius; currentRadius <= searchRadius;
@@ -227,7 +282,6 @@ find_implicit_path(const std::vector<FUNCTION>& systemIn,
   math::vector prev(start);
   current = start;
   currentRadius = constraintRadius;
-  
   std::list<math::vector> points;
   points.push_back(extract_vector(current, indices));
   bool first = true;

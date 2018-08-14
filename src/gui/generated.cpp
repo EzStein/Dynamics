@@ -54,6 +54,9 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	separatricesMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Separatrices...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu2->Append( separatricesMenuItem );
 	
+	m_menuItem33 = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Draw All Separatrices") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu2->Append( m_menuItem33 );
+	
 	m_menu2->AppendSeparator();
 	
 	hopfBifurcationMenuItem = new wxMenuItem( m_menu2, wxID_ANY, wxString( wxT("Hopf Bifurcation...") ) , wxEmptyString, wxITEM_NORMAL );
@@ -691,6 +694,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Connect( separatricesMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
+	this->Connect( m_menuItem33->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::draw_all_separatrices_menu_item_on_menu_selection ) );
 	this->Connect( hopfBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
 	this->Connect( saddleNodeBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
 	this->Connect( limitCycleBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
@@ -730,6 +734,7 @@ console_frame_base::~console_frame_base()
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::draw_all_separatrices_menu_item_on_menu_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
 	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );

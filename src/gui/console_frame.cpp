@@ -600,11 +600,16 @@ void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) 
 void console_frame::separatrices_menu_item_on_menu_selection(wxCommandEvent&) {
   separatrix_specs specs;
   specs.inc = 0.01;
-  specs.time = 40;
+  specs.time = 20;
   specs.type = separatrix_specs::type::STABLE;
+  specs.direction = true;
   if(appl.get_separatrix_dialog()->show_dialog(specs)) {
     appl.add_separatrix(specs);
   }
+}
+
+void console_frame::draw_all_separatrices_menu_item_on_menu_selection(wxCommandEvent&) {
+  appl.add_all_separatrices();
 }
 
 void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
@@ -708,12 +713,17 @@ void console_frame::update_parameters_data_view_ctrl() {
 void console_frame::update_separatrices_list() {
   separatricesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(false);
   separatricesDataViewCtrl->DeleteAllItems();
+  int row = 0;
   for(std::unordered_map<separatrix_id, separatrix>::const_iterator iter
 	= appl.get_model().get_separatrices().begin();
       iter != appl.get_model().get_separatrices().end(); ++iter) {
     wxVector<wxVariant> data;
     data.push_back(std::to_string(iter->first));
     separatricesDataViewCtrl->AppendItem(data);
+    if(iter->first == appl.get_model().get_selected_separatrix()) {
+      separatricesDataViewCtrl->SelectRow(row);
+    }
+    ++row;
   }
   separatricesDataViewCtrl->GetEventHandler()->SetEvtHandlerEnabled(true);
 }

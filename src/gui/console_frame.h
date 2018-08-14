@@ -56,6 +56,7 @@ class console_frame : public console_frame_base {
   virtual void saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
+  virtual void draw_all_separatrices_menu_item_on_menu_selection(wxCommandEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();

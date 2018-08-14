@@ -40,7 +40,7 @@ vector2d intersect(const vector2d& A1, const vector2d& A2,
   mat[0][0] = A2.y() - A1.y();
   mat[0][1] = A1.x() - A2.x();
   mat[1][0] = B2.y() - B1.y();
-  mat[2][1] = B1.x() - B2.x();
+  mat[1][1] = B1.x() - B2.x();
   vec[0] = A1.x()*A2.y() - A1.y() * A2.x();
   vec[1] = B1.x()*B2.y() - B1.y() * B2.x();
   
