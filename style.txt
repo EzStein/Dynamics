@@ -1,9 +1,18 @@
-This project will in general adhere to the google style guide for c++ (URL: https://google.github.io/styleguide/cppguide.html) with the following notable exceptions:
+This project consists of several mini libraries which may be installed onto
+your system. Each library contains public and private headers. Assuming that
+the library is named "lib_name" it will have the directory structure:
+dynsolver
+--lib_name
+----CMakeLists.txt
+----src
+------CPP FILES
+------include
+--------PRIVATE HEADER FILES
+----include
+------lib_name
+--------PUBLIC HEADER FILES
+----test
 
-Files will be named with a .cpp extension
-Types/class/structs/functions are named in lowercase with underscores to separate words
-Variables are named using camel case.
-
-Notably, the directory structure should usually match the namespace structure. The project is named dynsolver. If a class is defined in the path src/path/to/file.cpp it should reside in the namespace dynsolver::path::to.
-
-Tests are kept in a directory structure that matches the source directory but, has root as test. That is, the tests for the class src/path/to/file.cpp will reside in the test/path/to/file_test.cpp and will exist in the namespace dynsolver::path::to::test. Since it is a child of the namespace that file.cpp the tests can access the tested class without extra qualifications. We use the Catch testing framework which is contained entirely in the header file located at test/catch.hpp.
+All symbols in the library live in a namespace named after that library.
+Once installed, public header files may be accessed through <lib_name/header_name.h>
+Each library can be compiled and installed independently using its CMakeLists.txt.
