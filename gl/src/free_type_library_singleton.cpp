@@ -1,8 +1,8 @@
-#include "free_type_library_singleton.h"
+#include "gl/free_type_library_singleton.h"
 
 #include <cassert>
 
-namespace dynsolver {
+namespace gl {
 
 free_type_library_singleton free_type_library_singleton::singleton;
 

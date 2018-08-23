@@ -4,6 +4,7 @@ find_package(OpenGL REQUIRED)
 LOAD_GLAD()
 set(SRC_FILES
   app.cpp
+  constants.cpp
   isocline_dialog.cpp
   saddle_node_bifurcation_dialog.cpp
   console_frame.cpp
@@ -21,6 +22,7 @@ set(SRC_FILES
   saddle_connection_bifurcation_dialog.cpp)
 set(PUBLIC_HEADER_FILES app.h common.h)
 set(PRIVATE_HEADER_FILES
+  constants.h
   isocline_dialog.h
   saddle_node_bifurcation_dialog.h
   console_frame.h
@@ -49,4 +51,4 @@ add_library(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC "${GLAD_INCLUDE}" include/
   PRIVATE src/include src/include/gui)
 target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_LIBS}
-  PRIVATE OpenGL::GL ${EXTRA_GLAD_LIBS} compiler math gl regex util parser)
+  PRIVATE OpenGL::GL ${EXTRA_GLAD_LIBS} compiler math mygl regex util parser)

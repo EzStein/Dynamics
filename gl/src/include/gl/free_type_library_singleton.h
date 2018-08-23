@@ -4,7 +4,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-namespace dynsolver {
+namespace gl {
 
 // A singleton that provides us with an initialized free type library.
 // Consider making this a thread-local singleton!
