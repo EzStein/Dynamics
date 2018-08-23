@@ -233,9 +233,9 @@ void console_frame::new_parameter_menu_item_on_selection(wxCommandEvent&) {
   double width = 400;
   double height = 400;
   parameter_specs spec;
-  spec.viewport = math::window2d(math::vector2d(width, height),
-				 math::vector2d(10, 10),
-				 math::vector2d(-5, -5));
+  spec.viewport = ::math::window2d(::math::vector2d(width, height),
+				 ::math::vector2d(10, 10),
+				 ::math::vector2d(-5, -5));
   spec.horizAxisVar = appl.get_model().get_parameter_names()[0];
   spec.vertAxisVar = appl.get_model().get_parameter_names()[1];
   if(appl.get_parameter_dialog()->show_dialog(spec)) {
@@ -247,13 +247,13 @@ void console_frame::new_dynamical_menu_item_on_selection(wxCommandEvent&) {
   double width = 800;
   double height = 800;
   dynamical_specs spec;
-  spec.viewport2d = math::window2d(math::vector2d(width, height),
-				   math::vector2d(10, 10),
-				   math::vector2d(-5, -5));
+  spec.viewport2d = ::math::window2d(::math::vector2d(width, height),
+				   ::math::vector2d(10, 10),
+				   ::math::vector2d(-5, -5));
   
-  spec.viewport3d = math::window3d(math::vector3d(10,10,10),
-				   math::vector3d(-10,-10,-10),
-				   math::vector3d(0,1,0),
+  spec.viewport3d = ::math::window3d(::math::vector3d(10,10,10),
+				   ::math::vector3d(-10,-10,-10),
+				   ::math::vector3d(0,1,0),
 				   1, 100, width, height);
   int vars = appl.get_model().get_dynamical_dimension() + 1;
   if(vars == 2) {
@@ -579,7 +579,7 @@ void console_frame::solution_menu_item_on_menu_selection(wxCommandEvent&) {
   spec.tMax = 10;
   spec.inc = 0.01;
   int dynamicalVariables = appl.get_model().get_dynamical_dimension() + 1;
-  spec.init = math::vector(dynamicalVariables, 0.0);
+  spec.init = ::math::vector(dynamicalVariables, 0.0);
   if(appl.get_solution_dialog()->show_dialog(spec)) {
     appl.add_solution(spec);
   }
@@ -587,7 +587,7 @@ void console_frame::solution_menu_item_on_menu_selection(wxCommandEvent&) {
 void console_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&) {
   struct singular_point_specs spec;
   int dynamicalVariables = appl.get_model().get_dynamical_dimension() + 1;
-  spec.init = math::vector(dynamicalVariables, 0.0);
+  spec.init = ::math::vector(dynamicalVariables, 0.0);
   if(appl.get_singular_point_dialog()->show_dialog(spec)) {
     if(!appl.add_singular_point(spec)) {
       wxMessageDialog messageDialog(nullptr, "Could not find singular point.",
@@ -619,8 +619,8 @@ void console_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   specs.searchRadius = 10;
   specs.searchInc = 1;
   specs.direction =
-    math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
-  specs.init = math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+    ::math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
+  specs.init = ::math::vector(appl.get_model().get_dynamical_dimension(), 0.0);
   if(appl.get_isocline_dialog()->show_dialog(specs)) {
     if(!appl.add_isocline(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find isocline.",
@@ -780,8 +780,8 @@ void console_frame::hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) {
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.init.dynamicalVars = math::vector(2, 0.0);
-  specs.init.parameters = math::vector(2, 0.0);
+  specs.init.dynamicalVars = ::math::vector(2, 0.0);
+  specs.init.parameters = ::math::vector(2, 0.0);
   if(appl.get_hopf_bifurcation_dialog()->show_dialog(specs)) {
     if(!appl.add_hopf_bifurcation(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find hopf bifurcation.",
@@ -796,8 +796,8 @@ void console_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEven
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.init.dynamicalVars = math::vector(2, 0.0);
-  specs.init.parameters = math::vector(2, 0.0);
+  specs.init.dynamicalVars = ::math::vector(2, 0.0);
+  specs.init.parameters = ::math::vector(2, 0.0);
   if(appl.get_saddle_node_bifurcation_dialog()->show_dialog(specs)) {
     if(!appl.add_saddle_node_bifurcation(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find saddle-node bifurcation.",
@@ -812,9 +812,9 @@ void console_frame::limit_cycle_bifurcation_menu_item_on_selection(wxCommandEven
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.transversalA = math::vector(2, 0.0);
-  specs.transversalB = math::vector(2, 0.0);
-  specs.init = math::vector(2, 0.0);
+  specs.transversalA = ::math::vector(2, 0.0);
+  specs.transversalB = ::math::vector(2, 0.0);
+  specs.init = ::math::vector(2, 0.0);
   if(appl.get_limit_cycle_bifurcation_dialog()->show_dialog(specs)) {
     if(!appl.add_limit_cycle_bifurcation(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find semi-stable limit cycle",
@@ -829,11 +829,11 @@ void console_frame::saddle_connection_bifurcation_menu_item_on_selection(wxComma
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.transversalA = math::vector2d(0.0, 0.0);
-  specs.transversalB = math::vector2d(0.0, 0.0);
+  specs.transversalA = ::math::vector2d(0.0, 0.0);
+  specs.transversalB = ::math::vector2d(0.0, 0.0);
   specs.separatrix1 = model::kNoSeparatrixId;
   specs.separatrix2 = model::kNoSeparatrixId;
-  specs.init = math::vector(2, 0.0);
+  specs.init = ::math::vector(2, 0.0);
   if(appl.get_saddle_connection_bifurcation_dialog()->show_dialog(specs)) {
     if(!appl.add_saddle_connection_bifurcation(specs)) {
       wxMessageDialog messageDialog(nullptr, "Could not find saddle connection.",

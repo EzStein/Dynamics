@@ -2,6 +2,7 @@
 #include "compiler/ast/AST.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
 unary_minus_operator_node::unary_minus_operator_node(expression_node* child) :
 unary_operator_node(child) {
 

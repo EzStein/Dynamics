@@ -8,10 +8,10 @@
 namespace gl {
 
 const std::string text_renderer::kVertexShaderFilePath
-(app::generate_resource_path(std::vector<std::string>{"gl"}, "text_renderer.vert"));
+("resources/gl/text_renderer.vert"));
 
 const std::string text_renderer::kFragmentShaderFilePath
-(app::generate_resource_path(std::vector<std::string>{"gl"}, "text_renderer.frag"));
+("resources/gl/text_renderer.frag"));
 
 const std::string text_renderer::kTransformationUniform("transformation");
 const std::string text_renderer::kTextColorUniform("textColor");

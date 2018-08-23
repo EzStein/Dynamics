@@ -3,19 +3,10 @@
 #include <cstddef>
 #include <iostream>
 #include "compiler/function.h"
-#include "compiler/ast/expression_node.h"
-#include "compiler/ast/binary_addition_operator_node.h"
-#include "compiler/ast/binary_multiplication_operator_node.h"
-#include "compiler/ast/binary_subtraction_operator_node.h"
-#include "compiler/ast/division_operator_node.h"
-#include "compiler/ast/exponentiation_operator_node.h"
-#include "compiler/ast/integer_number_leaf_node.h"
-#include "compiler/ast/number_leaf_node.h"
-#include "compiler/ast/unary_minus_operator_node.h"
-#include "compiler/ast/polyadic_addition_operator_node.h"
-#include "compiler/ast/polyadic_multiplication_operator_node.h"
-#include "compiler/ast/variable_leaf_node.h"
+#include "compiler/ir/symbol.h"
+#include "compiler/compiler_data.h"
 
+class expression_node;
 class AST {
 public:
   explicit AST(expression_node*);
@@ -79,7 +70,6 @@ public:
   * The function returns a pointer to the constructed node*/
   template<class NODE_TYPE>
   static expression_node* make_unary_operator_node(expression_node* child);
-
   static expression_node* make_variable_leaf_node(symbol::ptr_type);
   static expression_node* make_number_leaf_node(double val);
   static expression_node* make_integer_number_leaf_node(long val);

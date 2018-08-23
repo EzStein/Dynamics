@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "free_type_library_singleton.h"
+#include "gl/free_type_library_singleton.h"
 
 namespace gl {
 

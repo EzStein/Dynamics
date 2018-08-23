@@ -2,6 +2,10 @@
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "compiler/ast/AST.h"
 #include "compiler/ast/visitor/mutation/pre_canonical_exponentiation_operator_visitor.h"
+#include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/polyadic_multiplication_operator_node.h"
+#include "compiler/ast/polyadic_addition_operator_node.h"
 
 exponentiation_operator_node::exponentiation_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {

@@ -3,6 +3,7 @@
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "compiler/ast/integer_number_leaf_node.h"
 #include "compiler/ast/AST.h"
+#include "compiler/ast/number_leaf_node.h"
 division_operator_node::division_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
 

@@ -2,6 +2,11 @@
 #include <algorithm>
 #include "compiler/ast/AST.h"
 #include "asm/assembler.h"
+
+#include "compiler/ast/unary_minus_operator_node.h"
+#include "compiler/ast/polyadic_addition_operator_node.h"
+#include "compiler/ast/polyadic_multiplication_operator_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 #include "compiler/ast/expression_node.h"
 #include "compiler/ast/exponentiation_operator_node.h"
 #include "compiler/ast/binary_addition_operator_node.h"

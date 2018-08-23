@@ -49,9 +49,9 @@ void parameter_dialog::ok_button_on_button_click(wxCommandEvent&) {
 
 void parameter_dialog::set_ui() {
   
-  math::vector2d min(specs.viewport.get_position());
-  math::vector2d span(specs.viewport.get_span());
-  math::vector2d max(span + min);
+  ::math::vector2d min(specs.viewport.get_position());
+  ::math::vector2d span(specs.viewport.get_span());
+  ::math::vector2d max(span + min);
   horizAxisMinPGItem->SetValue(wxVariant(min.x()));
   horizAxisMaxPGItem->SetValue(wxVariant(max.x()));
   vertAxisMinPGItem->SetValue(wxVariant(min.y()));
@@ -68,7 +68,7 @@ void parameter_dialog::set_ui() {
 }
 
 bool parameter_dialog::validate_and_set() {
-  math::vector2d min, max;
+  ::math::vector2d min, max;
   max.x() = horizAxisMaxPGItem->GetValue().GetDouble();
   min.x() = horizAxisMinPGItem->GetValue().GetDouble();
 

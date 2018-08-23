@@ -2,6 +2,7 @@
 
 #include "regex/lexer_builder.h"
 #include "util/util.h"
+#include "compiler/ast/expression_node.h"
 
 namespace dynsolver {
 namespace compiler {

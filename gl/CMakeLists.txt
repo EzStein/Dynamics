@@ -1,15 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(gl)
-
 find_package(OpenGL REQUIRED)
-if(UNIX)
-  set(EXTRA_LIBS "${CMAKE_DL_LIBS}")
-endif()
-execute_process(COMMAND git submodule update --init external/glad
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-execute_process(COMMAND python -m glad --out-path "${CMAKE_CURRENT_BINARY_DIR}"
-  --generator c --spec gl --omit-khrplatform --api gl=4.3 --extensions ""
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
+find_package(Freetype REQUIRED)
+LOAD_GLAD()
 set(SRC_FILES buffer.cpp sampler.cpp vertex_array.cpp
   program.cpp shader.cpp texture.cpp)
 set(PUBLIC_HEADER_FILES buffer.h program.h sampler.h shader.h
@@ -24,7 +17,8 @@ add_library(${PROJECT_NAME}
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}"
-  "${CMAKE_CURRENT_BINARY_DIR}/src/glad.c")
+  "${GLAD_SRC}")
 target_include_directories(${PROJECT_NAME} PUBLIC include/ PRIVATE src/include
-  "${CMAKE_CURRENT_BINARY_DIR}/include")
-target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL ${EXTRA_LIBS})
+  "${GLAD_INCLUDE}")
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL
+   ${GLAD_EXTRA_LIBS} util PUBLIC Freetype::Freetype)

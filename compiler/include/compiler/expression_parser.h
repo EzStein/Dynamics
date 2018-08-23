@@ -4,7 +4,6 @@
 #include <string>
 
 #include "compiler/ast/AST.h"
-#include "compiler/ast/expression_node.h"
 #include "parser/grammar.h"
 #include "parser/lr_parser.h"
 #include "regex/lexer.h"

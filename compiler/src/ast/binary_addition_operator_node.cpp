@@ -1,6 +1,9 @@
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/AST.h"
 #include "compiler/ast/visitor/mutation/level_addition_operator_visitor.h"
+#include "compiler/ast/polyadic_addition_operator_node.h"
+#include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 #include <iostream>
 #include <list>
 binary_addition_operator_node::binary_addition_operator_node(expression_node* leftChild, expression_node* rightChild) :

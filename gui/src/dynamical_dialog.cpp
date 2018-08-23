@@ -105,9 +105,9 @@ void dynamical_dialog::set_ui() {
   vertAxisMaxPGItem->SetValue(verticalAxisMax);
 
   // 3d
-  math::vector3d cameraPosition(specs.viewport3d.get_position());
-  math::vector3d cameraDirection(specs.viewport3d.get_view_direction());
-  math::vector3d upDirection(specs.viewport3d.get_up_direction());
+  ::math::vector3d cameraPosition(specs.viewport3d.get_position());
+  ::math::vector3d cameraDirection(specs.viewport3d.get_view_direction());
+  ::math::vector3d upDirection(specs.viewport3d.get_up_direction());
   double zNear = specs.viewport3d.get_near_z();
   double zFar = specs.viewport3d.get_far_z();
   dynamical3dPropertyGrid->SetPropertyValue(cameraPositionXPropertyGridItem,
@@ -169,27 +169,27 @@ bool dynamical_dialog::validate_and_set() {
     return false;
   }
   specs.viewport2d
-    .set_position(math::vector2d(horizontalAxisMin, verticalAxisMin));
+    .set_position(::math::vector2d(horizontalAxisMin, verticalAxisMin));
   specs.viewport2d
-    .set_span(math::vector2d(horizontalAxisMax - horizontalAxisMin,
+    .set_span(::math::vector2d(horizontalAxisMax - horizontalAxisMin,
 			     verticalAxisMax - verticalAxisMin));
   specs.horzAxisVar
     = varChoices.GetLabel(horizAxisVarPGItem->GetChoiceSelection());
   specs.vertAxisVar
     = varChoices.GetLabel(vertAxisVarPGItem->GetChoiceSelection());
 
-  math::vector3d cameraPosition(cameraPositionXPropertyGridItem->GetValue().GetDouble(),
+  ::math::vector3d cameraPosition(cameraPositionXPropertyGridItem->GetValue().GetDouble(),
 			  cameraPositionYPropertyGridItem->GetValue().GetDouble(),
 			  cameraPositionZPropertyGridItem->GetValue().GetDouble());
-  math::vector3d cameraDirection(cameraDirectionXPropertyGridItem->GetValue().GetDouble(),
+  ::math::vector3d cameraDirection(cameraDirectionXPropertyGridItem->GetValue().GetDouble(),
 			  cameraDirectionYPropertyGridItem->GetValue().GetDouble(),
 			  cameraDirectionZPropertyGridItem->GetValue().GetDouble());
-  math::vector3d upDirection(upDirectionXPropertyGridItem->GetValue().GetDouble(),
+  ::math::vector3d upDirection(upDirectionXPropertyGridItem->GetValue().GetDouble(),
 		       upDirectionYPropertyGridItem->GetValue().GetDouble(),
 		       upDirectionZPropertyGridItem->GetValue().GetDouble());
 
   // Verify that the upDriection and cameraDirection are not colinear.
-  math::vector3d up = math::vector3d::cross(cameraDirection, upDirection);
+  ::math::vector3d up = ::math::vector3d::cross(cameraDirection, upDirection);
   const double tolerance = 0.001;
   if(std::abs(up.x()) <= tolerance &&
      std::abs(up.y()) <= tolerance &&
@@ -201,7 +201,7 @@ bool dynamical_dialog::validate_and_set() {
   if(zNear <= 0 || zNear >= zFar) return false;
 
   specs.viewport3d
-    = math::window3d(cameraPosition, cameraDirection, upDirection, zNear, zFar,
+    = ::math::window3d(cameraPosition, cameraDirection, upDirection, zNear, zFar,
 		     specs.viewport3d.get_width(),
 		     specs.viewport3d.get_height());
 

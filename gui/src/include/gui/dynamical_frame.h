@@ -6,6 +6,8 @@
 
 #include "gui/common.h"
 #include "gui/generated.h"
+#include "math/window3d.h"
+#include "math/window2d.h"
 
 namespace dynsolver {
 namespace gui {
@@ -42,11 +44,11 @@ class dynamical_frame : public dynamical_frame_base {
 
   // The viewport as it exists when magnifcation starts.
   // Locked in on magnification start and end.
-  math::window2d magnificationViewport;
+  ::math::window2d magnificationViewport;
 
   // The window as it exists before a move is initiated.
   // Locked in when the left mouse is dpressed and released.
-  math::window2d moveViewport;
+  ::math::window2d moveViewport;
 
   // True when the first wheel event has note yet been processed. False
   // after the first wheel event has been processed and the wheel event
@@ -62,12 +64,12 @@ class dynamical_frame : public dynamical_frame_base {
   // the vertical or horizontal axes. We lock these values in along with
   // the axesScalingViewport when we left click on an axis.
   bool verticalScaling, horizontalScaling;
-  math::window2d axesScalingViewport;
+  ::math::window2d axesScalingViewport;
 
   // This is a viewport which is locked in
   // when the left mouse button is clicked. It is used to compute the camera,
   // rotation when dragging the mouse.
-  math::window3d rotationViewport;
+  ::math::window3d rotationViewport;
  public:
   dynamical_frame(app&, dynamical_id id, int width, int height);
   ~dynamical_frame();

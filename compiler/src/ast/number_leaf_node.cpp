@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <sstream>
 #include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 #include "compiler/ast/AST.h"
 
 

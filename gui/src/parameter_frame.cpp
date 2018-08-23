@@ -27,21 +27,21 @@ parameter_frame::parameter_frame(app& app, parameter_id id,
     id(id),
     rightClickMousePos(0, 0),
     leftClickMousePos(0, 0),
-    moveViewport(math::vector2d(0,0),
-		 math::vector2d(0,0),
-		 math::vector2d(0,0)),
+    moveViewport(::math::vector2d(0,0),
+		 ::math::vector2d(0,0),
+		 ::math::vector2d(0,0)),
     totalMagnification(1.0),
     magnificationPos(0, 0),
-    magnificationViewport(math::vector2d(0,0),
-			  math::vector2d(0,0),
-			  math::vector2d(0,0)),
+    magnificationViewport(::math::vector2d(0,0),
+			  ::math::vector2d(0,0),
+			  ::math::vector2d(0,0)),
     firstWheelEvent(true),
     magnificationTimer(this, kMagnificationTimerEventId),
     verticalScaling(false),
     horizontalScaling(false),
-    axesScalingViewport(math::vector2d(0,0),
-			math::vector2d(0,0),
-			math::vector2d(0,0)) {
+    axesScalingViewport(::math::vector2d(0,0),
+			::math::vector2d(0,0),
+			::math::vector2d(0,0)) {
   glCanvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
 			    wxDefaultPosition, wxSize(width, height));
   parameterWindowBox->Add(glCanvas, 1, wxEXPAND);
@@ -88,14 +88,14 @@ void parameter_frame::gl_canvas_on_key_up(wxKeyEvent&) {
 }
 
 void parameter_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   if(evt.LeftIsDown()) {
     // Left Drag
     if(parameterMoving) {
       appl.set_parameter_position(id, pos);
     } else if(verticalScaling || horizontalScaling) {
-      math::vector2d realPos = axesScalingViewport.real_coordinate_of(pos);
-      math::vector2d realLeftMousePos = axesScalingViewport.real_coordinate_of(leftClickMousePos);
+      ::math::vector2d realPos = axesScalingViewport.real_coordinate_of(pos);
+      ::math::vector2d realLeftMousePos = axesScalingViewport.real_coordinate_of(leftClickMousePos);
       double scale;
       if(horizontalScaling) {
 	scale = std::abs(realLeftMousePos.x() / realPos.x());
@@ -105,15 +105,15 @@ void parameter_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
       if(scale > kMaxAxesScale) {
 	scale = kMaxAxesScale;
       }
-      math::window2d newViewport(axesScalingViewport);
+      ::math::window2d newViewport(axesScalingViewport);
       if(horizontalScaling) {
-	newViewport.scale_real(math::vector2d(scale, 1.0), math::vector2d(0,0));
+	newViewport.scale_real(::math::vector2d(scale, 1.0), ::math::vector2d(0,0));
       } else {
-	newViewport.scale_real(math::vector2d(1.0, scale), math::vector2d(0,0));
+	newViewport.scale_real(::math::vector2d(1.0, scale), ::math::vector2d(0,0));
       }
       appl.set_parameter_viewport(id, newViewport);
     } else {
-      math::window2d newViewport(moveViewport);
+      ::math::window2d newViewport(moveViewport);
       newViewport.move_pixel(leftClickMousePos - pos);
       appl.set_parameter_viewport(id, newViewport);
     }
@@ -126,7 +126,7 @@ void parameter_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   leftClickMousePos = pos;
   parameterMoving = false;
   verticalScaling = false;
@@ -143,29 +143,29 @@ void parameter_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   set_cursor(pos);
   if(leftClickMousePos.distance(pos) <= kClickTolerance) {
     gl_canvas_on_left_mouse_click(pos);
   }
 }
 
-void parameter_frame::gl_canvas_on_left_mouse_click(const math::vector2d& pos) {
+void parameter_frame::gl_canvas_on_left_mouse_click(const ::math::vector2d& pos) {
 }
 
 void parameter_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   rightClickMousePos = pos;
 }
 
 void parameter_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   if(rightClickMousePos.distance(pos) <= kClickTolerance) {
     gl_canvas_on_right_mouse_click(pos);
   }
 }
 
-void parameter_frame::gl_canvas_on_right_mouse_click(const math::vector2d& pos) {
+void parameter_frame::gl_canvas_on_right_mouse_click(const ::math::vector2d& pos) {
   PopupMenu(parameterPopupMenu);
 }
 
@@ -182,7 +182,7 @@ void parameter_frame::gl_canvas_on_size(wxSizeEvent& evt) {
 }
 
 void parameter_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
-  math::vector2d pos(get_window_coordinates(evt));
+  ::math::vector2d pos(get_window_coordinates(evt));
   if(firstWheelEvent) {
     totalMagnification = 1.0;
     magnificationPos = pos;
@@ -192,8 +192,8 @@ void parameter_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   magnificationTimer.Start(kMagnificationTimerWait, wxTIMER_ONE_SHOT);
   totalMagnification *=
     evt.GetWheelRotation() < 0 ? 1 / kMagnificationRate : kMagnificationRate;
-  math::window2d newViewport(magnificationViewport);
-  newViewport.scale_pixel(math::vector2d(totalMagnification,
+  ::math::window2d newViewport(magnificationViewport);
+  newViewport.scale_pixel(::math::vector2d(totalMagnification,
 					 totalMagnification),
 			  magnificationPos);
   appl.set_parameter_viewport(id, newViewport);
@@ -203,16 +203,16 @@ void parameter_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
   firstWheelEvent = true;
 }
 
-math::vector2d parameter_frame::get_window_coordinates(const wxMouseEvent& evt) {
+::math::vector2d parameter_frame::get_window_coordinates(const wxMouseEvent& evt) {
   int posX, posY;
   evt.GetPosition(&posX, &posY);
   int width, height;
   glCanvas->GetSize(&width, &height);
   posY = height - posY;
-  return math::vector2d(posX, posY);
+  return ::math::vector2d(posX, posY);
 }
 
-void parameter_frame::set_cursor(const math::vector2d& pos) {
+void parameter_frame::set_cursor(const ::math::vector2d& pos) {
   if(appl.get_model().on_parameter_vert_axis(id, pos)) {
     SetCursor(wxCURSOR_SIZENS);
   } else if(appl.get_model().on_parameter_horiz_axis(id, pos)) {
@@ -236,7 +236,7 @@ void parameter_frame::hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) {
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.dynamicalVars = ::math::vector(2, 0.0);
   specs.init.parameters =
     appl.get_model().get_parameter_point(id, rightClickMousePos);
   if(appl.get_hopf_bifurcation_dialog()->show_dialog(specs)) {
@@ -254,7 +254,7 @@ void parameter_frame::saddle_node_bifurcation_menu_item_on_selection(wxCommandEv
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.init.dynamicalVars = math::vector(2, 0.0);
+  specs.init.dynamicalVars = ::math::vector(2, 0.0);
   specs.init.parameters =
     appl.get_model().get_parameter_point(id, rightClickMousePos);
   if(appl.get_saddle_node_bifurcation_dialog()->show_dialog(specs)) {
@@ -273,8 +273,8 @@ void parameter_frame::saddle_connection_bifurcation_menu_item_on_selection(wxCom
   specs.span = 100;
   specs.searchRadius = 10;
   specs.searchInc = 1;
-  specs.transversalA = math::vector2d(0.0, 0.0);
-  specs.transversalB = math::vector2d(0.0, 0.0);
+  specs.transversalA = ::math::vector2d(0.0, 0.0);
+  specs.transversalB = ::math::vector2d(0.0, 0.0);
   specs.separatrix1 = model::kNoSeparatrixId;
   specs.separatrix2 = model::kNoSeparatrixId;
   specs.init = appl.get_model().get_parameter_point(id, rightClickMousePos);

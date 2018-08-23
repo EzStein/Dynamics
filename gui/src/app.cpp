@@ -1,5 +1,3 @@
-
-
 #include "gui/app.h"
 
 #include <cassert>
@@ -208,7 +206,7 @@ void app::add_dynamical(const dynamical_specs& spec) {
 }
 
 void app::add_parameter(const parameter_specs& spec) {
-  math::vector2d size(spec.viewport.get_size());
+  ::math::vector2d size(spec.viewport.get_size());
   parameter_id id = modelData->add_parameter(spec);
   parameter_frame* frame = new parameter_frame(*this, id, size.x(), size.y());
   parameterFrames.insert(std::make_pair(id, frame));
@@ -229,18 +227,18 @@ void app::set_parameter_specs(parameter_id id,
 
 
 void app::set_dynamical_viewport_2d(dynamical_id id,
-				    const math::window2d& window) {
+				    const ::math::window2d& window) {
   modelData->set_dynamical_viewport_2d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
 void app::set_dynamical_viewport_3d(dynamical_id id,
-				    const math::window3d& window) {
+				    const ::math::window3d& window) {
   modelData->set_dynamical_viewport_3d(id, window);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
 
-void app::set_parameter_viewport(parameter_id id, const math::window2d& wind) {
+void app::set_parameter_viewport(parameter_id id, const ::math::window2d& wind) {
   modelData->set_parameter_viewport(id, wind);
   parameterFrames.at(id)->refresh_gl_canvas();
 }
@@ -644,7 +642,7 @@ void app::deselect_saddle_connection_bifurcation() {
   consoleFrame->update_saddle_connection_bifurcation_list();
 }
 
-void app::set_parameter_position(parameter_id id, const math::vector2d& pos) {
+void app::set_parameter_position(parameter_id id, const ::math::vector2d& pos) {
   modelData->set_parameter_position(id, pos);
   refresh_dynamical_windows();
   refresh_parameter_windows();

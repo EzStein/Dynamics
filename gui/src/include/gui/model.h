@@ -8,7 +8,7 @@
 
 #include <glad/glad.h>
 
-#include "common.h"
+#include "gui/common.h"
 #include "compiler/ast/AST.h"
 #include "compiler/function.h"
 #include "math/window2d.h"
@@ -63,7 +63,7 @@ struct solution_specs {
   // The starting value of the dynamical variables. This does not include
   // the variable of differentiation, and it is ordered according to
   // the dynamicalVarNames vector.
-  math::vector init;
+  ::math::vector init;
 
   // This is the starting value of the variable of differentiation.
   double tStart;
@@ -85,14 +85,14 @@ struct solution_specs {
 // A specification for drawing a solution through an initial point.
 struct solution {
   solution_specs specs;
-  std::list<math::dynamical_point> data;
+  std::list<::math::dynamical_point> data;
 };
 
 struct singular_point_specs {
   singular_point_specs();
   // The initial point used to compute the position of the singular point
   // in newtons method.
-  math::vector init;
+  ::math::vector init;
   color glColor;
 };
 
@@ -112,11 +112,11 @@ struct singular_point {
     
   };
   singular_point_specs specs;
-  math::vector position;
+  ::math::vector position;
   
   // A list of eigenvalues and their corresponding eigenvectors
   // for the linearization of the vector field at this point.
-  std::vector<math::eigenvalue> eigenvalues;
+  std::vector<::math::eigenvalue> eigenvalues;
 
   type type;
 };
@@ -126,11 +126,11 @@ struct isocline_specs {
   // This is the seed used in newtons method to find the isocline.
   // It is a vector of dynamical variables ordered according to
   // dynamicalVarNames.
-  math::vector init;
+  ::math::vector init;
 
   // This is the direction that the vector field points in on this isocline.
   // It is also ordered according to dynamicalVarNames.
-  math::vector direction;
+  ::math::vector direction;
 
   // This is the increment (in some direction) that is used when
   // computing the isocline.
@@ -156,7 +156,7 @@ struct isocline {
 
   // This is the data representing the isocline. It is ordered so that it
   // may be drawn in a single GL_LINE_STRIP primative.
-  std::list<math::vector> data;
+  std::list<::math::vector> data;
 };
 
 struct separatrix_specs {
@@ -193,14 +193,14 @@ struct separatrix {
   // A list of vectors where the vectors hold the dynamical variables
   // in the order given by dynamicalVarNames. Does not hold the variable
   // of differentiation.
-  std::list<math::vector2d> data;
+  std::list<::math::vector2d> data;
 };
 
 // Represent a point in the dynamical and parameter space.
 // Does not include the variable of differentiation t.
 struct bifurcation_point {
-  math::vector dynamicalVars;
-  math::vector parameters;
+  ::math::vector dynamicalVars;
+  ::math::vector parameters;
 };
 
 struct gen_singular_point_ret {
@@ -224,11 +224,11 @@ struct gen_separatrix_ret {
 
 struct find_separatrix_intersection_ret {
   // The new singular point position.
-  math::vector2d intersection;
+  ::math::vector2d intersection;
   bool success;
 
   find_separatrix_intersection_ret();
-  find_separatrix_intersection_ret(const math::vector2d intersection,
+  find_separatrix_intersection_ret(const ::math::vector2d intersection,
 				   bool success);
 };
 
@@ -253,7 +253,7 @@ struct hopf_bifurcation_specs {
 
 struct hopf_bifurcation {
   hopf_bifurcation_specs specs;
-  std::list<math::vector> data;
+  std::list<::math::vector> data;
 };
 
 struct saddle_node_bifurcation_specs {
@@ -272,14 +272,14 @@ struct saddle_node_bifurcation_specs {
 
 struct saddle_node_bifurcation {
   saddle_node_bifurcation_specs specs;
-  std::list<math::vector> data;
+  std::list<::math::vector> data;
 };
 
 struct saddle_connection_bifurcation_specs {
   saddle_connection_bifurcation_specs();
 
   // Holds the initial parameter condition values.
-  math::vector init;
+  ::math::vector init;
 
   // The two separatrices which we are attempting to connect.
   separatrix_id separatrix1;
@@ -288,8 +288,8 @@ struct saddle_connection_bifurcation_specs {
   // These two vectors define a line in the dynamical space which is transverse
   // to the saddle separatrices. We minimize the distance between the two
   // separatrices on this line.
-  math::vector2d transversalA;
-  math::vector2d transversalB;
+  ::math::vector2d transversalA;
+  ::math::vector2d transversalB;
   
   double inc;
 
@@ -303,13 +303,13 @@ struct saddle_connection_bifurcation_specs {
 
 struct saddle_connection_bifurcation {
   saddle_connection_bifurcation_specs specs;
-  std::list<math::vector> data;
+  std::list<::math::vector> data;
 };
 
 struct limit_cycle_bifurcation_specs {
   limit_cycle_bifurcation_specs();
   // Holds the initial parameter conditions.
-  math::vector init;
+  ::math::vector init;
 
   periodic_solution_id cycle1;
   periodic_solution_id cycle2;
@@ -317,8 +317,8 @@ struct limit_cycle_bifurcation_specs {
   // These two vectors define a line in the dynamical space which is transverse
   // to the limit cycles. We minimize the distance between the two
   // cycles on this line.
-  math::vector transversalA;
-  math::vector transversalB;
+  ::math::vector transversalA;
+  ::math::vector transversalB;
   
   double inc;
 
@@ -332,7 +332,7 @@ struct limit_cycle_bifurcation_specs {
 
 struct limit_cycle_bifurcation {
   limit_cycle_bifurcation_specs specs;
-  std::list<math::vector> data;
+  std::list<::math::vector> data;
 };
 
 // Used to pass to and from the dynamical window dialog to obtain
@@ -344,10 +344,10 @@ struct dynamical_specs {
   // 2d
   std::string horzAxisVar;
   std::string vertAxisVar;
-  math::window2d viewport2d;
+  ::math::window2d viewport2d;
 
   // 3d
-  math::window3d viewport3d;
+  ::math::window3d viewport3d;
   std::string xAxisVar;
   std::string yAxisVar;
   std::string zAxisVar;
@@ -356,7 +356,7 @@ struct dynamical_specs {
 struct parameter_specs {
   std::string horizAxisVar;
   std::string vertAxisVar;
-  math::window2d viewport;
+  ::math::window2d viewport;
 };
 
 // This class is used to hold all the data behind the GUI system.
@@ -411,13 +411,13 @@ class model {
   public:
     parameter_window(model&, const parameter_specs& spec);
 
-    bool on_parameter_position(const math::vector2d& pos) const;
+    bool on_parameter_position(const ::math::vector2d& pos) const;
 
     // Update
     void set_specs(const parameter_specs& spec);
 
     // Sets the 2d viewport.
-    void set_viewport(const math::window2d&);
+    void set_viewport(const ::math::window2d&);
 
     // Renders the window to the currently bound context.
     void paint();
@@ -429,8 +429,8 @@ class model {
     // Read
     // Returns true if the point given in pixels is on the vertical/horizontal
     // axis.
-    bool on_vert_axis(const math::vector2d&) const;
-    bool on_horiz_axis(const math::vector2d&) const;
+    bool on_vert_axis(const ::math::vector2d&) const;
+    bool on_horiz_axis(const ::math::vector2d&) const;
     
     // Gets and sets the specifications.
     const parameter_specs& get_specs() const;
@@ -450,7 +450,7 @@ class model {
     bool select_limit_cycle_bifurcation(int x, int y, limit_cycle_bifurcation_id*);
     bool select_saddle_connection_bifurcation(int x, int y, saddle_connection_bifurcation_id*);
     
-    math::vector get_point(const math::vector2d&) const;
+    ::math::vector get_point(const ::math::vector2d&) const;
 
   private:
     void draw_hopf_bifurcations();
@@ -515,10 +515,10 @@ class model {
     void set_specs(const dynamical_specs& spec);
 
     // Sets the 2d viewport.
-    void set_viewport_2d(const math::window2d&);
+    void set_viewport_2d(const ::math::window2d&);
 
     // Sets the 3d viewport.
-    void set_viewport_3d(const math::window3d&);
+    void set_viewport_3d(const ::math::window3d&);
 
     // Renders the window to the currently bound context.
     void paint();
@@ -530,8 +530,8 @@ class model {
     // Read
     // Returns true if the point given in pixels is on the vertical/horizontal
     // axis.
-    bool on_vert_axis(const math::vector2d&) const;
-    bool on_horiz_axis(const math::vector2d&) const;
+    bool on_vert_axis(const ::math::vector2d&) const;
+    bool on_horiz_axis(const ::math::vector2d&) const;
     // Gets and sets the specifications.
     const dynamical_specs& get_specs() const;
 
@@ -553,7 +553,7 @@ class model {
     bool select_singular_point(int x, int y, singular_point_id* id);
     bool select_separatrix(int x, int y, separatrix_id* id);
 
-    math::dynamical_point get_point(const math::vector2d& pos) const;
+    ::math::dynamical_point get_point(const ::math::vector2d& pos) const;
 
     // Generates a VBO for the corresponding solution data and id.
     // Replaces the VBO for that ID if it already exists.
@@ -650,7 +650,7 @@ class model {
 
 
   // Stores the current values of all the parameters.
-  math::vector parameterPosition;
+  ::math::vector parameterPosition;
 
   // Invariant on the above members maintains that the size of
   // dynamicalVarNames and parameterNames are consistent with
@@ -800,12 +800,12 @@ class model {
   // it returns the separatrix data.
   gen_separatrix_ret gen_separatrix(const singular_point_specs& singularPointSpecs,
 				    const separatrix_specs& separatrixSpecs,
-				    math::vector parameters);
+				    ::math::vector parameters);
 
   // Using the given singular point sepecification, this generates a singular
   // point with the given parameters.
   gen_singular_point_ret gen_singular_point(const singular_point_specs&,
-					    const math::vector& parameters);
+					    const ::math::vector& parameters);
 
   bool generate_hopf_bifurcation_data(hopf_bifurcation_id);
   bool generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id);
@@ -822,8 +822,8 @@ class model {
 			       double paramB,
 			       double sing1,
 			       double sing2,
-			       const math::vector2d& transA,
-			       const math::vector2d& transB,
+			       const ::math::vector2d& transA,
+			       const ::math::vector2d& transB,
 			       const separatrix_id& id);
   
   typedef std::unordered_map<solution_id, solution>::const_iterator
@@ -876,7 +876,7 @@ public:
 
   // Draws the 2d axes to the bound context. Updates
   // the realTickDistances accordingly.
-  void draw_axes_2d(const math::window2d& viewport,
+  void draw_axes_2d(const ::math::window2d& viewport,
 		    int ticksPerLabel,
 		    double tickFontSize,
 		    double& realTickDistanceX,
@@ -1011,17 +1011,17 @@ public:
   // Sets the 2d viewport of the dynamical window without altering the rest
   // of the specification.
   void set_dynamical_viewport_2d(dynamical_id id,
-				 const math::window2d& window);
+				 const ::math::window2d& window);
 
   // Sets the 2d viewport of the dynamical window without altering the rest of
   // the specification.
   void set_dynamical_viewport_3d(dynamical_id id,
-				 const math::window3d& window);
+				 const ::math::window3d& window);
 
   void set_parameter_specs(parameter_id, const parameter_specs&);
   
   void set_parameter_viewport(parameter_id,
-			      const math::window2d& window);
+			      const ::math::window2d& window);
 
   // Sets the solution specification. Updates VBO's if necessary.
   void set_solution_specs(solution_id id, const solution_specs& spec);
@@ -1060,11 +1060,11 @@ public:
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
-  bool on_dynamical_vert_axis(dynamical_id id, const math::vector2d&) const;
-  bool on_dynamical_horiz_axis(dynamical_id id, const math::vector2d&) const;
+  bool on_dynamical_vert_axis(dynamical_id id, const ::math::vector2d&) const;
+  bool on_dynamical_horiz_axis(dynamical_id id, const ::math::vector2d&) const;
 
-  bool on_parameter_vert_axis(parameter_id id, const math::vector2d&) const;
-  bool on_parameter_horiz_axis(parameter_id id, const math::vector2d&) const;
+  bool on_parameter_vert_axis(parameter_id id, const ::math::vector2d&) const;
+  bool on_parameter_horiz_axis(parameter_id id, const ::math::vector2d&) const;
 
   // Returns the dynamical dimension.
   // The dynamical dimension is one less than the number of dynamical variables.
@@ -1078,18 +1078,18 @@ public:
 
   // Returns the dynamical point associated with the given mouse position
   // in this dynamical window.
-  math::dynamical_point get_dynamical_point(dynamical_id, const math::vector2d& pos) const;
-  math::vector get_parameter_point(parameter_id, const math::vector2d& pos) const;
+  ::math::dynamical_point get_dynamical_point(dynamical_id, const ::math::vector2d& pos) const;
+  ::math::vector get_parameter_point(parameter_id, const ::math::vector2d& pos) const;
 
   // Sets the parameter position and updates all solutions, isoclines, and
   // singular points and their vbo's.
-  void set_parameter_position(parameter_id, const math::vector2d&);
+  void set_parameter_position(parameter_id, const ::math::vector2d&);
 
   // Returns true if the mouse cursor specified by pos is near the parameter
   // position.
-  bool on_parameter_position(parameter_id id, const math::vector2d& pos) const;
+  bool on_parameter_position(parameter_id id, const ::math::vector2d& pos) const;
 
-  const math::vector& get_parameter_position() const;
+  const ::math::vector& get_parameter_position() const;
 };
 } // namespace gui
 } // namespace dynsolver

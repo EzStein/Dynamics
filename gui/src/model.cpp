@@ -12,10 +12,9 @@
 #include "compiler/expression_parser.h"
 #include "math/util.h"
 #include "math/vector.h"
-#include "constants.h"
+#include "gui/constants.h"
 #include "gl/shader.h"
 #include "util/util.h"
-#include "../app.h"
 #include "math/window2d.h"
 #include "math/vector2d.h"
 #include "math/matrix_4x4.h"
@@ -41,7 +40,7 @@ find_separatrix_intersection_ret::find_separatrix_intersection_ret()
   : success(false) { }
 
 find_separatrix_intersection_ret::find_separatrix_intersection_ret
-(const math::vector2d intersection, bool success) : intersection(intersection),
+(const ::math::vector2d intersection, bool success) : intersection(intersection),
 						    success(success) { }
 
 color::color(double r, double g, double b, double a)
@@ -119,9 +118,9 @@ void model::parameter_window::gen_hopf_bifurcation_vbo(hopf_bifurcation_id id) {
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<math::vector>& data
+  const std::list<::math::vector>& data
     = modelData.hopfBifurcations.at(id).data;
-  for(std::list<math::vector>::const_iterator iter = data.begin();
+  for(std::list<::math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
     vboData.push_back((*iter)[horizIndex]);
     vboData.push_back((*iter)[vertIndex]);
@@ -144,9 +143,9 @@ void model::parameter_window::gen_saddle_node_bifurcation_vbo(saddle_node_bifurc
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<math::vector>& data
+  const std::list<::math::vector>& data
     = modelData.saddleNodeBifurcations.at(id).data;
-  for(std::list<math::vector>::const_iterator iter = data.begin();
+  for(std::list<::math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
     vboData.push_back((*iter)[horizIndex]);
     vboData.push_back((*iter)[vertIndex]);
@@ -169,9 +168,9 @@ void model::parameter_window::gen_limit_cycle_bifurcation_vbo(limit_cycle_bifurc
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<math::vector>& data
+  const std::list<::math::vector>& data
     = modelData.limitCycleBifurcations.at(id).data;
-  for(std::list<math::vector>::const_iterator iter = data.begin();
+  for(std::list<::math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
     vboData.push_back((*iter)[horizIndex]);
     vboData.push_back((*iter)[vertIndex]);
@@ -195,9 +194,9 @@ void model::parameter_window::gen_saddle_connection_bifurcation_vbo(saddle_conne
   int horizIndex = modelData.parameterIndex.at(specs.horizAxisVar);
   int vertIndex = modelData.parameterIndex.at(specs.vertAxisVar);
   std::vector<float> vboData;
-  const std::list<math::vector>& data
+  const std::list<::math::vector>& data
     = modelData.saddleConnectionBifurcations.at(id).data;
-  for(std::list<math::vector>::const_iterator iter = data.begin();
+  for(std::list<::math::vector>::const_iterator iter = data.begin();
       iter != data.end(); ++iter) {
     vboData.push_back((*iter)[horizIndex]);
     vboData.push_back((*iter)[vertIndex]);
@@ -245,20 +244,20 @@ bool model::parameter_window::select_saddle_connection_bifurcation(int x, int y,
   return false;
 }
 
-math::vector model::parameter_window::get_point(const math::vector2d& pos) const {
-  math::vector ret(modelData.parameters, 0.0);
-  math::vector2d real(specs.viewport.real_coordinate_of(pos));
+::math::vector model::parameter_window::get_point(const ::math::vector2d& pos) const {
+  ::math::vector ret(modelData.parameters, 0.0);
+  ::math::vector2d real(specs.viewport.real_coordinate_of(pos));
   ret[modelData.parameterIndex.at(specs.horizAxisVar)] = real[0];
   ret[modelData.parameterIndex.at(specs.vertAxisVar)] = real[1];
   return ret;
 }
 
-bool model::parameter_window::on_parameter_position(const math::vector2d& pos) const {
+bool model::parameter_window::on_parameter_position(const ::math::vector2d& pos) const {
   double x = modelData.parameterPosition[modelData.parameterIndex
 					 .at(specs.horizAxisVar)];
   double y = modelData.parameterPosition[modelData.parameterIndex
 					 .at(specs.vertAxisVar)];
-  math::vector2d pixelParamPos(specs.viewport.pixel_of(math::vector2d(x, y)));
+  ::math::vector2d pixelParamPos(specs.viewport.pixel_of(::math::vector2d(x, y)));
   return pos.distance(pixelParamPos) < 5;
 }
 
@@ -272,7 +271,7 @@ void model::parameter_window::set_specs(const parameter_specs& newSpecs) {
   }
 }
 
-void model::parameter_window::set_viewport(const math::window2d& viewport) {
+void model::parameter_window::set_viewport(const ::math::window2d& viewport) {
   specs.viewport = viewport;
 }
 
@@ -298,12 +297,12 @@ void model::parameter_window::paint() {
     modelData.parameterPosition[modelData.parameterIndex.at(specs.horizAxisVar)];
   double realParamY =
     modelData.parameterPosition[modelData.parameterIndex.at(specs.vertAxisVar)];
-  math::vector2d paramPixel(specs.viewport
-			    .pixel_of(math::vector2d(realParamX, realParamY)));
+  ::math::vector2d paramPixel(specs.viewport
+			    .pixel_of(::math::vector2d(realParamX, realParamY)));
   GLfloat transformationMatrix[16];
   (specs.viewport.pixel_to_ndc() *
-   math::matrix_4x4::translation(paramPixel.x(), paramPixel.y()) *
-   math::matrix_4x4::scale(6,6)).as_float_array(transformationMatrix);
+   ::math::matrix_4x4::translation(paramPixel.x(), paramPixel.y()) *
+   ::math::matrix_4x4::scale(6,6)).as_float_array(transformationMatrix);
   glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
 		     1, true, transformationMatrix);
   glBindVertexBuffer(model::k2dVertexBinding, crossVbo.get_handle(),
@@ -393,15 +392,15 @@ void model::parameter_window::resize(int width, int height) {
     * specs.viewport.get_span().x() / specs.viewport.get_size().x();
   double changeHeight = (height - specs.viewport.get_size().y())
     * specs.viewport.get_span().y() / specs.viewport.get_size().y();
-  specs.viewport.set_size(math::vector2d(width, height));
-  specs.viewport.set_span(math::vector2d(changeWidth +
+  specs.viewport.set_size(::math::vector2d(width, height));
+  specs.viewport.set_span(::math::vector2d(changeWidth +
 					 specs.viewport.get_span().x(),
 					 changeHeight +
 					 specs.viewport.get_span().y()));
 }
 
-bool model::parameter_window::on_vert_axis(const math::vector2d& pos) const {
-  math::vector2d axesPixel(specs.viewport.pixel_of(math::vector2d(0, 0)));
+bool model::parameter_window::on_vert_axis(const ::math::vector2d& pos) const {
+  ::math::vector2d axesPixel(specs.viewport.pixel_of(::math::vector2d(0, 0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > specs.viewport.get_size().x())
@@ -414,8 +413,8 @@ bool model::parameter_window::on_vert_axis(const math::vector2d& pos) const {
   return axis - 5 < pos.x() && pos.x() < axis + 5;
 }
 
-bool model::parameter_window::on_horiz_axis(const math::vector2d& pos) const {
-  math::vector2d axesPixel(specs.viewport.pixel_of(math::vector2d(0, 0)));
+bool model::parameter_window::on_horiz_axis(const ::math::vector2d& pos) const {
+  ::math::vector2d axesPixel(specs.viewport.pixel_of(::math::vector2d(0, 0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > specs.viewport.get_size().x())
@@ -476,11 +475,11 @@ void model::dynamical_window::set_specs(const dynamical_specs& other) {
   }
 }
 
-void model::dynamical_window::set_viewport_2d(const math::window2d& val) {
+void model::dynamical_window::set_viewport_2d(const ::math::window2d& val) {
   specs.viewport2d = val;
 }
 
-void model::dynamical_window::set_viewport_3d(const math::window3d& val) {
+void model::dynamical_window::set_viewport_3d(const ::math::window3d& val) {
   specs.viewport3d = val;
 }
 
@@ -489,7 +488,7 @@ bool model::dynamical_window::select_separatrix(int x, int y, separatrix_id* id)
 }
 
 bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
-  typedef std::list<math::dynamical_point>::const_iterator point_const_iter;
+  typedef std::list<::math::dynamical_point>::const_iterator point_const_iter;
   if(specs.is3d) {
     return false;
   } else {
@@ -518,12 +517,12 @@ bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
 	  yReal = point->vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
 	  yPrevReal = prevPoint->vars[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
 	}
-	math::vector2d real(xReal, yReal);
-	math::vector2d pixel(specs.viewport2d.pixel_of(real));
-	math::vector2d realPrev(xPrevReal, yPrevReal);
-	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
+	::math::vector2d real(xReal, yReal);
+	::math::vector2d pixel(specs.viewport2d.pixel_of(real));
+	::math::vector2d realPrev(xPrevReal, yPrevReal);
+	::math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
 	const int tolerance(5);
-	math::vector2d cursor(x, y);
+	::math::vector2d cursor(x, y);
 	if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
 	  *id = iter->first;
 	  return true;
@@ -535,7 +534,7 @@ bool model::dynamical_window::select_solution(int x, int y, solution_id* id) {
 }
 
 bool model::dynamical_window::select_isocline(int x, int y, isocline_id* id) {
-  typedef std::list<math::vector>::const_iterator point_const_iter;
+  typedef std::list<::math::vector>::const_iterator point_const_iter;
   if(specs.is3d) {
     return false;
   } else {
@@ -556,12 +555,12 @@ bool model::dynamical_window::select_isocline(int x, int y, isocline_id* id) {
 	yReal = (*point)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
 	yPrevReal = (*prevPoint)[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
        
-	math::vector2d real(xReal, yReal);
-	math::vector2d pixel(specs.viewport2d.pixel_of(real));
-	math::vector2d realPrev(xPrevReal, yPrevReal);
-	math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
+	::math::vector2d real(xReal, yReal);
+	::math::vector2d pixel(specs.viewport2d.pixel_of(real));
+	::math::vector2d realPrev(xPrevReal, yPrevReal);
+	::math::vector2d pixelPrev(specs.viewport2d.pixel_of(realPrev));
 	const int tolerance(5);
-	math::vector2d cursor(x, y);
+	::math::vector2d cursor(x, y);
 	if(cursor.line_segment_distance(pixel, pixelPrev) <= tolerance) {
 	  *id = iter->first;
 	  return true;
@@ -583,10 +582,10 @@ bool model::dynamical_window::select_singular_point(int x,int y,
       double yReal;
       xReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
       yReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
-      math::vector2d real(xReal, yReal);
-      math::vector2d pixel(specs.viewport2d.pixel_of(real));
+      ::math::vector2d real(xReal, yReal);
+      ::math::vector2d pixel(specs.viewport2d.pixel_of(real));
       const double tolerance = 5;
-      if(pixel.distance(math::vector2d(x, y)) <= tolerance) {
+      if(pixel.distance(::math::vector2d(x, y)) <= tolerance) {
 	*id = iter->first;
 	return true;
       }
@@ -645,9 +644,9 @@ void model::dynamical_window::draw_singular_points_3d() {
       glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
       
-      math::matrix_4x4 mat = math::matrix_4x4::translation(pixelCoordinate.x(),
+      ::math::matrix_4x4 mat = ::math::matrix_4x4::translation(pixelCoordinate.x(),
 							   pixelCoordinate.y());
-      mat *= math::matrix_4x4::scale(6,6);
+      mat *= ::math::matrix_4x4::scale(6,6);
       GLfloat transformationMatrix[16];
       mat.as_float_array(transformationMatrix);
       glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
@@ -747,13 +746,13 @@ void model::dynamical_window::draw_singular_points_2d() {
       double yReal;
       xReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.horzAxisVar)];
       yReal = iter->second.position[modelData.dynamicalVarIndex.at(specs.vertAxisVar)];
-      math::vector2d realCoordinate(xReal, yReal);
+      ::math::vector2d realCoordinate(xReal, yReal);
       GLfloat transformationMatrix[16];
-      math::vector2d pixelCoordinate
+      ::math::vector2d pixelCoordinate
 	(specs.viewport2d.pixel_of(realCoordinate));
       (specs.viewport2d.pixel_to_ndc() *
-       math::matrix_4x4::translation(pixelCoordinate.x(), pixelCoordinate.y()) *
-       math::matrix_4x4::scale(6, 6)).as_float_array(transformationMatrix);
+       ::math::matrix_4x4::translation(pixelCoordinate.x(), pixelCoordinate.y()) *
+       ::math::matrix_4x4::scale(6, 6)).as_float_array(transformationMatrix);
       glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
 			 1, true, transformationMatrix);
       GLuint handle;
@@ -788,7 +787,7 @@ void model::dynamical_window::draw_singular_points_2d() {
   }
 }
 
-void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
+void model::draw_axes_2d(const ::math::window2d& viewport, int ticksPerLabel,
 			 double tickFontSize,
 			 double& realTickDistanceX, double& realTickDistanceY,
 			 gl::buffer& axesVbo) const {
@@ -816,8 +815,8 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
   }
 
   // The x and y values in pixels for where the x and y axes should cross.
-  math::vector2d axesPixel
-    (viewport.pixel_of(math::vector2d(0.0, 0.0)));
+  ::math::vector2d axesPixel
+    (viewport.pixel_of(::math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > viewport.get_size().x())
@@ -839,7 +838,7 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
       x < viewport.get_position().x()
 	+ viewport.get_span().x(); x += realTickDistanceX) {
     float realCoordinate =
-      viewport.pixel_of(math::vector2d(x, 0)).x();
+      viewport.pixel_of(::math::vector2d(x, 0)).x();
     // First vertex
     axesVboData.push_back(realCoordinate); // X
     axesVboData.push_back(axesPixel.y() - 5); // Y
@@ -852,7 +851,7 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
 	+ viewport.get_span().y();
       y += realTickDistanceY) {
     float realCoordinate =
-      viewport.pixel_of(math::vector2d(0, y)).y();
+      viewport.pixel_of(::math::vector2d(0, y)).y();
     // First vertex
     axesVboData.push_back(axesPixel.x() - 5); // X
     axesVboData.push_back(realCoordinate); // Y
@@ -894,7 +893,7 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
 
   // Render Axes text
   const double tolerance = 0.001;
-  axesPixel = viewport.pixel_of(math::vector2d(0.0, 0.0));
+  axesPixel = viewport.pixel_of(::math::vector2d(0.0, 0.0));
   int yTextOffset(10);
   int xTextOffset(10);
   if(axesPixel.x() < 0.0) {
@@ -911,7 +910,7 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
     axesPixel.y() = viewport.get_size().y();
     yTextOffset = -20;
   }
-  math::vector2d axesReal(viewport
+  ::math::vector2d axesReal(viewport
 			  .real_coordinate_of(axesPixel));
   xStart = realTickDistanceX * ticksPerLabel *
     static_cast<int>(viewport.get_position().x() /
@@ -922,8 +921,8 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
   for(double x = xStart; x > viewport.get_position().x();
       x -= ticksPerLabel * realTickDistanceX) {
     if(std::abs(x) < tolerance) continue;
-    math::vector2d pixel(viewport
-			 .pixel_of(math::vector2d(x,
+    ::math::vector2d pixel(viewport
+			 .pixel_of(::math::vector2d(x,
 						  axesReal.y())));
     std::string text = util::double_to_string(x, 2);
     textRenderer.render_text(text, pixel.x() - text.size() * 3,
@@ -934,8 +933,8 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
 	+ viewport.get_span().x();
       x += ticksPerLabel * realTickDistanceX) {
     if(std::abs(x) < tolerance) continue;
-    math::vector2d pixel(viewport
-			 .pixel_of(math::vector2d(x, axesReal.y())));
+    ::math::vector2d pixel(viewport
+			 .pixel_of(::math::vector2d(x, axesReal.y())));
     std::string text = util::double_to_string(x, 2);
     textRenderer.render_text(text, pixel.x() - text.size() * 3,
 			     pixel.y() + yTextOffset,
@@ -944,8 +943,8 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
   for(double y = yStart; y > viewport.get_position().y();
       y -= ticksPerLabel * realTickDistanceY) {
     if(std::abs(y) < tolerance) continue;
-    math::vector2d pixel(viewport
-			 .pixel_of(math::vector2d(axesReal.x(),y)));
+    ::math::vector2d pixel(viewport
+			 .pixel_of(::math::vector2d(axesReal.x(),y)));
     std::string text = util::double_to_string(y, 2);
     textRenderer.render_text(text,
 			     pixel.x() + xTextOffset,
@@ -957,8 +956,8 @@ void model::draw_axes_2d(const math::window2d& viewport, int ticksPerLabel,
 	+ viewport.get_span().y();
       y += ticksPerLabel * realTickDistanceY) {
     if(std::abs(y) < tolerance) continue;
-    math::vector2d pixel(viewport
-			 .pixel_of(math::vector2d(axesReal.x(),y)));
+    ::math::vector2d pixel(viewport
+			 .pixel_of(::math::vector2d(axesReal.x(),y)));
     std::string text = util::double_to_string(y, 2);
     textRenderer.render_text(text, pixel.x() + xTextOffset,
 			     pixel.y() - 5, font,
@@ -1035,9 +1034,9 @@ void model::dynamical_window::resize(int width, int height) {
   double changeHeight = (height - specs.viewport2d.get_size().y())
     * specs.viewport2d.get_span().y() /
     specs.viewport2d.get_size().y();
-  specs.viewport2d.set_size(math::vector2d(width, height));
+  specs.viewport2d.set_size(::math::vector2d(width, height));
   specs.viewport2d
-    .set_span(math::vector2d(changeWidth +
+    .set_span(::math::vector2d(changeWidth +
 			     specs.viewport2d.get_span().x(),
 			     changeHeight +
 			     specs.viewport2d.get_span().y()));
@@ -1045,10 +1044,10 @@ void model::dynamical_window::resize(int width, int height) {
   specs.viewport3d.set_height(height);
 }
 
-math::dynamical_point model::dynamical_window::get_point(const math::vector2d& pos) const {
-  math::vector2d real = specs.viewport2d.real_coordinate_of(pos);
-  math::dynamical_point point;
-  point.vars = math::vector(modelData.dynamicalVars, 0.0);
+::math::dynamical_point model::dynamical_window::get_point(const ::math::vector2d& pos) const {
+  ::math::vector2d real = specs.viewport2d.real_coordinate_of(pos);
+  ::math::dynamical_point point;
+  point.vars = ::math::vector(modelData.dynamicalVars, 0.0);
   point.t = 0;
   if(specs.horzAxisVar == modelData.varDiffName) {
     point.t = real.x();
@@ -1063,9 +1062,9 @@ math::dynamical_point model::dynamical_window::get_point(const math::vector2d& p
   return point;
 }
 
-bool model::dynamical_window::on_vert_axis(const math::vector2d& pos) const {
-  math::vector2d axesPixel(specs.viewport2d
-			   .pixel_of(math::vector2d(0.0, 0.0)));
+bool model::dynamical_window::on_vert_axis(const ::math::vector2d& pos) const {
+  ::math::vector2d axesPixel(specs.viewport2d
+			   .pixel_of(::math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > specs.viewport2d.get_size().x())
@@ -1077,9 +1076,9 @@ bool model::dynamical_window::on_vert_axis(const math::vector2d& pos) const {
   double axis = axesPixel.x();
   return axis - 5 < pos.x() && pos.x() < axis + 5;
 }
-bool model::dynamical_window::on_horiz_axis(const math::vector2d& pos) const {
-  math::vector2d axesPixel(specs.viewport2d
-			   .pixel_of(math::vector2d(0.0, 0.0)));
+bool model::dynamical_window::on_horiz_axis(const ::math::vector2d& pos) const {
+  ::math::vector2d axesPixel(specs.viewport2d
+			   .pixel_of(::math::vector2d(0.0, 0.0)));
   if(axesPixel.x() < 0.0)
     axesPixel.x() = 0.0;
   if(axesPixel.x() > specs.viewport2d.get_size().x())
@@ -1105,13 +1104,13 @@ void model::dynamical_window::delete_isocline(isocline_id id) {
 }
 
 void model::dynamical_window::gen_solution_vbo(solution_id id) {
-  const std::list<math::dynamical_point>& solution(modelData.solutions.at(id).data);
+  const std::list<::math::dynamical_point>& solution(modelData.solutions.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = solution.size();
   size_t size2d = points * 2 * sizeof(float);
   size_t size3d = points * 3 * sizeof(float);
-  for(std::list<math::dynamical_point>::const_iterator point = solution.begin();
+  for(std::list<::math::dynamical_point>::const_iterator point = solution.begin();
       point != solution.end(); ++point) {
     double xReal;
     double yReal;
@@ -1167,7 +1166,7 @@ void model::dynamical_window::gen_solution_vbo(solution_id id) {
 }
 
 void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
-  const std::list<math::vector2d>& separatrix(modelData.separatrices.at(id).data);
+  const std::list<::math::vector2d>& separatrix(modelData.separatrices.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = separatrix.size();
@@ -1176,7 +1175,7 @@ void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
   if(specs.horzAxisVar != modelData.varDiffName &&
      specs.vertAxisVar != modelData.varDiffName) {
     size2d = points * 2 * sizeof(float);
-    for(std::list<math::vector2d>::const_iterator point = separatrix.begin();
+    for(std::list<::math::vector2d>::const_iterator point = separatrix.begin();
 	point != separatrix.end(); ++point) {
       double xReal;
       double yReal;
@@ -1201,7 +1200,7 @@ void model::dynamical_window::gen_separatrix_vbo(separatrix_id id) {
 }
 
 void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
-  const std::list<math::vector>& isocline(modelData.isoclines.at(id).data);
+  const std::list<::math::vector>& isocline(modelData.isoclines.at(id).data);
   std::vector<float> data2d;
   std::vector<float> data3d;
   size_t points = isocline.size();
@@ -1210,7 +1209,7 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
   if(specs.horzAxisVar != modelData.varDiffName &&
      specs.vertAxisVar != modelData.varDiffName) {
     size2d = points * 2 * sizeof(float);
-    for(std::list<math::vector>::const_iterator point = isocline.begin();
+    for(std::list<::math::vector>::const_iterator point = isocline.begin();
 	point != isocline.end(); ++point) {
       double xReal;
       double yReal;
@@ -1224,7 +1223,7 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
      specs.yAxisVar != modelData.varDiffName &&
      specs.zAxisVar != modelData.varDiffName) {
     size3d = points * 3 * sizeof(float);
-    for(std::list<math::vector>::const_iterator point = isocline.begin();
+    for(std::list<::math::vector>::const_iterator point = isocline.begin();
 	point != isocline.end(); ++point) {
       double xReal;
       double yReal;
@@ -1256,27 +1255,19 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
 }
 
 const std::string model::k2dVertexShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
-					  "2d_renderer.vert"));
+("gl/2d_renderer.vert");
 const GLuint model::k2dPositionAttribute(0);
 const GLuint model::k2dVertexBinding(0);
 const std::string model::k2dTransformationUniform("transformation");
-
-const std::string model::k2dFragmentShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
-					  "2d_renderer.frag"));
+const std::string model::k2dFragmentShaderFilePath("gl/2d_renderer.frag");
 const std::string model::k2dColorUniform("inColor");
 
-const std::string model::kPath3dVertexShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
-					  "path_3d.vert"));
+const std::string model::kPath3dVertexShaderFilePath("gl/path_3d.vert");
 const GLuint model::kPath3dPositionAttribute(0);
 const GLuint model::kPath3dVertexBinding(0);
 const std::string model::kPath3dTransformationUniform("transformation");
 
-const std::string model::kPath3dFragmentShaderFilePath
-(::dynsolver::app::generate_resource_path(std::vector<std::string>{"gl"},
-					  "path_3d.frag"));
+const std::string model::kPath3dFragmentShaderFilePath("gl/path_3d.frag");
 const std::string model::kPath3dColorUniform("inColor");
 
 const int model::minPixelTickDist = 15;
@@ -1440,7 +1431,7 @@ model::get_singular_points() const {
 void model::add_separatrix(const separatrix_specs& specs) {
   ++uniqueSeparatrixId;
   separatrices.insert(std::make_pair(uniqueSeparatrixId,
-				     separatrix{specs, std::list<math::vector2d>()}));
+				     separatrix{specs, std::list<::math::vector2d>()}));
   generate_separatrix_data(uniqueSeparatrixId);
   // We now need to update the VBO's of each window.
   for(dynamical_iter iter = dynamicalWindows.begin();
@@ -1452,7 +1443,7 @@ void model::add_separatrix(const separatrix_specs& specs) {
 void model::add_solution(const solution_specs& spec) {
   ++uniqueSolutionId;
   solutions.insert(std::make_pair(uniqueSolutionId,
-				  solution{spec, std::list<math::dynamical_point>()}));
+				  solution{spec, std::list<::math::dynamical_point>()}));
   generate_solution_data(uniqueSolutionId);
   
   // We now need to update the VBO's of each window.
@@ -1465,7 +1456,7 @@ void model::add_solution(const solution_specs& spec) {
 bool model::add_isocline(const isocline_specs& spec) {
   ++uniqueIsoclineId;
   isoclines.insert(std::make_pair(uniqueIsoclineId, isocline{spec,
-	  std::list<math::vector>()}));
+	  std::list<::math::vector>()}));
   bool success = generate_isocline_data(uniqueIsoclineId);
   if(success) {
     // We now need to update the VBO's of each window.
@@ -1485,7 +1476,7 @@ bool model::add_isocline(const isocline_specs& spec) {
 bool model::add_singular_point(const singular_point_specs& specs) {
   ++uniqueSingularPointId;
   singularPoints.insert(std::make_pair(uniqueSingularPointId,
-				       singular_point{specs, math::vector()}));
+				       singular_point{specs, ::math::vector()}));
   bool success = generate_singular_point_data(uniqueSingularPointId);
   if(success) {
     return true;
@@ -1501,7 +1492,7 @@ bool model::add_hopf_bifurcation(const hopf_bifurcation_specs& specs) {
   ++uniqueHopfBifurcationId;
   hopfBifurcations.insert(std::make_pair(uniqueHopfBifurcationId,
 					 hopf_bifurcation{specs,
-					     std::list<math::vector>()}));
+					     std::list<::math::vector>()}));
   bool success = generate_hopf_bifurcation_data(uniqueHopfBifurcationId);
   if(success) {
     for(parameter_iter iter = parameterWindows.begin();
@@ -1520,7 +1511,7 @@ bool model::add_saddle_node_bifurcation(const saddle_node_bifurcation_specs& spe
   ++uniqueSaddleNodeBifurcationId;
   saddleNodeBifurcations.insert(std::make_pair(uniqueSaddleNodeBifurcationId,
 					       saddle_node_bifurcation{specs,
-						   std::list<math::vector>()}));
+						   std::list<::math::vector>()}));
   bool success = generate_saddle_node_bifurcation_data(uniqueSaddleNodeBifurcationId);
   if(success) {
     for(parameter_iter iter = parameterWindows.begin();
@@ -1539,7 +1530,7 @@ bool model::add_limit_cycle_bifurcation(const limit_cycle_bifurcation_specs& spe
   ++uniqueLimitCycleBifurcationId;
   limitCycleBifurcations.insert(std::make_pair(uniqueLimitCycleBifurcationId,
 					       limit_cycle_bifurcation{specs,
-						   std::list<math::vector>()}));
+						   std::list<::math::vector>()}));
   bool success = generate_limit_cycle_bifurcation_data(uniqueLimitCycleBifurcationId);
   if(success) {
     for(parameter_iter iter = parameterWindows.begin();
@@ -1558,7 +1549,7 @@ bool model::add_saddle_connection_bifurcation(const saddle_connection_bifurcatio
   ++uniqueSaddleConnectionBifurcationId;
   saddleConnectionBifurcations.insert(std::make_pair(uniqueSaddleConnectionBifurcationId,
 					       saddle_connection_bifurcation{specs,
-						   std::list<math::vector>()}));
+						   std::list<::math::vector>()}));
   bool success = generate_saddle_connection_bifurcation_data(uniqueSaddleConnectionBifurcationId);
   if(success) {
     for(parameter_iter iter = parameterWindows.begin();
@@ -1827,77 +1818,77 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
     });
   
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 0);
+      return ::math::derivative(systemFunctions[4], vec, 0);
     });
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 1);
+      return ::math::derivative(systemFunctions[4], vec, 1);
     });
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 2);
+      return ::math::derivative(systemFunctions[4], vec, 2);
     });
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 3);
+      return ::math::derivative(systemFunctions[4], vec, 3);
     });
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 4);
+      return ::math::derivative(systemFunctions[4], vec, 4);
     });
   jacobianFunctions.push_back([&](const double* arr) -> double {
-      math::vector vec(6, 0.0);
+      ::math::vector vec(6, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
       vec[2] = arr[2];
       vec[3] = arr[3];
       vec[4] = arr[4];
       vec[5] = arr[5];
-      return math::derivative(systemFunctions[4], vec, 5);
+      return ::math::derivative(systemFunctions[4], vec, 5);
     });
   
   // Setup the initial search vector
-  math::vector init(6, 0.0);
+  ::math::vector init(6, 0.0);
   init[0] = specs.init[0];
   init[1] = specs.init[1];
 
-  math::vector p1 =
+  ::math::vector p1 =
     singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
   init[2] = p1[0];
   init[3] = p1[1];
   
-  math::vector p2 =
+  ::math::vector p2 =
     singularPoints.at(separatrices.at(specs.separatrix2).specs.singularPoint).position;
   init[4] = p2[0];
   init[5] = p2[1];
@@ -1920,10 +1911,10 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
 
   saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
   std::vector<std::function<double(const double*)>> systemFunctions;
-    math::vector p1 =
+    ::math::vector p1 =
     singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
   
-  math::vector p2 =
+  ::math::vector p2 =
     singularPoints.at(separatrices.at(specs.separatrix2).specs.singularPoint).position;
   
   systemFunctions.push_back([&](const double* arr)->double {
@@ -1957,16 +1948,16 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
     });
   std::vector<std::function<double(const double*)>> jacobianFunctions;
   jacobianFunctions.push_back([&](const double* arr)->double {
-      math::vector vec(2, 0.0);
+      ::math::vector vec(2, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
-      return math::derivative(systemFunctions[0], vec, 0);
+      return ::math::derivative(systemFunctions[0], vec, 0);
     });
   jacobianFunctions.push_back([&](const double* arr)->double {
-      math::vector vec(2, 0.0);
+      ::math::vector vec(2, 0.0);
       vec[0] = arr[0];
       vec[1] = arr[1];
-      return math::derivative(systemFunctions[0], vec, 1);
+      return ::math::derivative(systemFunctions[0], vec, 1);
     });
 
   std::vector<int> varIndex;
@@ -2000,9 +1991,9 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
   std::cout << "Deriv A: "<<jacobianFunctions[0](specs.init.data()) << std::endl;
   std::cout << "Deriv B: "<<jacobianFunctions[1](specs.init.data()) << std::endl;
   return false;
-  math::find_implicit_path_ret ret;
+  ::math::find_implicit_path_ret ret;
   try {
-  ret = math::find_implicit_path(systemFunctions,
+  ret = ::math::find_implicit_path(systemFunctions,
 				 jacobianFunctions,
 				 specs.init,
 				 varIndex,
@@ -2029,7 +2020,7 @@ bool model::generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id) {
 
 gen_singular_point_ret
 model::gen_singular_point(const singular_point_specs& specs,
-			  const math::vector& parameterVals) {
+			  const ::math::vector& parameterVals) {
   std::vector<compiler::function<double, const double*>> systemFunctions;
   for(std::vector<expression>::const_iterator iter = system.begin();
       iter != system.end(); ++iter) {
@@ -2043,7 +2034,7 @@ model::gen_singular_point(const singular_point_specs& specs,
     }
   }
   std::vector<int> indices;
-  math::vector init(symbolsToIndex.size());
+  ::math::vector init(symbolsToIndex.size());
   init[varDiffIndex] = 0; // This value is ignored.
   for(int i = 0; i != parameters; ++i) {
     init[parameterIndexToSymbol[i]] = parameterVals[i];
@@ -2053,7 +2044,7 @@ model::gen_singular_point(const singular_point_specs& specs,
     indices.push_back(dynamicalIndexToSymbol[i]);
   }
  
-  if(!math::newton_method(systemFunctions,
+  if(!::math::newton_method(systemFunctions,
 			  jacobianFunctions, indices,
 			  init)) {
     std::cout << "Couldn't find singular point" << std::endl;
@@ -2075,13 +2066,13 @@ model::gen_singular_point(const singular_point_specs& specs,
   }
   // We now compute the jacobian matrix at this point and
   // evaluate its eigenvalues.
-  math::square_matrix mat(dynamicalVars);
+  ::math::square_matrix mat(dynamicalVars);
   for(int r = 0; r != dynamicalVars; ++r) {
     for(int c = 0; c != dynamicalVars; ++c) {
       mat[r][c] = partials[r][dynamicalIndexToSymbol[c]].function(data.data());
     }
   }
-  std::vector<math::eigenvalue> eigenvalues = mat.find_eigenvalues();
+  std::vector<::math::eigenvalue> eigenvalues = mat.find_eigenvalues();
   // Compute the type of the singular point.
   // We first check whether they are all real or all complex, or mixed.
   bool foundReal(false);
@@ -2258,9 +2249,9 @@ bool model::compile(const std::string& newVarDiffName,
     parameterIndexToSymbol.push_back(symbolsToIndex[parameterNames[i]]);
   }
   if(parameters == 0) 
-    parameterPosition = math::vector(1, 0.0);
+    parameterPosition = ::math::vector(1, 0.0);
   else
-    parameterPosition = math::vector(parameters, 0.0);
+    parameterPosition = ::math::vector(parameters, 0.0);
   for(dynamical_iter iter = dynamicalWindows.begin();
       iter != dynamicalWindows.end(); ++iter) {
     for(solution_const_iter sol = solutions.begin();
@@ -2336,36 +2327,36 @@ void model::resize_parameter(parameter_id id, int width, int height) {
 }
 
 void model::set_dynamical_viewport_2d(dynamical_id id,
-				      const math::window2d& window) {
+				      const ::math::window2d& window) {
   dynamicalWindows.at(id).set_viewport_2d(window);
 }
 
 void model::set_dynamical_viewport_3d(dynamical_id id,
-				      const math::window3d& window) {
+				      const ::math::window3d& window) {
   dynamicalWindows.at(id).set_viewport_3d(window);
 }
 
 void model::set_parameter_viewport(parameter_id id,
-				   const math::window2d &window) {
+				   const ::math::window2d &window) {
   parameterWindows.at(id).set_viewport(window);
 }
 
 bool model::on_dynamical_vert_axis(dynamical_id id,
-				   const math::vector2d& pos) const {
+				   const ::math::vector2d& pos) const {
   return dynamicalWindows.at(id).on_vert_axis(pos);
 }
 bool model::on_dynamical_horiz_axis(dynamical_id id,
-				    const math::vector2d& pos) const {
+				    const ::math::vector2d& pos) const {
   return dynamicalWindows.at(id).on_horiz_axis(pos);
 }
 
 bool model::on_parameter_horiz_axis(parameter_id id,
-				    const math::vector2d& pos) const {
+				    const ::math::vector2d& pos) const {
   return parameterWindows.at(id).on_horiz_axis(pos);
 }
 
 bool model::on_parameter_vert_axis(parameter_id id,
-				    const math::vector2d& pos) const {
+				    const ::math::vector2d& pos) const {
   return parameterWindows.at(id).on_vert_axis(pos);
 }
 
@@ -2442,7 +2433,7 @@ void model::generate_solution_data(solution_id id) {
     systemFunctions.push_back(iter->function);
   }
 
-  math::vector input(symbolsToIndex.size());
+  ::math::vector input(symbolsToIndex.size());
   for(int i = 0; i != parameterNames.size(); ++i) {
     input[parameterIndexToSymbol[i]] = parameterPosition[i];
   }
@@ -2453,7 +2444,7 @@ void model::generate_solution_data(solution_id id) {
 
   // Set the data
   solutions.at(id).data =
-    math::euler_method(systemFunctions, dynamicalIndexToSymbol,
+    ::math::euler_method(systemFunctions, dynamicalIndexToSymbol,
 		       varDiffIndex, input,
 		       spec.inc, spec.tMin, spec.tMax);
 }
@@ -2627,29 +2618,29 @@ model::find_separatrix_intersection(double paramA,
 				    double paramB,
 				    double sing1,
 				    double sing2,
-				    const math::vector2d& transA,
-				    const math::vector2d& transB,
+				    const ::math::vector2d& transA,
+				    const ::math::vector2d& transB,
 				    const separatrix_id& id) {
   separatrix_specs specs = separatrices.at(id).specs;
   specs.inc = 0.01;
   singular_point_specs singularPointSpecs;
-  math::vector initCondition(2);
+  ::math::vector initCondition(2);
   initCondition[0] = sing1;
   initCondition[1] = sing2;
   singularPointSpecs.init = initCondition;
   gen_separatrix_ret ret = gen_separatrix(singularPointSpecs,
 					  specs,
-					  math::vector2d(paramA, paramB));
+					  ::math::vector2d(paramA, paramB));
   if(!ret.success) {
     std::cout << "No Separatrix" << std::endl;
     return find_separatrix_intersection_ret();
   }
 
-  math::vector2d prev = *(ret.sep.data.begin());
-  math::vector2d orig(prev);
-  for(const math::vector2d& next : ret.sep.data) {
-    if(math::splits(orig, next, transA, transB)) {
-      math::vector2d inter = next;
+  ::math::vector2d prev = *(ret.sep.data.begin());
+  ::math::vector2d orig(prev);
+  for(const ::math::vector2d& next : ret.sep.data) {
+    if(::math::splits(orig, next, transA, transB)) {
+      ::math::vector2d inter = next;
       return find_separatrix_intersection_ret(inter,
 					      true);
     }
@@ -2661,7 +2652,7 @@ model::find_separatrix_intersection(double paramA,
 
 gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPointSpecs,
 					 const separatrix_specs& separatrixSpecs,
-					 math::vector parameterVals) {
+					 ::math::vector parameterVals) {
   gen_singular_point_ret ret = gen_singular_point(singularPointSpecs,
 						  parameterVals);
   if(!ret.success) {
@@ -2674,7 +2665,7 @@ gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPoi
     return gen_separatrix_ret();
   }
   
-  math::vector init(symbolsToIndex.size());
+  ::math::vector init(symbolsToIndex.size());
   init[varDiffIndex] = 0; // This is ignored by the functions.
   for(int i = 0; i != parameters; ++i) {
     init[parameterIndexToSymbol[i]] = parameterVals[i];
@@ -2713,9 +2704,9 @@ gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPoi
     systemFunctions.push_back(iter->function);
   }
 
-  std::list<math::dynamical_point> points;
+  std::list<::math::dynamical_point> points;
   if(separatrixSpecs.type == separatrix_specs::type::STABLE) {
-    points = math::euler_method(systemFunctions,
+    points = ::math::euler_method(systemFunctions,
 				dynamicalIndexToSymbol,
 				varDiffIndex,
 				init,
@@ -2723,7 +2714,7 @@ gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPoi
 				-separatrixSpecs.time,
 				0);
   } else {
-    points = math::euler_method(systemFunctions,
+    points = ::math::euler_method(systemFunctions,
 				dynamicalIndexToSymbol,
 				varDiffIndex,
 				init,
@@ -2732,9 +2723,9 @@ gen_separatrix_ret model::gen_separatrix(const singular_point_specs& singularPoi
 				separatrixSpecs.time);
   }
 
-  std::list<math::vector2d> data;
-  for(const math::dynamical_point& point : points) {
-    data.push_back(math::vector2d(point.vars[0], point.vars[1]));
+  std::list<::math::vector2d> data;
+  for(const ::math::dynamical_point& point : points) {
+    data.push_back(::math::vector2d(point.vars[0], point.vars[1]));
   }
   
   return gen_separatrix_ret{singularPoint,
@@ -2872,7 +2863,7 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
     });
   
   // Setup the initial search vector
-  math::vector init(symbolsToIndex.size());
+  ::math::vector init(symbolsToIndex.size());
   std::vector<int> varIndex;
   init[varDiffIndex] = 0; // This value is ignored by the functions
   for(int i = 0; i != dynamicalVars; ++i) {
@@ -2888,8 +2879,8 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
   constraintVars.insert(2);
   constraintVars.insert(3);
 
-  math::find_implicit_path_ret ret =
-    math::find_implicit_path(systemFunctions,
+  ::math::find_implicit_path_ret ret =
+    ::math::find_implicit_path(systemFunctions,
 			     jacobianFunctions,
 			     init,
 			     varIndex,
@@ -2901,9 +2892,9 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
 
   if(!ret.success) return false;
 
-  std::list<math::vector> points;
-  for(const math::vector& point : ret.data) {
-    math::vector vec(2);
+  std::list<::math::vector> points;
+  for(const ::math::vector& point : ret.data) {
+    ::math::vector vec(2);
     vec[0] = point[2];
     vec[1] = point[3];
     points.push_back(vec);
@@ -3041,7 +3032,7 @@ bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id id)
   
   
   // Setup the initial search vector
-  math::vector init(symbolsToIndex.size());
+  ::math::vector init(symbolsToIndex.size());
   std::vector<int> varIndex;
   init[varDiffIndex] = 0; // This value is ignored by the functions
   for(int i = 0; i != dynamicalVars; ++i) {
@@ -3057,8 +3048,8 @@ bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id id)
   constraintVars.insert(2);
   constraintVars.insert(3);
 
-  math::find_implicit_path_ret ret =
-    math::find_implicit_path(systemFunctions,
+  ::math::find_implicit_path_ret ret =
+    ::math::find_implicit_path(systemFunctions,
 			     jacobianFunctions,
 			     init,
 			     varIndex,
@@ -3070,9 +3061,9 @@ bool model::generate_saddle_node_bifurcation_data(saddle_node_bifurcation_id id)
 
   if(!ret.success) return false;
 
-  std::list<math::vector> points;
-  for(const math::vector& point : ret.data) {
-    math::vector vec(2);
+  std::list<::math::vector> points;
+  for(const ::math::vector& point : ret.data) {
+    ::math::vector vec(2);
     vec[0] = point[2];
     vec[1] = point[3];
     points.push_back(vec);
@@ -3128,7 +3119,7 @@ bool model::generate_isocline_data(isocline_id id) {
   }
   
   // Setup the initial search vector
-  math::vector init(kIndex + 1);
+  ::math::vector init(kIndex + 1);
   init[varDiffIndex] = 0; // This value is ignored by the functions
   for(int i = 0; i != dynamicalVars; ++i) {
     init[dynamicalIndexToSymbol[i]] = specs.init[i];
@@ -3148,8 +3139,8 @@ bool model::generate_isocline_data(isocline_id id) {
     constraintVars.insert(i);
   }
 
-  math::find_implicit_path_ret ret =
-    math::find_implicit_path(systemFunctions,
+  ::math::find_implicit_path_ret ret =
+    ::math::find_implicit_path(systemFunctions,
 			     jacobianFunctions,
 			     init,
 			     varIndex,
@@ -3189,9 +3180,9 @@ const std::string& model::get_var_diff_name() const {
   return varDiffName;
 }
 
-void model::set_parameter_position(parameter_id id, const math::vector2d& pos) {
+void model::set_parameter_position(parameter_id id, const ::math::vector2d& pos) {
   const parameter_specs& specs = parameterWindows.at(id).get_specs();
-  math::vector2d realPos(specs.viewport.real_coordinate_of(pos));
+  ::math::vector2d realPos(specs.viewport.real_coordinate_of(pos));
   parameterPosition[parameterIndex.at(specs.horizAxisVar)] = realPos.x();
   parameterPosition[parameterIndex.at(specs.vertAxisVar)] = realPos.y();
   // For each solution
@@ -3253,22 +3244,22 @@ void model::set_parameter_position(parameter_id id, const math::vector2d& pos) {
   }
 }
 
-bool model::on_parameter_position(parameter_id id, const math::vector2d& pos) const {
+bool model::on_parameter_position(parameter_id id, const ::math::vector2d& pos) const {
   return parameterWindows.at(id).on_parameter_position(pos);
 }
 
 // Returns the dynamical point associated with the given mouse position
 // in this dynamical window.
-math::dynamical_point model::get_dynamical_point(dynamical_id id, const math::vector2d& pos) const {
+::math::dynamical_point model::get_dynamical_point(dynamical_id id, const ::math::vector2d& pos) const {
   return dynamicalWindows.at(id).get_point(pos);
 }
 
-math::vector model::get_parameter_point(parameter_id id,
-					const math::vector2d& pos) const {
+::math::vector model::get_parameter_point(parameter_id id,
+					const ::math::vector2d& pos) const {
   return parameterWindows.at(id).get_point(pos);
 }
 
-const math::vector& model::get_parameter_position() const {
+const ::math::vector& model::get_parameter_position() const {
   return parameterPosition;
 }
 } // namespace gui

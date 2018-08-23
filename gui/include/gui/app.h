@@ -8,17 +8,29 @@
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
 
-
 #include "gui/common.h"
-#include "gui/model.h"
-
-#include "math/window2d.h"
 
 class wxDialog;
 
+namespace math {
+class window3d;
+class window2d;
+class vector2d;
+}
+
 namespace dynsolver {
 namespace gui {
-
+class dynamical_specs;
+class parameter_specs;
+class saddle_connection_bifurcation_specs;
+class limit_cycle_bifurcation_specs;
+class singular_point_specs;
+class separatrix_specs;
+class solution_specs;
+class isocline_specs;
+class hopf_bifurcation_specs;
+class saddle_node_bifurcation_specs;
+class model;
 class dynamical_frame;
 class parameter_frame;
 class console_frame;
@@ -124,14 +136,14 @@ class app : public wxApp {
 
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_2d(dynamical_id id,
-				 const math::window2d&);
+				 const ::math::window2d&);
   
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_3d(dynamical_id id,
-				 const math::window3d&);
+				 const ::math::window3d&);
 
   void set_parameter_specs(parameter_id, const parameter_specs&);
-  void set_parameter_viewport(parameter_id id, const math::window2d&);
+  void set_parameter_viewport(parameter_id id, const ::math::window2d&);
 
   // Called when we need to clear what is currently compiled
   void set_no_compile();
@@ -244,7 +256,7 @@ class app : public wxApp {
 
   // Sets the parameter position according to the position provided in window
   // coordinates. Updates all parameter and dynamical windows accordingly.
-  void set_parameter_position(parameter_id, const math::vector2d&);
+  void set_parameter_position(parameter_id, const ::math::vector2d&);
 
 private:
   void refresh_dynamical_windows();

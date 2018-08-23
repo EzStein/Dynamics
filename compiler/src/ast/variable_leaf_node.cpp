@@ -1,5 +1,6 @@
 #include "compiler/ast/variable_leaf_node.h"
 #include "compiler/ast/AST.h"
+#include "compiler/ast/integer_number_leaf_node.h"
 variable_leaf_node::variable_leaf_node(symbol::ptr_type _symPtr):symPtr(_symPtr) {
 
 }

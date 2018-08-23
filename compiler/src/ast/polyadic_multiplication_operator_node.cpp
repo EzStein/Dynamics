@@ -18,7 +18,6 @@
 #include "compiler/ast/binary_operator_node.h"
 
 
-
  polyadic_multiplication_operator_node::polyadic_multiplication_operator_node(expression_node* firstChild) {
    children.push_back(firstChild);
  }

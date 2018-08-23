@@ -3,6 +3,8 @@
 #include "compiler/ast/binary_addition_operator_node.h"
 #include "compiler/ast/binary_multiplication_operator_node.h"
 #include "compiler/ast/integer_number_leaf_node.h"
+#include "compiler/ast/number_leaf_node.h"
+#include "compiler/ast/unary_minus_operator_node.h"
 binary_subtraction_operator_node::binary_subtraction_operator_node(expression_node* leftChild, expression_node* rightChild) :
 binary_operator_node(leftChild, rightChild) {
 

@@ -37,26 +37,26 @@ private:
   
   // Variables which are set whenever the mouse is right clicked
   // (mouse down event). The value is stored until the next right click.
-  math::vector2d rightClickMousePos;
+  ::math::vector2d rightClickMousePos;
 
   // These variables store the position of the mouse after the left mouse
   // button is clicked. The values are updated during mouse down events.
-  math::vector2d leftClickMousePos;
+  ::math::vector2d leftClickMousePos;
 
   // The window as it exists before a move is initiated.
   // Locked in when the left mouse is depressed.
-  math::window2d moveViewport;
+  ::math::window2d moveViewport;
 
   // Represents the magnification due to scrolling.
   double totalMagnification;
 
   // The X and Y pixels of the mouse when magnification begins.
   // These are set on a magnification start.
-  math::vector2d magnificationPos;
+  ::math::vector2d magnificationPos;
 
   // The viewport as it exists when magnifcation starts.
   // Locked in on magnification start and end.
-  math::window2d magnificationViewport;
+  ::math::window2d magnificationViewport;
 
   // True when the first wheel event has note yet been processed. False
   // after the first wheel event has been processed and the wheel event
@@ -79,7 +79,7 @@ private:
   // the vertical or horizontal axes. We lock these values in along with
   // the axesScalingViewport when we left click on an axis.
   bool verticalScaling, horizontalScaling;
-  math::window2d axesScalingViewport;
+  ::math::window2d axesScalingViewport;
 
   // The maximum axes scaling allowed.
   static const double kMaxAxesScale;
@@ -114,15 +114,15 @@ public:
 
   // Returns the window coordinates of the mouse cursor for the given mouse
   // event.
-  math::vector2d get_window_coordinates(const wxMouseEvent&);
+  ::math::vector2d get_window_coordinates(const wxMouseEvent&);
 
   // When the left or right mouse button are pressed and released in the
   // same spot, a mouse_click event is generated.
-  void gl_canvas_on_right_mouse_click(const math::vector2d& pos);
-  void gl_canvas_on_left_mouse_click(const math::vector2d& pos);
+  void gl_canvas_on_right_mouse_click(const ::math::vector2d& pos);
+  void gl_canvas_on_left_mouse_click(const ::math::vector2d& pos);
 
   // Set's the cursors image according to its position on the canvas.
-  void set_cursor(const math::vector2d& pos);
+  void set_cursor(const ::math::vector2d& pos);
 
   // Refreshes the canvas.
   void refresh_gl_canvas();

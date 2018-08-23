@@ -37,8 +37,3 @@ GLuint shader::get_handle() const {
   return handle;
 }
 } // namespace gl
-
-int main(void) {
-  gl::shader shader("", GL_STATIC_DRAW);
-  return -1;
-}
