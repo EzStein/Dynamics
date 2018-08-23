@@ -1,11 +1,12 @@
-#include "constants.h"
+#include "gui/constants.h"
+#include "gui/config.h"
 
 #include <vector>
 
 namespace dynsolver {
 namespace constants {
 
-const std::string kDefaultFontFilePath("fonts/OpenSans-Regular.ttf");
+const std::string kDefaultFontFilePath(DEFAULT_FONT_PATH);
 
 namespace app {
 const int kGLMajorVersion(4);

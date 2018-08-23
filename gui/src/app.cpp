@@ -98,24 +98,15 @@ bool app::OnInit() {
   
   wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "");
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
-  dummyCanvas->Bind(wxEVT_PAINT, [&](wxPaintEvent&){
-      // We only want to set the context current once,
-      // but the paint event may be called several times.
-      static bool first(true);
-      if(first && dummyCanvas->IsShownOnScreen()) {
-	glContext->SetCurrent(*dummyCanvas);
-	first = false;
-      }
-      
-      // We need this check because sometimes the paint
-      // event is called before
-      // the canvas is considered modal.
-      if(dummyDialog->IsModal() && !first) {
-	dummyDialog->EndModal(0);
-      }
-    });
+  auto onIdleLambda = [&](wxIdleEvent&){
+      glContext->SetCurrent(*dummyCanvas);
+      dummyDialog->EndModal(0);
+  };
+  dummyCanvas->Bind(wxEVT_IDLE, onIdleLambda);
   dummyDialog->ShowModal();
+  dummyCanvas->Unbind(wxEVT_IDLE, onIdleLambda);
   delete dummyDialog; // Also deletes dummyCanvas
+  
   // The context is now current!
   // We now load the function pointers
   bool success = gladLoadGL();

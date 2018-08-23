@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(gui)
-find_package(OpenGL REQUIRED)
+find_package(OpenGL 4.3 REQUIRED)
 LOAD_GLAD()
 set(SRC_FILES
   app.cpp
@@ -43,12 +43,21 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
+set(DEFAULT_FONT_PATH "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf")
+set(2D_VERTEX_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.vert")
+set(2D_FRAGMENT_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.frag")
+set(3D_VERTEX_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/path_3d.vert")
+set(3D_FRAGMENT_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/path_3d.frag")
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/gui/config.h"
+  )
 add_library(${PROJECT_NAME}
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}"
   "${GLAD_SRC}")
 target_include_directories(${PROJECT_NAME} PUBLIC "${GLAD_INCLUDE}" include/
-  PRIVATE src/include src/include/gui)
+  PRIVATE src/include src/include/gui "${CMAKE_CURRENT_BINARY_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_LIBS}
   PRIVATE OpenGL::GL ${EXTRA_GLAD_LIBS} compiler math mygl regex util parser)

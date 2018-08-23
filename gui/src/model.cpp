@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
 #include "math/eigenvalue.h"
+#include "gui/config.h"
 
 #include "parser/syntax_exception.h"
 #include "compiler/expression_parser.h"
@@ -1254,20 +1255,19 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
   }
 }
 
-const std::string model::k2dVertexShaderFilePath
-("gl/2d_renderer.vert");
+const std::string model::k2dVertexShaderFilePath(VERTEX_SHADER_PATH_2D);
 const GLuint model::k2dPositionAttribute(0);
 const GLuint model::k2dVertexBinding(0);
 const std::string model::k2dTransformationUniform("transformation");
-const std::string model::k2dFragmentShaderFilePath("gl/2d_renderer.frag");
+const std::string model::k2dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_2D);
 const std::string model::k2dColorUniform("inColor");
 
-const std::string model::kPath3dVertexShaderFilePath("gl/path_3d.vert");
+const std::string model::kPath3dVertexShaderFilePath(VERTEX_SHADER_PATH_3D);
 const GLuint model::kPath3dPositionAttribute(0);
 const GLuint model::kPath3dVertexBinding(0);
 const std::string model::kPath3dTransformationUniform("transformation");
 
-const std::string model::kPath3dFragmentShaderFilePath("gl/path_3d.frag");
+const std::string model::kPath3dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_3D);
 const std::string model::kPath3dColorUniform("inColor");
 
 const int model::minPixelTickDist = 15;

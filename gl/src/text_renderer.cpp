@@ -5,14 +5,13 @@
 #include "gl/font.h"
 #include "gl/shader.h"
 #include "util/util.h"
+#include "gl/config.h"
 
 namespace gl {
 
-const std::string text_renderer::kVertexShaderFilePath
-("resources/gl/text_renderer.vert");
+const std::string text_renderer::kVertexShaderFilePath(VERTEX_SHADER_PATH);
 
-const std::string text_renderer::kFragmentShaderFilePath
-("resources/gl/text_renderer.frag");
+const std::string text_renderer::kFragmentShaderFilePath(FRAGMENT_SHADER_PATH);
 
 const std::string text_renderer::kTransformationUniform("transformation");
 const std::string text_renderer::kTextColorUniform("textColor");
