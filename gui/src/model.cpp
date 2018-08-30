@@ -1,5 +1,7 @@
 #include "gui/model.h"
 
+#include "gui/config.h"
+
 #include <vector>
 #include <cassert>
 #include <functional>
@@ -7,15 +9,15 @@
 #include <glad/glad.h>
 #include <wx/glcanvas.h>
 #include "math/eigenvalue.h"
-#include "gui/config.h"
 
 #include "parser/syntax_exception.h"
 #include "compiler/expression_parser.h"
 #include "math/util.h"
 #include "math/vector.h"
-#include "gui/constants.h"
+#include "constants.h"
 #include "gl/shader.h"
 #include "util/util.h"
+#include "gui/app.h"
 #include "math/window2d.h"
 #include "math/vector2d.h"
 #include "math/matrix_4x4.h"
@@ -1259,15 +1261,16 @@ const std::string model::k2dVertexShaderFilePath(VERTEX_SHADER_PATH_2D);
 const GLuint model::k2dPositionAttribute(0);
 const GLuint model::k2dVertexBinding(0);
 const std::string model::k2dTransformationUniform("transformation");
-const std::string model::k2dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_2D);
+
+  const std::string model::k2dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_2D);
 const std::string model::k2dColorUniform("inColor");
 
-const std::string model::kPath3dVertexShaderFilePath(VERTEX_SHADER_PATH_3D);
+  const std::string model::kPath3dVertexShaderFilePath(VERTEX_SHADER_PATH_3D);
 const GLuint model::kPath3dPositionAttribute(0);
 const GLuint model::kPath3dVertexBinding(0);
 const std::string model::kPath3dTransformationUniform("transformation");
 
-const std::string model::kPath3dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_3D);
+  const std::string model::kPath3dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_3D);
 const std::string model::kPath3dColorUniform("inColor");
 
 const int model::minPixelTickDist = 15;
@@ -1565,353 +1568,9 @@ bool model::add_saddle_connection_bifurcation(const saddle_connection_bifurcatio
 }
 
 bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurcation_id id) {
-  // We solve the following system.
-  // f(x1, y1, a, b) = 0
-  // g(x1, y1, a, b) = 0
-  // f(x2, y2, a, b) = 0
-  // g(x2, y2, a, b) = 0
-  // IntersectionDistance(x1, y1, x2, y2, a, b) = 0
-  //
-  // Where (x1, y1) is the position of the singular point of one of the separatrices,
-  // and (x2, y2) is the position of the singular point of another separatrix.
-  // The order of the variables is a, b, x1, y1, x2, y2
-  /*saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
-  std::vector<std::function<double(const double*)>> systemFunctions;
-  systemFunctions.push_back([&](const double* arr)->double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return system[0].function(in);
-    });
-  systemFunctions.push_back([&](const double* arr)->double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return system[1].function(in);
-    });
-  systemFunctions.push_back([&](const double* arr)->double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return system[0].function(in);
-    });
-  systemFunctions.push_back([&](const double* arr)->double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return system[1].function(in);
-    });
-  
-  systemFunctions.push_back([&](const double* arr) -> double {
-      find_separatrix_intersection_ret ret1 =
-	find_separatrix_intersection(arr[0],
-				     arr[1],
-				     arr[2],
-				     arr[3],
-				     specs.transversalA,
-				     specs.transversalB,
-				     specs.separatrix1);
-
-      if(!ret1.success) {
-	throw no_intersection_found_exception();
-      }
-      find_separatrix_intersection_ret ret2 =
-	find_separatrix_intersection(arr[0],
-				     arr[1],
-				     arr[4],
-				     arr[5],
-				     specs.transversalA,
-				     specs.transversalB,
-				     specs.separatrix2);
-      if(!ret2.success) {
-	throw no_intersection_found_exception();
-      }
-      double a = specs.transversalA.distance(ret1.intersection);
-      double b = specs.transversalA.distance(ret2.intersection);
-      return b - a;
-    });
-
-  std::vector<std::function<double(const double*)>> jacobianFunctions;
-
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[0][parameterIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[0][parameterIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[0][dynamicalIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[0][dynamicalIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[1][parameterIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[1][parameterIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[1][dynamicalIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[2];
-      in[dynamicalIndexToSymbol[1]] = arr[3];
-      return partials[1][dynamicalIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[0][parameterIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[0][parameterIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[0][dynamicalIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[0][dynamicalIndexToSymbol[1]].function(in);
-    });
-
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[1][parameterIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[1][parameterIndexToSymbol[1]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      return 0;
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[1][dynamicalIndexToSymbol[0]].function(in);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      double in[5];
-      in[varDiffIndex] = 0;
-      in[parameterIndexToSymbol[0]] = arr[0];
-      in[parameterIndexToSymbol[1]] = arr[1];
-      in[dynamicalIndexToSymbol[0]] = arr[4];
-      in[dynamicalIndexToSymbol[1]] = arr[5];
-      return partials[1][dynamicalIndexToSymbol[1]].function(in);
-    });
-  
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 0);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 1);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 2);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 3);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 4);
-    });
-  jacobianFunctions.push_back([&](const double* arr) -> double {
-      ::math::vector vec(6, 0.0);
-      vec[0] = arr[0];
-      vec[1] = arr[1];
-      vec[2] = arr[2];
-      vec[3] = arr[3];
-      vec[4] = arr[4];
-      vec[5] = arr[5];
-      return ::math::derivative(systemFunctions[4], vec, 5);
-    });
-  
-  // Setup the initial search vector
-  ::math::vector init(6, 0.0);
-  init[0] = specs.init[0];
-  init[1] = specs.init[1];
-
-  ::math::vector p1 =
-    singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
-  init[2] = p1[0];
-  init[3] = p1[1];
-  
-  ::math::vector p2 =
-    singularPoints.at(separatrices.at(specs.separatrix2).specs.singularPoint).position;
-  init[4] = p2[0];
-  init[5] = p2[1];
-
-  std::cout << "Parameters: " << specs.init.to_string() << std::endl;
-  std::cout << "Singular Point 1: " << p1.to_string() << std::endl;
-  std::cout << "Singular Point 2: " << p2.to_string() << std::endl;
-  
-  std::vector<int> varIndex;
-  varIndex.push_back(0);
-  varIndex.push_back(1);
-  varIndex.push_back(2);
-  varIndex.push_back(3);
-  varIndex.push_back(4);
-  varIndex.push_back(5);
-
-  std::unordered_set<int> constraintVars;
-  constraintVars.insert(0);
-  constraintVars.insert(1); */
-
   saddle_connection_bifurcation_specs specs = saddleConnectionBifurcations.at(id).specs;
   std::vector<std::function<double(const double*)>> systemFunctions;
-    ::math::vector p1 =
+  ::math::vector p1 =
     singularPoints.at(separatrices.at(specs.separatrix1).specs.singularPoint).position;
   
   ::math::vector p2 =
@@ -1942,9 +1601,6 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
 	throw no_intersection_found_exception();
       }
       return ret1.intersection.distance(ret2.intersection);
-      //      double a = specs.transversalA.distance(ret1.intersection);
-      //      double b = specs.transversalA.distance(ret2.intersection);
-      //      return b - a;
     });
   std::vector<std::function<double(const double*)>> jacobianFunctions;
   jacobianFunctions.push_back([&](const double* arr)->double {
@@ -1968,7 +1624,7 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
   constraintVars.insert(0);
   constraintVars.insert(1);
 
-  find_separatrix_intersection_ret ret1 =
+  /*  find_separatrix_intersection_ret ret1 =
     find_separatrix_intersection(specs.init[0],
 				 specs.init[1],
 				 p1[0],
@@ -1989,10 +1645,9 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
   std::cout << "Inter 2: " << ret2.intersection.to_string() << std::endl;
   std::cout << "Dist: "<<systemFunctions[0](specs.init.data()) << std::endl;
   std::cout << "Deriv A: "<<jacobianFunctions[0](specs.init.data()) << std::endl;
-  std::cout << "Deriv B: "<<jacobianFunctions[1](specs.init.data()) << std::endl;
-  return false;
+  std::cout << "Deriv B: "<<jacobianFunctions[1](specs.init.data()) << std::endl;*/
+  
   ::math::find_implicit_path_ret ret;
-  try {
   ret = ::math::find_implicit_path(systemFunctions,
 				 jacobianFunctions,
 				 specs.init,
@@ -2002,10 +1657,7 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
 				 specs.searchInc,
 				 specs.inc,
 				 specs.span);
-  } catch(const std::exception& exc) {
-    return false;
-  }
-
+  
   if(!ret.success) {
     return false;
   }
@@ -2014,6 +1666,7 @@ bool model::generate_saddle_connection_bifurcation_data(saddle_connection_bifurc
   saddleConnectionBifurcations.at(id).specs = specs;
   return true;
 }
+
 bool model::generate_limit_cycle_bifurcation_data(limit_cycle_bifurcation_id) {
   return false;
 }
@@ -2636,11 +2289,15 @@ model::find_separatrix_intersection(double paramA,
     return find_separatrix_intersection_ret();
   }
 
+  // If its a stable separatrix we go in reverse direction.
+  if(ret.sep.specs.type == separatrix_specs::type::STABLE) {
+    ret.sep.data.reverse();
+  }
   ::math::vector2d prev = *(ret.sep.data.begin());
   ::math::vector2d orig(prev);
   for(const ::math::vector2d& next : ret.sep.data) {
     if(::math::splits(orig, next, transA, transB)) {
-      ::math::vector2d inter = next;
+      ::math::vector2d inter = ::math::intersect(prev, next, transA, transB);
       return find_separatrix_intersection_ret(inter,
 					      true);
     }
@@ -3263,4 +2920,4 @@ const ::math::vector& model::get_parameter_position() const {
   return parameterPosition;
 }
 } // namespace gui
-} // namespace dynslover
+}

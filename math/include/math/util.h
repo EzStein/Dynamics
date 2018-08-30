@@ -113,7 +113,7 @@ bool newton_method(const std::vector<FUNCTION>& functions,
   assert(varIndices.size() * varIndices.size() == jacobian.size());
   static const int maxIterations(100);
   static const int holdIterations(5);
-  static const double tolerance(1e-10);
+  static const double tolerance(1e-2);
   
   // Counts the number of consecutive iterations where the
   // initial condition moved less than tolerance distance under the
@@ -123,8 +123,12 @@ bool newton_method(const std::vector<FUNCTION>& functions,
   vector previous(input);
   vector next(input);
   while(i != maxIterations && holdCount != holdIterations) {
-    //    std::cout << next.to_string() << std::endl;
-    if(!newton_iteration(functions, jacobian, varIndices, next)) {
+    //std::cout << next.to_string() << std::endl;
+    try {
+      if(!newton_iteration(functions, jacobian, varIndices, next)) {
+	return false;
+      }
+    } catch(const std::exception& exc) {
       return false;
     }
     if(previous.distance(next) < tolerance) {
@@ -277,7 +281,8 @@ find_implicit_path(const std::vector<FUNCTION>& systemIn,
     }
   }
   if(!found) return find_implicit_path_ret();
-  
+
+  std::cout << "Found!" << std::endl;
   math::vector prev(start);
   current = start;
   currentRadius = constraintRadius;
@@ -346,5 +351,4 @@ bool splits(const vector2d& A1, const vector2d& A2,
 	    const vector2d& B1, const vector2d& B2);
 
 } // namespace math
-
 #endif
