@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(mygl)
 find_package(OpenGL 4.3 REQUIRED)
-find_package(Freetype REQUIRED)
 LOAD_GLAD()
 set(SRC_FILES buffer.cpp sampler.cpp vertex_array.cpp
   program.cpp shader.cpp texture.cpp font.cpp text_renderer.cpp
@@ -28,4 +27,5 @@ configure_file(
 target_include_directories(${PROJECT_NAME} PUBLIC include/ PRIVATE src/include
   "${GLAD_INCLUDE}" "${CMAKE_CURRENT_BINARY_DIR}/include")
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL
-   ${GLAD_EXTRA_LIBS} util PUBLIC Freetype::Freetype)
+   ${GLAD_EXTRA_LIBS} util PUBLIC ${FREETYPE_TARGET})
+
