@@ -6,7 +6,13 @@
 #include <vector>
 #include <cassert>
 
+#include "compiler/config.h"
+
+#ifdef IS_UNIX
 #include <sys/mman.h>
+#else
+#include <windows.h>
+#endif
 
 namespace dynsolver {
 namespace compiler {
@@ -47,10 +53,12 @@ function<RET_T, ARGS_T...>::function(const std::vector<unsigned char>& code) :
   funcPtr(nullptr), size(0) {
   size = code.size();
   // Allocates readable writable executable memory.
-
+#ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-		 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  assert(ptr != MAP_FAILED);
+		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#else
+  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, code.data(), size * sizeof(unsigned char));
 }
@@ -59,7 +67,11 @@ template<class RET_T, class ...ARGS_T>
 function<RET_T, ARGS_T...>::~function() {
   // We dealocate the speciall executable memory.
   if(funcPtr != nullptr) {
+#ifdef IS_UNIX
     int success = munmap(reinterpret_cast<void*>(funcPtr), size);
+#else
+    int success = !VirtualFree(reinterpret_cast<void*>(funcPtr), 0, MEM_RELEASE);
+#endif
     assert(success == 0);
     funcPtr = nullptr;
   }
@@ -70,9 +82,13 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>
   funcPtr(nullptr), size(0) {
   size = other.size;
 
+#ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  assert(ptr != MAP_FAILED);
+#else
+  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
+  
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, other.funcPtr, size);
 }
@@ -92,9 +108,12 @@ function<RET_T, ARGS_T...>
   int success = munmap(reinterpret_cast<void*>(funcPtr), size);
   assert(success == 0);
   size = other.size;
+#ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  assert(ptr != MAP_FAILED);
+#else
+  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, other.funcPtr, size);
   return *this;

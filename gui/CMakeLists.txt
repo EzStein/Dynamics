@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 project(gui)
-find_package(OpenGL 4.3 REQUIRED)
-LOAD_GLAD()
 set(SRC_FILES
   app.cpp
   constants.cpp
@@ -56,8 +54,9 @@ add_library(${PROJECT_NAME}
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}"
-  "${GLAD_SRC}")
-target_include_directories(${PROJECT_NAME} PUBLIC "${GLAD_INCLUDE}" include/
-  PRIVATE src/include src/include/gui "${CMAKE_CURRENT_BINARY_DIR}/include")
-target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_LIBS}
-  PRIVATE OpenGL::GL ${EXTRA_GLAD_LIBS} compiler math mygl regex util parser)
+  "${GLAD_SRC_FILE}" "${GLAD_INCLUDE_FILE}")
+target_include_directories(${PROJECT_NAME} PUBLIC include/
+  PRIVATE src/include src/include/gui "${CMAKE_CURRENT_BINARY_DIR}/include"
+  PUBLIC "${GLAD_INCLUDE_DIR}")
+target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS}
+  PRIVATE OpenGL::GL ${GLAD_LIBS} compiler math mygl regex util parser)
