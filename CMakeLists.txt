@@ -14,7 +14,7 @@ if(wxWidgets_FOUND)
   set(WX_WIDGETS_LIBS "${wxWidgets_LIBRARIES}")
 else()
   message("Setting up wxWidgets build.")
-  execute_process(COMMAND git submodule update --init external/wxWidgets
+  execute_process(COMMAND git submodule update --init --recursive external/wxWidgets
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
   add_subdirectory(external/wxWidgets)
   set(WX_WIDGETS_LIBS "${WX_WIDGETS_MODULES}")
@@ -23,11 +23,12 @@ find_package(Freetype)
 if(Freetype_FOUND)
   set(FREETYPE_TARGET Freetype::Freetype)
 else()
-  execute_process(COMMAND git submodule update --init external/freetype2
+  execute_process(COMMAND git submodule update --init --recursive external/freetype2
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
   add_subdirectory(external/freetype2)
   set(FREETYPE_TARGET freetype)
 endif()
+find_package(PythonInterp REQUIRED)
 FUNCTION(LOAD_GLAD)
   if(UNIX)
     set(EXTRA_GLAD_LIBS "${CMAKE_DL_LIBS}"
@@ -40,7 +41,7 @@ FUNCTION(LOAD_GLAD)
   if(NOT EXISTS "${CMAKE_BINARY_DIR}/glad/src/glad.c"
       OR NOT EXISTS "${CMAKE_BINARY_DIR}/glad/include/glad/glad.h")
     message("Generating GL Loader...")
-    execute_process(COMMAND git submodule update --init external/glad
+    execute_process(COMMAND git submodule update --init --recursive external/glad
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
     execute_process(COMMAND python -m glad --out-path "${CMAKE_BINARY_DIR}/glad"
       --generator c --spec gl --omit-khrplatform --api gl=4.3 --extensions ""
