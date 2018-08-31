@@ -41,6 +41,7 @@ if(Freetype_FOUND)
 else()
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/freetype2
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+  set(BUILD_SHARED_LIBS OFF)
   add_subdirectory(external/freetype2)
   set(FREETYPE_TARGET freetype)
 endif()
