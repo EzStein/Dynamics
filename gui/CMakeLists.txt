@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(gui)
-set(SRC_FILES
-  app.cpp
+set(SRC_FILES app.cpp
   constants.cpp
   isocline_dialog.cpp
   saddle_node_bifurcation_dialog.cpp

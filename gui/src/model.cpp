@@ -1479,7 +1479,7 @@ bool model::add_isocline(const isocline_specs& spec) {
 bool model::add_singular_point(const singular_point_specs& specs) {
   ++uniqueSingularPointId;
   singularPoints.insert(std::make_pair(uniqueSingularPointId,
-				       singular_point{specs, ::math::vector()}));
+				       singular_point(specs, ::math::vector())));
   bool success = generate_singular_point_data(uniqueSingularPointId);
   if(success) {
     return true;
@@ -1768,7 +1768,7 @@ model::gen_singular_point(const singular_point_specs& specs,
       type = singular_point::type::SADDLE_FOCUS_NODE;
     }
   }
-  return gen_singular_point_ret(singular_point{newSpecs, newSpecs.init, eigenvalues, type}, true);
+  return gen_singular_point_ret(singular_point(newSpecs, newSpecs.init, eigenvalues, type), true);
 }
 
 bool model::generate_singular_point_data(singular_point_id id) {

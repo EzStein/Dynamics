@@ -19,6 +19,7 @@
 #include "gl/font.h"
 #include "gl/text_renderer.h"
 #include "math/util.h"
+#include "math/eigenvalue.h"
 
 class wxGLCanvas;
 class wxGLContext;
@@ -71,7 +72,7 @@ struct solution_specs {
   // Invariant:
   // tMax must be strictly greater than tMin. initial[0] must be
   // strictly between tMax and tMin
-  // increment is strictly positive.
+  // increment is strictly positive. 
   
   // The bounds on how far tMax and tMin should run.
   double tMax;
@@ -111,6 +112,11 @@ struct singular_point {
     SADDLE_FOCUS_NODE // Mixed real and non-real, different real part signs.
     
   };
+  singular_point(const singular_point_specs& specs = singular_point_specs(),
+	  const ::math::vector& position = ::math::vector(),
+	  const std::vector<::math::eigenvalue>& eigenvalues = std::vector<::math::eigenvalue>(),
+	  const type& type = type::STABLE_NODE) :
+	  specs(specs), position(position), eigenvalues(eigenvalues), type(type) { }
   singular_point_specs specs;
   ::math::vector position;
   

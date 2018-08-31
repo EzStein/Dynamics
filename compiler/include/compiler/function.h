@@ -105,7 +105,11 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>&
 function<RET_T, ARGS_T...>
 ::operator=(const function<RET_T, ARGS_T...>& other) {
   if(&other == this) return *this;
+#ifdef IS_UNIX
   int success = munmap(reinterpret_cast<void*>(funcPtr), size);
+#else
+  int success = !VirtualFree(reinterpret_cast<void*>(funcPtr), 0, MEM_RELEASE);
+#endif
   assert(success == 0);
   size = other.size;
 #ifdef IS_UNIX

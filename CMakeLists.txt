@@ -30,6 +30,7 @@ if(wxWidgets_FOUND)
 else()
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+  set(wxBUILD_SHARED OFF)
   add_subdirectory(external/wxWidgets)
   set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
 endif()
