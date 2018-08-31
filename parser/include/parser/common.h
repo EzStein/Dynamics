@@ -1,7 +1,12 @@
 #ifndef PARSER_COMMON_H_
 #define PARSER_COMMON_H_
 // Common files contain the symbols needed by interdependent headers.
-
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <limits>
 
 namespace parser {
