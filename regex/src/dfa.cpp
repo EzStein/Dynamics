@@ -8,6 +8,7 @@
 #include <stack>
 #include <unordered_map>
 #include <vector>
+#include <array>
 
 #include "regex/common.h"
 #include "regex/nfa.h"

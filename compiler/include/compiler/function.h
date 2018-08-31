@@ -57,7 +57,7 @@ function<RET_T, ARGS_T...>::function(const std::vector<unsigned char>& code) :
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #else
-  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, code.data(), size * sizeof(unsigned char));
@@ -86,7 +86,7 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #else
-  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
   
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
@@ -112,7 +112,7 @@ function<RET_T, ARGS_T...>
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #else
-  void* ptr = VirtualALloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
   funcPtr = reinterpret_cast<unsigned char *>(ptr);
   std::memcpy(funcPtr, other.funcPtr, size);

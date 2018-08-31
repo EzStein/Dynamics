@@ -1,6 +1,5 @@
 #ifndef DRIVER_GUARD
 #define DRIVER_GUARD
-#include <sys/mman.h>
 #include <cstddef>
 #include <string>
 #include <map>
