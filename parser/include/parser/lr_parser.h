@@ -70,7 +70,7 @@ class lr_parser {
   
   
   // Indicates the type of entry in the parse table.
-  enum class entry_type {SHIFT, REDUCE, GOTO, ERROR, ACCEPT};
+  enum class entry_type {SHIFT, REDUCE, GOTO, PARSE_ERROR, ACCEPT};
   
   // Returns the entry type along with its data.
   //
@@ -87,7 +87,7 @@ class lr_parser {
   //
   // If ACCEPT is the type, the other fields are not used.
   //
-  // If the type is ERROR, then there is no entry
+  // If the type is PARSE_ERROR, then there is no entry
   // in the parse table.
   //
   // Precondition: the state must exist. (We may assert an error
@@ -170,7 +170,7 @@ ATTR_TYPE lr_parser::parse(regex::lexer& lexer, CALL_TYPE callback) const {
     
     assert(type != entry_type::GOTO);
     
-    if(type == entry_type::ERROR) {
+    if(type == entry_type::PARSE_ERROR) {
       throw syntax_exception(inputToken, get_expected_tokens(state),
                              lexer.token_position(),
                              lexer.character_position(),

@@ -1768,8 +1768,7 @@ model::gen_singular_point(const singular_point_specs& specs,
       type = singular_point::type::SADDLE_FOCUS_NODE;
     }
   }
-  return gen_singular_point_ret
-    {singular_point{newSpecs, newSpecs.init, eigenvalues, type}, true};
+  return gen_singular_point_ret(singular_point{newSpecs, newSpecs.init, eigenvalues, type}, true);
 }
 
 bool model::generate_singular_point_data(singular_point_id id) {

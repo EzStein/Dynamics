@@ -33,7 +33,7 @@ void lr_parser::get_table_entry(int state, int symbol, entry_type& entry,
   std::unordered_map<int,table_entry>::const_iterator iter =
       table[state].find(symbol);
   if(iter == table[state].end()) {
-    entry = entry_type::ERROR;
+    entry = entry_type::PARSE_ERROR;
     return;
   }
   entry = iter->second.type;
