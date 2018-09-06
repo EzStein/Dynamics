@@ -17,7 +17,7 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/include/gl/config.h"
   )
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}"
