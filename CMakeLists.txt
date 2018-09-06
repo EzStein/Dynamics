@@ -62,6 +62,12 @@ if(UNIX)
   set(GLAD_LIBS "${CMAKE_DL_LIBS}")
 endif()
 
+if(NOT UNIX)
+  set(CMAKE_CXX_FLAGS "/EHsc")
+endif()
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_subdirectory(gui)
 add_subdirectory(regex)
 add_subdirectory(parser)

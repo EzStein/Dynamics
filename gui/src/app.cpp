@@ -238,7 +238,7 @@ int app::OnExit() {
   return 0;
 }
 
-bool app::OnExceptionInMainLoop() {
+/*bool app::OnExceptionInMainLoop() {
   throw;
   return false;
 }
@@ -254,7 +254,7 @@ bool app::StoreCurrentException() {
     std::cout << exc.what() << std::endl;
   }
   return false;
-}
+}*/
 
 solution_dialog* app::get_solution_dialog() const {
   return solutionDialog;
