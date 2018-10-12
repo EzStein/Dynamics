@@ -41,9 +41,8 @@ if(Freetype_FOUND)
 else()
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/freetype2
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-  execute_process(COMMAND ${GIT_EXECUTABLE} checkout 86bc8a95056c97a810986434a3f268cbe67f2902
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/freetype2")
   set(BUILD_SHARED_LIBS OFF)
+  set(SKIP_INSTALL_ALL ON)
   add_subdirectory(external/freetype2)
   set(FREETYPE_TARGET freetype)
 endif()
@@ -63,7 +62,7 @@ if(UNIX)
 endif()
 
 if(NOT UNIX)
-  set(CMAKE_CXX_FLAGS "/EHsc")
+  set(CMAKE_CXX_FLAGS "/EHa")
 endif()
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

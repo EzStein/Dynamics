@@ -9,9 +9,16 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
-add_executable(${PROJECT_NAME}
-  "${SRC_FILES}"
-  "${PUBLIC_HEADER_FILES}"
-  "${PRIVATE_HEADER_FILES}")
+if(WIN32)
+   add_executable(${PROJECT_NAME} WIN32
+      "${SRC_FILES}"
+      "${PUBLIC_HEADER_FILES}"
+      "${PRIVATE_HEADER_FILES}")
+else()
+   add_executable(${PROJECT_NAME}
+      "${SRC_FILES}"
+      "${PUBLIC_HEADER_FILES}"
+      "${PRIVATE_HEADER_FILES}")
+endif()
 target_include_directories(${PROJECT_NAME} PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE gui)

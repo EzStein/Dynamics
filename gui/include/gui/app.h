@@ -20,16 +20,16 @@ class vector2d;
 
 namespace dynsolver {
 namespace gui {
-class dynamical_specs;
-class parameter_specs;
-class saddle_connection_bifurcation_specs;
-class limit_cycle_bifurcation_specs;
-class singular_point_specs;
-class separatrix_specs;
-class solution_specs;
-class isocline_specs;
-class hopf_bifurcation_specs;
-class saddle_node_bifurcation_specs;
+struct dynamical_specs;
+struct parameter_specs;
+struct saddle_connection_bifurcation_specs;
+struct limit_cycle_bifurcation_specs;
+struct singular_point_specs;
+struct separatrix_specs;
+struct solution_specs;
+struct isocline_specs;
+struct hopf_bifurcation_specs;
+struct saddle_node_bifurcation_specs;
 class model;
 class dynamical_frame;
 class parameter_frame;
