@@ -44,6 +44,7 @@ else()
   set(BUILD_SHARED_LIBS OFF)
   set(SKIP_INSTALL_ALL ON)
   add_subdirectory(external/freetype2)
+  target_include_directories(freetype PUBLIC external/freetype2/include)
   set(FREETYPE_TARGET freetype)
 endif()
 
