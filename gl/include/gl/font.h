@@ -3,7 +3,6 @@
 
 #include <unordered_map>
 
-#define FT2_BUILD_LIBRARY
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

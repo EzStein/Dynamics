@@ -8,12 +8,11 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
-add_executable(${PROJECT_NAME} "${SRC_FILES}"
+add_executable(${PROJECT_NAME} ${WINDOWS_GUI_FLAG} "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}"
   "${GLAD_SRC_FILE}" "${GLAD_INCLUDE_FILE}")
 target_include_directories(${PROJECT_NAME} PUBLIC include
-  PRIVATE src/include
-  PUBLIC "${GLAD_INCLUDE_DIR}")
+  PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${WX_WIDGETS_TARGETS}
-  OpenGL::GL ${GLAD_LIBS})
+  OpenGL::GL glad)

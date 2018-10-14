@@ -16,8 +16,19 @@ FUNCTION(PREPEND var prefix)
   SET(${var} "${listVar}" PARENT_SCOPE)
 ENDFUNCTION(PREPEND)
 
-set(GL_VERSION 4.3)
-find_package(OpenGL ${GL_VERSION} REQUIRED)
+if(UNIX)
+  add_compile_definitions(IS_UNIX)
+endif()
+if(MSVC)
+  add_compile_definitions(IS_WINDOWS)
+endif()
+
+set(GL_VERSION_MAJOR 4)
+set(GL_VERSION_MINOR 3)
+
+add_compile_definitions(GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
+add_compile_definitions(GL_VERSION_MINOR=${GL_VERSION_MINOR})
+find_package(OpenGL REQUIRED)
 
 # The list of wx widgets required modules.
 set(WX_WIDGETS_MODULES core base gl adv propgrid)
@@ -51,22 +62,20 @@ endif()
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-set(GLAD_SRC_FILE  "${CMAKE_BINARY_DIR}/glad/src/glad.c")
-set(GLAD_INCLUDE_FILE  "${CMAKE_BINARY_DIR}/glad/include/glad/glad.h")
-set(GLAD_INCLUDE_DIR "${CMAKE_BINARY_DIR}/glad/include")
 execute_process(
-  COMMAND ${PYTHON_EXECUTABLE} -m glad --out-path "${CMAKE_BINARY_DIR}/glad"
-  --generator c --spec gl --omit-khrplatform --api gl=${GL_VERSION} --extensions ""
+  COMMAND ${PYTHON_EXECUTABLE} -m glad
+  --out-path "${CMAKE_SOURCE_DIR}/glad"
+  --generator c --spec gl --omit-khrplatform
+  --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
-if(UNIX)
-  set(GLAD_LIBS "${CMAKE_DL_LIBS}")
-endif()
+add_subdirectory(glad)
 
-if(NOT UNIX)
+if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")
+  set(WINDOWS_GUI_FLAG "WIN32")
 endif()
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 
 add_subdirectory(gui)
 add_subdirectory(regex)

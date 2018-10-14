@@ -40,22 +40,21 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
-set(DEFAULT_FONT_PATH "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf")
-set(2D_VERTEX_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.vert")
-set(2D_FRAGMENT_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.frag")
-set(3D_VERTEX_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/path_3d.vert")
-set(3D_FRAGMENT_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/path_3d.frag")
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/gui/config.h"
-  )
 add_library(${PROJECT_NAME} STATIC
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
-  "${PRIVATE_HEADER_FILES}"
-  "${GLAD_SRC_FILE}" "${GLAD_INCLUDE_FILE}")
+  "${PRIVATE_HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include/
-  PRIVATE src/include src/include/gui "${CMAKE_CURRENT_BINARY_DIR}/include"
-  PUBLIC "${GLAD_INCLUDE_DIR}")
-target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS}
-  PRIVATE OpenGL::GL ${GLAD_LIBS} compiler math mygl regex util parser)
+  PRIVATE src/include src/include/gui)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS} glad
+  PRIVATE OpenGL::GL compiler math mygl regex util parser)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  DEFAULT_FONT_PATH="${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  VERTEX_SHADER_PATH_2D="${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.vert")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  FRAGMENT_SHADER_PATH_2D="${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.frag")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  VERTEX_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.vert")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  FRAGMENT_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.frag")

@@ -5,7 +5,6 @@
 #include "gl/font.h"
 #include "gl/shader.h"
 #include "util/util.h"
-#include "gl/config.h"
 
 namespace gl {
 

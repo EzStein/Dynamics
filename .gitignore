@@ -1,3 +1,5 @@
 .DS_Store
 compile_commands.json
 *build*
+glad/**/*.c
+glad/**/*.h

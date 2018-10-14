@@ -24,8 +24,11 @@ bool app::OnInit() {
   glContextAttrs
       .PlatformDefaults()
       .CoreProfile()
-      .OGLVersion(4, 3)
+      .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
       .EndList();
+  std::cout << "Running under opengl version: " <<
+      std::to_string(GL_VERSION_MAJOR) << "."
+            << std::to_string(GL_VERSION_MINOR) << std::endl;
   
   glContext = new wxGLContext(canvas, NULL, &glContextAttrs);
   assert(glContext->IsOK());

@@ -1,4 +1,3 @@
-
 #ifndef DYNSOLVER_GUI_APP_H_
 #define DYNSOLVER_GUI_APP_H_
 

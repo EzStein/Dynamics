@@ -1,5 +1,0 @@
-#ifndef COMPILER_CONFIG
-#define COMPILER_CONFIG
-#cmakedefine IS_WINDOWS
-#cmakedefine IS_UNIX
-#endif

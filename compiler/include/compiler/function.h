@@ -6,8 +6,6 @@
 #include <vector>
 #include <cassert>
 
-#include "compiler/config.h"
-
 #ifdef IS_UNIX
 #include <sys/mman.h>
 #else

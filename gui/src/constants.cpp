@@ -1,5 +1,4 @@
 #include "gui/constants.h"
-#include "gui/config.h"
 
 #include <vector>
 

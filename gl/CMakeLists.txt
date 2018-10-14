@@ -11,21 +11,15 @@ PREPEND(PUBLIC_HEADER_FILES "include/gl"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/gl"
   "${PRIVATE_HEADER_FILES}")
-set(VERTEX_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.vert")
-set(FRAGMENT_SHADER_PATH "${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.frag")
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/gl/config.h"
-  )
 add_library(${PROJECT_NAME} STATIC
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
-  "${PRIVATE_HEADER_FILES}"
-  "${GLAD_SRC_FILE}"
-  "${GLAD_INCLUDE_FILE}"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/gl/config.h")
-target_include_directories(${PROJECT_NAME} PUBLIC include/ PRIVATE src/include
-  "${CMAKE_CURRENT_BINARY_DIR}/include" PUBLIC "${GLAD_INCLUDE_DIR}")
-target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL
-  PUBLIC "${GLAD_LIBS}" util ${FREETYPE_TARGET})
-
+  "${PRIVATE_HEADER_FILES}")
+target_include_directories(${PROJECT_NAME} PUBLIC include/
+  PRIVATE src/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL glad
+  PUBLIC util ${FREETYPE_TARGET})
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  VERTEX_SHADER_PATH="${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.vert")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  FRAGMENT_SHADER_PATH="${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.frag")

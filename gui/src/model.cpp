@@ -1,7 +1,5 @@
 #include "gui/model.h"
 
-#include "gui/config.h"
-
 #include <vector>
 #include <cassert>
 #include <functional>
