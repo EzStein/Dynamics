@@ -23,7 +23,7 @@ if(MSVC)
   add_compile_definitions(IS_WINDOWS)
 endif()
 
-set(GL_VERSION_MAJOR 4)
+set(GL_VERSION_MAJOR 3)
 set(GL_VERSION_MINOR 3)
 
 add_compile_definitions(GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
