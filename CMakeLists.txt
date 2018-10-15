@@ -4,6 +4,7 @@ if(POLICY CMP0025)
 endif()
 project(dynsolver)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE Debug)
 find_package(Git REQUIRED)
 find_package(PythonInterp REQUIRED)
 
