@@ -8,7 +8,6 @@
 #include <wx/frame.h>
 #include <wx/glcanvas.h>
 
-#include "constants.h"
 #include "gui/console_frame.h"
 #include "gui/dynamical_frame.h"
 #include "gui/parameter_frame.h"
@@ -86,7 +85,7 @@ bool app::OnInit() {
   glAttributes.Defaults().EndList();
   glContextAttributes.PlatformDefaults()
     .CoreProfile()
-    .OGLVersion(constants::app::kGLMajorVersion, constants::app::kGLMinorVersion)
+    .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
     .EndList();
 
   glContext = create_context(glAttributes, glContextAttributes);

@@ -12,7 +12,6 @@
 #include "compiler/expression_parser.h"
 #include "math/util.h"
 #include "math/vector.h"
-#include "constants.h"
 #include "gl/shader.h"
 #include "util/util.h"
 #include "gui/app.h"
@@ -1399,7 +1398,7 @@ const saddle_node_bifurcation_id model::kNoSaddleNodeBifurcationId = 0;
 const limit_cycle_bifurcation_id model::kNoLimitCycleBifurcationId = 0;
 const saddle_connection_bifurcation_id model::kNoSaddleConnectionBifurcationId = 0;
 
-model::model() : font(constants::kDefaultFontFilePath),
+model::model() : font(DEFAULT_FONT_PATH),
 		 dynamicalVars(0),
 		 parameters(0),
 		 selectedSolutionId(kNoSolutionId),

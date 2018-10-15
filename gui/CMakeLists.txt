@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(gui)
 set(SRC_FILES app.cpp
-  constants.cpp
   isocline_dialog.cpp
   saddle_node_bifurcation_dialog.cpp
   console_frame.cpp
@@ -19,7 +18,6 @@ set(SRC_FILES app.cpp
   saddle_connection_bifurcation_dialog.cpp)
 set(PUBLIC_HEADER_FILES app.h common.h)
 set(PRIVATE_HEADER_FILES
-  constants.h
   isocline_dialog.h
   saddle_node_bifurcation_dialog.h
   console_frame.h
