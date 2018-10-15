@@ -58,3 +58,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   VERTEX_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.vert")
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   FRAGMENT_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.frag")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MINOR=${GL_VERSION_MINOR})

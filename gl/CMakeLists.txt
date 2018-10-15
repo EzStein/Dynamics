@@ -23,3 +23,11 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   VERTEX_SHADER_PATH="${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.vert")
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   FRAGMENT_SHADER_PATH="${CMAKE_SOURCE_DIR}/resources/gl/text_renderer.frag")
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MINOR=${GL_VERSION_MINOR})
+if(${GL_VERSION_4_3})
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    GL_VERSION_4_3)
+endif()

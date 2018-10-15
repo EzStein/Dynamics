@@ -16,18 +16,17 @@ FUNCTION(PREPEND var prefix)
   SET(${var} "${listVar}" PARENT_SCOPE)
 ENDFUNCTION(PREPEND)
 
-if(UNIX)
-  add_compile_definitions(IS_UNIX)
+if(APPLE)
+  set(GL_VERSION_MAJOR 3)
+  set(GL_VERSION_MINOR 3)
 endif()
-if(MSVC)
-  add_compile_definitions(IS_WINDOWS)
+if(NOT APPLE)
+  set(GL_VERSION_MAJOR 4)
+  set(GL_VERSION_MINOR 3)
+  set(GL_VERSION_4_3)
 endif()
 
-set(GL_VERSION_MAJOR 3)
-set(GL_VERSION_MINOR 3)
 
-add_compile_definitions(GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
-add_compile_definitions(GL_VERSION_MINOR=${GL_VERSION_MINOR})
 find_package(OpenGL REQUIRED)
 
 # The list of wx widgets required modules.

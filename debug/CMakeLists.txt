@@ -16,3 +16,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC include
   PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${WX_WIDGETS_TARGETS}
   OpenGL::GL glad)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  GL_VERSION_MINOR=${GL_VERSION_MINOR})

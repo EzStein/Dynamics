@@ -28,7 +28,8 @@ std::vector<shader> text_renderer::generate_shaders() {
 }
 
 text_renderer::text_renderer() : prog(generate_shaders()),
-				 vbo(nullptr, 16 * sizeof(GLfloat), GL_DYNAMIC_DRAW),
+				 vbo(nullptr, 16 * sizeof(GLfloat),
+                                     GL_DYNAMIC_DRAW),
 				 vertexAttributeBinding(0), textureUnit(0) {
   // Initialize Program Info
   transformationUniform =
@@ -39,20 +40,33 @@ text_renderer::text_renderer() : prog(generate_shaders()),
     glGetUniformLocation(prog.get_handle(), kTextColorUniform.c_str());
   glUseProgram(prog.get_handle());
   glUniform1i(samplerUniform, textureUnit);
-  glUseProgram(prog.get_handle());
   
   // Initialize VAO
   glBindVertexArray(vao.get_handle());
   glEnableVertexAttribArray(kVertexPositionAttribute);
-  glVertexAttribFormat(kVertexPositionAttribute, 2, GL_FLOAT, GL_FALSE, 0);
-  glVertexAttribBinding(kVertexPositionAttribute, vertexAttributeBinding);
-    
   glEnableVertexAttribArray(kTexturePositionAttribute);
+  
+#ifdef GL_VERSION_4_3
+  
   glVertexAttribFormat(kTexturePositionAttribute,
 		       2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat));
   glVertexAttribBinding(kTexturePositionAttribute, vertexAttributeBinding);
-  
+  glVertexAttribFormat(kVertexPositionAttribute, 2, GL_FLOAT, GL_FALSE, 0);
+  glVertexAttribBinding(kVertexPositionAttribute, vertexAttributeBinding);
   glBindVertexBuffer(vertexAttributeBinding, vbo.get_handle(), 0, 4 * sizeof(GLfloat));
+  
+#else
+  
+  glBindBuffer(GL_ARRAY_BUFFER, vbo.get_handle());
+  glVertexAttribPointer(kTexturePositionAttribute, 2, GL_FLOAT, GL_FALSE,
+                        4 * sizeof(GLfloat),
+                        reinterpret_cast<void*>(2 * sizeof(GLfloat)));
+  glVertexAttribPointer(kVertexPositionAttribute, 2, GL_FLOAT, GL_FALSE,
+                        4 * sizeof(GLfloat), 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  
+#endif
+  
   glBindVertexArray(0);
   
   // Initialize Sampler

@@ -21,3 +21,8 @@ add_library(${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME} PUBLIC include/
   PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE asm parser util)
+if(UNIX)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC IS_UNIX)
+else()
+  target_compile_definitions(${PROJECT_NAME} PUBLIC IS_WINDOWS)
+endif()

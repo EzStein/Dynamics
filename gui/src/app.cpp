@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <sstream>
 
 #include <wx/msgdlg.h>
 #include <wx/frame.h>
@@ -31,6 +32,7 @@ namespace {
 // Attempts to create the opengl context with the provided attributes.
 wxGLContext create_context(const wxGLAttributes&, const wxGLContextAttrs&);
 
+#ifdef GL_VERSION_4_3
 void APIENTRY opengl_debug_message_callback( GLenum source,
 					       GLenum type,
 					       GLuint id,
@@ -42,9 +44,19 @@ void APIENTRY opengl_debug_message_callback( GLenum source,
     throw std::runtime_error("OpenGL exception: " + std::to_string(type)
 			     + ": " + message);
   } else {
-    std::cout << "GL Notification: " << message << std::endl;
+    std::cout << "OpenGL Notification: " << message << std::endl;
   }
 }
+#else
+void process_gl_errors() {
+  GLenum err;
+  while((err = glGetError()) != GL_NO_ERROR) {
+    std::stringstream sstream;
+    sstream << std::hex << err;
+    throw std::runtime_error("OpenGL exception: 0x" + sstream.str());
+  }
+}
+#endif
 } // namespace anonymous
 
 app::app() : customLogger(nullptr),
@@ -112,9 +124,11 @@ bool app::OnInit() {
   bool success = gladLoadGL();
   assert(success);
 
+#ifdef GL_VERSION_4_3
   // We set up opengl debugging and callback info.
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(opengl_debug_message_callback, nullptr);
+#endif
   
   // We may now finally construct the model.
   modelData = new model();
