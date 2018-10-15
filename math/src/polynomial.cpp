@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cassert>
 #include <iostream>
+#include <cmath>
 
 #include "math/complex.h"
 #include "math/poly_root.h"
@@ -204,7 +205,7 @@ division_ret polynomial::divide(const polynomial& divisor) const {
   assert(!divisor.is_zero());
   // The index of the divisor's leading coefficient.
   int leadCoef = divisor.size - 1;
-  
+
   // We invert the divisor and make it a monomial.
   polynomial monDiv = divisor*polynomial(-1.0 / divisor.coefficients[leadCoef]);
 
@@ -223,7 +224,7 @@ division_ret polynomial::divide(const polynomial& divisor) const {
     }
     deflation[i] = acc;
   }
-  
+
   std::vector<double> quotient;
   // Copy and reverse the quotient
   for(int i = size - leadCoef - 1; i >= 0; --i) {
@@ -289,7 +290,7 @@ std::vector<poly_root> polynomial::find_roots() const {
       potentialRoots.push_back(root);
       root.conjugate();
       potentialRoots.push_back(root);
-      
+
       std::vector<double> coefficients;
       coefficients.push_back(root.norm_squared());
       coefficients.push_back(-2 * root.real());
@@ -337,4 +338,3 @@ std::vector<poly_root> polynomial::find_roots() const {
   return roots;*/
 }
 } // namespace math
-

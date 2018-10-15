@@ -1,4 +1,5 @@
 #include "gl/shader.h"
+#include <sstream>
 
 namespace gl {
 shader::shader(const std::string& code, GLenum type) {

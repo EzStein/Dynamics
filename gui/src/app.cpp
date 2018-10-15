@@ -30,7 +30,7 @@ namespace gui {
 
 namespace {
 // Attempts to create the opengl context with the provided attributes.
-wxGLContext create_context(const wxGLAttributes&, const wxGLContextAttrs&);
+wxGLContext* create_context(const wxGLAttributes&, const wxGLContextAttrs&);
 
 #ifdef GL_VERSION_4_3
 void APIENTRY opengl_debug_message_callback( GLenum source,
@@ -81,7 +81,7 @@ bool app::OnInit() {
   customLogger = new wxLogStderr();
   // Set wx global logging to output directly to stderr.
   wxLog::SetActiveTarget(customLogger);
-  
+
   // Initializes the attributes which are used to generate an opengl context.
   glAttributes.Defaults().EndList();
   glContextAttributes.PlatformDefaults()
@@ -89,8 +89,8 @@ bool app::OnInit() {
     .OGLVersion(constants::app::kGLMajorVersion, constants::app::kGLMinorVersion)
     .EndList();
 
-  glContext = new wxGLContext(create_context(glAttributes, glContextAttributes));
-  
+  glContext = create_context(glAttributes, glContextAttributes);
+
   // Check to see if the context was created successfully. If not,
   // we try again. We try no more than 3 times before giving up.
   while(!glContext->IsOK()) {
@@ -101,13 +101,13 @@ bool app::OnInit() {
     if(messageDialog.ShowModal() != wxID_OK) {
       return false;
     }
-    glContext = new wxGLContext(create_context(glAttributes, glContextAttributes));
+    glContext = create_context(glAttributes, glContextAttributes);
   }
   // We have now constructed a context!
 
   // In order to make the context current, we need a visible wxGLCanvas
   // We may then delete the canvas and still use the headless context.
-  
+
   wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "");
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
   auto onIdleLambda = [&](wxIdleEvent&){
@@ -118,7 +118,7 @@ bool app::OnInit() {
   dummyDialog->ShowModal();
   dummyCanvas->Unbind(wxEVT_IDLE, onIdleLambda);
   delete dummyDialog; // Also deletes dummyCanvas
-  
+
   // The context is now current!
   // We now load the function pointers
   bool success = gladLoadGL();
@@ -129,10 +129,10 @@ bool app::OnInit() {
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(opengl_debug_message_callback, nullptr);
 #endif
-  
+
   // We may now finally construct the model.
   modelData = new model();
-  
+
   // Setup a basic example.
   consoleFrame = new console_frame(*this);
   consoleFrame->Show();
@@ -148,7 +148,7 @@ bool app::OnInit() {
   saddleNodeBifurcationDialog = new saddle_node_bifurcation_dialog(*this);
   limitCycleBifurcationDialog = new limit_cycle_bifurcation_dialog(*this);
   saddleConnectionBifurcationDialog = new saddle_connection_bifurcation_dialog(*this);
-  
+
   return true;
 }
 
@@ -256,7 +256,7 @@ int app::OnExit() {
   throw;
   return false;
 }
-  
+
 void app::OnUnhandledException() {
   throw;
 }
@@ -628,7 +628,7 @@ void app::deselect_hopf_bifurcation() {
   refresh_parameter_windows();
   consoleFrame->update_hopf_bifurcation_list();
 }
-				       
+
 void app::deselect_saddle_node_bifurcation() {
   modelData->deselect_saddle_node_bifurcation();
   refresh_parameter_windows();
@@ -664,19 +664,19 @@ void app::refresh_parameter_windows() {
   }
 }
 namespace {
-wxGLContext create_context(const wxGLAttributes& glAttributes,
+wxGLContext* create_context(const wxGLAttributes& glAttributes,
 		    const wxGLContextAttrs& glContextAttributes) {
   // Create a dummy frame and canvas that will be used to generate the context.
   // This is essentially a hack that allows us to create an opengl context
   // using wxWidgets.
   wxFrame* dummyFrame = new wxFrame(NULL, wxID_ANY, "");
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyFrame, glAttributes);
-  
+
   // Initialize opengl and create an opengl context.
-  wxGLContext glContext(dummyCanvas, nullptr, &glContextAttributes);
+  wxGLContext* glContext = new wxGLContext(dummyCanvas, nullptr, &glContextAttributes);
 
   dummyFrame->Close(); // Also deletes the dummy frame and canvas.
-  
+
   return glContext;
 }
 } // namespace anonymous

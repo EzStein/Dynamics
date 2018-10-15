@@ -1,6 +1,6 @@
 #include "gl/program.h"
-
 #include "gl/shader.h"
+#include <sstream>
 
 namespace gl {
 
@@ -42,7 +42,6 @@ program& program::operator=(program&& other) {
 }
 
 GLuint program::get_handle() const {
-  return handle; 
+  return handle;
 }
 } // namespace gl
-
