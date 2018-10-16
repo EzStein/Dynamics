@@ -82,59 +82,35 @@ bool app::OnInit() {
   wxLog::SetActiveTarget(customLogger);
 
   // Initializes the attributes which are used to generate an opengl context.
-  glAttributes.PlatformDefaults().DoubleBuffer().EndList();
+  glAttributes.Defaults().DoubleBuffer().EndList();
   glContextAttributes.PlatformDefaults()
     .CoreProfile()
     .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
     .EndList();
 
-  glContext = create_context(glAttributes, glContextAttributes);
-
-  // Check to see if the context was created successfully. If not,
-  // we try again. We try no more than 3 times before giving up.
-  while(!glContext->IsOK()) {
-    delete glContext;
-    glContext = nullptr;
-    wxMessageDialog messageDialog(nullptr, "Failed to create an opengl context. Try again?",
-				  "OpenGL Error", wxOK | wxCANCEL);
-    if(messageDialog.ShowModal() != wxID_OK) {
-      return false;
-    }
-    glContext = create_context(glAttributes, glContextAttributes);
-  }
-  // We have now constructed a context!
-
-  // In order to make the context current, we need a visible wxGLCanvas
-  // We may then delete the canvas and still use the headless context.
-
-  wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "");
-  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
-  auto onIdleLambda = [&](wxIdleEvent&){
-      glContext->SetCurrent(*dummyCanvas);
-      dummyDialog->EndModal(0);
-  };
-  dummyCanvas->Bind(wxEVT_IDLE, onIdleLambda);
-  dummyDialog->ShowModal();
-  dummyCanvas->Unbind(wxEVT_IDLE, onIdleLambda);
-  delete dummyDialog; // Also deletes dummyCanvas
-
-  // The context is now current!
-  // We now load the function pointers
-  bool success = gladLoadGL();
+  wxFrame* dummyFrame = new wxFrame(nullptr, wxID_ANY, "OpenGL Setup");
+  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyFrame, glAttributes);
+  glContext = new wxGLContext(dummyCanvas, NULL, &glContextAttributes);
+  assert(glContext->IsOK());
+  dummyFrame->Show(true);
+  bool success = glContext->SetCurrent(*dummyCanvas);
   assert(success);
-
+  success = gladLoadGL();
+  assert(success);
+  
 #ifdef GL_VERSION_4_3
   // We set up opengl debugging and callback info.
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(opengl_debug_message_callback, nullptr);
 #endif
+  dummyFrame->Destroy();
 
   // We may now finally construct the model.
   modelData = new model();
 
   // Setup a basic example.
   consoleFrame = new console_frame(*this);
-  consoleFrame->Show();
+  consoleFrame->Show(true);
 
   // Set up dialogs
   solutionDialog = new solution_dialog(*this);
