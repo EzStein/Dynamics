@@ -130,7 +130,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       isImm = true;
 
       if(tok == token::HEX_INT) {
-        imm = std::stoul(lexeme, nullptr, 16);
+        imm = std::stoull(lexeme, nullptr, 16);
       } else if(tok == token::DEC_INT) {
         imm = std::stoll(lexeme);
       } else {
@@ -275,8 +275,8 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
 }
 
 void assembler::append(instruction inst, size operandSize, size addressSize, reg_type regType,
-  addressing_mode addrMode, reg rmReg, long rmDisp,
-  reg rReg, bool isImm, long imm, bool rmIsDest, bool uniformReg,
+  addressing_mode addrMode, reg rmReg, long long rmDisp,
+  reg rReg, bool isImm, long long imm, bool rmIsDest, bool uniformReg,
   std::vector<unsigned char>& buf) {
 
    /*If the operand size is 16 bits, we use an override prefix*/

@@ -19,9 +19,10 @@
 #ifndef INTEGER_NUMBER_LEAF_NODE_H
 #define INTEGER_NUMBER_LEAF_NODE_H
 #include "compiler/ast/leaf_node.h"
+#include <cstdint>
 class integer_number_leaf_node : public leaf_node {
 public:
-  integer_number_leaf_node(long);
+  integer_number_leaf_node(int64_t);
   integer_number_leaf_node(int);
   /*Rounds the double to the nearest long*/
   integer_number_leaf_node(double);
@@ -43,7 +44,7 @@ public:
   expression_node* differentiate(const std::string& var) override;
 
   /*Make friend instead of public*/
-  long val;
+  int64_t val;
 private:
 
   virtual bool is_integral() const override;
