@@ -80,11 +80,11 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     addressing_mode addrMode = addressing_mode::NONE;
     size addressSize = size::QUAD_WORD;
     reg_type regType = reg_type::GPR;
-    long rmDisp;
+    long rmDisp = 0;
     bool isImm = false;
-    long imm;
-    bool rmIsDest;
-    bool uniformReg;
+    long imm = 0;
+    bool rmIsDest = false;
+    bool uniformReg = false;
     if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
       append(inst, operandSize, addressSize, regType, addrMode, rmReg, rmDisp, rReg, isImm, imm, rmIsDest, uniformReg, vec);
 
