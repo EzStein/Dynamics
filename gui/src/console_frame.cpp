@@ -431,13 +431,20 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
     messageDialog.ShowModal();
     return;
   }
-  
-  if(!appl.compile(varDiffName, dynamicalVarNames,
-		   parameterNames, expressions)) {
-    wxMessageDialog messageDialog(nullptr, "The Compilation Failed!",
-				  "Compilation Error", wxOK);
-    messageDialog.ShowModal();
-    return;
+  try {
+	  if (!appl.compile(varDiffName, dynamicalVarNames,
+		  parameterNames, expressions)) {
+		  wxMessageDialog messageDialog(nullptr, "The Compilation Failed!",
+			  "Compilation Error", wxOK);
+		  messageDialog.ShowModal();
+		  return;
+	  }
+  }
+  catch (const std::exception& exc) {
+	  wxMessageDialog messageDialog(nullptr, "The Compilation Failed!",
+		  exc.what(), wxOK);
+	  messageDialog.ShowModal();
+	  std::cout << exc.what() << std::endl;
   }
   
   compiledEquationsDataViewCtrl->DeleteAllItems();

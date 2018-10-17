@@ -80,9 +80,9 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
     addressing_mode addrMode = addressing_mode::NONE;
     size addressSize = size::QUAD_WORD;
     reg_type regType = reg_type::GPR;
-    long rmDisp = 0;
+    long long rmDisp = 0;
     bool isImm = false;
-    long imm = 0;
+    long long imm = 0;
     bool rmIsDest = false;
     bool uniformReg = false;
     if(tok == token::NEW_LINE || tok == token::ENDPOINT) {
@@ -132,7 +132,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
       if(tok == token::HEX_INT) {
         imm = std::stoul(lexeme, nullptr, 16);
       } else if(tok == token::DEC_INT) {
-        imm = std::stol(lexeme);
+        imm = std::stoll(lexeme);
       } else {
         throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected integer literal.";
       }
@@ -143,7 +143,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
         /*Consume the left Paren*/
         if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " +  "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
-        rmDisp = std::stol(lexeme);
+        rmDisp = std::stoll(lexeme);
         if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
@@ -223,7 +223,7 @@ std::vector<unsigned char> assembler::assemble(std::string str) {
         /*Consume the left Paren*/
         if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::DEC_INT) {
-        rmDisp = std::stol(lexeme);
+        rmDisp = std::stoll(lexeme);
         if(lex.consume_token(lexeme) != token::LEFT_PAREN) throw "On line, "+ std::to_string(lineNo) + ": " + "Unexpected token '" + lexeme + "' Expected '('";
       } else if(tok == token::LEFT_PAREN) {
         rmDisp = 0;
