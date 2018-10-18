@@ -12,6 +12,7 @@ quaternion::quaternion(const vector3d& axis, double angle) : vector(4, 0.0) {
   (*this)[1] = axis.y() * std::sin(angle / 2);
   (*this)[2] = axis.z() * std::sin(angle / 2);
   (*this)[3] = std::cos(angle / 2);
+  
 }
 
 quaternion::quaternion(double x, double y, double z, double w) : vector(4, 0.0) {
