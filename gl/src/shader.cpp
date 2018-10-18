@@ -1,4 +1,5 @@
 #include "gl/shader.h"
+#include <iostream>
 #include <sstream>
 
 namespace gl {
@@ -13,6 +14,7 @@ shader::shader(const std::string& code, GLenum type) {
     char infoLog[1024];
     glGetShaderInfoLog(handle, 1024, nullptr, infoLog);
     glDeleteShader(handle);
+    std::cout << std::string(infoLog) << std::endl;
     throw shader_compile_exception("Shader failed to compile: "
 				   + std::string(infoLog));
   }
