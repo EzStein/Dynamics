@@ -64,6 +64,17 @@ bool app::OnInit() {
       };
   canvas->Bind(wxEVT_PAINT, onPaint);
 
+  // wxDataViewCtrl Tests
+  dataViewFrame = new wxFrame(nullptr, wxID_ANY, "My Frame",
+                              wxPoint(100, 100), wxSize(300, 300));
+  dataView = new wxDataViewListCtrl(dataViewFrame, wxID_ANY);
+  dataView->AppendTextColumn("My Non editables", wxDATAVIEW_CELL_INERT);
+  dataView->AppendTextColumn("My editables", wxDATAVIEW_CELL_EDITABLE);
+  wxVector<wxVariant> cells;
+  cells.push_back(wxVariant("A"));
+  cells.push_back(wxVariant("B"));
+  dataView->AppendItem(cells);
+  dataViewFrame->Show();
   return true;
 }
 

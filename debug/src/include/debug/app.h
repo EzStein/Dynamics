@@ -2,6 +2,7 @@
 #define DYNSOLVER_DEBUG_APP_H_
 
 #include <wx/app.h>
+#include <wx/dataview.h>
 
 class wxGLCanvas;
 class wxFrame;
@@ -16,6 +17,9 @@ class app : public wxApp {
   wxFrame* frame;
   
   wxGLContext* glContext;
+
+  wxFrame* dataViewFrame;
+  wxDataViewListCtrl* dataView;
   
  public:
   virtual bool OnInit() override;
