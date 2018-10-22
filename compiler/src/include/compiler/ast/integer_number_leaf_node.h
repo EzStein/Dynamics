@@ -22,7 +22,7 @@
 #include <cstdint>
 class integer_number_leaf_node : public leaf_node {
 public:
-  integer_number_leaf_node(int64_t);
+  integer_number_leaf_node(long);
   integer_number_leaf_node(int);
   /*Rounds the double to the nearest long*/
   integer_number_leaf_node(double);
@@ -44,7 +44,7 @@ public:
   expression_node* differentiate(const std::string& var) override;
 
   /*Make friend instead of public*/
-  int64_t val;
+  long val;
 private:
 
   virtual bool is_integral() const override;
