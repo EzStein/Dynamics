@@ -25,7 +25,7 @@ bool app::OnInit() {
                       wxPoint(100, 100), wxSize(800, 600));
 
   wxGLAttributes glAttrs;
-  glAttrs.PlatformDefaults().DoubleBuffer().EndList();
+  glAttrs.Defaults().PlatformDefaults().DoubleBuffer().EndList();
 
   canvas = new wxGLCanvas(frame, glAttrs);
 
