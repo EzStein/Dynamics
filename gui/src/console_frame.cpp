@@ -34,12 +34,12 @@ console_frame::console_frame(app& app)
 
   variableNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
   compiledParametersDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
-  
+
   wxVector<wxVariant> data;
   data.push_back("x' = ");
   data.push_back("");
   equationsDataViewCtrl->AppendItem(data);
-  
+
   data.clear();
   data.push_back("0");
   data.push_back("x");
@@ -100,9 +100,9 @@ void console_frame::variables_text_ctrl_process_enter() {
   variablesTextCtrlValue = value;
   if(variables == newVariables)
     return;
-  
+
   variables = newVariables;
-    
+
   // Update equationsDataViewCtrl and variablesDataViewCtrl
   std::vector<std::string> defaultVarNames(variables);
   switch(variables) {
@@ -163,7 +163,7 @@ void console_frame::parameters_text_ctrl_process_enter() {
   parametersTextCtrlValue = value;
   if(parameters == newParameters)
     return;
-  
+
   parameters = newParameters;
 
   std::vector<std::string> defaultParameterNames(parameters);
@@ -198,7 +198,7 @@ void console_frame::lorenz_example_menu_item_on_menu_selection(wxCommandEvent&) 
   variables_text_ctrl_process_enter();
   parametersTextCtrl->SetValue("3");
   parameters_text_ctrl_process_enter();
-  
+
   equationsDataViewCtrl->DeleteAllItems();
   wxVector<wxVariant> data;
   data.push_back(wxVariant("x"));
@@ -250,7 +250,7 @@ void console_frame::new_dynamical_menu_item_on_selection(wxCommandEvent&) {
   spec.viewport2d = ::math::window2d(::math::vector2d(width, height),
 				   ::math::vector2d(10, 10),
 				   ::math::vector2d(-5, -5));
-  
+
   spec.viewport3d = ::math::window3d(::math::vector3d(10,10,10),
 				   ::math::vector3d(-10,-10,-10),
 				   ::math::vector3d(0,1,0),
@@ -278,7 +278,7 @@ void console_frame::new_dynamical_menu_item_on_selection(wxCommandEvent&) {
     assert(false);
   }
 
-  
+
   spec.is3d = false;
   if(appl.get_dynamical_dialog()->show_dialog(spec)) {
     appl.add_dynamical(spec);
@@ -342,7 +342,7 @@ void console_frame::set_yes_compile() {
   singularPointsDataViewCtrl->DeleteAllItems();
   solutionsDataViewCtrl->DeleteAllItems();
   isoclinesDataViewCtrl->DeleteAllItems();
-  
+
   singularPointsDataViewCtrl->ClearColumns();
   singularPointsDataViewCtrl->AppendTextColumn("ID");
 
@@ -367,7 +367,7 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
       return;
     }
     dynamicalVarNames.push_back(name);
-    
+
     std::string value(equationsDataViewCtrl->GetTextValue(row, 1));
 
     expressions.push_back(value);
@@ -393,7 +393,7 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
     parameterNames.push_back(name);
   }
 
-  
+
   std::string varDiffName(varDiffTextCtrl->GetValue().ToStdString());
   if(!nfa.accepts(varDiffName)) {
     wxMessageDialog messageDialog(nullptr,
@@ -446,7 +446,7 @@ void console_frame::compile_button_on_button_click(wxCommandEvent& event) {
 	  messageDialog.ShowModal();
 	  std::cout << exc.what() << std::endl;
   }
-  
+
   compiledEquationsDataViewCtrl->DeleteAllItems();
   for(int i = 0; i != appl.get_model().get_dynamical_dimension(); ++i) {
     wxVector<wxVariant> data;
@@ -480,7 +480,7 @@ void console_frame::separatrices_data_view_ctrl_on_selection_changed(wxDataViewE
 }
 
 void console_frame::isoclines_edit_button_on_button_click(wxCommandEvent&) {
-  
+
 }
 
 void console_frame::isoclines_delete_button_on_button_click(wxCommandEvent&) {
@@ -508,7 +508,7 @@ void console_frame::update_isoclines_list() {
     isoclinesDataViewCtrl->AppendItem(data);
     if(iter->first == appl.get_model().get_selected_isocline()) {
       isoclinesDataViewCtrl->SelectRow(row);
-      
+
     }
     ++row;
   }

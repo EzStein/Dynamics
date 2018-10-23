@@ -52,6 +52,7 @@ void process_gl_errors() {
   while((err = glGetError()) != GL_NO_ERROR) {
     std::stringstream sstream;
     sstream << std::hex << err;
+		std::cout << "OpenGL exception: 0x" << sstream.str() << std::endl;
     throw std::runtime_error("OpenGL exception: 0x" + sstream.str());
   }
 }
@@ -97,7 +98,7 @@ bool app::OnInit() {
   assert(success);
   success = gladLoadGL();
   assert(success);
-  
+
 #ifdef GL_VERSION_4_3
   // We set up opengl debugging and callback info.
   glEnable(GL_DEBUG_OUTPUT);
@@ -303,10 +304,12 @@ void app::set_no_compile() {
 
 void app::paint_dynamical(dynamical_id id) {
   modelData->paint_dynamical(id);
+	process_gl_errors();
 }
 
 void app::paint_parameter(parameter_id id) {
   modelData->paint_parameter(id);
+	process_gl_errors();
 }
 
 void app::resize_dynamical(dynamical_id id, double width, double height) {
@@ -434,6 +437,7 @@ void app::refresh_dynamical_windows() {
   for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
+		process_gl_errors();
   }
 }
 
