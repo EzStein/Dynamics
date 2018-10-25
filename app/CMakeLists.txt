@@ -15,3 +15,7 @@ add_executable(${PROJECT_NAME} ${WINDOWS_GUI_FLAG}
   "${PRIVATE_HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE gui)
+
+# Setup installation
+install(TARGETS ${PROJECT_NAME} DESTINATION bin
+  COMPONENT dynsolver_comp)
