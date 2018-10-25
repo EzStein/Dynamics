@@ -3,6 +3,8 @@ if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif()
 project(dynsolver)
+set(DYNSOLVER_VERSION_MAJOR 0)
+set(DYNSOLVER_VERSION_MINOR 1)
 find_package(Git REQUIRED)
 find_package(PythonInterp REQUIRED)
 
@@ -59,12 +61,14 @@ endif()
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-execute_process(
-  COMMAND ${PYTHON_EXECUTABLE} -m glad
-  --out-path "${CMAKE_SOURCE_DIR}/glad"
-  --generator c --spec gl --omit-khrplatform
-  --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/glad/src/glad.c")
+  execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} -m glad
+    --out-path "${CMAKE_SOURCE_DIR}/glad"
+    --generator c --spec gl --omit-khrplatform
+    --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
+endif()
 add_subdirectory(glad)
 
 if(WIN32)
@@ -86,3 +90,22 @@ add_subdirectory(compiler)
 add_subdirectory(util)
 add_subdirectory(app)
 add_subdirectory(debug)
+
+# Setup packaging
+if(APPLE)
+  set(CPACK_GENERATOR DMG)
+elseif(UNIX)
+  set(CPACK_GENERATOR DEB)
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ezsuite")
+elseif(WIN32)
+  set(CPACK_GENERATOR NSIS WIX)
+endif()
+
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_VERSION_MAJOR ${DYNSOLVER_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${DYNSOLVER_VERSION_MINOR})
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL dynsolver_comp)
+include(CPack)
+
