@@ -73,7 +73,10 @@ add_subdirectory(glad)
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")
-  set(WINDOWS_GUI_FLAG "WIN32")
+  set(EXE_FLAG "WIN32")
+endif()
+if(APPLE)
+  set(EXE_FLAG "MACOSX_BUNDLE")
 endif()
 
 
