@@ -8,6 +8,8 @@
 #include <wx/glcanvas.h>
 #include <wx/gdicmn.h>
 
+#include <gl/buffer.h>
+
 namespace dynsolver {
 namespace debug {
 
@@ -25,7 +27,7 @@ bool app::OnInit() {
                       wxPoint(100, 100), wxSize(800, 600));
 
   wxGLAttributes glAttrs;
-  glAttrs.Defaults().PlatformDefaults().DoubleBuffer().EndList();
+  glAttrs.PlatformDefaults().DoubleBuffer().EndList();
 
   canvas = new wxGLCanvas(frame, glAttrs);
 
@@ -49,6 +51,21 @@ bool app::OnInit() {
 
   success = gladLoadGL();
   assert(success);
+  GLuint handle;
+
+  char data[10000];
+  //while(1) {
+    gl::buffer buffer(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer1(nullptr, 0, GL_DYNAMIC_DRAW);
+    buffer1 = buffer;
+    buffer.set_data(nullptr, 100);
+    gl::buffer buffer2(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer3(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer4(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer5(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer6(nullptr, 0, GL_DYNAMIC_DRAW);
+    gl::buffer buffer7(nullptr, 0, GL_DYNAMIC_DRAW);
+  //}
 
   auto onPaint =
       [&](wxPaintEvent& evt){

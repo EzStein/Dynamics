@@ -83,7 +83,7 @@ bool app::OnInit() {
   wxLog::SetActiveTarget(customLogger);
 
   // Initializes the attributes which are used to generate an opengl context.
-  glAttributes.Defaults().PlatformDefaults().DoubleBuffer().EndList();
+  glAttributes.PlatformDefaults().DoubleBuffer().EndList();
   glContextAttributes.PlatformDefaults()
     .CoreProfile()
     .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)

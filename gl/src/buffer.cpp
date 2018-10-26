@@ -1,22 +1,50 @@
 #include "gl/buffer.h"
 
+#include <sstream>
+#include <stdexcept>
+#include <iostream>
 namespace gl {
-buffer::buffer(const unsigned char* data, size_t size, GLenum storage)
-  : storage(storage), size(size), handle(0) {
+  namespace {
+    void process_gl_errors() {
+      GLenum err;
+      bool erro = false;
+      while((err = glGetError()) != GL_NO_ERROR) {
+        erro = true;
+        std::stringstream sstream;
+        sstream << std::hex << err;
+    		std::cout << "OpenGL exception: 0x" << sstream.str() << std::endl;
+      }
+      if(erro) {
+        throw std::runtime_error("OpenGL exception: GL_ERROR");
+      }
+    }
+  }
+buffer::buffer(const unsigned char* data, size_t _size, GLenum storage)
+  : storage(storage), size(_size), handle(0) {
   glGenBuffers(1, &handle);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
-  glBufferData(GL_COPY_WRITE_BUFFER, size, data, storage);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+  std::cout << "MAKING VBO handle = " << handle << " type: " <<  std::hex << storage << std::endl;
+  process_gl_errors();
+  std::cout << std::hex << GL_COPY_WRITE_BUFFER << std::endl;
+  glBindBuffer(GL_ARRAY_BUFFER, handle);
+
+  process_gl_errors();
+  glBufferData(GL_ARRAY_BUFFER, size, data, storage);
+  process_gl_errors();
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 buffer::~buffer() {
   // Does nothing if handle is zero.
-  glDeleteBuffers(1, &handle);
+  if(handle != 0) {
+    std::cout << "Deleting VBO handle = " << handle << std::endl;
+    glDeleteBuffers(1, &handle);
+  }
 }
 
 buffer::buffer(const buffer& other) :
   storage(other.storage), size(other.size) {
   glGenBuffers(1, &handle);
+  std::cout << "MAKING VBO handle = " << handle << " type: " <<  std::hex << storage << std::endl;
   glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
   glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
   glBindBuffer(GL_COPY_READ_BUFFER, other.handle);
@@ -49,12 +77,15 @@ buffer& buffer::operator=(const buffer& other) {
 
 buffer& buffer::operator=(buffer&& other) {
   if(&other == this) return *this;
-  glDeleteBuffers(1, &handle);
-  
+  if(handle != 0) {
+    std::cout << "Deleting VBO handle = " << handle << std::endl;
+    glDeleteBuffers(1, &handle);
+  }
+
   storage = other.storage;
   size = other.size;
   handle = other.handle;
-  
+
   // Prevent the vbo from being destroyed when it enters
   // other::~buffer()
   other.handle = 0;
