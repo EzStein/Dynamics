@@ -45,6 +45,8 @@ else()
   set(wxBUILD_SHARED OFF)
   add_subdirectory(external/wxWidgets)
   set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
+  set_target_properties(media ribbon webview html xml aui richtext wxscintilla
+  stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 
 find_package(Freetype)
@@ -105,7 +107,7 @@ elseif(UNIX)
   set(CPACK_GENERATOR DEB RPM)
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ezsuite")
 elseif(WIN32)
-  set(CPACK_GENERATOR NSIS WIX)
+  set(CPACK_GENERATOR NSIS)
 endif()
 
 include(InstallRequiredSystemLibraries)
