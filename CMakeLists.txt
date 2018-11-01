@@ -8,6 +8,8 @@ set(DYNSOLVER_VERSION_MINOR 1)
 find_package(Git REQUIRED)
 find_package(PythonInterp REQUIRED)
 
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/test_install")
+
 # Prepends a string to each element in a list
 FUNCTION(PREPEND var prefix)
   SET(listVar "")
@@ -75,14 +77,12 @@ if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")
   set(EXE_FLAG "WIN32")
 endif()
-if(APPLE)
-  set(EXE_FLAG "MACOSX_BUNDLE")
-endif()
 
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+
 add_subdirectory(gui)
 add_subdirectory(regex)
 add_subdirectory(parser)
@@ -96,7 +96,11 @@ add_subdirectory(debug)
 
 # Setup packaging
 if(APPLE)
-  set(CPACK_GENERATOR DMG)
+  set(CPACK_GENERATOR Bundle)
+  set(CPACK_BUNDLE_NAME dynsolver)
+  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/resources/apple_bundle/app.plist")
+  set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/resources/apple_bundle/icon.icns")
+  set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/resources/apple_bundle/Spiral.png")
 elseif(UNIX)
   set(CPACK_GENERATOR DEB RPM)
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ezsuite")
@@ -104,10 +108,8 @@ elseif(WIN32)
   set(CPACK_GENERATOR NSIS WIX)
 endif()
 
-
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_VERSION_MAJOR ${DYNSOLVER_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${DYNSOLVER_VERSION_MINOR})
-set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_COMPONENTS_ALL dynsolver_comp)
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_CURRENT_BINARY_DIR};app;dynsolver_comp;/")
 include(CPack)

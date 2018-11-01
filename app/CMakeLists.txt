@@ -17,5 +17,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE gui)
 
 # Setup installation
+if(APPLE)
+install(TARGETS ${PROJECT_NAME} DESTINATION "../MacOS"
+  COMPONENT dynsolver_comp)
+else()
 install(TARGETS ${PROJECT_NAME} DESTINATION bin
   COMPONENT dynsolver_comp)
+endif()
