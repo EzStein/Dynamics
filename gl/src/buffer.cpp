@@ -25,12 +25,12 @@ buffer::buffer(const unsigned char* data, size_t _size, GLenum storage)
   std::cout << "MAKING VBO handle = " << handle << " type: " <<  std::hex << storage << std::endl;
   process_gl_errors();
   std::cout << std::hex << GL_COPY_WRITE_BUFFER << std::endl;
-  glBindBuffer(GL_ARRAY_BUFFER, handle);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
 
   process_gl_errors();
-  glBufferData(GL_ARRAY_BUFFER, size, data, storage);
+  glBufferData(GL_COPY_WRITE_BUFFER, size, data, storage);
   process_gl_errors();
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 }
 
 buffer::~buffer() {

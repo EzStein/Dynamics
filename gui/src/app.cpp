@@ -304,12 +304,10 @@ void app::set_no_compile() {
 
 void app::paint_dynamical(dynamical_id id) {
   modelData->paint_dynamical(id);
-	process_gl_errors();
 }
 
 void app::paint_parameter(parameter_id id) {
   modelData->paint_parameter(id);
-	process_gl_errors();
 }
 
 void app::resize_dynamical(dynamical_id id, double width, double height) {
@@ -437,7 +435,6 @@ void app::refresh_dynamical_windows() {
   for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
 	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
-		process_gl_errors();
   }
 }
 
