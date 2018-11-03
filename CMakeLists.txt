@@ -45,8 +45,13 @@ else()
   set(wxBUILD_SHARED OFF)
   add_subdirectory(external/wxWidgets)
   set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
-  set_target_properties(media ribbon webview html xml aui richtext wxscintilla
-  stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  if(UNIX AND NOT APPLE)
+    set_target_properties(ribbon html xml aui richtext wxscintilla
+      stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  else()
+    set_target_properties(media ribbon webview html xml aui richtext wxscintilla
+      stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  endif()
 endif()
 
 find_package(Freetype)
