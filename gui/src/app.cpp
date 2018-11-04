@@ -78,6 +78,14 @@ app::~app() {
 }
 
 bool app::OnInit() {
+#ifdef IS_WINDOWS
+	// Redirect stdout stdin and stderr to a console on windows gui apps
+	AllocConsole();
+	freopen("CONIN$", "r", stdin);
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+#endif
+
   customLogger = new wxLogStderr();
   // Set wx global logging to output directly to stderr.
   wxLog::SetActiveTarget(customLogger);

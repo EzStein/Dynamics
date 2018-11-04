@@ -205,23 +205,30 @@ double AST::evaluate() const {
 std::string AST::emit_code_amd64() const {
   compiler_data data(0);
   std::string retVal =
-  "pushq %rbp\n"
-  "movq %rsp, %rbp\n"
-  /*Allocate 16 bytes on the stack. The 8 bytes starting at of -0x08(%rbp)
-  holds the mxcsr reg, the old and the new fpu cw regs
-  The 8 bytes starting at -0x10(%rbp) are used for scratch space*/
-  "subq $0x10, %rsp\n"
-  "stmxcsr -0x4(%rbp)\n"
-  "fstcw -0x6(%rbp)\n"
-  "movw $0x0f7f, -0x8(%rbp)\n"
-  "pushq %rbx\n"
-  "pushq %r12\n"
-  "pushq %r13\n"
-  "pushq %r14\n"
-  "pushq %r15\n"
-  "finit\n"
-  "fldcw -0x8(%rbp)\n";
-
+	  "pushq %rbp\n"
+	  "movq %rsp, %rbp\n"
+	  /*Allocate 16 bytes on the stack. The 8 bytes starting at of -0x08(%rbp)
+	  holds the mxcsr reg, the old and the new fpu cw regs
+	  The 8 bytes starting at -0x10(%rbp) are used for scratch space*/
+	  "subq $0x10, %rsp\n"
+	  "stmxcsr -0x4(%rbp)\n"
+	  "fstcw -0x6(%rbp)\n"
+	  "movw $0x0f7f, -0x8(%rbp)\n"
+#ifdef IS_WINDOWS
+	  "pushq %rdi\n"
+	  "pushq %rsi\n"
+#endif
+	  "pushq %rbx\n"
+	  "pushq %r12\n"
+	  "pushq %r13\n"
+	  "pushq %r14\n"
+	  "pushq %r15\n"
+	  "finit\n"
+	  "fldcw -0x8(%rbp)\n"
+#ifdef IS_WINDOWS
+	  "movq %rcx, %rdi\n"
+#endif
+	  ;
   root->emit_code_amd64(retVal, data);
   retVal +=
   "fstpl -0x10(%rbp)\n"
@@ -231,6 +238,10 @@ std::string AST::emit_code_amd64() const {
   "popq %r13\n"
   "popq %r12\n"
   "popq %rbx\n"
+#ifdef IS_WINDOWS
+  "popq %rsi\n"
+  "popq %rdi\n"
+#endif
   "fldcw -0x6(%rbp)\n"
   "ldmxcsr -0x4(%rbp)\n"
   "movq %rbp, %rsp\n"

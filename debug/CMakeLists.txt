@@ -20,3 +20,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MINOR=${GL_VERSION_MINOR})
+if(WIN32)
+ target_compile_definitions(${PROJECT_NAME} PRIVATE IS_WINDOWS)
+endif()

@@ -10,6 +10,20 @@
 
 #include <gl/buffer.h>
 
+
+#include <iostream>
+#include "compiler/expression_parser.h"
+#include <climits>
+#include <stdexcept>
+#ifdef IS_WINDOWS
+#include <windows.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
+#include <iostream>
+#include <fstream>
+#endif
+
 namespace dynsolver {
 namespace debug {
 
@@ -23,6 +37,13 @@ void process_gl_errors() {
 }
 
 bool app::OnInit() {
+#ifdef IS_WINDOWS
+	AllocConsole();
+	freopen("CONIN$", "r", stdin);
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+#endif
+
   frame = new wxFrame(nullptr, wxID_ANY, "My Frame",
                       wxPoint(100, 100), wxSize(800, 600));
 
@@ -53,20 +74,6 @@ bool app::OnInit() {
   assert(success);
   GLuint handle;
 
-  char data[10000];
-  //while(1) {
-    gl::buffer buffer(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer1(nullptr, 0, GL_DYNAMIC_DRAW);
-    buffer1 = buffer;
-    buffer.set_data(nullptr, 100);
-    gl::buffer buffer2(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer3(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer4(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer5(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer6(nullptr, 0, GL_DYNAMIC_DRAW);
-    gl::buffer buffer7(nullptr, 0, GL_DYNAMIC_DRAW);
-  //}
-
   auto onPaint =
       [&](wxPaintEvent& evt){
         glContext->SetCurrent(*canvas);
@@ -92,6 +99,26 @@ bool app::OnInit() {
   cells.push_back(wxVariant("B"));
   dataView->AppendItem(cells);
   dataViewFrame->Show();
+
+  std::cout << "Hello World." << std::endl;
+
+  try {
+	  compiler::expression_parser parse;
+	  std::list<symbol> symbolTable;
+	  symbolTable.push_back(symbol("x", 0, 0));
+	  std::cout << "Expression:" << std::endl;
+	  std::string expr;
+	  std::getline(std::cin, expr);
+	  std::cout << "Value:" << std::endl;
+	  double val;
+	  std::cin >> val;
+	  AST ast = parse.parse(expr, symbolTable);
+	  compiler::function<double, const double*> function = ast.compile();
+	  std::cout << "Result: " << function(&val) << std::endl;
+  }
+  catch (const std::exception& exc) {
+	  std::cout << exc.what() << std::endl;
+  }
   return true;
 }
 

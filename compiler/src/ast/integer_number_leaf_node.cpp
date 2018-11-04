@@ -13,9 +13,9 @@ integer_number_leaf_node::integer_number_leaf_node(double _val) {
 }
 
 void integer_number_leaf_node::emit_code_amd64(std::string& acc, compiler_data& data) const {
-  acc += "movl $" + std::to_string((static_cast<unsigned long>(val) >> 32)) + ", %eax\n";
+  acc += "movl $" + std::to_string((static_cast<uint64_t>(val) >> 32)) + ", %eax\n";
   acc += "movl %eax, -0x0c(%rbp)\n";
-  acc += "movl $" + std::to_string((static_cast<unsigned long>(val) << 32) >> 32) + ", %eax\n";
+  acc += "movl $" + std::to_string((static_cast<uint64_t>(val) << 32) >> 32) + ", %eax\n";
   acc += "movl %eax, -0x10(%rbp)\n";
   AST::emit_stack_inc_amd64(acc, data);
   acc += "fildq -0x10(%rbp)\n";
