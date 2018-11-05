@@ -72,7 +72,18 @@ bool app::OnInit() {
 
   success = gladLoadGL();
   assert(success);
-  GLuint handle;
+  gl::buffer buf1(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf2(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf3(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf4(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf5(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf6(nullptr, 0, GL_DYNAMIC_DRAW);
+  gl::buffer buf6_ref(std::move(buf6));
+  gl::buffer buf6_ref1(std::move(buf6_ref));
+  buf6.~buffer();
+  buf6_ref.~buffer();
+  gl::buffer buf7(nullptr, 0, GL_DYNAMIC_DRAW);
+
 
   auto onPaint =
       [&](wxPaintEvent& evt){

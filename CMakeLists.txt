@@ -35,11 +35,11 @@ find_package(OpenGL REQUIRED)
 set(WX_WIDGETS_MODULES core base gl adv propgrid)
 set(WX_WIDGETS_VERSION 3.0)
 
-find_package(wxWidgets ${WX_WIDGETS_VERSION} COMPONENTS ${WX_WIDGETS_MODULES})
-if(wxWidgets_FOUND)
-  include("${wxWidgets_USE_FILE}")
-  set(WX_WIDGETS_TARGETS "${wxWidgets_LIBRARIES}")
-else()
+#find_package(wxWidgets ${WX_WIDGETS_VERSION} COMPONENTS ${WX_WIDGETS_MODULES})
+#if(wxWidgets_FOUND)
+#  include("${wxWidgets_USE_FILE}")
+#  set(WX_WIDGETS_TARGETS "${wxWidgets_LIBRARIES}")
+#else()
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
   set(wxBUILD_SHARED OFF)
@@ -52,12 +52,12 @@ else()
     set_target_properties(media ribbon webview html xml aui richtext wxscintilla
       stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
   endif()
-endif()
+#endif()
 
-find_package(Freetype)
-if(Freetype_FOUND)
-  set(FREETYPE_TARGET Freetype::Freetype)
-else()
+#find_package(Freetype)
+#if(Freetype_FOUND)
+#  set(FREETYPE_TARGET Freetype::Freetype)
+#else()
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/freetype2
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
   set(BUILD_SHARED_LIBS OFF)
@@ -65,7 +65,7 @@ else()
   add_subdirectory(external/freetype2)
   target_include_directories(freetype PUBLIC external/freetype2/include)
   set(FREETYPE_TARGET freetype)
-endif()
+#endif()
 
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad

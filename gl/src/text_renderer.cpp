@@ -40,23 +40,23 @@ text_renderer::text_renderer() : prog(generate_shaders()),
     glGetUniformLocation(prog.get_handle(), kTextColorUniform.c_str());
   glUseProgram(prog.get_handle());
   glUniform1i(samplerUniform, textureUnit);
-  
+
   // Initialize VAO
   glBindVertexArray(vao.get_handle());
   glEnableVertexAttribArray(kVertexPositionAttribute);
   glEnableVertexAttribArray(kTexturePositionAttribute);
-  
+
 #ifdef GL_VERSION_4_3
-  
+
   glVertexAttribFormat(kTexturePositionAttribute,
 		       2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat));
   glVertexAttribBinding(kTexturePositionAttribute, vertexAttributeBinding);
   glVertexAttribFormat(kVertexPositionAttribute, 2, GL_FLOAT, GL_FALSE, 0);
   glVertexAttribBinding(kVertexPositionAttribute, vertexAttributeBinding);
   glBindVertexBuffer(vertexAttributeBinding, vbo.get_handle(), 0, 4 * sizeof(GLfloat));
-  
+
 #else
-  
+
   glBindBuffer(GL_ARRAY_BUFFER, vbo.get_handle());
   glVertexAttribPointer(kTexturePositionAttribute, 2, GL_FLOAT, GL_FALSE,
                         4 * sizeof(GLfloat),
@@ -64,11 +64,11 @@ text_renderer::text_renderer() : prog(generate_shaders()),
   glVertexAttribPointer(kVertexPositionAttribute, 2, GL_FLOAT, GL_FALSE,
                         4 * sizeof(GLfloat), 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  
+
 #endif
-  
+
   glBindVertexArray(0);
-  
+
   // Initialize Sampler
   glSamplerParameteri(so.get_handle(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glSamplerParameteri(so.get_handle(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -109,7 +109,7 @@ void text_renderer::render_text(const std::string& text, int x, int y,
   glActiveTexture(GL_TEXTURE0 + textureUnit);
 
   GLfloat scale = fontSize / font.get_base_height();
-  
+
   for(char c : text) {
     size_t width, height, bearingX, bearingY, advance;
     GLuint texture;
@@ -117,7 +117,7 @@ void text_renderer::render_text(const std::string& text, int x, int y,
 
     GLfloat bottomLeftX = x + bearingX * scale;
     GLfloat bottomLeftY = y - height * scale + bearingY * scale;
-    
+
     // Bottom Left
     buffer[0] = bottomLeftX;
     buffer[1] = bottomLeftY;
@@ -131,13 +131,13 @@ void text_renderer::render_text(const std::string& text, int x, int y,
     buffer[9] = bottomLeftY;
 
     // Top Right
-    buffer[12] = bottomLeftX + width * scale; 
+    buffer[12] = bottomLeftX + width * scale;
     buffer[13] = bottomLeftY + height * scale;
 
     glBindTexture(GL_TEXTURE_2D, texture);
     vbo.set_data(reinterpret_cast<unsigned char*>(buffer), 16 * sizeof(GLfloat));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    
+
     x += (advance * scale) / 64;
   }
   glBindVertexArray(0);

@@ -765,15 +765,10 @@ void model::dynamical_window::draw_solutions_2d() {
 		       iter->second.vbo2d.get_handle(),
                        0, 2 * sizeof(float));
 #else
-std::cout << "!!!!!"<< std::endl;
-    process_gl_errors();
     glBindBuffer(GL_ARRAY_BUFFER, iter->second.vbo2d.get_handle());
-    process_gl_errors();
     glVertexAttribPointer(k2dPositionAttribute, 2, GL_FLOAT,
                           GL_FALSE, 0, reinterpret_cast<void*>(0));
-    process_gl_errors();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    process_gl_errors();
 #endif
     glDrawArrays(GL_LINE_STRIP, 0, iter->second.vertices);
   }
