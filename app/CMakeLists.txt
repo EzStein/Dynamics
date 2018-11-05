@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 project(app)
 
+if(WIN32)
+set(SRC_FILES app.cpp app.manifest)
+else()
 set(SRC_FILES app.cpp)
+endif()
 set(PUBLIC_HEADER_FILES)
 set(PRIVATE_HEADER_FILES app.h)
 PREPEND(SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src" "${SRC_FILES}")
