@@ -118,7 +118,7 @@ std::string util::get_resource_root() {
 	  resourceRootPath = path;
 	  return resourceRootPath;
 #elif IS_APPLE
-	  return "apple_path";
+	  return "apple_path"
 #elif IS_LINUX
 	  return "linux_path";
 #elif
