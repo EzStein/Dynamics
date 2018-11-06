@@ -6,5 +6,10 @@
   <string>app</string>
   <key>CFBundleIconFile</key>
   <string>dynsolver.icns</string>
+  <key>LSEnvironment</key>
+  <dict>
+    <key>DYNSOLVER_RUN_INSTALLED_EXE</key>
+    <string>TRUE</string>
+  </dict>
 </dict>
 </plist>

@@ -2,8 +2,12 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <cassert>
 #ifdef IS_WINDOWS
 #include <windows.h>
+#endif
+#ifdef IS_APPLE
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #include "util/util.h"
@@ -101,28 +105,38 @@ std::string util::resourceRootPath = "";
 // are running
 std::string util::get_resource_root() {
   if (resourceRootPath != std::string("")) {
-	return resourceRootPath;
+    return resourceRootPath;
   }
   const char* env = std::getenv("DYNSOLVER_RUN_INSTALLED_EXE");
   if (env != nullptr && std::string(env) == std::string("TRUE")) {
 #ifdef IS_WINDOWS
-	  std::cout << "USING INSTALLATION!" << std::endl;
-	  HMODULE hModule = GetModuleHandleW(NULL);
-	  WCHAR pathCstr[MAX_PATH];
-	  GetModuleFileNameW(hModule, pathCstr, MAX_PATH);
-	  std::wstring pathWide(pathCstr);
-	  std::string path(pathWide.begin(), pathWide.end());
+    std::cout << "USING INSTALLATION!" << std::endl;
+    HMODULE hModule = GetModuleHandleW(NULL);
+    WCHAR pathCstr[MAX_PATH];
+    GetModuleFileNameW(hModule, pathCstr, MAX_PATH);
+    std::wstring pathWide(pathCstr);
+    std::string path(pathWide.begin(), pathWide.end());
 
-	  // We remove the trailing "/bin/app.exe" from this string
-	  path = path.substr(0, path.size() - 12);
-	  resourceRootPath = path;
-	  return resourceRootPath;
+    // We remove the trailing "/bin/app.exe" from this string
+    path = path.substr(0, path.size() - 12);
+    resourceRootPath = path;
+    return resourceRootPath;
 #elif IS_APPLE
-	  return "apple_path";
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+    char path[PATH_MAX];
+    if (!CFURLGetFileSystemRepresentation(resourcesURL, TRUE,
+                                          (UInt8 *)path, PATH_MAX))
+    {
+      // error!
+    }
+    CFRelease(resourcesURL);
+    resourceRootPath = std::string(path);
+    return resourceRootPath;
 #elif IS_LINUX
-	  return "linux_path";
-#elif
-	  assert(false);
+    return "linux_path";
+#else
+    assert(false);
 #endif
   } else {
 	  std::cout << "USING SOURCE!" << std::endl;
