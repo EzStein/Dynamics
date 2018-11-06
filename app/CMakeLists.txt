@@ -42,6 +42,10 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/gl" DESTINATION "share/${EXE_NA
   COMPONENT dynsolver_comp)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "share/${EXE_NAME}"
   COMPONENT dynsolver_comp)
+install(FILES "${CMAKE_SOURCE_DIR}/resources/linux/xyz.ezstein.dynsolver.desktop" DESTINATION "share/applications"
+  COMPONENT dynsolver_comp)
+install(FILES "${CMAKE_SOURCE_DIR}/resources/linux/icon.png" DESTINATION "share/${EXE_NAME}"
+  COMPONENT dynsolver_comp)
 endif()
 
 if ( UNIX )

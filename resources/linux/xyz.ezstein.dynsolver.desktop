@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Dynsolver
+Version=0.1
+Comment=A dynamical systems viewer
+Exec=dynsolver
+Icon=/usr/share/dynsolver/icon.png
+Type=Application
+Categories=Science
+Terminal=false
