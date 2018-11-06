@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(mygl)
 set(SRC_FILES buffer.cpp sampler.cpp vertex_array.cpp
   program.cpp shader.cpp texture.cpp font.cpp text_renderer.cpp

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(asm)
 set(SRC_FILES asm.cpp assembler.cpp)
 set(PUBLIC_HEADER_FILES assembler.h asm.h)

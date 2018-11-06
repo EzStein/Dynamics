@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(debug)
 set(SRC_FILES main.cpp app.cpp)
 set(PUBLIC_HEADER_FILES)

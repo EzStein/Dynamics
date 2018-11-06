@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(parser)
 set(SRC_FILES grammar.cpp lr_parser.cpp syntax_exception.cpp)
 set(PUBLIC_HEADER_FILES grammar.h lr_parser.h syntax_exception.h common.h)

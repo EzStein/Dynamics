@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(math)
 set(SRC_FILES complex.cpp matrix_3x3.cpp poly_matrix.cpp
   quaternion.cpp vector2d.cpp window2d.cpp eigenvalue.cpp matrix_4x4.cpp
