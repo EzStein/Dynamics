@@ -44,3 +44,9 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "."
   COMPONENT dynsolver_comp)
 endif()
 
+if ( UNIX )
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wall")
+endif()
+if ( WIN32 )
+    target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()

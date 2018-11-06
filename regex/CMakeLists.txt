@@ -15,3 +15,9 @@ add_library(${PROJECT_NAME} STATIC
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include/ PRIVATE src/include)
+if ( UNIX )
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wall")
+endif()
+if ( WIN32 )
+    target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()

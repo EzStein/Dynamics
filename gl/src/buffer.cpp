@@ -4,28 +4,27 @@
 #include <stdexcept>
 #include <iostream>
 namespace gl {
-  namespace {
-    void process_gl_errors() {
-      GLenum err;
-      bool erro = false;
-      while((err = glGetError()) != GL_NO_ERROR) {
-        erro = true;
-        std::stringstream sstream;
-        sstream << std::hex << err;
-    		std::cout << "OpenGL exception: 0x" << sstream.str() << std::endl;
-      }
-      if(erro) {
-        throw std::runtime_error("OpenGL exception: GL_ERROR");
-      }
-    }
+namespace {
+void process_gl_errors() {
+  GLenum err;
+  bool erro = false;
+  while((err = glGetError()) != GL_NO_ERROR) {
+    erro = true;
+    std::stringstream sstream;
+    sstream << std::hex << err;
+    std::cout << "OpenGL exception: 0x" << sstream.str() << std::endl;
   }
+  if(erro) {
+    throw std::runtime_error("OpenGL exception: GL_ERROR");
+  }
+}
+}
 buffer::buffer(const unsigned char* data, size_t _size, GLenum storage)
-  : storage(storage), size(_size), handle(0) {
-    //throw std::runtime_error("test");
+    : storage(storage), size(_size), handle(0) {
+  //throw std::runtime_error("test");
   static int count = 0;
   ++count;
   glGenBuffers(1, &handle);
-  std::cout << "Constructor VBO handle = " << handle << std::endl;
   process_gl_errors();
   glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
 
@@ -36,15 +35,13 @@ buffer::buffer(const unsigned char* data, size_t _size, GLenum storage)
 }
 
 buffer::~buffer() {
-  std::cout << "Destructor VBO handle = " << handle << std::endl;
   // Does nothing if handle is zero.
   glDeleteBuffers(1, &handle);
 }
 
 buffer::buffer(const buffer& other) :
-  storage(other.storage), size(other.size) {
+    storage(other.storage), size(other.size) {
   glGenBuffers(1, &handle);
-  std::cout << "Copy Constructor VBO handle = " << handle << std::endl;
   glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
   glBufferData(GL_COPY_WRITE_BUFFER, size, nullptr, storage);
   glBindBuffer(GL_COPY_READ_BUFFER, other.handle);
@@ -54,15 +51,13 @@ buffer::buffer(const buffer& other) :
 }
 
 buffer::buffer(buffer&& other) : handle(other.handle),
-  storage(other.storage), size(other.size) {
-  std::cout << "Move Constructor VBO handle = " << handle << std::endl;
+                                 storage(other.storage), size(other.size) {
   // Prevent the vbo from being destroyed immediatly when other::~buffer
   // is called
   other.handle = 0;
 }
 
 buffer& buffer::operator=(const buffer& other) {
-  std::cout << "Copy Assignment VBO handle = " << handle << std::endl;
   if(&other == this) return *this;
   glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
   if(size < other.size || other.storage != storage) {
@@ -78,7 +73,6 @@ buffer& buffer::operator=(const buffer& other) {
 }
 
 buffer& buffer::operator=(buffer&& other) {
-  std::cout << "Move Assignment VBO handle = " << handle << std::endl;
   if(&other == this) return *this;
   if(handle != 0) {
     glDeleteBuffers(1, &handle);
@@ -95,7 +89,6 @@ buffer& buffer::operator=(buffer&& other) {
 }
 
 void buffer::set_data(const unsigned char* data, size_t newSize) {
-  std::cout << "Set data handle = " << handle << std::endl;
   glBindBuffer(GL_COPY_WRITE_BUFFER, handle);
   if(newSize > size) {
     // The buffer must increase so we reallocate.
