@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>app</string>
+  <string>dynsolver</string>
   <key>CFBundleIconFile</key>
   <string>dynsolver.icns</string>
   <key>LSEnvironment</key>

@@ -14,6 +14,7 @@ find_package(Git REQUIRED)
 find_package(PythonInterp REQUIRED)
 
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/test_install")
+set(EXE_NAME "dynsolver")
 
 # Prepends a string to each element in a list
 FUNCTION(PREPEND var prefix)
@@ -109,19 +110,16 @@ if(APPLE)
   set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/resources/apple_bundle/icon.icns")
   set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/resources/apple_bundle/Spiral.png")
 elseif(UNIX)
-  set(CPACK_GENERATOR DEB RPM)
+  set(CPACK_GENERATOR DEB)
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ezsuite")
-  set(CPACK_PACKAGE_EXECUTABLES "app;dynsolver")
-  set(CPACK_CREATE_DESKTOP_LINKS "app")
 elseif(WIN32)
   set(CPACK_GENERATOR NSIS)
   set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/nsis_installer/lorenz.ico")
   set(CPACK_NSIS_MODIFY_PATH "ON")
   set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
-  set(CPACK_PACKAGE_EXECUTABLES "app;dynsolver")
-  set(CPACK_CREATE_DESKTOP_LINKS "app")
-  set(CPACK_NSIS_INSTALLED_ICON_NAME "bin/app.exe")
-
+  set(CPACK_PACKAGE_EXECUTABLES "${EXE_NAME};dynsolver")
+  set(CPACK_CREATE_DESKTOP_LINKS "${EXE_NAME}")
+  
 # Set/unset the environment variable DYNSOLVER_RUN_INSTALLED_EXE to TRUE
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
 "!include \\\"winmessages.nsh\\\"

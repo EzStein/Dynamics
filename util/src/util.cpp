@@ -1,4 +1,6 @@
+#include <unistd.h>
 #include <cstdlib>
+#include <climits>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -107,18 +109,27 @@ std::string util::get_resource_root() {
   if (resourceRootPath != std::string("")) {
     return resourceRootPath;
   }
+#ifdef IS_LINUX
+  char path[PATH_MAX];
+  ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+  assert(len != -1);
+  path[len] = 0;
+  std::string binDir("/usr/bin");
+  if(std::string(path).substr(0, binDir.size()) == binDir) {
+#elif
   const char* env = std::getenv("DYNSOLVER_RUN_INSTALLED_EXE");
   if (env != nullptr && std::string(env) == std::string("TRUE")) {
-#ifdef IS_WINDOWS
+#endif
     std::cout << "USING INSTALLATION!" << std::endl;
+#ifdef IS_WINDOWS
     HMODULE hModule = GetModuleHandleW(NULL);
     WCHAR pathCstr[MAX_PATH];
     GetModuleFileNameW(hModule, pathCstr, MAX_PATH);
     std::wstring pathWide(pathCstr);
     std::string path(pathWide.begin(), pathWide.end());
 
-    // We remove the trailing "/bin/app.exe" from this string
-    path = path.substr(0, path.size() - 12);
+    // We remove the trailing "/bin/dynsolver.exe" from this string
+    path = path.substr(0, path.size() - std::string(EXE_NAME).size());
     resourceRootPath = path;
     return resourceRootPath;
 #elif IS_APPLE
@@ -126,15 +137,15 @@ std::string util::get_resource_root() {
     CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
     char path[PATH_MAX];
     if (!CFURLGetFileSystemRepresentation(resourcesURL, TRUE,
-                                          (UInt8 *)path, PATH_MAX))
-    {
-      // error!
+                                          (UInt8 *)path, PATH_MAX)) {
+      assert(false);
     }
     CFRelease(resourcesURL);
     resourceRootPath = std::string(path);
     return resourceRootPath;
 #elif IS_LINUX
-    return "linux_path";
+    resourceRootPath = std::string("/usr/share/") + std::string(EXE_NAME);
+    return resourceRootPath;
 #else
     assert(false);
 #endif

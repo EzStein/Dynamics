@@ -38,9 +38,9 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "."
 else()
 install(TARGETS ${PROJECT_NAME} DESTINATION "bin"
   COMPONENT dynsolver_comp)
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/gl" DESTINATION "."
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/gl" DESTINATION "share/${EXE_NAME}"
   COMPONENT dynsolver_comp)
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "."
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "share/${EXE_NAME}"
   COMPONENT dynsolver_comp)
 endif()
 
@@ -50,3 +50,4 @@ endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
 endif()
+set_target_properties(app PROPERTIES OUTPUT_NAME "${EXE_NAME}")

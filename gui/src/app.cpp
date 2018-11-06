@@ -101,22 +101,28 @@ bool app::OnInit() {
     .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
     .EndList();
 
-  wxFrame* dummyFrame = new wxFrame(nullptr, wxID_ANY, "OpenGL Setup");
-  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyFrame, glAttributes);
+  wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "OpenGL Setup");
+  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
   glContext = new wxGLContext(dummyCanvas, NULL, &glContextAttributes);
   assert(glContext->IsOK());
-  dummyFrame->Show(true);
-  bool success = glContext->SetCurrent(*dummyCanvas);
-  assert(success);
-  success = gladLoadGL();
-  assert(success);
-
+  auto dummyCanvasOnPaint = [&](wxPaintEvent& evt) {
+    assert(dummyCanvas->IsShownOnScreen());
+    bool success = glContext->SetCurrent(*dummyCanvas);
+    assert(success);
+    success = gladLoadGL();
+    assert(success);
+    dummyDialog->EndModal(0);
+  };
+  dummyCanvas->Bind(wxEVT_PAINT, dummyCanvasOnPaint);
+  dummyDialog->ShowModal();
+  dummyDialog->Destroy();
+  
 #ifdef GL_VERSION_4_3
   // We set up opengl debugging and callback info.
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(opengl_debug_message_callback, nullptr);
 #endif
-  dummyFrame->Destroy();
+
 
   // We may now finally construct the model.
   modelData = new model();
