@@ -119,6 +119,19 @@ elseif(WIN32)
   set(CPACK_PACKAGE_EXECUTABLES "app;dynsolver")
   set(CPACK_CREATE_DESKTOP_LINKS "app")
   set(CPACK_NSIS_INSTALLED_ICON_NAME "bin/app.exe")
+
+# Set/unset the environment variable DYNSOLVER_RUN_INSTALLED_EXE to TRUE
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
+"!include \\\"winmessages.nsh\\\"
+ !define env_hklm 'HKLM \\\"SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment\\\"'
+ !define env_hkcu 'HKCU \\\"Environment\\\"'
+ WriteRegExpandStr \\\${env_hklm} 'DYNSOLVER_RUN_INSTALLED_EXE' 'TRUE'
+ WriteRegExpandStr \\\${env_hkcu} 'DYNSOLVER_RUN_INSTALLED_EXE' 'TRUE'
+ SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 \\\"STR:Environment\\\" /TIMEOUT=5000")
+ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
+"DeleteRegValue \\\${env_hklm} 'DYNSOLVER_RUN_INSTALLED_EXE'
+ DeleteRegValue \\\${env_hkcu} 'DYNSOLVER_RUN_INSTALLED_EXE'
+ SendMessage \\\${HWND_BROADCAST} \\\${WM_WININICHANGE} 0 \\\"STR:Environment\\\" /TIMEOUT=5000")
 endif()
 
 include(InstallRequiredSystemLibraries)

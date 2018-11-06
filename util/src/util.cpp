@@ -103,9 +103,10 @@ std::string util::get_resource_root() {
   if (resourceRootPath != std::string("")) {
 	return resourceRootPath;
   }
-
-  if (true){//std::string(std::getenv("DYNSOLVER_RUN_INSTALLED_EXE")) == std::string("TRUE")) {
+  const char* env = std::getenv("DYNSOLVER_RUN_INSTALLED_EXE");
+  if (env != nullptr && std::string(env) == std::string("TRUE")) {
 #ifdef IS_WINDOWS
+	  std::cout << "USING INSTALLATION!" << std::endl;
 	  HMODULE hModule = GetModuleHandleW(NULL);
 	  WCHAR pathCstr[MAX_PATH];
 	  GetModuleFileNameW(hModule, pathCstr, MAX_PATH);
@@ -124,6 +125,7 @@ std::string util::get_resource_root() {
 	  assert(false);
 #endif
   } else {
+	  std::cout << "USING SOURCE!" << std::endl;
 	  resourceRootPath = RESOURCE_ROOT_PATH;
 	  return resourceRootPath;
   }
