@@ -8,10 +8,6 @@
 
 namespace gl {
 
-const std::string text_renderer::kVertexShaderFilePath(VERTEX_SHADER_PATH);
-
-const std::string text_renderer::kFragmentShaderFilePath(FRAGMENT_SHADER_PATH);
-
 const std::string text_renderer::kTransformationUniform("transformation");
 const std::string text_renderer::kTextColorUniform("textColor");
 const std::string text_renderer::kSamplerUniform("sampler");
@@ -20,9 +16,9 @@ const GLuint text_renderer::kTexturePositionAttribute(1);
 
 std::vector<shader> text_renderer::generate_shaders() {
   std::vector<shader> shaders;
-  std::string code(util::read_file(kVertexShaderFilePath));
+  std::string code(util::read_file(util::getTextRendererVertexShaderPath()));
   shaders.push_back(shader(code, GL_VERTEX_SHADER));
-  code = util::read_file(kFragmentShaderFilePath);
+  code = util::read_file(util::getTextRendererFragmentShaderPath());
   shaders.push_back(shader(code, GL_FRAGMENT_SHADER));
   return shaders;
 }

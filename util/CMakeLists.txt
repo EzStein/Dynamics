@@ -14,3 +14,13 @@ add_library(${PROJECT_NAME} STATIC
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include/ PRIVATE src/include)
+if(UNIX AND NOT APPLE)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC IS_LINUX)
+endif()
+if(WIN32)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC IS_WINDOWS)
+endif()
+if(APPLE)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC IS_APPLE)
+endif()
+target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCE_ROOT_PATH="${CMAKE_SOURCE_DIR}/resources")

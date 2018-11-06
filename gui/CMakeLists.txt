@@ -47,16 +47,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC include/
 target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS} glad
   PRIVATE OpenGL::GL compiler math mygl regex util parser)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-  DEFAULT_FONT_PATH="${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf")
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  VERTEX_SHADER_PATH_2D="${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.vert")
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  FRAGMENT_SHADER_PATH_2D="${CMAKE_SOURCE_DIR}/resources/gl/2d_renderer.frag")
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  VERTEX_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.vert")
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  FRAGMENT_SHADER_PATH_3D="${CMAKE_SOURCE_DIR}/resources/gl/path_3d.frag")
-target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MINOR=${GL_VERSION_MINOR})

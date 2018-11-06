@@ -25,6 +25,10 @@ if(APPLE)
 install(TARGETS ${PROJECT_NAME} DESTINATION "../MacOS"
   COMPONENT dynsolver_comp)
 else()
-install(TARGETS ${PROJECT_NAME} DESTINATION bin
+install(TARGETS ${PROJECT_NAME} DESTINATION "bin"
   COMPONENT dynsolver_comp)
 endif()
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/gl" DESTINATION "."
+  COMPONENT dynsolver_comp)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "."
+  COMPONENT dynsolver_comp)

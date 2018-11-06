@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #endif
+#include "util/util.h"
 
 namespace dynsolver {
 namespace debug {
@@ -43,7 +44,7 @@ bool app::OnInit() {
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
 #endif
-
+	std::cout << util::getDefaultFontPath() << std::endl;
   frame = new wxFrame(nullptr, wxID_ANY, "My Frame",
                       wxPoint(100, 100), wxSize(800, 600));
 

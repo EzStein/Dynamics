@@ -1368,20 +1368,16 @@ void model::dynamical_window::gen_isocline_vbo(isocline_id id) {
   }
 }
 
-const std::string model::k2dVertexShaderFilePath(VERTEX_SHADER_PATH_2D);
 const GLuint model::k2dPositionAttribute(0);
 const GLuint model::k2dVertexBinding(0);
 const std::string model::k2dTransformationUniform("transformation");
 
-const std::string model::k2dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_2D);
 const std::string model::k2dColorUniform("inColor");
 
-const std::string model::kPath3dVertexShaderFilePath(VERTEX_SHADER_PATH_3D);
 const GLuint model::kPath3dPositionAttribute(0);
 const GLuint model::kPath3dVertexBinding(0);
 const std::string model::kPath3dTransformationUniform("transformation");
 
-const std::string model::kPath3dFragmentShaderFilePath(FRAGMENT_SHADER_PATH_3D);
 const std::string model::kPath3dColorUniform("inColor");
 
 const int model::minPixelTickDist = 15;
@@ -1389,18 +1385,18 @@ const int model::maxPixelTickDist = 15 * 5 * 2;
 
 std::vector<gl::shader> model::build_shaders_2d() {
   std::vector<gl::shader> shaders;
-  shaders.push_back(gl::shader(util::read_file(model::k2dVertexShaderFilePath),
+  shaders.push_back(gl::shader(util::read_file(util::get2dVertexShaderFilePath()),
 			       GL_VERTEX_SHADER));
-  shaders.push_back(gl::shader(util::read_file(model::k2dFragmentShaderFilePath),
+  shaders.push_back(gl::shader(util::read_file(util::get2dFragmentShaderFilePath()),
 			       GL_FRAGMENT_SHADER));
   return shaders;
 }
 
 std::vector<gl::shader> model::build_shaders_path_3d() {
   std::vector<gl::shader> shaders;
-  shaders.push_back(gl::shader(util::read_file(model::kPath3dVertexShaderFilePath),
+  shaders.push_back(gl::shader(util::read_file(util::getPath3dVertexShaderFilePath()),
 			       GL_VERTEX_SHADER));
-  shaders.push_back(gl::shader(util::read_file(model::kPath3dFragmentShaderFilePath),
+  shaders.push_back(gl::shader(util::read_file(util::getPath3dFragmentShaderFilePath()),
 			       GL_FRAGMENT_SHADER));
   return shaders;
 }
@@ -1416,7 +1412,7 @@ const saddle_node_bifurcation_id model::kNoSaddleNodeBifurcationId = 0;
 const limit_cycle_bifurcation_id model::kNoLimitCycleBifurcationId = 0;
 const saddle_connection_bifurcation_id model::kNoSaddleConnectionBifurcationId = 0;
 
-model::model() : font(DEFAULT_FONT_PATH),
+model::model() : font(util::getDefaultFontPath()),
 		 dynamicalVars(0),
 		 parameters(0),
 		 selectedSolutionId(kNoSolutionId),
