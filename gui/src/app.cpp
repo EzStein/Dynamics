@@ -104,15 +104,21 @@ bool app::OnInit() {
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
   glContext = new wxGLContext(dummyCanvas, NULL, &glContextAttributes);
   assert(glContext->IsOK());
-  auto dummyCanvasOnPaint = [&](wxPaintEvent& evt) {
-    assert(dummyCanvas->IsShownOnScreen());
-    bool success = glContext->SetCurrent(*dummyCanvas);
-    assert(success);
-    success = gladLoadGL();
-    assert(success);
-    dummyDialog->EndModal(0);
+  auto dummyCanvasOnIdle =
+      [&](wxIdleEvent& evt) {
+        static bool initialized = false;
+        if(dummyCanvas->IsShownOnScreen() && !initialized) {
+          bool success = glContext->SetCurrent(*dummyCanvas);
+          assert(success);
+          success = gladLoadGL();
+          assert(success);
+          dummyDialog->EndModal(0);
+          initialized = true;
+        } else {
+          evt.RequestMore();
+        }
   };
-  dummyCanvas->Bind(wxEVT_PAINT, dummyCanvasOnPaint);
+  dummyCanvas->Bind(wxEVT_IDLE, dummyCanvasOnIdle);
   dummyDialog->ShowModal();
   dummyDialog->Destroy();
 

@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Dec 21 2016)
+// C++ code generated with wxFormBuilder (version Nov  7 2018)
 // http://www.wxformbuilder.org/
 //
-// PLEASE DO "NOT" EDIT THIS FILE!
+// PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
 #include "generated.h"
@@ -115,7 +115,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer41 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 
 	equationsDataViewCtrl = new wxDataViewListCtrl( sbSizer41->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn16 = equationsDataViewCtrl->AppendTextColumn( wxT("Variable"), wxDATAVIEW_CELL_EDITABLE, -1, wxALIGN_LEFT);
+	m_dataViewListColumn16 = equationsDataViewCtrl->AppendTextColumn( wxT("Variable"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	sbSizer41->Add( equationsDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -128,7 +128,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer42->Add( variablesTextCtrl, 0, wxALL, 5 );
 
 	variableNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer42->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn5 = variableNamesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	m_dataViewListColumn5 = variableNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	sbSizer42->Add( variableNamesDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -141,7 +141,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer6->Add( parametersTextCtrl, 0, wxALL, 5 );
 
 	parameterNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer6->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn51 = parameterNamesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	m_dataViewListColumn51 = parameterNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	sbSizer6->Add( parameterNamesDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -176,7 +176,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Parameters") ), wxVERTICAL );
 
 	compiledParametersDataViewCtrl = new wxDataViewListCtrl( sbSizer4->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn3 = compiledParametersDataViewCtrl->AppendTextColumn( wxT("Parameter") );
+	m_dataViewListColumn3 = compiledParametersDataViewCtrl->AppendTextColumn( wxT("Parameter"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	sbSizer4->Add( compiledParametersDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -186,8 +186,8 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( m_panel13, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 
 	compiledEquationsDataViewCtrl = new wxDataViewListCtrl( sbSizer5->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn1 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Variable") );
-	m_dataViewListColumn17 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Expression") );
+	m_dataViewListColumn1 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Variable"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
+	m_dataViewListColumn17 = compiledEquationsDataViewCtrl->AppendTextColumn( wxT("Expression"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	sbSizer5->Add( compiledEquationsDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -237,12 +237,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid1->EnableDragColMove( false );
 	m_grid1->EnableDragColSize( true );
 	m_grid1->SetColLabelSize( 30 );
-	m_grid1->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid1->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid1->EnableDragRowSize( true );
 	m_grid1->SetRowLabelSize( 80 );
-	m_grid1->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid1->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -287,7 +287,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	bSizer37 = new wxBoxSizer( wxVERTICAL );
 
 	separatricesDataViewCtrl = new wxDataViewListCtrl( m_panel14, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn7 = separatricesDataViewCtrl->AppendTextColumn( wxT("Id") );
+	m_dataViewListColumn7 = separatricesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
 	bSizer37->Add( separatricesDataViewCtrl, 1, wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer371;
@@ -318,12 +318,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid11->EnableDragColMove( false );
 	m_grid11->EnableDragColSize( true );
 	m_grid11->SetColLabelSize( 30 );
-	m_grid11->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid11->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid11->EnableDragRowSize( true );
 	m_grid11->SetRowLabelSize( 80 );
-	m_grid11->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid11->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -374,12 +374,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid12->EnableDragColMove( false );
 	m_grid12->EnableDragColSize( true );
 	m_grid12->SetColLabelSize( 30 );
-	m_grid12->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid12->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid12->EnableDragRowSize( true );
 	m_grid12->SetRowLabelSize( 80 );
-	m_grid12->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid12->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -430,12 +430,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid13->EnableDragColMove( false );
 	m_grid13->EnableDragColSize( true );
 	m_grid13->SetColLabelSize( 30 );
-	m_grid13->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid13->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid13->EnableDragRowSize( true );
 	m_grid13->SetRowLabelSize( 80 );
-	m_grid13->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid13->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -486,12 +486,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid14->EnableDragColMove( false );
 	m_grid14->EnableDragColSize( true );
 	m_grid14->SetColLabelSize( 30 );
-	m_grid14->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid14->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid14->EnableDragRowSize( true );
 	m_grid14->SetRowLabelSize( 80 );
-	m_grid14->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid14->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -542,12 +542,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid141->EnableDragColMove( false );
 	m_grid141->EnableDragColSize( true );
 	m_grid141->SetColLabelSize( 30 );
-	m_grid141->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid141->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid141->EnableDragRowSize( true );
 	m_grid141->SetRowLabelSize( 80 );
-	m_grid141->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid141->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -598,12 +598,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid142->EnableDragColMove( false );
 	m_grid142->EnableDragColSize( true );
 	m_grid142->SetColLabelSize( 30 );
-	m_grid142->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid142->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid142->EnableDragRowSize( true );
 	m_grid142->SetRowLabelSize( 80 );
-	m_grid142->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid142->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -654,12 +654,12 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_grid143->EnableDragColMove( false );
 	m_grid143->EnableDragColSize( true );
 	m_grid143->SetColLabelSize( 30 );
-	m_grid143->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid143->SetColLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Rows
 	m_grid143->EnableDragRowSize( true );
 	m_grid143->SetRowLabelSize( 80 );
-	m_grid143->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	m_grid143->SetRowLabelAlignment( wxALIGN_CENTER, wxALIGN_CENTER );
 
 	// Label Appearance
 
@@ -689,22 +689,22 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( console_frame_base::console_frame_on_close ) );
-	this->Connect( closeMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_menu_item_on_menu_selection ) );
-	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
-	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
-	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Connect( separatricesMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
-	this->Connect( m_menuItem33->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::draw_all_separatrices_menu_item_on_menu_selection ) );
-	this->Connect( hopfBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
-	this->Connect( saddleNodeBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
-	this->Connect( limitCycleBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
-	this->Connect( saddleConnectionBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
-	this->Connect( newDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
-	this->Connect( newParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
-	this->Connect( closeDynamicalMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
-	this->Connect( closeParameterMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
-	this->Connect( lorenzExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	this->Connect( vanDerPolExampleMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ) );
+	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_menu_item_on_menu_selection ), this, closeMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ), this, solutionMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ), this, singularPointMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ), this, isoclineMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ), this, separatricesMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::draw_all_separatrices_menu_item_on_menu_selection ), this, m_menuItem33->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ), this, hopfBifurcationMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ), this, saddleNodeBifurcationMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ), this, limitCycleBifurcationMenuItem->GetId());
+	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_connection_bifurcation_menu_item_on_selection ), this, saddleConnectionBifurcationMenuItem->GetId());
+	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ), this, newDynamicalMenuItem->GetId());
+	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ), this, newParameterMenuItem->GetId());
+	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ), this, closeDynamicalMenuItem->GetId());
+	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ), this, closeParameterMenuItem->GetId());
+	m_menu8->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ), this, lorenzExampleMenuItem->GetId());
+	m_menu8->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ), this, vanDerPolExampleMenuItem->GetId());
 	variablesTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
 	variableNamesDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
 	parametersTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
@@ -729,22 +729,6 @@ console_frame_base::~console_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( console_frame_base::console_frame_on_close ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::solution_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::singular_point_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::separatrices_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::draw_all_separatrices_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::hopf_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_dynamical_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::new_parameter_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_dynamical_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ) );
 	variablesTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
 	variableNamesDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
 	parametersTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
@@ -825,13 +809,13 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 
 	this->SetSizer( bSizer34s );
 	this->Layout();
-	m_statusBar2 = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
+	m_statusBar2 = this->CreateStatusBar( 1, wxSTB_SIZEGRIP, wxID_ANY );
 	m_menubar1 = new wxMenuBar( 0 );
 	m_menu4 = new wxMenu();
 	editMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Edit...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu4->Append( editMenuItem );
 
-	m_menubar1->Append( m_menu4, wxT("Views") );
+	m_menubar1->Append( m_menu4, wxT("View...") );
 
 	this->SetMenuBar( m_menubar1 );
 
@@ -842,13 +826,13 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( dynamical_frame_base::dynamical_frame_on_close ) );
 	this->Connect( wxEVT_ICONIZE, wxIconizeEventHandler( dynamical_frame_base::dynamical_frame_on_iconize ) );
 	this->Connect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
-	this->Connect( selectionSelectMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_select_menu_item_on_menu_selection ) );
-	this->Connect( selectionDeleteMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_delete_menu_item_on_menu_selection ) );
-	this->Connect( selectionEditMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_edit_menu_item_on_menu_selection ) );
-	this->Connect( solutionMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ) );
-	this->Connect( singularPointMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ) );
-	this->Connect( isoclineMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ) );
+	selectionPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_select_menu_item_on_menu_selection ), this, selectionSelectMenuItem->GetId());
+	selectionPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_delete_menu_item_on_menu_selection ), this, selectionDeleteMenuItem->GetId());
+	selectionPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_edit_menu_item_on_menu_selection ), this, selectionEditMenuItem->GetId());
+	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ), this, solutionMenuItem->GetId());
+	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ), this, singularPointMenuItem->GetId());
+	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ), this, isoclineMenuItem->GetId());
+	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ), this, editMenuItem->GetId());
 }
 
 dynamical_frame_base::~dynamical_frame_base()
@@ -857,13 +841,6 @@ dynamical_frame_base::~dynamical_frame_base()
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( dynamical_frame_base::dynamical_frame_on_close ) );
 	this->Disconnect( wxEVT_ICONIZE, wxIconizeEventHandler( dynamical_frame_base::dynamical_frame_on_iconize ) );
 	this->Disconnect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_select_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_delete_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::selection_edit_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ) );
 
 	delete selectionPopupMenu;
 	delete objectsPopupMenu;
@@ -878,11 +855,11 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	editMenuItem = new wxMenuItem( m_menu9, wxID_ANY, wxString( wxT("Edit...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu9->Append( editMenuItem );
 
-	m_menubar3->Append( m_menu9, wxT("View") );
+	m_menubar3->Append( m_menu9, wxT("View...") );
 
 	this->SetMenuBar( m_menubar3 );
 
-	m_statusBar3 = this->CreateStatusBar( 1, wxST_SIZEGRIP, wxID_ANY );
+	m_statusBar3 = this->CreateStatusBar( 1, wxSTB_SIZEGRIP, wxID_ANY );
 	wxBoxSizer* bSizer26;
 	bSizer26 = new wxBoxSizer( wxVERTICAL );
 
@@ -929,22 +906,17 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
-	this->Connect( editMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
-	this->Connect( hopfBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::hopf_bifurcation_menu_item_on_selection ) );
-	this->Connect( saddleNodeBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
-	this->Connect( limitCycleBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
-	this->Connect( saddleConnectionBifurcationMenuItem->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
+	m_menu9->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ), this, editMenuItem->GetId());
+	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::hopf_bifurcation_menu_item_on_selection ), this, hopfBifurcationMenuItem->GetId());
+	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ), this, saddleNodeBifurcationMenuItem->GetId());
+	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ), this, limitCycleBifurcationMenuItem->GetId());
+	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ), this, saddleConnectionBifurcationMenuItem->GetId());
 }
 
 parameter_frame_base::~parameter_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::edit_menu_item_on_menu_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::hopf_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ) );
-	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ) );
 
 	delete parameterPopupMenu;
 }

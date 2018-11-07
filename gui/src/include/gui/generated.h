@@ -1,12 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Dec 21 2016)
+// C++ code generated with wxFormBuilder (version Nov  7 2018)
 // http://www.wxformbuilder.org/
 //
-// PLEASE DO "NOT" EDIT THIS FILE!
+// PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef __GENERATED_H__
-#define __GENERATED_H__
+#pragma once
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
@@ -42,10 +41,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// Class console_frame_base
 ///////////////////////////////////////////////////////////////////////////////
-class console_frame_base : public wxFrame 
+class console_frame_base : public wxFrame
 {
 	private:
-	
+
 	protected:
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu1;
@@ -137,7 +136,7 @@ class console_frame_base : public wxFrame
 		wxButton* m_button253;
 		wxGrid* m_grid143;
 		wxMenu* m_menu22;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void console_frame_on_close( wxCloseEvent& event ) = 0;
 		virtual void close_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
@@ -171,28 +170,28 @@ class console_frame_base : public wxFrame
 		virtual void isoclines_delete_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void hopf_bifurcations_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
 		virtual void saddle_node_bifurcations_data_view_ctrl_on_selection_changed( wxDataViewEvent& event ) = 0;
-		
-	
+
+
 	public:
-		
+
 		console_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Console"), const wxPoint& pos = wxPoint( -1,-1 ), const wxSize& size = wxSize( 904,785 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
+
 		~console_frame_base();
-		
+
 		void console_frame_baseOnContextMenu( wxMouseEvent &event )
 		{
 			this->PopupMenu( m_menu22, event.GetPosition() );
 		}
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class dynamical_frame_base
 ///////////////////////////////////////////////////////////////////////////////
-class dynamical_frame_base : public wxFrame 
+class dynamical_frame_base : public wxFrame
 {
 	private:
-	
+
 	protected:
 		wxBoxSizer* bSizer34s;
 		wxPanel* m_panel11;
@@ -206,7 +205,7 @@ class dynamical_frame_base : public wxFrame
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu4;
 		wxMenuItem* editMenuItem;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void dynamical_frame_on_close( wxCloseEvent& event ) = 0;
 		virtual void dynamical_frame_on_iconize( wxIconizeEvent& event ) = 0;
@@ -218,33 +217,33 @@ class dynamical_frame_base : public wxFrame
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
-		
-	
+
+
 	public:
-		
+
 		dynamical_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Dynamical Space"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 900,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
+
 		~dynamical_frame_base();
-		
+
 		void m_panel11OnContextMenu( wxMouseEvent &event )
 		{
 			m_panel11->PopupMenu( selectionPopupMenu, event.GetPosition() );
 		}
-		
+
 		void m_panel15OnContextMenu( wxMouseEvent &event )
 		{
 			m_panel15->PopupMenu( objectsPopupMenu, event.GetPosition() );
 		}
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class parameter_frame_base
 ///////////////////////////////////////////////////////////////////////////////
-class parameter_frame_base : public wxFrame 
+class parameter_frame_base : public wxFrame
 {
 	private:
-	
+
 	protected:
 		wxMenuBar* m_menubar3;
 		wxMenu* m_menu9;
@@ -253,7 +252,7 @@ class parameter_frame_base : public wxFrame
 		wxPanel* m_panel11;
 		wxMenu* parameterPopupMenu;
 		wxBoxSizer* parameterWindowBox;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void parameter_frame_on_close( wxCloseEvent& event ) { event.Skip(); }
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) { event.Skip(); }
@@ -261,52 +260,52 @@ class parameter_frame_base : public wxFrame
 		virtual void saddle_node_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void limit_cycle_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void saddle_connection_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
+
 		parameter_frame_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter Space"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 845,713 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
+
 		~parameter_frame_base();
-		
+
 		void m_panel11OnContextMenu( wxMouseEvent &event )
 		{
 			m_panel11->PopupMenu( parameterPopupMenu, event.GetPosition() );
 		}
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class parameter_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class parameter_dialog_base : public wxDialog 
+class parameter_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPropertyGrid* parameterPropertyGrid;
 		wxButton* okButton;
 		wxButton* cancelButton;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 627,357 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		parameter_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Parameter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 627,357 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~parameter_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class solution_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class solution_dialog_base : public wxDialog 
+class solution_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook2;
 		wxPanel* m_panel11;
@@ -318,53 +317,53 @@ class solution_dialog_base : public wxDialog
 		wxPGProperty* incrementPropertyGridItem;
 		wxButton* addButton;
 		wxButton* cancelButton;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void add_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
-		
-	
+
+
 	public:
-		
-		solution_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Initial Value Solution"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 596,367 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		solution_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Initial Value Solution"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 596,367 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~solution_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class dynamical_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class dynamical_dialog_base : public wxDialog 
+class dynamical_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxRadioBox* viewportRadioBox;
 		wxPropertyGrid* dynamical2dPropertyGrid;
 		wxPropertyGrid* dynamical3dPropertyGrid;
 		wxButton* okButton;
 		wxButton* cancelButton;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void viewport_radio_box_on_radio_box( wxCommandEvent& event ) = 0;
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
-		
-	
+
+
 	public:
-		
-		dynamical_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Dynamical"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 661,300 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		dynamical_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Dynamical"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 661,300 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~dynamical_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class isocline_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class isocline_dialog_base : public wxDialog 
+class isocline_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook3;
 		wxPanel* m_panel9;
@@ -379,26 +378,26 @@ class isocline_dialog_base : public wxDialog
 		wxPGProperty* searchIncrementPGItem;
 		wxButton* m_button14;
 		wxButton* m_button13;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		isocline_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Isocline"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		isocline_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Isocline"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 663,392 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~isocline_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class hopf_bifurcation_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class hopf_bifurcation_dialog_base : public wxDialog 
+class hopf_bifurcation_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook5;
 		wxPanel* m_panel17;
@@ -412,26 +411,26 @@ class hopf_bifurcation_dialog_base : public wxDialog
 		wxPGProperty* searchIncrementPGItem;
 		wxButton* m_button26;
 		wxButton* m_button27;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		hopf_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		hopf_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~hopf_bifurcation_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class saddle_connection_bifurcation_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class saddle_connection_bifurcation_dialog_base : public wxDialog 
+class saddle_connection_bifurcation_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook5;
 		wxPanel* m_panel17;
@@ -448,26 +447,26 @@ class saddle_connection_bifurcation_dialog_base : public wxDialog
 		wxComboBox* separatrix2ComboBox;
 		wxButton* m_button26;
 		wxButton* m_button27;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		saddle_connection_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 513,372 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		saddle_connection_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 513,372 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~saddle_connection_bifurcation_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class limit_cycle_bifurcation_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class limit_cycle_bifurcation_dialog_base : public wxDialog 
+class limit_cycle_bifurcation_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook5;
 		wxPanel* m_panel17;
@@ -484,26 +483,26 @@ class limit_cycle_bifurcation_dialog_base : public wxDialog
 		wxComboBox* limitCycle2ComboBox;
 		wxButton* m_button26;
 		wxButton* m_button27;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		limit_cycle_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 584,395 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		limit_cycle_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 584,395 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~limit_cycle_bifurcation_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class saddle_node_bifurcation_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class saddle_node_bifurcation_dialog_base : public wxDialog 
+class saddle_node_bifurcation_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxNotebook* m_notebook5;
 		wxPanel* m_panel17;
@@ -517,50 +516,50 @@ class saddle_node_bifurcation_dialog_base : public wxDialog
 		wxPGProperty* searchIncrementPGItem;
 		wxButton* m_button26;
 		wxButton* m_button27;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		saddle_node_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		saddle_node_bifurcation_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 648,386 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~saddle_node_bifurcation_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class singular_point_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class singular_point_dialog_base : public wxDialog 
+class singular_point_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxDataViewListCtrl* initialValueDataViewCtrl;
 		wxButton* addButton;
 		wxButton* cancelButton;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void add_button_on_button_click( wxCommandEvent& event ) = 0;
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) = 0;
-		
-	
+
+
 	public:
-		
-		singular_point_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Singular Point"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,349 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		singular_point_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Singular Point"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,349 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~singular_point_dialog_base();
-	
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class separatrix_dialog_base
 ///////////////////////////////////////////////////////////////////////////////
-class separatrix_dialog_base : public wxDialog 
+class separatrix_dialog_base : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxPropertyGrid* m_propertyGrid6;
 		wxPGProperty* incrementPGItem;
@@ -571,17 +570,16 @@ class separatrix_dialog_base : public wxDialog
 		wxComboBox* typeComboBox;
 		wxButton* okButton;
 		wxButton* cancelButton;
-		
+
 		// Virtual event handlers, overide them in your derived class
 		virtual void ok_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cancel_button_on_button_click( wxCommandEvent& event ) { event.Skip(); }
-		
-	
+
+
 	public:
-		
-		separatrix_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Separatrix"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,400 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		separatrix_dialog_base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Separatrix"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 400,400 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~separatrix_dialog_base();
-	
+
 };
 
-#endif //__GENERATED_H__

@@ -4,3 +4,4 @@ compile_commands.json
 glad/**/*.c
 glad/**/*.h
 .dir-locals.el
+tmp
