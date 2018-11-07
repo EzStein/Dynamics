@@ -18,7 +18,7 @@ void util::strip_white_space(std::string& str) {
   std::string::iterator end = str.end();
   for(std::string::iterator iter = str.begin(); iter != end;) {
     if(isspace(*iter)) {
-      
+
       iter = str.erase(iter);
     } else {
       ++iter;
@@ -74,7 +74,7 @@ std::string util::read_file(const std::string& path) {
   if(!file) {
     throw "No such file or directory: " + path;
   }
-  
+
   // Seeks to the end of the file to get file size
   fseek(file, 0, SEEK_END);
   size_t fileSize = ftell(file);
@@ -116,7 +116,7 @@ std::string util::get_resource_root() {
   path[len] = 0;
   std::string binDir("/usr/bin");
   if(std::string(path).substr(0, binDir.size()) == binDir) {
-#elif
+#else
   const char* env = std::getenv("DYNSOLVER_RUN_INSTALLED_EXE");
   if (env != nullptr && std::string(env) == std::string("TRUE")) {
 #endif

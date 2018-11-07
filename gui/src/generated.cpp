@@ -88,7 +88,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	closeParameterMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Close Parameter Windows...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu4->Append( closeParameterMenuItem );
 
-	m_menubar1->Append( m_menu4, wxT("Window") );
+	m_menubar1->Append( m_menu4, wxT("Windows") );
 
 	m_menu8 = new wxMenu();
 	wxMenuItem* lorenzExampleMenuItem;
@@ -831,7 +831,7 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	editMenuItem = new wxMenuItem( m_menu4, wxID_ANY, wxString( wxT("Edit...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu4->Append( editMenuItem );
 
-	m_menubar1->Append( m_menu4, wxT("View") );
+	m_menubar1->Append( m_menu4, wxT("Views") );
 
 	this->SetMenuBar( m_menubar1 );
 

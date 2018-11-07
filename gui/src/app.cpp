@@ -115,19 +115,24 @@ bool app::OnInit() {
   dummyCanvas->Bind(wxEVT_PAINT, dummyCanvasOnPaint);
   dummyDialog->ShowModal();
   dummyDialog->Destroy();
-  
+
 #ifdef GL_VERSION_4_3
   // We set up opengl debugging and callback info.
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(opengl_debug_message_callback, nullptr);
 #endif
 
-
   // We may now finally construct the model.
   modelData = new model();
 
   // Setup a basic example.
   consoleFrame = new console_frame(*this);
+	#ifdef IS_APPLE
+		auto frameOnIdle = [&](wxIdleEvent& evt) {
+			process_gl_errors();
+		};
+		consoleFrame->Bind(wxEVT_IDLE, frameOnIdle);
+	#endif
   consoleFrame->Show(true);
 
   // Set up dialogs

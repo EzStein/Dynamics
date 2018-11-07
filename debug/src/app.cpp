@@ -67,31 +67,26 @@ namespace dynsolver {
       assert(glContext->IsOK());
 
       frame->Show(true);
+      bool success = glContext->SetCurrent(*canvas);
+  	  assert(success);
+
+  	  success = gladLoadGL();
+  	  assert(success);
 
       auto onPaint =
 	[&](wxPaintEvent& evt){
-	static bool first = true;
-	if(first) {
-	  bool success = glContext->SetCurrent(*canvas);
-	  assert(success);
-
-	  success = gladLoadGL();
-	  assert(success);
-	  first = false;
-	  return;
-	}
-        glContext->SetCurrent(*canvas);
-        // Call some gl functions
-        glViewport(0, 0, canvas->GetSize().GetWidth(),
-		   canvas->GetSize().GetHeight());
-        glClearColor(1.0f, 1.0f, 0.0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        bool success = canvas->SwapBuffers();
-        assert(success);
-        process_gl_errors();
-      };
-      canvas->Bind(wxEVT_PAINT, onPaint);
-      return true;
+      glContext->SetCurrent(*canvas);
+      // Call some gl functions
+      glViewport(0, 0, canvas->GetSize().GetWidth(),
+	   canvas->GetSize().GetHeight());
+      glClearColor(1.0f, 1.0f, 0.0, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+      bool success = canvas->SwapBuffers();
+      assert(success);
+      process_gl_errors();
+    };
+    canvas->Bind(wxEVT_PAINT, onPaint);
+    return true;
     }
 
     app::~app() {
