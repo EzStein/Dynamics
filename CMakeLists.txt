@@ -35,6 +35,7 @@ if(NOT APPLE)
   set(GL_VERSION_4_3)
 endif()
 
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 
 # The list of wx widgets required modules.
@@ -111,6 +112,7 @@ if(APPLE)
 elseif(UNIX)
   set(CPACK_GENERATOR DEB RPM)
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ezsuite")
+  set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/usr/share/applications")
 elseif(WIN32)
   set(CPACK_GENERATOR NSIS)
   set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/windows/icon.ico")

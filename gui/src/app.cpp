@@ -91,11 +91,10 @@ bool app::OnInit() {
   wxLog::SetActiveTarget(customLogger);
 
   // Initializes the attributes which are used to generate an opengl context.
-#ifdef IS_LINUX
-  glAttributes.Defaults().EndList();
-#else
-  glAttributes.PlatformDefaults().DoubleBuffer().EndList();
-#endif
+  glAttributes.PlatformDefaults().RGBA().DoubleBuffer().EndList();
+  bool supported = wxGLCanvas::IsDisplaySupported(glAttributes);
+  assert(supported);
+
   glContextAttributes.PlatformDefaults()
     .CoreProfile()
     .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
@@ -246,7 +245,7 @@ int app::OnExit() {
   return 0;
 }
 
-/*bool app::OnExceptionInMainLoop() {
+bool app::OnExceptionInMainLoop() {
   throw;
   return false;
 }
@@ -262,7 +261,7 @@ bool app::StoreCurrentException() {
     std::cout << exc.what() << std::endl;
   }
   return false;
-}*/
+}
 
 solution_dialog* app::get_solution_dialog() const {
   return solutionDialog;

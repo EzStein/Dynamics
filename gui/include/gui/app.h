@@ -101,11 +101,11 @@ class app : public wxApp {
   // Called when the last frame has been closed.
   virtual int OnExit() override;
 
-  /*virtual bool OnExceptionInMainLoop() override;
+  virtual bool OnExceptionInMainLoop() override;
   
   virtual void OnUnhandledException() override;
   
-  virtual bool StoreCurrentException() override;*/
+  virtual bool StoreCurrentException() override;
 
   // Closes the dynamical window, freeing up all of its info in the model.
   // This is called in the on close event of the dynamical_frame, so there
