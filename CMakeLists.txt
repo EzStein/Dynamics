@@ -120,7 +120,7 @@ elseif(WIN32)
   set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
   set(CPACK_PACKAGE_EXECUTABLES "${EXE_NAME};dynsolver")
   set(CPACK_CREATE_DESKTOP_LINKS "${EXE_NAME}")
-  
+
 # Set/unset the environment variable DYNSOLVER_RUN_INSTALLED_EXE to TRUE
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
 "!include \\\"winmessages.nsh\\\"
