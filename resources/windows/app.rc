@@ -1,1 +1,2 @@
-id ICON "C:\Program Files\dynsolver\app.icon
+myic ICON "C:\\Users\ezste\\dynsolver\\resources\\windows\\app.ico"
+mybmp BITMAP "C:\\Users\ezste\\dynsolver\\resources\\windows\\app.bmp"

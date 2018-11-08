@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <cstdlib>
 #include <climits>
 #include <sstream>
@@ -7,9 +6,16 @@
 #include <cassert>
 #ifdef IS_WINDOWS
 #include <windows.h>
+#include <Shlwapi.h>
+// remember to link against shlwapi.lib
+// in VC++ this can be done with
+#pragma comment(lib, "Shlwapi.lib")
 #endif
 #ifdef IS_APPLE
 #include <CoreFoundation/CoreFoundation.h>
+#endif
+#ifdef IS_LINUX
+#include <unistd.h>
 #endif
 
 #include "util/util.h"
@@ -128,8 +134,18 @@ std::string util::get_resource_root() {
     std::wstring pathWide(pathCstr);
     std::string path(pathWide.begin(), pathWide.end());
 
+	TCHAR buffer[MAX_PATH] = { 0 };
+	TCHAR * name;
+	DWORD bufSize = sizeof(buffer) / sizeof(*buffer);
+	// Get the fully-qualified path of the executable
+	if (GetModuleFileName(NULL, buffer, bufSize) == bufSize)
+	{
+		// the buffer is too small, handle the error somehow
+	}
+	name = PathFindFileName(buffer);
     // We remove the trailing "/bin/dynsolver.exe" from this string
-    path = path.substr(0, path.size() - std::string(EXE_NAME).size());
+    path = path.substr(0, path.size() - (std::string("/bin/") + std::string(name)).size());
+	std::cout << path << std::endl;
     resourceRootPath = path;
     return resourceRootPath;
 #elif IS_APPLE

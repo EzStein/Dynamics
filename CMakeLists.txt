@@ -115,10 +115,10 @@ elseif(UNIX)
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/usr/share/applications")
 elseif(WIN32)
   set(CPACK_GENERATOR NSIS)
-  set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/windows/icon.ico")
+  set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/windows/app.ico")
   set(CPACK_NSIS_MODIFY_PATH "ON")
   set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
-  set(CPACK_PACKAGE_EXECUTABLES "${EXE_NAME};dynsolver")
+  set(CPACK_PACKAGE_EXECUTABLES "${EXE_NAME};${EXE_NAME}")
   set(CPACK_CREATE_DESKTOP_LINKS "${EXE_NAME}")
 
 # Set/unset the environment variable DYNSOLVER_RUN_INSTALLED_EXE to TRUE

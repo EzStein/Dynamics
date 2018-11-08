@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(app)
 
 if(WIN32)
-add_custom_command(OUTPUT "${CMAKE_CURRENT_BUILD_DIR}/app.res"
-COMMAND "windres ${CMAKE_SOURCE_DIR}/resources/windows/app.rc -O coff -o ${CMAKE_CURRENT_BUILD_DIR}/app.res")
 set(SRC_FILES app.cpp app.manifest)
 else()
 set(SRC_FILES app.cpp)
@@ -16,7 +14,7 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
 if(WIN32)
-set(SRC_FILES "${CMAKE_CURRENT_BUILD_DIR}/app.res" "${SRC_FILES}")
+  set(SRC_FILES ${SRC_FILES} "${CMAKE_SOURCE_DIR}/resources/windows/app.rc")
 endif()
 add_executable(${PROJECT_NAME} ${EXE_FLAG}
   "${SRC_FILES}"
@@ -40,7 +38,6 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/gl" DESTINATION "."
   COMPONENT dynsolver_comp)
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources/fonts" DESTINATION "."
   COMPONENT dynsolver_comp)
-install(FILES "${CMAKE_SOURCE_DIR}/resources/windows/app.ico" DESTINATION ".")
 else()
 install(TARGETS ${PROJECT_NAME} DESTINATION "bin"
   COMPONENT dynsolver_comp)
