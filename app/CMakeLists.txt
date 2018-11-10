@@ -10,7 +10,8 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
 if(WIN32)
-  set(SRC_FILES ${SRC_FILES} "${CMAKE_SOURCE_DIR}/resources/windows/app.rc")
+  set(SRC_FILES ${SRC_FILES} "${CMAKE_SOURCE_DIR}/resources/windows/app.rc"
+"${CMAKE_SOURCE_DIR}/resources/windows/app.manifest")
 endif()
 add_executable(${PROJECT_NAME} ${EXE_FLAG}
   "${SRC_FILES}"
