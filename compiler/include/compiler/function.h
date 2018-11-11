@@ -53,7 +53,7 @@ function<RET_T, ARGS_T...>::function(const std::vector<unsigned char>& code) :
   // Allocates readable writable executable memory.
 #ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		   MAP_PRIVATE | MAP_ANON, -1, 0);
 #else
   void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
@@ -82,7 +82,7 @@ template<class RET_T, class ...ARGS_T> function<RET_T, ARGS_T...>
 
 #ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		   MAP_PRIVATE | MAP_ANON, -1, 0);
 #else
   void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
@@ -112,7 +112,7 @@ function<RET_T, ARGS_T...>
   size = other.size;
 #ifdef IS_UNIX
   void* ptr = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		   MAP_PRIVATE | MAP_ANON, -1, 0);
 #else
   void* ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif

@@ -7,6 +7,8 @@ if(POLICY CMP0072)
 endif()
 project(dynsolver)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_C_STANDARD 11)
+
 set(CMAKE_BUILD_TYPE Debug)
 set(DYNSOLVER_VERSION_MAJOR 0)
 set(DYNSOLVER_VERSION_MINOR 1)
@@ -50,6 +52,7 @@ set(WX_WIDGETS_VERSION 3.0)
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
   set(wxBUILD_SHARED OFF)
+  set(wxBUILD_PRECOMP OFF)
   add_subdirectory(external/wxWidgets)
   set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
   if(UNIX AND NOT APPLE)
@@ -77,14 +80,13 @@ set(WX_WIDGETS_VERSION 3.0)
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/glad/src/glad.c")
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -m glad
+    --profile core
     --out-path "${CMAKE_SOURCE_DIR}/glad"
-    --generator c --spec gl --omit-khrplatform
+    --generator c --spec gl 
     --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
-endif()
 add_subdirectory(glad)
 
 if(WIN32)

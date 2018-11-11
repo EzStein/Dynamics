@@ -2,6 +2,7 @@
 #define GL_BUFFER_H_
 
 #include <glad/glad.h>
+#include <cstddef>
 
 namespace gl {
 
