@@ -28,32 +28,19 @@ namespace dynsolver {
 namespace gui {
 
 namespace {
-// Attempts to create the opengl context with the provided attributes.
-wxGLContext* create_context(const wxGLAttributes&, const wxGLContextAttrs&);
-
 #ifdef GL_VERSION_4_3
 void APIENTRY opengl_debug_message_callback( GLenum source,
-					       GLenum type,
-					       GLuint id,
-					       GLenum severity,
-					       GLsizei length,
-					       const GLchar* message,
-					       const void* userParam ) {
+                                             GLenum type,
+                                             GLuint id,
+                                             GLenum severity,
+                                             GLsizei length,
+                                             const GLchar* message,
+                                             const void* userParam ) {
   if(severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
     throw std::runtime_error("OpenGL exception: " + std::to_string(type)
 			     + ": " + message);
   } else {
     std::cout << "OpenGL Notification: " << message << std::endl;
-  }
-}
-#else
-void process_gl_errors() {
-  GLenum err;
-  while((err = glGetError()) != GL_NO_ERROR) {
-    std::stringstream sstream;
-    sstream << std::hex << err;
-		std::cout << "OpenGL exception: 0x" << sstream.str() << std::endl;
-    throw std::runtime_error("OpenGL exception: 0x" + sstream.str());
   }
 }
 #endif
@@ -79,11 +66,11 @@ app::~app() {
 
 bool app::OnInit() {
 #ifdef IS_WINDOWS
-	// Redirect stdout stdin and stderr to a console on windows gui apps
-	AllocConsole();
-	freopen("CONIN$", "r", stdin);
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+  // Redirect stdout stdin and stderr to a console on windows gui apps
+  AllocConsole();
+  freopen("CONIN$", "r", stdin);
+  freopen("CONOUT$", "w", stdout);
+  freopen("CONOUT$", "w", stderr);
 #endif
 
   customLogger = new wxLogStderr();
@@ -96,9 +83,9 @@ bool app::OnInit() {
   assert(supported);
 
   glContextAttributes.PlatformDefaults()
-    .CoreProfile()
-    .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
-    .EndList();
+      .CoreProfile()
+      .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
+      .EndList();
 
   wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "OpenGL Setup");
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
@@ -112,12 +99,12 @@ bool app::OnInit() {
           assert(success);
           success = gladLoadGL();
           assert(success);
-          dummyDialog->EndModal(0);
+          dummyDialog->EndModal(0); // Idle events may still occur after this
           initialized = true;
         } else {
           evt.RequestMore();
         }
-  };
+      };
   dummyCanvas->Bind(wxEVT_IDLE, dummyCanvasOnIdle);
   dummyDialog->ShowModal();
   dummyDialog->Destroy();
@@ -133,12 +120,6 @@ bool app::OnInit() {
 
   // Setup a basic example.
   consoleFrame = new console_frame(*this);
-	#ifdef IS_APPLE
-		auto frameOnIdle = [&](wxIdleEvent& evt) {
-			process_gl_errors();
-		};
-		consoleFrame->Bind(wxEVT_IDLE, frameOnIdle);
-	#endif
   consoleFrame->Show(true);
 
   // Set up dialogs
@@ -153,6 +134,7 @@ bool app::OnInit() {
   limitCycleBifurcationDialog = new limit_cycle_bifurcation_dialog(*this);
   saddleConnectionBifurcationDialog = new saddle_connection_bifurcation_dialog(*this);
 
+  // Exit OnInit and run application event loop
   return true;
 }
 
@@ -173,7 +155,7 @@ void app::delete_parameter(parameter_id id) {
 // so it destroys them
 void app::delete_all_dynamical_windows() {
   for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
-	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
+          = dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     modelData->delete_dynamical(iter->first);
     iter->second->Destroy();
   }
@@ -182,7 +164,7 @@ void app::delete_all_dynamical_windows() {
 
 void app::delete_all_parameter_windows() {
   for(std::unordered_map<parameter_id, parameter_frame*>::const_iterator iter
-	= parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
+          = parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
     modelData->delete_parameter(iter->first);
     iter->second->Destroy();
   }
@@ -223,7 +205,7 @@ void app::add_parameter(const parameter_specs& spec) {
 }
 
 void app::set_dynamical_specs(dynamical_id id,
-					     const dynamical_specs& spec) {
+                              const dynamical_specs& spec) {
   modelData->set_dynamical_specs(id, spec);
   dynamicalFrames.at(id)->refresh_gl_canvas();
 }
@@ -381,7 +363,7 @@ void app::add_all_separatrices() {
   specs.inc = 0.01;
   specs.time = 20;
   for(std::unordered_map<singular_point_id, singular_point>::const_iterator
-	iter = modelData->get_singular_points().begin();
+          iter = modelData->get_singular_points().begin();
       iter != modelData->get_singular_points().end();
       ++iter) {
     if(iter->second.type == singular_point::type::SADDLE) {
@@ -461,13 +443,13 @@ bool app::compile(const std::string& varDiffName,
 
 void app::refresh_dynamical_windows() {
   for(std::unordered_map<dynamical_id, dynamical_frame*>::const_iterator iter
-	= dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
+          = dynamicalFrames.begin(); iter != dynamicalFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
   }
 }
 
 void app::set_solution_specs(solution_id id,
-				     const solution_specs& spec) {
+                             const solution_specs& spec) {
   modelData->set_solution_specs(id, spec);
   refresh_dynamical_windows();
   consoleFrame->update_solutions_list();
@@ -663,26 +645,9 @@ void app::set_parameter_position(parameter_id id, const ::math::vector2d& pos) {
 
 void app::refresh_parameter_windows() {
   for(std::unordered_map<parameter_id, parameter_frame*>::const_iterator iter
-	= parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
+          = parameterFrames.begin(); iter != parameterFrames.end(); ++iter) {
     iter->second->refresh_gl_canvas();
   }
 }
-namespace {
-wxGLContext* create_context(const wxGLAttributes& glAttributes,
-		    const wxGLContextAttrs& glContextAttributes) {
-  // Create a dummy frame and canvas that will be used to generate the context.
-  // This is essentially a hack that allows us to create an opengl context
-  // using wxWidgets.
-  wxFrame* dummyFrame = new wxFrame(NULL, wxID_ANY, "");
-  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyFrame, glAttributes);
-
-  // Initialize opengl and create an opengl context.
-  wxGLContext* glContext = new wxGLContext(dummyCanvas, nullptr, &glContextAttributes);
-
-  dummyFrame->Close(); // Also deletes the dummy frame and canvas.
-
-  return glContext;
-}
-} // namespace anonymous
 } // namespace gui
 } // namespace dynsolver
