@@ -57,9 +57,17 @@ execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive ex
 set(wxBUILD_SHARED OFF)
 set(wxBUILD_PRECOMP OFF)
 set(wxUSE_ZLIB OFF)
-set(wxUSE_ZLIB OFF)
 set(wxUSE_ZIPSTREAM OFF)
+set(wxUSE_LIBLZMA OFF)
+set(wxUSE_LIBPNG OFF)
+set(wxUSE_ARTPROVIDER_TANGO OFF)
+set(wxUSE_SVG OFF)
+set(wxUSE_LIBJPEG OFF)
+set(wxUSE_LIBTIFF OFF)
+set(wxUSE_EXPAT OFF)
+set(wxUSE_REGEX OFF)
 set(wxBUILD_INSTALL OFF)
+set(wxUSE_STL ON)
 
 add_subdirectory(external/wxWidgets)
 
