@@ -83,6 +83,10 @@ execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive ex
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 set(BUILD_SHARED_LIBS OFF)
 set(SKIP_INSTALL_ALL ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_BZip2 ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_ZLIB ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
 add_subdirectory(external/freetype2)
 
 # Exclude freetype targets from the all/default target
