@@ -27,6 +27,15 @@ FUNCTION(PREPEND var prefix)
   SET(${var} "${listVar}" PARENT_SCOPE)
 ENDFUNCTION(PREPEND)
 
+FUNCTION(get_all_targets _result _dir)
+    get_property(_subdirs DIRECTORY "${_dir}" PROPERTY SUBDIRECTORIES)
+    foreach(_subdir IN LISTS _subdirs)
+        get_all_targets(${_result} "${_subdir}")
+    endforeach()
+    get_property(_sub_targets DIRECTORY "${_dir}" PROPERTY BUILDSYSTEM_TARGETS)
+    set(${_result} ${${_result}} ${_sub_targets} PARENT_SCOPE)
+ENDFUNCTION()
+
 if(APPLE)
   set(GL_VERSION_MAJOR 3)
   set(GL_VERSION_MINOR 3)
@@ -43,39 +52,40 @@ find_package(OpenGL REQUIRED)
 # The list of wx widgets required modules.
 set(WX_WIDGETS_MODULES core base gl adv propgrid)
 set(WX_WIDGETS_VERSION 3.0)
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+set(wxBUILD_SHARED OFF)
+set(wxBUILD_PRECOMP OFF)
+set(wxUSE_ZLIB OFF)
+set(wxUSE_ZLIB OFF)
+set(wxUSE_ZIPSTREAM OFF)
+set(wxBUILD_INSTALL OFF)
 
-#find_package(wxWidgets ${WX_WIDGETS_VERSION} COMPONENTS ${WX_WIDGETS_MODULES})
-#if(wxWidgets_FOUND)
-#  include("${wxWidgets_USE_FILE}")
-#  set(WX_WIDGETS_TARGETS "${wxWidgets_LIBRARIES}")
-#else()
-  execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-  set(wxBUILD_SHARED OFF)
-  set(wxBUILD_PRECOMP OFF)
-  add_subdirectory(external/wxWidgets)
-  set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
-  if(UNIX AND NOT APPLE)
-    set_target_properties(ribbon html xml aui richtext wxscintilla
-      stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  else()
-    set_target_properties(media ribbon webview html xml aui richtext wxscintilla
-      stc xrc wxrc qa net PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  endif()
-#endif()
+add_subdirectory(external/wxWidgets)
 
-#find_package(Freetype)
-#if(Freetype_FOUND)
-#  set(FREETYPE_TARGET Freetype::Freetype)
-#else()
-  execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/freetype2
+# Exclude wx widgets targets from the all/default target
+get_all_targets(wxTargets external/wxWidgets)
+foreach(target IN LISTS wxTargets)
+  set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL ON)
+endforeach()
+set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
+
+# Freetype configuration
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/freetype2
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-  set(BUILD_SHARED_LIBS OFF)
-  set(SKIP_INSTALL_ALL ON)
-  add_subdirectory(external/freetype2)
-  target_include_directories(freetype PUBLIC external/freetype2/include)
-  set(FREETYPE_TARGET freetype)
-#endif()
+set(BUILD_SHARED_LIBS OFF)
+set(SKIP_INSTALL_ALL ON)
+add_subdirectory(external/freetype2)
+
+# Exclude freetype targets from the all/default target
+get_all_targets(ftTargets external/freetype2)
+foreach(target IN LISTS ftTargets)
+  set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL ON)
+endforeach()
+
+target_include_directories(freetype PUBLIC external/freetype2/include)
+set(FREETYPE_TARGET freetype)
+
 
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad
@@ -84,7 +94,7 @@ execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive ex
     COMMAND ${PYTHON_EXECUTABLE} -m glad
     --profile core
     --out-path "${CMAKE_SOURCE_DIR}/glad"
-    --generator c --spec gl 
+    --generator c --spec gl
     --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
 add_subdirectory(glad)
