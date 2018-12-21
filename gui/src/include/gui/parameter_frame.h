@@ -8,8 +8,6 @@
 #include "math/window2d.h"
 #include "math/vector2d.h"
 
-class wxGLCanvas;
-
 namespace dynsolver {
 namespace gui {
 
@@ -21,9 +19,6 @@ class parameter_frame : public parameter_frame_base {
 private:
   app& appl;
 
-  // The opengl canvas used for rendering to the parameter window.
-  wxGLCanvas* glCanvas;
-
   // The parameter id associated with this window.
   parameter_id id;
 
@@ -34,7 +29,7 @@ private:
   // The pixel distance used to determine whether a mouse up and
   // mouse down event should constitute a mouse click.
   static const double kClickTolerance;
-  
+
   // Variables which are set whenever the mouse is right clicked
   // (mouse down event). The value is stored until the next right click.
   ::math::vector2d rightClickMousePos;
@@ -87,30 +82,30 @@ private:
   // Indicates that a left click drag event corresponds to moving the
   // parameter position.
   bool parameterMoving;
-  
+
 public:
   parameter_frame(app& app, parameter_id id, int width, int height);
   ~parameter_frame();
-  void gl_canvas_on_key_down(wxKeyEvent&);
-  void gl_canvas_on_key_up(wxKeyEvent&);
-  void gl_canvas_on_left_down(wxMouseEvent&);
-  void gl_canvas_on_left_up(wxMouseEvent&);
-  void gl_canvas_on_motion(wxMouseEvent&);
-  void gl_canvas_on_mouse_wheel(wxMouseEvent&);
-  void gl_canvas_on_right_down(wxMouseEvent&);
-  void gl_canvas_on_right_up(wxMouseEvent& evt);
-  void gl_canvas_on_paint(wxPaintEvent&);
-  void gl_canvas_on_size(wxSizeEvent&);
+  virtual void canvas_on_key_down(wxKeyEvent&) override;
+  virtual void canvas_on_key_up(wxKeyEvent&) override;
+  virtual void canvas_on_left_down(wxMouseEvent&) override;
+  virtual void canvas_on_left_up(wxMouseEvent&) override;
+  virtual void canvas_on_motion(wxMouseEvent&) override;
+  virtual void canvas_on_right_down(wxMouseEvent&) override;
+  virtual void canvas_on_right_up(wxMouseEvent& evt) override;
+  virtual void canvas_on_paint(wxPaintEvent&) override;
+  virtual void canvas_on_size(wxSizeEvent&) override;
 
   virtual void parameter_frame_on_close(wxCloseEvent&) override;
   virtual void hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
-  
+
+  void canvas_on_mouse_wheel(wxMouseEvent&);
 
   // Called when the mouse wheel ends by a timer.
-  void gl_canvas_on_mouse_wheel_end(wxTimerEvent&);
+  void canvas_on_mouse_wheel_end(wxTimerEvent&);
 
   // Returns the window coordinates of the mouse cursor for the given mouse
   // event.
@@ -118,14 +113,14 @@ public:
 
   // When the left or right mouse button are pressed and released in the
   // same spot, a mouse_click event is generated.
-  void gl_canvas_on_right_mouse_click(const ::math::vector2d& pos);
-  void gl_canvas_on_left_mouse_click(const ::math::vector2d& pos);
+  void canvas_on_right_mouse_click(const ::math::vector2d& pos);
+  void canvas_on_left_mouse_click(const ::math::vector2d& pos);
 
   // Set's the cursors image according to its position on the canvas.
   void set_cursor(const ::math::vector2d& pos);
 
   // Refreshes the canvas.
-  void refresh_gl_canvas();
+  void refresh_canvas();
 };
 } // namespace gui
 } // namespace dynsolver

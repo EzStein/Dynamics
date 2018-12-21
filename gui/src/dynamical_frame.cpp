@@ -1,7 +1,6 @@
 #include "gui/dynamical_frame.h"
 
 #include "gui/generated.h"
-#include <wx/glcanvas.h>
 #include <wx/msgdlg.h>
 
 #include "gui/solution_dialog.h"
@@ -31,36 +30,13 @@ dynamical_frame::dynamical_frame(app& app, dynamical_id id, int width, int heigh
   axesScalingViewport(::math::vector2d(0,0),
 		      ::math::vector2d(0,0),
 		      ::math::vector2d(0,0)) {
-  // Setup events and widgets not already done in dynamical_frame_base
-  glCanvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
-			    wxDefaultPosition, wxSize(width, height));
-  dynamicalWindowBox->Add(glCanvas, 1, wxEXPAND);
-  Fit();
-  glCanvas->Bind(wxEVT_PAINT, &dynamical_frame::gl_canvas_on_paint, this);
-  glCanvas->Bind(wxEVT_KEY_DOWN, &dynamical_frame::gl_canvas_on_key_down, this);
-  glCanvas->Bind(wxEVT_KEY_UP, &dynamical_frame::gl_canvas_on_key_up, this);
-  glCanvas->Bind(wxEVT_LEFT_DOWN, &dynamical_frame::gl_canvas_on_left_down, this);
-  glCanvas->Bind(wxEVT_LEFT_UP, &dynamical_frame::gl_canvas_on_left_up, this);
-  glCanvas->Bind(wxEVT_MOTION, &dynamical_frame::gl_canvas_on_motion, this);
-  glCanvas->Bind(wxEVT_MOUSEWHEEL, &dynamical_frame::gl_canvas_on_mouse_wheel, this);
-  glCanvas->Bind(wxEVT_RIGHT_DOWN, &dynamical_frame::gl_canvas_on_right_down, this);
-  glCanvas->Bind(wxEVT_RIGHT_UP, &dynamical_frame::gl_canvas_on_right_up, this);
-  glCanvas->Bind(wxEVT_SIZE, &dynamical_frame::gl_canvas_on_size, this);
-  Bind(wxEVT_TIMER, &dynamical_frame::gl_canvas_on_mouse_wheel_end, this,
+  canvas->Bind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 
 dynamical_frame::~dynamical_frame() {
-  glCanvas->Unbind(wxEVT_PAINT, &dynamical_frame::gl_canvas_on_paint, this);
-  glCanvas->Unbind(wxEVT_KEY_DOWN, &dynamical_frame::gl_canvas_on_key_down, this);
-  glCanvas->Unbind(wxEVT_KEY_UP, &dynamical_frame::gl_canvas_on_key_up, this);
-  glCanvas->Unbind(wxEVT_LEFT_DOWN, &dynamical_frame::gl_canvas_on_left_down, this);
-  glCanvas->Unbind(wxEVT_LEFT_UP, &dynamical_frame::gl_canvas_on_left_up, this);
-  glCanvas->Unbind(wxEVT_MOTION, &dynamical_frame::gl_canvas_on_motion, this);
-  glCanvas->Unbind(wxEVT_MOUSEWHEEL, &dynamical_frame::gl_canvas_on_mouse_wheel, this);
-  glCanvas->Unbind(wxEVT_RIGHT_DOWN, &dynamical_frame::gl_canvas_on_right_down, this);
-  glCanvas->Unbind(wxEVT_RIGHT_UP, &dynamical_frame::gl_canvas_on_right_up, this);
-  glCanvas->Unbind(wxEVT_SIZE, &dynamical_frame::gl_canvas_on_size, this);
+  canvas->Unbind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
+        kMagnificationTimerEventId);
 }
 
 void dynamical_frame::dynamical_frame_on_close(wxCloseEvent&) {
@@ -90,8 +66,8 @@ void dynamical_frame::solution_menu_item_on_menu_selection(wxCommandEvent& evt) 
     appl.add_solution(spec);
   }
 }
-void dynamical_frame::gl_canvas_on_key_up(wxKeyEvent& evt) { }
-void dynamical_frame::gl_canvas_on_key_down(wxKeyEvent& evt) {
+void dynamical_frame::canvas_on_key_up(wxKeyEvent& evt) { }
+void dynamical_frame::canvas_on_key_down(wxKeyEvent& evt) {
   if(appl.get_model().get_dynamical_specs(id).is3d) {
     ::math::window3d
       viewport(appl.get_model().get_dynamical_specs(id).viewport3d);
@@ -149,10 +125,10 @@ void dynamical_frame::singular_point_menu_item_on_menu_selection(wxCommandEvent&
   }
 }
 
-void dynamical_frame::gl_canvas_on_left_down(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_left_down(wxMouseEvent& evt) {
   evt.GetPosition(&leftClickMouseX, &leftClickMouseY);
   int width, height;
-  glCanvas->GetSize(&width, &height);
+  canvas->GetSize(&width, &height);
   leftClickMouseY = height - leftClickMouseY;
   if(appl.get_model().get_dynamical_specs(id).is3d) {
     rotationViewport = appl.get_model().get_dynamical_specs(id).viewport3d;
@@ -177,11 +153,11 @@ void dynamical_frame::set_cursor(int x, int y) {
   }
 }
 
-void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_left_up(wxMouseEvent& evt) {
   int posX, posY;
   evt.GetPosition(&posX, &posY);
   int width, height;
-  glCanvas->GetSize(&width, &height);
+  canvas->GetSize(&width, &height);
   posY = height - posY;
 
 
@@ -195,7 +171,7 @@ void dynamical_frame::gl_canvas_on_left_up(wxMouseEvent& evt) {
 
   leftClickMouseX = posX;
   leftClickMouseY = posY;
-  
+
   if(!appl.get_model().get_dynamical_specs(id).is3d) {
     moveViewport = appl.get_model().get_dynamical_specs(id).viewport2d;
     verticalScaling = false;
@@ -225,11 +201,11 @@ void dynamical_frame::isocline_menu_item_on_menu_selection(wxCommandEvent&) {
   std::cout << "Computed Isocline" << std::endl;
 }
 
-void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_motion(wxMouseEvent& evt) {
   int posX, posY;
   evt.GetPosition(&posX, &posY);
   int width, height;
-  glCanvas->GetSize(&width, &height);
+  canvas->GetSize(&width, &height);
   posY = height - posY;
 
   if(appl.get_model().get_dynamical_specs(id).is3d) {
@@ -281,7 +257,7 @@ void dynamical_frame::gl_canvas_on_motion(wxMouseEvent& evt) {
   }
 }
 
-void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
+void dynamical_frame::canvas_on_mouse_wheel_start(int posX, int posY) {
   if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     totalMagnification = 1.0;
@@ -291,21 +267,21 @@ void dynamical_frame::gl_canvas_on_mouse_wheel_start(int posX, int posY) {
   }
 }
 
-void dynamical_frame::gl_canvas_on_mouse_wheel_end(wxTimerEvent&) {
+void dynamical_frame::canvas_on_mouse_wheel_end(wxTimerEvent&) {
   if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     firstWheelEvent = true;
   }
 }
 
-void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_mouse_wheel(wxMouseEvent& evt) {
   int posX, posY;
   evt.GetPosition(&posX, &posY);
   int width, height;
-  glCanvas->GetSize(&width, &height);
+  canvas->GetSize(&width, &height);
   posY = height - posY;
   if(firstWheelEvent) {
-    gl_canvas_on_mouse_wheel_start(posX, posY);
+    canvas_on_mouse_wheel_start(posX, posY);
     firstWheelEvent = false;
   }
   magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
@@ -320,34 +296,38 @@ void dynamical_frame::gl_canvas_on_mouse_wheel(wxMouseEvent& evt) {
   }
 }
 
-void dynamical_frame::gl_canvas_on_right_down(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_right_down(wxMouseEvent& evt) {
   evt.GetPosition(&rightClickMouseX, &rightClickMouseY);
   int width, height;
-  glCanvas->GetSize(&width, &height);
+  canvas->GetSize(&width, &height);
   rightClickMouseY = height - rightClickMouseY;
   if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     PopupMenu(objectsPopupMenu);
   }
 }
-void dynamical_frame::gl_canvas_on_right_up(wxMouseEvent& evt) {
+void dynamical_frame::canvas_on_right_up(wxMouseEvent& evt) {
 }
 
-void dynamical_frame::gl_canvas_on_size(wxSizeEvent& evt) {
+void dynamical_frame::canvas_on_size(wxSizeEvent& evt) {
   wxSize size(evt.GetSize());
   appl.resize_dynamical(id, size.GetWidth(), size.GetHeight());
 }
 
-void dynamical_frame::refresh_gl_canvas() {
-  glCanvas->Refresh();
+void dynamical_frame::refresh_canvas() {
+  canvas->Refresh();
 }
 
-void dynamical_frame::gl_canvas_on_paint(wxPaintEvent& evt) {
-  if(glCanvas->IsShownOnScreen()) {
-    appl.get_gl_context().SetCurrent(*glCanvas);
-    appl.paint_dynamical(id);
-    glCanvas->SwapBuffers();
-  }
+void dynamical_frame::canvas_on_paint(wxPaintEvent& evt) {
+  wxPaintDC dc(canvas);
+  // Calls appropriate GL render functions
+  appl.paint_dynamical(id);
+
+  int width, height;
+  canvas->GetSize(&width, &height);
+
+  // Copy from FBO to screen.
+  dc.DrawBitmap(appl.get_fbo_bitmap(width, height), 0, 0);
 }
 
 void dynamical_frame::dynamical_frame_on_iconize(wxIconizeEvent& evt) {

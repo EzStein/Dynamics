@@ -23,9 +23,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MINOR=${GL_VERSION_MINOR})
-if(${GL_VERSION_4_3})
-  target_compile_definitions(${PROJECT_NAME} PRIVATE
-    GL_VERSION_4_3)
+if(${GL_VERSION_MAJOR} GREATER 3 AND ${GL_VERSION_MINOR} GREATER 2)
+    # Version larger than 4.3
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+      GL_ATTRIB_FORMAT)
 endif()
 if ( UNIX )
     target_compile_options(${PROJECT_NAME} PRIVATE "-Wall")

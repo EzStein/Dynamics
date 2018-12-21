@@ -51,7 +51,6 @@ endif()
 if(NOT APPLE)
   set(GL_VERSION_MAJOR 4)
   set(GL_VERSION_MINOR 3)
-  set(GL_VERSION_4_3)
 endif()
 
 set(OpenGL_GL_PREFERENCE GLVND)

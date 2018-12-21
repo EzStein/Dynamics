@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Nov  7 2018)
+// C++ code generated with wxFormBuilder (version Oct 26 2018)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -200,7 +200,7 @@ class dynamical_frame_base : public wxFrame
 		wxMenu* objectsPopupMenu;
 		wxMenuItem* solutionMenuItem;
 		wxMenuItem* singularPointMenuItem;
-		wxBoxSizer* dynamicalWindowBox;
+		wxPanel* canvas;
 		wxStatusBar* m_statusBar2;
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu4;
@@ -216,6 +216,15 @@ class dynamical_frame_base : public wxFrame
 		virtual void solution_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void singular_point_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void isocline_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void canvas_on_key_down( wxKeyEvent& event ) = 0;
+		virtual void canvas_on_key_up( wxKeyEvent& event ) = 0;
+		virtual void canvas_on_left_down( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_left_up( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_motion( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_paint( wxPaintEvent& event ) = 0;
+		virtual void canvas_on_right_down( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_right_up( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_size( wxSizeEvent& event ) = 0;
 		virtual void edit_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 
 
@@ -251,7 +260,7 @@ class parameter_frame_base : public wxFrame
 		wxStatusBar* m_statusBar3;
 		wxPanel* m_panel11;
 		wxMenu* parameterPopupMenu;
-		wxBoxSizer* parameterWindowBox;
+		wxPanel* canvas;
 
 		// Virtual event handlers, overide them in your derived class
 		virtual void parameter_frame_on_close( wxCloseEvent& event ) { event.Skip(); }
@@ -260,6 +269,15 @@ class parameter_frame_base : public wxFrame
 		virtual void saddle_node_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void limit_cycle_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void saddle_connection_bifurcation_menu_item_on_selection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void canvas_on_key_down( wxKeyEvent& event ) { event.Skip(); }
+		virtual void canvas_on_key_up( wxKeyEvent& event ) { event.Skip(); }
+		virtual void canvas_on_left_down( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_left_up( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_motion( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_paint( wxPaintEvent& event ) { event.Skip(); }
+		virtual void canvas_on_right_down( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_right_up( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_size( wxSizeEvent& event ) { event.Skip(); }
 
 
 	public:

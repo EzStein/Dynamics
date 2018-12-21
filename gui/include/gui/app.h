@@ -1,15 +1,15 @@
 #ifndef DYNSOLVER_GUI_APP_H_
 #define DYNSOLVER_GUI_APP_H_
-
-#include <unordered_map>
-
-// Included first since this has implications on how opengl functions.
-#include <glad/glad.h>
-#include <wx/glcanvas.h>
-
 #include "gui/common.h"
 
+#include <unordered_map>
+#include <wx/app.h>
+
+#include <glad/glad.h>
+
+struct GLFWwindow;
 class wxDialog;
+class wxStdLog;
 
 namespace math {
 class window3d;
@@ -57,21 +57,28 @@ class saddle_connection_bifurcation_dialog;
 // the event is not responsible for updating after the event.
 class app : public wxApp {
  private:
+  // OpenGL state for offscreen rendering
+  // A dummy window used to create the gl context. This window is invisible.
+  GLFWwindow* glWindow;
+
+  // A framebuffer object to which we render.
+  GLuint fbo;
+
+  // The color and depth Render buffer objects which are attached to the fbo.
+  GLuint colorRbo, depthRbo;
+
+  // The size of the FBO rendering area. All on screen panels to which we display
+  // the FBO must have a smaller window.
+  GLsizei fboWidth = 1000, fboHeight = 1000;
+
+
   // A custom logger for handling error and warning messages.
   // Currently we direct everything to standard error.
   wxLogStderr* customLogger;
-  
+
   // Represents all the data used in this program.
   model* modelData;
 
-  // glContextAttributes is used for initializing any opengl contexts in this
-  // program. glAttributes is used for initializing any glCanvas in this program.
-  wxGLContextAttrs glContextAttributes;
-  wxGLAttributes glAttributes;
-  
-  // The opengl context used across all windows for rendering.
-  wxGLContext* glContext;
-  
   std::unordered_map<dynamical_id, dynamical_frame*> dynamicalFrames;
   std::unordered_map<parameter_id, parameter_frame*> parameterFrames;
 
@@ -90,21 +97,18 @@ class app : public wxApp {
   saddle_node_bifurcation_dialog* saddleNodeBifurcationDialog;
   limit_cycle_bifurcation_dialog* limitCycleBifurcationDialog;
   saddle_connection_bifurcation_dialog* saddleConnectionBifurcationDialog;
-  
+
  public:
-  app();
-  
-  ~app();
-  
+
   virtual bool OnInit() override;
-  
+
   // Called when the last frame has been closed.
   virtual int OnExit() override;
 
   virtual bool OnExceptionInMainLoop() override;
-  
+
   virtual void OnUnhandledException() override;
-  
+
   virtual bool StoreCurrentException() override;
 
   // Closes the dynamical window, freeing up all of its info in the model.
@@ -136,7 +140,7 @@ class app : public wxApp {
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_2d(dynamical_id id,
 				 const ::math::window2d&);
-  
+
   // Changes the specification of the dynamical window.
   void set_dynamical_viewport_3d(dynamical_id id,
 				 const ::math::window3d&);
@@ -159,17 +163,10 @@ class app : public wxApp {
   saddle_node_bifurcation_dialog* get_saddle_node_bifurcation_dialog() const;
   limit_cycle_bifurcation_dialog* get_limit_cycle_bifurcation_dialog() const;
   saddle_connection_bifurcation_dialog* get_saddle_connection_bifurcation_dialog() const;
-  
+
   // Returns a const model that the GUI's will use to update their
   // displays.
   const model& get_model() const;
-
-  // Returns a reference to the opengl context used in this program.
-  const wxGLContext& get_gl_context() const;
-
-  // Returns a reference to the attributes used for constructing all opengl
-  // canvas's in this program.
-  const wxGLAttributes& get_gl_attributes() const;
 
   void paint_dynamical(dynamical_id);
   void paint_parameter(parameter_id);
@@ -205,7 +202,7 @@ class app : public wxApp {
   // Delete
   // Deletes the solution. and updates the necessary frames
   void delete_solution(solution_id);
-  
+
   void delete_singular_point(solution_id id);
 
   void delete_isocline(isocline_id id);
@@ -213,11 +210,11 @@ class app : public wxApp {
   void delete_separatrix(separatrix_id id);
 
   void delete_hopf_bifurcation(hopf_bifurcation_id id);
-  
+
   void delete_saddle_node_bifurcation(saddle_node_bifurcation_id id);
 
   void delete_limit_cycle_bifurcation(limit_cycle_bifurcation_id id);
-  
+
   void delete_saddle_connection_bifurcation(saddle_connection_bifurcation_id id);
 
   // Update
@@ -231,7 +228,7 @@ class app : public wxApp {
   // singular_point, solution, isocline.
   void select_dynamical_object(dynamical_id id, int x, int y);
   void select_parameter_object(parameter_id id, int x, int y);
-  
+
 
   // Programatically selects an object.
   void select_solution(solution_id id);
@@ -257,9 +254,18 @@ class app : public wxApp {
   // coordinates. Updates all parameter and dynamical windows accordingly.
   void set_parameter_position(parameter_id, const ::math::vector2d&);
 
+  // Returns the subset of the FBO with the appropriate width and height
+  // as a bitmap.
+  wxBitmap get_fbo_bitmap(int width, int height);
+
 private:
   void refresh_dynamical_windows();
   void refresh_parameter_windows();
+
+  // Sets up offscreen rendering to the FBO. After this call,
+  // function pointers are initialized and all opengl calls affect the
+  // FBO
+  void initialize_opengl();
 };
 
 } // namespace gui

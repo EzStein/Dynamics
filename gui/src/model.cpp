@@ -317,7 +317,7 @@ void model::parameter_window::paint() {
    ::math::matrix_4x4::scale(6,6)).as_float_array(transformationMatrix);
   glUniformMatrix4fv(modelData.k2dTransformationUniformLocation,
 		     1, true, transformationMatrix);
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
   glBindVertexBuffer(model::k2dVertexBinding, crossVbo.get_handle(),
 		     0, 2 * sizeof(float));
 #else
@@ -348,7 +348,7 @@ void model::parameter_window::draw_hopf_bifurcations() {
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo.get_handle(),
 		       0, 2 * sizeof(float));
@@ -372,7 +372,7 @@ void model::parameter_window::draw_saddle_node_bifurcations() {
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo.get_handle(),
 		       0, 2 * sizeof(float));
@@ -396,7 +396,7 @@ void model::parameter_window::draw_limit_cycle_bifurcations() {
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo.get_handle(),
 		       0, 2 * sizeof(float));
@@ -420,7 +420,7 @@ void model::parameter_window::draw_saddle_connection_bifurcations() {
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo.get_handle(),
 		       0, 2 * sizeof(float));
@@ -650,7 +650,7 @@ void model::dynamical_window::draw_solutions_3d() {
     }
     glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::kPath3dVertexBinding,
 		       iter->second.vbo3d.get_handle(),
                        0, 3 * sizeof(float));
@@ -676,7 +676,7 @@ void model::dynamical_window::draw_isoclines_3d() {
       }
       glUniform4f(modelData.kPath3dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
       glBindVertexBuffer(model::kPath3dVertexBinding,
 			 iter->second.vbo3d.get_handle(),
                          0, 3 * sizeof(float));
@@ -729,7 +729,7 @@ void model::dynamical_window::draw_axes_3d() {
   };
   gl::buffer tmp(reinterpret_cast<unsigned char*>(axes),
 		 4 * 3 * sizeof(float), GL_STATIC_DRAW);
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
   glBindVertexBuffer(model::kPath3dVertexBinding,
 		     tmp.get_handle(), 0, 3 * sizeof(float));
 #else
@@ -758,7 +758,7 @@ void model::dynamical_window::draw_solutions_2d() {
     }
     glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
     glBindVertexBuffer(model::k2dVertexBinding,
 		       iter->second.vbo2d.get_handle(),
                        0, 2 * sizeof(float));
@@ -782,7 +782,7 @@ void model::dynamical_window::draw_isoclines_2d() {
       }
       glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
       glBindVertexBuffer(model::k2dVertexBinding,
 			 iter->second.vbo2d.get_handle(),
                          0, 2 * sizeof(float));
@@ -807,7 +807,7 @@ void model::dynamical_window::draw_separatrices_2d() {
       }
       glUniform4f(modelData.k2dColorUniformLocation, glColor.get_red(),
 		  glColor.get_green(), glColor.get_blue(), glColor.get_alpha());
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
       glBindVertexBuffer(model::k2dVertexBinding,
 			 iter->second.vbo2d.get_handle(),
                          0, 2 * sizeof(float));
@@ -874,7 +874,7 @@ void model::dynamical_window::draw_singular_points_2d() {
           handle = modelData.starVbo.get_handle();
           vertices = modelData.starVboVertices;
       }
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
       glBindVertexBuffer(model::k2dVertexBinding,
 			 handle, 0, 2 * sizeof(float));
 #else
@@ -988,7 +988,7 @@ void model::draw_axes_2d(const ::math::window2d& viewport, int ticksPerLabel,
 		     1, true, transformationMatrix);
   // Set color to Black
   glUniform4f(k2dColorUniformLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
   glBindVertexBuffer(model::k2dVertexBinding, axesVbo.get_handle(),
 		     0, 2 * sizeof(float));
 #else
@@ -1449,7 +1449,7 @@ model::model() : font(util::getDefaultFontPath()),
   glUseProgram(program2d.get_handle());
   glBindVertexArray(vao2d.get_handle());
   glEnableVertexAttribArray(k2dPositionAttribute);
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
   glVertexAttribFormat(k2dPositionAttribute,
 		       2, GL_FLOAT, GL_FALSE, 0);
   glVertexAttribBinding(k2dPositionAttribute,
@@ -1458,7 +1458,7 @@ model::model() : font(util::getDefaultFontPath()),
   glUseProgram(programPath3d.get_handle());
   glBindVertexArray(vaoPath3d.get_handle());
   glEnableVertexAttribArray(kPath3dPositionAttribute);
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
   glVertexAttribFormat(kPath3dPositionAttribute, 3, GL_FLOAT, GL_FALSE, 0);
   glVertexAttribBinding(kPath3dPositionAttribute, kPath3dVertexBinding);
 #endif

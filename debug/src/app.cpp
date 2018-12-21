@@ -95,8 +95,6 @@ bool app::OnInit() {
   canvas = new wxPanel(frame);
   auto onPaint = [&](const wxPaintEvent& evt) {
     wxPaintDC dc(canvas);
-    dc.SetBrush(*wxBLUE_BRUSH);
-    dc.Clear();
 
     // Enough space for RGB data where each component is an unsigned byte.
     int width, height;

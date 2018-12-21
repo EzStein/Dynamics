@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Nov  7 2018)
+// C++ code generated with wxFormBuilder (version Oct 26 2018)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -801,10 +801,8 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 
 	bSizer34s->Add( bSizer20, 0, wxALL, 5 );
 
-	dynamicalWindowBox = new wxBoxSizer( wxVERTICAL );
-
-
-	bSizer34s->Add( dynamicalWindowBox, 1, wxEXPAND, 5 );
+	canvas = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bSizer34s->Add( canvas, 1, wxEXPAND | wxALL, 5 );
 
 
 	this->SetSizer( bSizer34s );
@@ -832,6 +830,15 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::solution_menu_item_on_menu_selection ), this, solutionMenuItem->GetId());
 	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::singular_point_menu_item_on_menu_selection ), this, singularPointMenuItem->GetId());
 	objectsPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::isocline_menu_item_on_menu_selection ), this, isoclineMenuItem->GetId());
+	canvas->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( dynamical_frame_base::canvas_on_key_down ), NULL, this );
+	canvas->Connect( wxEVT_KEY_UP, wxKeyEventHandler( dynamical_frame_base::canvas_on_key_up ), NULL, this );
+	canvas->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_down ), NULL, this );
+	canvas->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_up ), NULL, this );
+	canvas->Connect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Connect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::canvas_on_paint ), NULL, this );
+	canvas->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_down ), NULL, this );
+	canvas->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_up ), NULL, this );
+	canvas->Connect( wxEVT_SIZE, wxSizeEventHandler( dynamical_frame_base::canvas_on_size ), NULL, this );
 	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( dynamical_frame_base::edit_menu_item_on_menu_selection ), this, editMenuItem->GetId());
 }
 
@@ -841,6 +848,15 @@ dynamical_frame_base::~dynamical_frame_base()
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( dynamical_frame_base::dynamical_frame_on_close ) );
 	this->Disconnect( wxEVT_ICONIZE, wxIconizeEventHandler( dynamical_frame_base::dynamical_frame_on_iconize ) );
 	this->Disconnect( wxEVT_SET_FOCUS, wxFocusEventHandler( dynamical_frame_base::dynamical_frame_on_set_focus ) );
+	canvas->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( dynamical_frame_base::canvas_on_key_down ), NULL, this );
+	canvas->Disconnect( wxEVT_KEY_UP, wxKeyEventHandler( dynamical_frame_base::canvas_on_key_up ), NULL, this );
+	canvas->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_down ), NULL, this );
+	canvas->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_up ), NULL, this );
+	canvas->Disconnect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Disconnect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::canvas_on_paint ), NULL, this );
+	canvas->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_down ), NULL, this );
+	canvas->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_up ), NULL, this );
+	canvas->Disconnect( wxEVT_SIZE, wxSizeEventHandler( dynamical_frame_base::canvas_on_size ), NULL, this );
 
 	delete selectionPopupMenu;
 	delete objectsPopupMenu;
@@ -893,10 +909,8 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 
 	bSizer26->Add( bSizer27, 1, wxEXPAND, 5 );
 
-	parameterWindowBox = new wxBoxSizer( wxVERTICAL );
-
-
-	bSizer26->Add( parameterWindowBox, 1, wxEXPAND, 5 );
+	canvas = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bSizer26->Add( canvas, 1, wxEXPAND | wxALL, 5 );
 
 
 	this->SetSizer( bSizer26 );
@@ -911,12 +925,30 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_node_bifurcation_menu_item_on_selection ), this, saddleNodeBifurcationMenuItem->GetId());
 	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::limit_cycle_bifurcation_menu_item_on_selection ), this, limitCycleBifurcationMenuItem->GetId());
 	parameterPopupMenu->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( parameter_frame_base::saddle_connection_bifurcation_menu_item_on_selection ), this, saddleConnectionBifurcationMenuItem->GetId());
+	canvas->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( parameter_frame_base::canvas_on_key_down ), NULL, this );
+	canvas->Connect( wxEVT_KEY_UP, wxKeyEventHandler( parameter_frame_base::canvas_on_key_up ), NULL, this );
+	canvas->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_left_down ), NULL, this );
+	canvas->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_left_up ), NULL, this );
+	canvas->Connect( wxEVT_MOTION, wxMouseEventHandler( parameter_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Connect( wxEVT_PAINT, wxPaintEventHandler( parameter_frame_base::canvas_on_paint ), NULL, this );
+	canvas->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_right_down ), NULL, this );
+	canvas->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_right_up ), NULL, this );
+	canvas->Connect( wxEVT_SIZE, wxSizeEventHandler( parameter_frame_base::canvas_on_size ), NULL, this );
 }
 
 parameter_frame_base::~parameter_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( parameter_frame_base::parameter_frame_on_close ) );
+	canvas->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( parameter_frame_base::canvas_on_key_down ), NULL, this );
+	canvas->Disconnect( wxEVT_KEY_UP, wxKeyEventHandler( parameter_frame_base::canvas_on_key_up ), NULL, this );
+	canvas->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_left_down ), NULL, this );
+	canvas->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_left_up ), NULL, this );
+	canvas->Disconnect( wxEVT_MOTION, wxMouseEventHandler( parameter_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Disconnect( wxEVT_PAINT, wxPaintEventHandler( parameter_frame_base::canvas_on_paint ), NULL, this );
+	canvas->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_right_down ), NULL, this );
+	canvas->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_right_up ), NULL, this );
+	canvas->Disconnect( wxEVT_SIZE, wxSizeEventHandler( parameter_frame_base::canvas_on_size ), NULL, this );
 
 	delete parameterPopupMenu;
 }

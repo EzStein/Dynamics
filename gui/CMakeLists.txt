@@ -12,7 +12,6 @@ set(SRC_FILES app.cpp
   dynamical_frame.cpp
   parameter_dialog.cpp
   solution_dialog.cpp
-  generated.cpp
   parameter_frame.cpp
   hopf_bifurcation_dialog.cpp
   saddle_connection_bifurcation_dialog.cpp)
@@ -29,7 +28,6 @@ set(PRIVATE_HEADER_FILES
   dynamical_frame.h
   parameter_dialog.h
   solution_dialog.h
-  generated.h
   parameter_frame.h
   hopf_bifurcation_dialog.h
   saddle_connection_bifurcation_dialog.h)
@@ -38,18 +36,27 @@ PREPEND(PUBLIC_HEADER_FILES "include/${PROJECT_NAME}"
   "${PUBLIC_HEADER_FILES}")
 PREPEND(PRIVATE_HEADER_FILES "src/include/${PROJECT_NAME}"
   "${PRIVATE_HEADER_FILES}")
+set(SRC_FILES ${SRC_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/resources/include/gui/generated.cpp")
+set(PRIVATE_HEADER_FILES ${PRIVATE_HEADER_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/resources/include/gui/generated.h")
 add_library(${PROJECT_NAME} STATIC
   "${SRC_FILES}"
   "${PUBLIC_HEADER_FILES}"
   "${PRIVATE_HEADER_FILES}")
 target_include_directories(${PROJECT_NAME} PUBLIC include/
-  PRIVATE src/include src/include/gui)
-target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS} glad
-  PRIVATE OpenGL::GL compiler math mygl regex util parser)
+  PRIVATE src/include resources/include)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${WX_WIDGETS_TARGETS}
+  PRIVATE OpenGL::GL compiler math mygl regex util parser glfw PUBLIC glad)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MINOR=${GL_VERSION_MINOR})
+if(${GL_VERSION_MAJOR} GREATER 3 AND ${GL_VERSION_MINOR} GREATER 2)
+  # Version larger than 4.3
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    GL_ERROR_CALLBACK)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    GL_ATTRIB_FORMAT)
+endif()
 if(UNIX AND NOT APPLE)
   target_compile_definitions(${PROJECT_NAME} PUBLIC IS_LINUX)
 endif()

@@ -1,6 +1,8 @@
 #ifndef DYNSOLVER_GUI_COMMON_H_
 #define DYNSOLVER_GUI_COMMON_H_
 
+#include <cstddef>
+
 namespace dynsolver {
 namespace gui {
 // Common is used for common forward declarations in the dynsolver::gui

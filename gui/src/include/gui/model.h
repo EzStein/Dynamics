@@ -60,7 +60,7 @@ struct solution_specs {
 
   // The color that should be used to render this solution.
   color glColor;
-  
+
   // The starting value of the dynamical variables. This does not include
   // the variable of differentiation, and it is ordered according to
   // the dynamicalVarNames vector.
@@ -72,8 +72,8 @@ struct solution_specs {
   // Invariant:
   // tMax must be strictly greater than tMin. initial[0] must be
   // strictly between tMax and tMin
-  // increment is strictly positive. 
-  
+  // increment is strictly positive.
+
   // The bounds on how far tMax and tMin should run.
   double tMax;
   double tMin;
@@ -102,15 +102,15 @@ struct singular_point {
     STABLE_NODE,  // All real and same sign -
     UNSTABLE_NODE, // All real and same sign +
     SADDLE, // All real, opposate signs.
-    
+
     STABLE_FOCUS, // All Non-real, neagitve real part
     UNSTABLE_FOCUS, // All non-real positive real part
     SADDLE_FOCUS, // All non-real mixed real part
-    
+
     STABLE_FOCUS_NODE, // Mixed real and non-real, same real part sign, -
     UNSTABLE_FOCUS_NODE, // Mixed real and non-real, same real part sign, +
     SADDLE_FOCUS_NODE // Mixed real and non-real, different real part signs.
-    
+
   };
   singular_point(const singular_point_specs& specs = singular_point_specs(),
 	  const ::math::vector& position = ::math::vector(),
@@ -119,7 +119,7 @@ struct singular_point {
 	  specs(specs), position(position), eigenvalues(eigenvalues), type(type) { }
   singular_point_specs specs;
   ::math::vector position;
-  
+
   // A list of eigenvalues and their corresponding eigenvectors
   // for the linearization of the vector field at this point.
   std::vector<::math::eigenvalue> eigenvalues;
@@ -167,13 +167,13 @@ struct isocline {
 
 struct separatrix_specs {
   separatrix_specs();
-  
+
   // Whether this is a stable or unstable separatrix.
   enum class type {
     STABLE, UNSTABLE
   };
   type type;
-  
+
   // The singular point associated with this separatrix.
   singular_point_id singularPoint;
 
@@ -246,7 +246,7 @@ public:
 struct hopf_bifurcation_specs {
   hopf_bifurcation_specs();
   bifurcation_point init;
-  
+
   double inc;
 
   int span;
@@ -265,9 +265,9 @@ struct hopf_bifurcation {
 struct saddle_node_bifurcation_specs {
   saddle_node_bifurcation_specs();
   bifurcation_point init;
-  
+
   double inc;
-  
+
   int span;
 
   double searchRadius;
@@ -296,7 +296,7 @@ struct saddle_connection_bifurcation_specs {
   // separatrices on this line.
   ::math::vector2d transversalA;
   ::math::vector2d transversalB;
-  
+
   double inc;
 
   int span;
@@ -325,7 +325,7 @@ struct limit_cycle_bifurcation_specs {
   // cycles on this line.
   ::math::vector transversalA;
   ::math::vector transversalB;
-  
+
   double inc;
 
   int span;
@@ -413,7 +413,7 @@ class model {
     limitCycleBifurcationData;
     std::unordered_map<saddle_connection_bifurcation_id, render_data>
     saddleConnectionBifurcationData;
-    
+
   public:
     parameter_window(model&, const parameter_specs& spec);
 
@@ -437,7 +437,7 @@ class model {
     // axis.
     bool on_vert_axis(const ::math::vector2d&) const;
     bool on_horiz_axis(const ::math::vector2d&) const;
-    
+
     // Gets and sets the specifications.
     const parameter_specs& get_specs() const;
 
@@ -455,7 +455,7 @@ class model {
     bool select_saddle_node_bifurcation(int x, int y, saddle_node_bifurcation_id*);
     bool select_limit_cycle_bifurcation(int x, int y, limit_cycle_bifurcation_id*);
     bool select_saddle_connection_bifurcation(int x, int y, saddle_connection_bifurcation_id*);
-    
+
     ::math::vector get_point(const ::math::vector2d&) const;
 
   private:
@@ -463,9 +463,9 @@ class model {
     void draw_saddle_node_bifurcations();
     void draw_limit_cycle_bifurcations();
     void draw_saddle_connection_bifurcations();
-    
+
   };
-  
+
   // Represents information associated with an instance of a dynamical window.
   // Multiple dynamical windows may be open at any given time.
   class dynamical_window {
@@ -513,7 +513,7 @@ class model {
     // The current tick distance in real coordnate values.
     double realTickDistanceX;
     double realTickDistanceY;
-    
+
   public:
     dynamical_window(model&, const dynamical_specs& spec);
 
@@ -582,8 +582,8 @@ class model {
     void draw_isoclines_2d();
     void draw_singular_points_2d();
     void draw_separatrices_2d();
-    
-    
+
+
     typedef std::unordered_map<solution_id, render_data>::const_iterator
     solution_data_const_iter;
 
@@ -600,7 +600,7 @@ class model {
   static const GLuint k2dPositionAttribute;
   static const GLuint k2dVertexBinding;
   static const std::string k2dTransformationUniform;
-  
+
   static const std::string k2dFragmentShaderFilePath;
   static const std::string k2dColorUniform;
 
@@ -608,14 +608,14 @@ class model {
   static const GLuint kPath3dPositionAttribute;
   static const GLuint kPath3dVertexBinding;
   static const std::string kPath3dTransformationUniform;
-  
+
   static const std::string kPath3dFragmentShaderFilePath;
   static const std::string kPath3dColorUniform;
 
   // A font and text renderer
   gl::font font;
   gl::text_renderer textRenderer;
-  
+
   // The number of dynamical variables involved excluding the variable of
   // differentiation, t. Should always be 1 or greater. This number shall be
   // denoted as d.
@@ -665,9 +665,9 @@ class model {
   // dynamicalVars + parameters exclusive. And the strings
   // that they are mapped to are precisely those strings contained in the
   // vectors.
-  
+
   // The following variables are updated on every recompile.
-  
+
   // The following stores CAS syntax tree info.
   // The system of equations as a syntax tree.
   // These two variables are updated everytime a string is compiled.
@@ -701,7 +701,7 @@ class model {
 
   // The following variables are updated on each change to parameterPosition
   // and to each change to system or jacobian (on any recompilation).
-  
+
   // The following variables demonstrate what to draw on the dynamical plane.
   // They are specifications for what to draw, and the actually pixel data.
   // Each entry in the following maps is given by a unique id.
@@ -742,7 +742,7 @@ class model {
   saddle_node_bifurcation_id uniqueSaddleNodeBifurcationId;
   limit_cycle_bifurcation_id uniqueLimitCycleBifurcationId;
   saddle_connection_bifurcation_id uniqueSaddleConnectionBifurcationId;
-  
+
   // True if the model is currently representing a compiled system.
   // False if no system is being viewed. If false, the following variables,
   // have no meaning and do not need to satisfy any invariants.
@@ -754,7 +754,7 @@ class model {
 
   gl::vertex_array vaoPath3d;
   gl::program programPath3d;
-  
+
   const GLuint k2dTransformationUniformLocation;
   const GLuint k2dColorUniformLocation;
   const GLuint kPath3dTransformationUniformLocation;
@@ -831,7 +831,7 @@ class model {
 			       const ::math::vector2d& transA,
 			       const ::math::vector2d& transB,
 			       const separatrix_id& id);
-  
+
   typedef std::unordered_map<solution_id, solution>::const_iterator
   solution_const_iter;
   typedef std::unordered_map<dynamical_id, dynamical_window>::const_iterator
@@ -857,7 +857,7 @@ class model {
   isocline_iter;
   typedef std::unordered_map<separatrix_id, separatrix>::iterator
   separatrix_iter;
-  
+
 public:
   // This value is never mapped. Usually this is set to 0.
   static const dynamical_id kNoDynamicalId;
@@ -870,14 +870,14 @@ public:
   static const saddle_node_bifurcation_id kNoSaddleNodeBifurcationId;
   static const limit_cycle_bifurcation_id kNoLimitCycleBifurcationId;
   static const saddle_connection_bifurcation_id kNoSaddleConnectionBifurcationId;
-  
+
   // The maximal distance between two axis ticks in pixels. If the number of
   // axis tickets jumps above the maximum, then the number of tickets are
   // doubled, and the real distance between each tick is halved. If it falls
   // below the minimum, the distance between each tick is doubled.
   static const int minPixelTickDist;
   static const int maxPixelTickDist;
-  
+
   model();
 
   // Draws the 2d axes to the bound context. Updates
@@ -903,7 +903,7 @@ public:
   // the new values in pixels.
   void resize_dynamical(dynamical_id id, int width, int height);
   void resize_parameter(parameter_id id, int width, int height);
-  
+
 
   // Resets most variables and compiles the array of strings in newExpressions
   // into a vector field system of ODE's.  Returns true
@@ -924,7 +924,7 @@ public:
   // Adds the initial value solution. The solution is added according to the
   // specification provided.
   void add_solution(const solution_specs&);
-  
+
   // Attempts find and add the singular point. If newtons method fails,
   // this method returns false. If the singular point already exists,
   // nothing more is done.
@@ -1013,7 +1013,7 @@ public:
   // Sets the dynamical window specification. This will update the
   // necessary VBO's if that is needed.
   void set_dynamical_specs(dynamical_id id, const dynamical_specs& spec);
-  
+
   // Sets the 2d viewport of the dynamical window without altering the rest
   // of the specification.
   void set_dynamical_viewport_2d(dynamical_id id,
@@ -1025,7 +1025,7 @@ public:
 				 const ::math::window3d& window);
 
   void set_parameter_specs(parameter_id, const parameter_specs&);
-  
+
   void set_parameter_viewport(parameter_id,
 			      const ::math::window2d& window);
 
@@ -1038,7 +1038,7 @@ public:
   const parameter_specs& get_parameter_specs(parameter_id id) const;
 
   const std::unordered_map<solution_id, solution>& get_solutions() const;
-  
+
   const std::unordered_map<singular_point_id, singular_point>&
   get_singular_points() const;
   const std::unordered_map<isocline_id, isocline>& get_isoclines() const;
@@ -1062,7 +1062,7 @@ public:
   saddle_node_bifurcation_id get_selected_saddle_node_bifurcation() const;
   saddle_connection_bifurcation_id get_selected_saddle_connection_bifurcation() const;
   limit_cycle_bifurcation_id get_selected_limit_cycle_bifurcation() const;
-  
+
 
   // True if the given position in pixels lies on the vertical or horizontal
   // axes respectively for the given dynamical_window
@@ -1100,4 +1100,3 @@ public:
 } // namespace gui
 } // namespace dynsolver
 #endif
-

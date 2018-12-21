@@ -42,7 +42,7 @@ text_renderer::text_renderer() : prog(generate_shaders()),
   glEnableVertexAttribArray(kVertexPositionAttribute);
   glEnableVertexAttribArray(kTexturePositionAttribute);
 
-#ifdef GL_VERSION_4_3
+#ifdef GL_ATTRIB_FORMAT
 
   glVertexAttribFormat(kTexturePositionAttribute,
 		       2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat));
