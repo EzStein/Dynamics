@@ -36,6 +36,14 @@ FUNCTION(get_all_targets _result _dir)
     set(${_result} ${${_result}} ${_sub_targets} PARENT_SCOPE)
 ENDFUNCTION()
 
+# Removes each target defined recursively in the dir directory from the default/all target.
+FUNCTION(remove_from_all dir)
+get_all_targets(targets "${dir}")
+foreach(target IN LISTS targets)
+set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL ON)
+endforeach()
+ENDFUNCTION()
+
 if(APPLE)
   set(GL_VERSION_MAJOR 3)
   set(GL_VERSION_MINOR 3)
@@ -72,10 +80,7 @@ set(wxUSE_STL ON)
 add_subdirectory(external/wxWidgets)
 
 # Exclude wx widgets targets from the all/default target
-get_all_targets(wxTargets external/wxWidgets)
-foreach(target IN LISTS wxTargets)
-  set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL ON)
-endforeach()
+remove_from_all(external/wxWidgets)
 set(WX_WIDGETS_TARGETS "${WX_WIDGETS_MODULES}")
 
 # Freetype configuration
@@ -90,14 +95,10 @@ set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
 add_subdirectory(external/freetype2)
 
 # Exclude freetype targets from the all/default target
-get_all_targets(ftTargets external/freetype2)
-foreach(target IN LISTS ftTargets)
-  set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL ON)
-endforeach()
+remove_from_all(external/freetype2)
 
 target_include_directories(freetype PUBLIC external/freetype2/include)
 set(FREETYPE_TARGET freetype)
-
 
 # Generate glad files.
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glad
@@ -106,10 +107,23 @@ execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive ex
     COMMAND ${PYTHON_EXECUTABLE} -m glad
     --profile core
     --out-path "${CMAKE_SOURCE_DIR}/glad"
-    --generator c --spec gl
+    --generator c-debug --spec gl
     --api gl=${GL_VERSION_MAJOR}.${GL_VERSION_MINOR} --extensions ""
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/external/glad")
 add_subdirectory(glad)
+
+# GLFW imports
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glfw
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_INSTALL OFF)
+set(BUILD_SHARED_LIBS OFF)
+set(GLFW_USE_MENUBAR OFF)
+set(GLFW_USE_RETINA ON)
+add_subdirectory(external/glfw)
+remove_from_all(external/glfw)
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")

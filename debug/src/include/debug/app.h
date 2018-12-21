@@ -2,28 +2,30 @@
 #define DYNSOLVER_DEBUG_APP_H_
 
 #include <wx/app.h>
-#include <wx/dataview.h>
 
-class wxGLCanvas;
+#include "glad/glad.h"
+
 class wxFrame;
-class wxGLContext;
+class wxPanel;
+struct GLFWwindow;
 
 namespace dynsolver {
 namespace debug {
 
 class app : public wxApp {
  private:
-  wxGLCanvas* canvas;
   wxFrame* frame;
-  
-  wxGLContext* glContext;
+  wxPanel* canvas;
+  GLFWwindow* glWindow;
 
-  wxFrame* dataViewFrame;
-  wxDataViewListCtrl* dataView;
-  
+  // Non default framebuffer.
+  GLuint fbo;
+  GLuint colorRbo, depthRbo;
+  GLsizei fboWidth = 1000, fboHeight = 1000;
+
  public:
   virtual bool OnInit() override;
-  ~app();
+  virtual int OnExit() override;
 };
 }
 }

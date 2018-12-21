@@ -15,11 +15,16 @@ add_executable(${PROJECT_NAME} ${EXE_FLAG} "${SRC_FILES}"
 target_include_directories(${PROJECT_NAME} PUBLIC include
   PRIVATE src/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${WX_WIDGETS_TARGETS}
-  OpenGL::GL glad compiler parser mygl)
+  OpenGL::GL glad compiler parser mygl glfw)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MAJOR=${GL_VERSION_MAJOR})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   GL_VERSION_MINOR=${GL_VERSION_MINOR})
+if(${GL_VERSION_MAJOR} GREATER 3 AND ${GL_VERSION_MINOR} GREATER 2)
+# Version larger than 4.3
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    GL_ERROR_CALLBACK)
+endif()
 if(WIN32)
  target_compile_definitions(${PROJECT_NAME} PRIVATE IS_WINDOWS)
 endif()
