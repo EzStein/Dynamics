@@ -260,8 +260,11 @@ int app::OnExit() {
   glDeleteRenderbuffers(1, &colorRbo);
   glDeleteRenderbuffers(1, &depthRbo);
   glDeleteFramebuffers(1, &fbo);
-  glfwDestroyWindow(glWindow);
-  glfwTerminate();
+  glfwMakeContextCurrent(nullptr);
+  // These two lines cause osx mojave to crash with
+  // "Invalid or prematurely-freed autorelease pool" error
+  //glfwDestroyWindow(glWindow);
+  //glfwTerminate();
   return wxApp::OnExit();
 }
 

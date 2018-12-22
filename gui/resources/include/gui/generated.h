@@ -155,6 +155,11 @@ class console_frame_base : public wxFrame
 		virtual void close_parameter_menu_item_on_selection( wxCommandEvent& event ) = 0;
 		virtual void lorenz_example_menu_item_on_menu_selection( wxCommandEvent& event ) = 0;
 		virtual void van_der_pol_example_on_menu_selection( wxCommandEvent& event ) = 0;
+		virtual void equationsDataViewCtrlOnDataViewListCtrlItemActivated( wxDataViewEvent& event ) = 0;
+		virtual void equationsDataViewCtrlOnDataViewListCtrlItemEditingDone( wxDataViewEvent& event ) = 0;
+		virtual void equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted( wxDataViewEvent& event ) = 0;
+		virtual void equationsDataViewCtrlOnDataViewListCtrlItemStartEditing( wxDataViewEvent& event ) = 0;
+		virtual void equationsDataViewCtrlOnDataViewListCtrlSelectionChanged( wxDataViewEvent& event ) = 0;
 		virtual void variables_text_ctrl_on_text_enter( wxCommandEvent& event ) = 0;
 		virtual void variable_names_data_view_ctrl_on_value_changed( wxDataViewEvent& event ) = 0;
 		virtual void parameters_text_ctrl_on_text_enter( wxCommandEvent& event ) = 0;
@@ -221,6 +226,7 @@ class dynamical_frame_base : public wxFrame
 		virtual void canvas_on_left_down( wxMouseEvent& event ) = 0;
 		virtual void canvas_on_left_up( wxMouseEvent& event ) = 0;
 		virtual void canvas_on_motion( wxMouseEvent& event ) = 0;
+		virtual void canvas_on_mouse_wheel( wxMouseEvent& event ) = 0;
 		virtual void canvas_on_paint( wxPaintEvent& event ) = 0;
 		virtual void canvas_on_right_down( wxMouseEvent& event ) = 0;
 		virtual void canvas_on_right_up( wxMouseEvent& event ) = 0;
@@ -274,6 +280,7 @@ class parameter_frame_base : public wxFrame
 		virtual void canvas_on_left_down( wxMouseEvent& event ) { event.Skip(); }
 		virtual void canvas_on_left_up( wxMouseEvent& event ) { event.Skip(); }
 		virtual void canvas_on_motion( wxMouseEvent& event ) { event.Skip(); }
+		virtual void canvas_on_mouse_wheel( wxMouseEvent& event ) { event.Skip(); }
 		virtual void canvas_on_paint( wxPaintEvent& event ) { event.Skip(); }
 		virtual void canvas_on_right_down( wxMouseEvent& event ) { event.Skip(); }
 		virtual void canvas_on_right_up( wxMouseEvent& event ) { event.Skip(); }

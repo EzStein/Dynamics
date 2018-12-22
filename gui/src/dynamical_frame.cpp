@@ -30,12 +30,12 @@ dynamical_frame::dynamical_frame(app& app, dynamical_id id, int width, int heigh
   axesScalingViewport(::math::vector2d(0,0),
 		      ::math::vector2d(0,0),
 		      ::math::vector2d(0,0)) {
-  canvas->Bind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
+  Bind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 
 dynamical_frame::~dynamical_frame() {
-  canvas->Unbind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
+  Unbind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
         kMagnificationTimerEventId);
 }
 
@@ -284,7 +284,7 @@ void dynamical_frame::canvas_on_mouse_wheel(wxMouseEvent& evt) {
     canvas_on_mouse_wheel_start(posX, posY);
     firstWheelEvent = false;
   }
-  magnificationTimer.Start(500, wxTIMER_ONE_SHOT);
+  magnificationTimer.Start(700, wxTIMER_ONE_SHOT);
   if(appl.get_model().get_dynamical_specs(id).is3d) {
   } else {
     double magnificationUnit = std::pow(1.0002, evt.GetWheelRotation());

@@ -14,7 +14,7 @@ namespace dynsolver {
 namespace gui {
 
 const int parameter_frame::kMagnificationTimerEventId = 0;
-const int parameter_frame::kMagnificationTimerWait = 500;
+const int parameter_frame::kMagnificationTimerWait = 700;
 const double parameter_frame::kMagnificationRate = 1.01;
 const double parameter_frame::kClickTolerance = 2.0;
 const double parameter_frame::kMaxAxesScale = 1e5;
@@ -41,12 +41,12 @@ parameter_frame::parameter_frame(app& app, parameter_id id,
     axesScalingViewport(::math::vector2d(0,0),
 			::math::vector2d(0,0),
 			::math::vector2d(0,0)) {
-  canvas->Bind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
+  Bind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 
 parameter_frame::~parameter_frame() {
-	canvas->Unbind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
+	Unbind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 

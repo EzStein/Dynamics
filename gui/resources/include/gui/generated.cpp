@@ -115,7 +115,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer41 = new wxStaticBoxSizer( new wxStaticBox( bSizer18, wxID_ANY, wxT("Equations") ), wxVERTICAL );
 
 	equationsDataViewCtrl = new wxDataViewListCtrl( sbSizer41->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn16 = equationsDataViewCtrl->AppendTextColumn( wxT("Variable"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
+	m_dataViewListColumn16 = equationsDataViewCtrl->AppendTextColumn( wxT("Variable"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(0), 0 );
 	sbSizer41->Add( equationsDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -128,7 +128,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer42->Add( variablesTextCtrl, 0, wxALL, 5 );
 
 	variableNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer42->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn5 = variableNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
+	m_dataViewListColumn5 = variableNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(0), 0 );
 	sbSizer42->Add( variableNamesDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -141,7 +141,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	sbSizer6->Add( parametersTextCtrl, 0, wxALL, 5 );
 
 	parameterNamesDataViewCtrl = new wxDataViewListCtrl( sbSizer6->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_dataViewListColumn51 = parameterNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(wxALIGN_LEFT), wxDATAVIEW_COL_RESIZABLE );
+	m_dataViewListColumn51 = parameterNamesDataViewCtrl->AppendTextColumn( wxT("Id"), wxDATAVIEW_CELL_INERT, -1, static_cast<wxAlignment>(0), 0 );
 	sbSizer6->Add( parameterNamesDataViewCtrl, 1, wxEXPAND, 5 );
 
 
@@ -257,7 +257,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel5->SetSizer( bSizer182 );
 	m_panel5->Layout();
 	bSizer182->Fit( m_panel5 );
-	m_notebook2->AddPage( m_panel5, wxT("Solutions"), true );
+	m_notebook2->AddPage( m_panel5, wxT("Solutions"), false );
 	m_panel6 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxVERTICAL );
@@ -506,7 +506,7 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_panel16->SetSizer( bSizer40 );
 	m_panel16->Layout();
 	bSizer40->Fit( m_panel16 );
-	m_notebook2->AddPage( m_panel16, wxT("Saddle-Node Bifurcations"), false );
+	m_notebook2->AddPage( m_panel16, wxT("Saddle-Node Bifurcations"), true );
 	m_panel161 = new wxPanel( m_notebook2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer401;
 	bSizer401 = new wxBoxSizer( wxVERTICAL );
@@ -705,6 +705,11 @@ console_frame_base::console_frame_base( wxWindow* parent, wxWindowID id, const w
 	m_menu4->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::close_parameter_menu_item_on_selection ), this, closeParameterMenuItem->GetId());
 	m_menu8->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::lorenz_example_menu_item_on_menu_selection ), this, lorenzExampleMenuItem->GetId());
 	m_menu8->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( console_frame_base::van_der_pol_example_on_menu_selection ), this, vanDerPolExampleMenuItem->GetId());
+	equationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_ACTIVATED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemActivated ), NULL, this );
+	equationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_EDITING_DONE, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemEditingDone ), NULL, this );
+	equationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_EDITING_STARTED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted ), NULL, this );
+	equationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_START_EDITING, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemStartEditing ), NULL, this );
+	equationsDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlSelectionChanged ), NULL, this );
 	variablesTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
 	variableNamesDataViewCtrl->Connect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
 	parametersTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
@@ -729,6 +734,11 @@ console_frame_base::~console_frame_base()
 {
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( console_frame_base::console_frame_on_close ) );
+	equationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_ACTIVATED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemActivated ), NULL, this );
+	equationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_EDITING_DONE, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemEditingDone ), NULL, this );
+	equationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_EDITING_STARTED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted ), NULL, this );
+	equationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_START_EDITING, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlItemStartEditing ), NULL, this );
+	equationsDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_SELECTION_CHANGED, wxDataViewEventHandler( console_frame_base::equationsDataViewCtrlOnDataViewListCtrlSelectionChanged ), NULL, this );
 	variablesTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::variables_text_ctrl_on_text_enter ), NULL, this );
 	variableNamesDataViewCtrl->Disconnect( wxEVT_COMMAND_DATAVIEW_ITEM_VALUE_CHANGED, wxDataViewEventHandler( console_frame_base::variable_names_data_view_ctrl_on_value_changed ), NULL, this );
 	parametersTextCtrl->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( console_frame_base::parameters_text_ctrl_on_text_enter ), NULL, this );
@@ -835,6 +845,7 @@ dynamical_frame_base::dynamical_frame_base( wxWindow* parent, wxWindowID id, con
 	canvas->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_down ), NULL, this );
 	canvas->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_up ), NULL, this );
 	canvas->Connect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( dynamical_frame_base::canvas_on_mouse_wheel ), NULL, this );
 	canvas->Connect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::canvas_on_paint ), NULL, this );
 	canvas->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_down ), NULL, this );
 	canvas->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_up ), NULL, this );
@@ -853,6 +864,7 @@ dynamical_frame_base::~dynamical_frame_base()
 	canvas->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_down ), NULL, this );
 	canvas->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_left_up ), NULL, this );
 	canvas->Disconnect( wxEVT_MOTION, wxMouseEventHandler( dynamical_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( dynamical_frame_base::canvas_on_mouse_wheel ), NULL, this );
 	canvas->Disconnect( wxEVT_PAINT, wxPaintEventHandler( dynamical_frame_base::canvas_on_paint ), NULL, this );
 	canvas->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_down ), NULL, this );
 	canvas->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( dynamical_frame_base::canvas_on_right_up ), NULL, this );
@@ -930,6 +942,7 @@ parameter_frame_base::parameter_frame_base( wxWindow* parent, wxWindowID id, con
 	canvas->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_left_down ), NULL, this );
 	canvas->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_left_up ), NULL, this );
 	canvas->Connect( wxEVT_MOTION, wxMouseEventHandler( parameter_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( parameter_frame_base::canvas_on_mouse_wheel ), NULL, this );
 	canvas->Connect( wxEVT_PAINT, wxPaintEventHandler( parameter_frame_base::canvas_on_paint ), NULL, this );
 	canvas->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_right_down ), NULL, this );
 	canvas->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_right_up ), NULL, this );
@@ -945,6 +958,7 @@ parameter_frame_base::~parameter_frame_base()
 	canvas->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_left_down ), NULL, this );
 	canvas->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_left_up ), NULL, this );
 	canvas->Disconnect( wxEVT_MOTION, wxMouseEventHandler( parameter_frame_base::canvas_on_motion ), NULL, this );
+	canvas->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( parameter_frame_base::canvas_on_mouse_wheel ), NULL, this );
 	canvas->Disconnect( wxEVT_PAINT, wxPaintEventHandler( parameter_frame_base::canvas_on_paint ), NULL, this );
 	canvas->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( parameter_frame_base::canvas_on_right_down ), NULL, this );
 	canvas->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( parameter_frame_base::canvas_on_right_up ), NULL, this );

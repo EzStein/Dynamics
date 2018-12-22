@@ -20,7 +20,7 @@ class console_frame : public console_frame_base {
   int parameters;
   std::string variablesTextCtrlValue;
   std::string parametersTextCtrlValue;
-  
+
  public:
   console_frame(app&);
   virtual ~console_frame();
@@ -50,13 +50,19 @@ class console_frame : public console_frame_base {
   virtual void separatrices_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
   virtual void hopf_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
   virtual void saddle_node_bifurcations_data_view_ctrl_on_selection_changed(wxDataViewEvent&) override;
-  
+
   virtual void separatrices_menu_item_on_menu_selection(wxCommandEvent&) override;
   virtual void hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_node_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void draw_all_separatrices_menu_item_on_menu_selection(wxCommandEvent&) override;
+
+  virtual void equationsDataViewCtrlOnDataViewListCtrlSelectionChanged(wxDataViewEvent&) override;
+  virtual void equationsDataViewCtrlOnDataViewListCtrlItemActivated(wxDataViewEvent&) override;
+  virtual void equationsDataViewCtrlOnDataViewListCtrlItemStartEditing(wxDataViewEvent&) override;
+  virtual void equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted(wxDataViewEvent&) override;
+  virtual void equationsDataViewCtrlOnDataViewListCtrlItemEditingDone(wxDataViewEvent&) override;
 
   // Tells the console frame that nothing is currently compiled.
   void set_no_compile();
@@ -72,7 +78,7 @@ class console_frame : public console_frame_base {
   void update_saddle_node_bifurcation_list();
   void update_limit_cycle_bifurcation_list();
   void update_saddle_connection_bifurcation_list();
-  
+
 private:
   // Returns the id of the selected solution.
   solution_id get_selected_solution();

@@ -728,7 +728,9 @@ void model::dynamical_window::draw_axes_3d() {
     0, 1
   };
   gl::buffer tmp(reinterpret_cast<unsigned char*>(axes),
-		 4 * 3 * sizeof(float), GL_STATIC_DRAW);
+		 4 * 3 * sizeof(GLfloat), GL_STATIC_DRAW);
+  gl::buffer tmpIndices(reinterpret_cast<unsigned char*>(elements),
+      2 * sizeof(GLuint), GL_STATIC_DRAW);
 #ifdef GL_ATTRIB_FORMAT
   glBindVertexBuffer(model::kPath3dVertexBinding,
 		     tmp.get_handle(), 0, 3 * sizeof(float));
@@ -738,15 +740,17 @@ void model::dynamical_window::draw_axes_3d() {
                         GL_FALSE, 0, reinterpret_cast<void*>(0));
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 #endif
-
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tmpIndices.get_handle());
   glUniform4f(modelData.kPath3dColorUniformLocation, 1.0, 0.0, 0.0, 1.0);
-  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, 0);
   elements[1] = 2;
+  tmpIndices.set_data(reinterpret_cast<unsigned char*>(elements), 2*sizeof(GLuint));
   glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 1.0, 0.0, 1.0);
-  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, 0);
   elements[1] = 3;
+  tmpIndices.set_data(reinterpret_cast<unsigned char*>(elements), 2*sizeof(GLuint));
   glUniform4f(modelData.kPath3dColorUniformLocation, 0.0, 0.0, 1.0, 1.0);
-  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, elements);
+  glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, 0);
 }
 
 void model::dynamical_window::draw_solutions_2d() {
@@ -2542,13 +2546,13 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
                                   + partials[1][dynamicalIndexToSymbol[1]].function(arr);
                             });
 
-  double searchRadius = 0.001;
+/*  double searchRadius = 0.001;
   // (a-a_0)^2 + (b-b_0)^2 - r^2 = 0
   systemFunctions.push_back([&](const double* arr) -> double {
                               double a = arr[parameterIndexToSymbol[0]] - specs.init.parameters[0];
                               double b = arr[parameterIndexToSymbol[1]] - specs.init.parameters[1];
                               return a * a + b * b - searchRadius * searchRadius;
-                            });
+                            });*/
 
   // We now build the jacobian.
   jacobianFunctions.push_back([&](const double* arr) -> double {
@@ -2610,7 +2614,7 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
                                     .function(arr);
                               });
 
-  jacobianFunctions.push_back([&](const double* arr) -> double {
+/*  jacobianFunctions.push_back([&](const double* arr) -> double {
                                 return 0;
                               });
   jacobianFunctions.push_back([&](const double* arr) -> double {
@@ -2621,7 +2625,7 @@ bool model::generate_hopf_bifurcation_data(hopf_bifurcation_id id) {
                               });
   jacobianFunctions.push_back([&](const double* arr) -> double {
                                 return 2 * (arr[parameterIndexToSymbol[1]] - specs.init.parameters[1]);
-                              });
+                              });*/
 
   // Setup the initial search vector
   ::math::vector init(symbolsToIndex.size());

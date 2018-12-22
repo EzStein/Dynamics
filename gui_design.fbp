@@ -407,16 +407,16 @@
                     </object>
                 </object>
             </object>
-            <object class="wxBoxSizer" expanded="0">
+            <object class="wxBoxSizer" expanded="1">
                 <property name="minimum_size"></property>
                 <property name="name">bSizer4</property>
                 <property name="orient">wxHORIZONTAL</property>
                 <property name="permission">none</property>
-                <object class="sizeritem" expanded="0">
+                <object class="sizeritem" expanded="1">
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND | wxALL</property>
                     <property name="proportion">1</property>
-                    <object class="wxNotebook" expanded="0">
+                    <object class="wxNotebook" expanded="1">
                         <property name="BottomDockable">1</property>
                         <property name="LeftDockable">1</property>
                         <property name="RightDockable">1</property>
@@ -469,11 +469,11 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
-                        <object class="notebookpage" expanded="0">
+                        <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Staging</property>
                             <property name="select">1</property>
-                            <object class="wxPanel" expanded="0">
+                            <object class="wxPanel" expanded="1">
                                 <property name="BottomDockable">1</property>
                                 <property name="LeftDockable">1</property>
                                 <property name="RightDockable">1</property>
@@ -524,16 +524,16 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style">wxTAB_TRAVERSAL</property>
-                                <object class="wxBoxSizer" expanded="0">
+                                <object class="wxBoxSizer" expanded="1">
                                     <property name="minimum_size"></property>
                                     <property name="name">bSizer183</property>
                                     <property name="orient">wxVERTICAL</property>
                                     <property name="permission">none</property>
-                                    <object class="sizeritem" expanded="0">
+                                    <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
                                         <property name="flag">wxEXPAND</property>
                                         <property name="proportion">1</property>
-                                        <object class="wxStaticBoxSizer" expanded="0">
+                                        <object class="wxStaticBoxSizer" expanded="1">
                                             <property name="id">wxID_ANY</property>
                                             <property name="label">Equations</property>
                                             <property name="minimum_size"></property>
@@ -541,11 +541,11 @@
                                             <property name="orient">wxVERTICAL</property>
                                             <property name="parent">1</property>
                                             <property name="permission">none</property>
-                                            <object class="sizeritem" expanded="0">
+                                            <object class="sizeritem" expanded="1">
                                                 <property name="border">5</property>
                                                 <property name="flag">wxEXPAND</property>
                                                 <property name="proportion">1</property>
-                                                <object class="wxDataViewListCtrl" expanded="0">
+                                                <object class="wxDataViewListCtrl" expanded="1">
                                                     <property name="bg"></property>
                                                     <property name="context_help"></property>
                                                     <property name="context_menu">1</property>
@@ -566,10 +566,15 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
+                                                    <event name="OnDataViewListCtrlItemActivated">equationsDataViewCtrlOnDataViewListCtrlItemActivated</event>
+                                                    <event name="OnDataViewListCtrlItemEditingDone">equationsDataViewCtrlOnDataViewListCtrlItemEditingDone</event>
+                                                    <event name="OnDataViewListCtrlItemEditingStarted">equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted</event>
+                                                    <event name="OnDataViewListCtrlItemStartEditing">equationsDataViewCtrlOnDataViewListCtrlItemStartEditing</event>
+                                                    <event name="OnDataViewListCtrlSelectionChanged">equationsDataViewCtrlOnDataViewListCtrlSelectionChanged</event>
                                                     <object class="dataViewListColumn" expanded="0">
-                                                        <property name="align">wxALIGN_LEFT</property>
+                                                        <property name="align"></property>
                                                         <property name="ellipsize"></property>
-                                                        <property name="flags">wxDATAVIEW_COL_RESIZABLE</property>
+                                                        <property name="flags"></property>
                                                         <property name="label">Variable</property>
                                                         <property name="mode">wxDATAVIEW_CELL_INERT</property>
                                                         <property name="name">m_dataViewListColumn16</property>
@@ -581,11 +586,11 @@
                                             </object>
                                         </object>
                                     </object>
-                                    <object class="sizeritem" expanded="0">
+                                    <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
                                         <property name="flag">wxEXPAND</property>
                                         <property name="proportion">1</property>
-                                        <object class="wxStaticBoxSizer" expanded="0">
+                                        <object class="wxStaticBoxSizer" expanded="1">
                                             <property name="id">wxID_ANY</property>
                                             <property name="label">Variables</property>
                                             <property name="minimum_size"></property>
@@ -658,11 +663,11 @@
                                                     <event name="OnTextEnter">variables_text_ctrl_on_text_enter</event>
                                                 </object>
                                             </object>
-                                            <object class="sizeritem" expanded="0">
+                                            <object class="sizeritem" expanded="1">
                                                 <property name="border">5</property>
                                                 <property name="flag">wxEXPAND</property>
                                                 <property name="proportion">1</property>
-                                                <object class="wxDataViewListCtrl" expanded="0">
+                                                <object class="wxDataViewListCtrl" expanded="1">
                                                     <property name="bg"></property>
                                                     <property name="context_help"></property>
                                                     <property name="context_menu">1</property>
@@ -685,9 +690,9 @@
                                                     <property name="window_style"></property>
                                                     <event name="OnDataViewListCtrlItemValueChanged">variable_names_data_view_ctrl_on_value_changed</event>
                                                     <object class="dataViewListColumn" expanded="0">
-                                                        <property name="align">wxALIGN_LEFT</property>
+                                                        <property name="align"></property>
                                                         <property name="ellipsize"></property>
-                                                        <property name="flags">wxDATAVIEW_COL_RESIZABLE</property>
+                                                        <property name="flags"></property>
                                                         <property name="label">Id</property>
                                                         <property name="mode">wxDATAVIEW_CELL_INERT</property>
                                                         <property name="name">m_dataViewListColumn5</property>
@@ -699,11 +704,11 @@
                                             </object>
                                         </object>
                                     </object>
-                                    <object class="sizeritem" expanded="0">
+                                    <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
                                         <property name="flag">wxEXPAND</property>
                                         <property name="proportion">1</property>
-                                        <object class="wxStaticBoxSizer" expanded="0">
+                                        <object class="wxStaticBoxSizer" expanded="1">
                                             <property name="id">wxID_ANY</property>
                                             <property name="label">Parameters</property>
                                             <property name="minimum_size"></property>
@@ -776,11 +781,11 @@
                                                     <event name="OnTextEnter">parameters_text_ctrl_on_text_enter</event>
                                                 </object>
                                             </object>
-                                            <object class="sizeritem" expanded="0">
+                                            <object class="sizeritem" expanded="1">
                                                 <property name="border">5</property>
                                                 <property name="flag">wxEXPAND</property>
                                                 <property name="proportion">1</property>
-                                                <object class="wxDataViewListCtrl" expanded="0">
+                                                <object class="wxDataViewListCtrl" expanded="1">
                                                     <property name="bg"></property>
                                                     <property name="context_help"></property>
                                                     <property name="context_menu">1</property>
@@ -802,9 +807,9 @@
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
                                                     <object class="dataViewListColumn" expanded="0">
-                                                        <property name="align">wxALIGN_LEFT</property>
+                                                        <property name="align"></property>
                                                         <property name="ellipsize"></property>
-                                                        <property name="flags">wxDATAVIEW_COL_RESIZABLE</property>
+                                                        <property name="flags"></property>
                                                         <property name="label">Id</property>
                                                         <property name="mode">wxDATAVIEW_CELL_INERT</property>
                                                         <property name="name">m_dataViewListColumn51</property>
@@ -1208,11 +1213,11 @@
                         </object>
                     </object>
                 </object>
-                <object class="sizeritem" expanded="0">
+                <object class="sizeritem" expanded="1">
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND | wxALL</property>
                     <property name="proportion">2</property>
-                    <object class="wxNotebook" expanded="0">
+                    <object class="wxNotebook" expanded="1">
                         <property name="BottomDockable">1</property>
                         <property name="LeftDockable">1</property>
                         <property name="RightDockable">1</property>
@@ -1268,7 +1273,7 @@
                         <object class="notebookpage" expanded="0">
                             <property name="bitmap"></property>
                             <property name="label">Solutions</property>
-                            <property name="select">1</property>
+                            <property name="select">0</property>
                             <object class="wxPanel" expanded="0">
                                 <property name="BottomDockable">1</property>
                                 <property name="LeftDockable">1</property>
@@ -2919,11 +2924,11 @@
                                 </object>
                             </object>
                         </object>
-                        <object class="notebookpage" expanded="0">
+                        <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Saddle-Node Bifurcations</property>
-                            <property name="select">0</property>
-                            <object class="wxPanel" expanded="0">
+                            <property name="select">1</property>
+                            <object class="wxPanel" expanded="1">
                                 <property name="BottomDockable">1</property>
                                 <property name="LeftDockable">1</property>
                                 <property name="RightDockable">1</property>
@@ -2974,7 +2979,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style">wxTAB_TRAVERSAL</property>
-                                <object class="wxBoxSizer" expanded="0">
+                                <object class="wxBoxSizer" expanded="1">
                                     <property name="minimum_size"></property>
                                     <property name="name">bSizer40</property>
                                     <property name="orient">wxVERTICAL</property>
@@ -4634,6 +4639,7 @@
                         <event name="OnLeftDown">canvas_on_left_down</event>
                         <event name="OnLeftUp">canvas_on_left_up</event>
                         <event name="OnMotion">canvas_on_motion</event>
+                        <event name="OnMouseWheel">canvas_on_mouse_wheel</event>
                         <event name="OnPaint">canvas_on_paint</event>
                         <event name="OnRightDown">canvas_on_right_down</event>
                         <event name="OnRightUp">canvas_on_right_up</event>
@@ -4994,6 +5000,7 @@
                         <event name="OnLeftDown">canvas_on_left_down</event>
                         <event name="OnLeftUp">canvas_on_left_up</event>
                         <event name="OnMotion">canvas_on_motion</event>
+                        <event name="OnMouseWheel">canvas_on_mouse_wheel</event>
                         <event name="OnPaint">canvas_on_paint</event>
                         <event name="OnRightDown">canvas_on_right_down</event>
                         <event name="OnRightUp">canvas_on_right_up</event>

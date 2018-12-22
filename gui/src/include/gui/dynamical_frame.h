@@ -90,8 +90,7 @@ class dynamical_frame : public dynamical_frame_base {
   virtual void canvas_on_right_up(wxMouseEvent&) override;
   virtual void canvas_on_paint(wxPaintEvent&) override;
   virtual void canvas_on_size(wxSizeEvent&) override;
-
-  void canvas_on_mouse_wheel(wxMouseEvent&);
+  virtual void canvas_on_mouse_wheel(wxMouseEvent&) override;
   void refresh_canvas();
 
 private:

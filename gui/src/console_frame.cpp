@@ -30,8 +30,11 @@ console_frame::console_frame(app& app)
   // Add in widgets and setup events not already done in console_frame_base.
   equationsDataViewCtrl->AppendTextColumn("Expression", wxDATAVIEW_CELL_EDITABLE);
 
-  parameterNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
+//  parameterNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
 
+  wxDataViewColumn* myCustomColumn = new wxDataViewColumn("Param",
+    new wxDataViewTextRenderer(wxDataViewTextRenderer::GetDefaultType(), wxDATAVIEW_CELL_EDITABLE), 1);
+  parameterNamesDataViewCtrl->AppendColumn(myCustomColumn);
   variableNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
   compiledParametersDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 
@@ -50,6 +53,8 @@ console_frame::console_frame(app& app)
   solutionsDataViewCtrl->AppendTextColumn("T Min");
   solutionsDataViewCtrl->AppendTextColumn("T Max");
 
+  saddleNodeBifurcationsDataViewCtrl->AppendTextColumn("ID");
+  hopfBifurcationsDataViewCtrl->AppendTextColumn("ID");
   singularPointsDataViewCtrl->AppendTextColumn("ID");
   isoclinesDataViewCtrl->AppendTextColumn("ID");
   set_no_compile();
@@ -848,6 +853,25 @@ void console_frame::saddle_connection_bifurcation_menu_item_on_selection(wxComma
       messageDialog.ShowModal();
     }
   }
+}
+
+void console_frame::equationsDataViewCtrlOnDataViewListCtrlSelectionChanged(wxDataViewEvent&) {
+  std::cout << "EVT Selection Changed" << std::endl;
+  wxDataViewItem item = equationsDataViewCtrl->GetSelection();
+  wxDataViewColumn* column = equationsDataViewCtrl->GetColumn(1);
+  equationsDataViewCtrl->EditItem(item, column);
+}
+void console_frame::equationsDataViewCtrlOnDataViewListCtrlItemActivated(wxDataViewEvent&) {
+  std::cout << "EVT Item Activated" << std::endl;
+}
+void console_frame::equationsDataViewCtrlOnDataViewListCtrlItemStartEditing(wxDataViewEvent&) {
+  std::cout << "EVT Start Editing" << std::endl;
+}
+void console_frame::equationsDataViewCtrlOnDataViewListCtrlItemEditingStarted(wxDataViewEvent&) {
+  std::cout << "EVT Editing Started" << std::endl;
+}
+void console_frame::equationsDataViewCtrlOnDataViewListCtrlItemEditingDone(wxDataViewEvent&) {
+  std::cout << "EVT Editing Done" << std::endl;
 }
 } // namespace gui
 } // namespace dynsolver

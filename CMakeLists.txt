@@ -114,13 +114,11 @@ add_subdirectory(glad)
 # GLFW imports
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/glfw
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-set(GLFW_BUILD_EXAMPLES OFF)
-set(GLFW_BUILD_TESTS OFF)
-set(GLFW_BUILD_DOCS OFF)
-set(GLFW_INSTALL OFF)
-set(BUILD_SHARED_LIBS OFF)
-set(GLFW_USE_MENUBAR OFF)
-set(GLFW_USE_RETINA ON)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw)
 remove_from_all(external/glfw)
 

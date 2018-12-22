@@ -102,7 +102,7 @@ public:
   virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
 
-  void canvas_on_mouse_wheel(wxMouseEvent&);
+  virtual void canvas_on_mouse_wheel(wxMouseEvent&) override;
 
   // Called when the mouse wheel ends by a timer.
   void canvas_on_mouse_wheel_end(wxTimerEvent&);
