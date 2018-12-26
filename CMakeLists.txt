@@ -47,6 +47,7 @@ ENDFUNCTION()
 if(APPLE)
   set(GL_VERSION_MAJOR 3)
   set(GL_VERSION_MINOR 3)
+  set(USE_GLFW ON)
 endif()
 if(NOT APPLE)
   set(GL_VERSION_MAJOR 4)
@@ -57,7 +58,7 @@ set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 
 # The list of wx widgets required modules.
-set(WX_WIDGETS_MODULES core base gl adv propgrid)
+set(WX_WIDGETS_MODULES core base adv propgrid gl)
 set(WX_WIDGETS_VERSION 3.0)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/wxWidgets
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")

@@ -8,6 +8,9 @@
 #include "math/window2d.h"
 #include "math/vector2d.h"
 
+class wxGLCanvas;
+class wxPanel;
+
 namespace dynsolver {
 namespace gui {
 
@@ -18,6 +21,12 @@ class app;
 class parameter_frame : public parameter_frame_base {
 private:
   app& appl;
+
+#ifdef USE_GLFW
+  wxPanel* canvas;
+#else
+  wxGLCanvas* canvas;
+#endif
 
   // The parameter id associated with this window.
   parameter_id id;
@@ -86,15 +95,15 @@ private:
 public:
   parameter_frame(app& app, parameter_id id, int width, int height);
   ~parameter_frame();
-  virtual void canvas_on_key_down(wxKeyEvent&) override;
-  virtual void canvas_on_key_up(wxKeyEvent&) override;
-  virtual void canvas_on_left_down(wxMouseEvent&) override;
-  virtual void canvas_on_left_up(wxMouseEvent&) override;
-  virtual void canvas_on_motion(wxMouseEvent&) override;
-  virtual void canvas_on_right_down(wxMouseEvent&) override;
-  virtual void canvas_on_right_up(wxMouseEvent& evt) override;
-  virtual void canvas_on_paint(wxPaintEvent&) override;
-  virtual void canvas_on_size(wxSizeEvent&) override;
+  void canvas_on_key_down(wxKeyEvent&);
+  void canvas_on_key_up(wxKeyEvent&);
+  void canvas_on_left_down(wxMouseEvent&);
+  void canvas_on_left_up(wxMouseEvent&);
+  void canvas_on_motion(wxMouseEvent&);
+  void canvas_on_right_down(wxMouseEvent&);
+  void canvas_on_right_up(wxMouseEvent& evt);
+  void canvas_on_paint(wxPaintEvent&);
+  void canvas_on_size(wxSizeEvent&);
 
   virtual void parameter_frame_on_close(wxCloseEvent&) override;
   virtual void hopf_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
@@ -102,7 +111,7 @@ public:
   virtual void limit_cycle_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
   virtual void saddle_connection_bifurcation_menu_item_on_selection(wxCommandEvent&) override;
 
-  virtual void canvas_on_mouse_wheel(wxMouseEvent&) override;
+  void canvas_on_mouse_wheel(wxMouseEvent&);
 
   // Called when the mouse wheel ends by a timer.
   void canvas_on_mouse_wheel_end(wxTimerEvent&);

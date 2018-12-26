@@ -7,9 +7,13 @@
 
 #include <glad/glad.h>
 
+#ifdef USE_GLFW
 struct GLFWwindow;
+#else
+#include <wx/glcanvas.h>
 class wxDialog;
-class wxStdLog;
+#endif
+
 
 namespace math {
 class window3d;
@@ -57,6 +61,7 @@ class saddle_connection_bifurcation_dialog;
 // the event is not responsible for updating after the event.
 class app : public wxApp {
  private:
+#ifdef USE_GLFW
   // OpenGL state for offscreen rendering
   // A dummy window used to create the gl context. This window is invisible.
   GLFWwindow* glWindow;
@@ -70,6 +75,15 @@ class app : public wxApp {
   // The size of the FBO rendering area. All on screen panels to which we display
   // the FBO must have a smaller window.
   GLsizei fboWidth = 1000, fboHeight = 1000;
+#else
+  // glContextAttributes is used for initializing any opengl contexts in this
+  // program. glAttributes is used for initializing any glCanvas in this program.
+  wxGLContextAttrs glContextAttributes;
+  wxGLAttributes glAttributes;
+
+  // The opengl context used across all windows for rendering.
+  wxGLContext* glContext;
+#endif
 
 
   // A custom logger for handling error and warning messages.
@@ -254,9 +268,14 @@ class app : public wxApp {
   // coordinates. Updates all parameter and dynamical windows accordingly.
   void set_parameter_position(parameter_id, const ::math::vector2d&);
 
+#ifdef USE_GLFW
   // Returns the subset of the FBO with the appropriate width and height
   // as a bitmap.
   wxBitmap get_fbo_bitmap(int width, int height);
+#else
+  const wxGLContext& get_gl_context() const;
+  const wxGLAttributes& get_gl_attributes() const;
+#endif
 
 private:
   void refresh_dynamical_windows();

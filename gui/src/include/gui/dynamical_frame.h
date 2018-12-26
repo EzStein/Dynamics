@@ -8,6 +8,9 @@
 #include "math/window3d.h"
 #include "math/window2d.h"
 
+class wxGLCanvas;
+class wxPanel;
+
 namespace dynsolver {
 namespace gui {
 
@@ -19,6 +22,12 @@ class dynamical_frame : public dynamical_frame_base {
  private:
   // A reference to the model object of this program.
   app& appl;
+
+#ifdef USE_GLFW
+  wxPanel* canvas;
+#else
+  wxGLCanvas* canvas;
+#endif
 
   // The id associated to this frame.
   dynamical_id id;
@@ -81,16 +90,16 @@ class dynamical_frame : public dynamical_frame_base {
   virtual void selection_select_menu_item_on_menu_selection(wxCommandEvent& evt) override;
   virtual void isocline_menu_item_on_menu_selection(wxCommandEvent&) override;
 
-  virtual void canvas_on_key_down(wxKeyEvent&) override;
-  virtual void canvas_on_key_up(wxKeyEvent&) override;
-  virtual void canvas_on_left_down(wxMouseEvent&) override;
-  virtual void canvas_on_left_up(wxMouseEvent&) override;
-  virtual void canvas_on_motion(wxMouseEvent&) override;
-  virtual void canvas_on_right_down(wxMouseEvent&) override;
-  virtual void canvas_on_right_up(wxMouseEvent&) override;
-  virtual void canvas_on_paint(wxPaintEvent&) override;
-  virtual void canvas_on_size(wxSizeEvent&) override;
-  virtual void canvas_on_mouse_wheel(wxMouseEvent&) override;
+  void canvas_on_key_down(wxKeyEvent&);
+  void canvas_on_key_up(wxKeyEvent&);
+  void canvas_on_left_down(wxMouseEvent&);
+  void canvas_on_left_up(wxMouseEvent&);
+  void canvas_on_motion(wxMouseEvent&);
+  void canvas_on_right_down(wxMouseEvent&);
+  void canvas_on_right_up(wxMouseEvent&);
+  void canvas_on_paint(wxPaintEvent&);
+  void canvas_on_size(wxSizeEvent&);
+  void canvas_on_mouse_wheel(wxMouseEvent&);
   void refresh_canvas();
 
 private:

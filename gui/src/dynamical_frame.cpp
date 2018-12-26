@@ -2,6 +2,9 @@
 
 #include "gui/generated.h"
 #include <wx/msgdlg.h>
+#ifndef USE_GLFW
+#include <wx/glcanvas.h>
+#endif
 
 #include "gui/solution_dialog.h"
 #include "gui/singular_point_dialog.h"
@@ -30,11 +33,41 @@ dynamical_frame::dynamical_frame(app& app, dynamical_id id, int width, int heigh
   axesScalingViewport(::math::vector2d(0,0),
 		      ::math::vector2d(0,0),
 		      ::math::vector2d(0,0)) {
+#ifdef USE_GLFW
+  canvas = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(width, height));
+#else
+  // Setup events and widgets not already done in dynamical_frame_base
+  canvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
+			    wxDefaultPosition, wxSize(width, height));
+#endif
+  dynamicalWindowBox->Add(canvas, 1, wxEXPAND);
+  Fit();
+
+  canvas->Bind(wxEVT_PAINT, &dynamical_frame::canvas_on_paint, this);
+  canvas->Bind(wxEVT_KEY_DOWN, &dynamical_frame::canvas_on_key_down, this);
+  canvas->Bind(wxEVT_KEY_UP, &dynamical_frame::canvas_on_key_up, this);
+  canvas->Bind(wxEVT_LEFT_DOWN, &dynamical_frame::canvas_on_left_down, this);
+  canvas->Bind(wxEVT_LEFT_UP, &dynamical_frame::canvas_on_left_up, this);
+  canvas->Bind(wxEVT_MOTION, &dynamical_frame::canvas_on_motion, this);
+  canvas->Bind(wxEVT_MOUSEWHEEL, &dynamical_frame::canvas_on_mouse_wheel, this);
+  canvas->Bind(wxEVT_RIGHT_DOWN, &dynamical_frame::canvas_on_right_down, this);
+  canvas->Bind(wxEVT_RIGHT_UP, &dynamical_frame::canvas_on_right_up, this);
+  canvas->Bind(wxEVT_SIZE, &dynamical_frame::canvas_on_size, this);
   Bind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 
 dynamical_frame::~dynamical_frame() {
+  canvas->Unbind(wxEVT_PAINT, &dynamical_frame::canvas_on_paint, this);
+  canvas->Unbind(wxEVT_KEY_DOWN, &dynamical_frame::canvas_on_key_down, this);
+  canvas->Unbind(wxEVT_KEY_UP, &dynamical_frame::canvas_on_key_up, this);
+  canvas->Unbind(wxEVT_LEFT_DOWN, &dynamical_frame::canvas_on_left_down, this);
+  canvas->Unbind(wxEVT_LEFT_UP, &dynamical_frame::canvas_on_left_up, this);
+  canvas->Unbind(wxEVT_MOTION, &dynamical_frame::canvas_on_motion, this);
+  canvas->Unbind(wxEVT_MOUSEWHEEL, &dynamical_frame::canvas_on_mouse_wheel, this);
+  canvas->Unbind(wxEVT_RIGHT_DOWN, &dynamical_frame::canvas_on_right_down, this);
+  canvas->Unbind(wxEVT_RIGHT_UP, &dynamical_frame::canvas_on_right_up, this);
+  canvas->Unbind(wxEVT_SIZE, &dynamical_frame::canvas_on_size, this);
   Unbind(wxEVT_TIMER, &dynamical_frame::canvas_on_mouse_wheel_end, this,
         kMagnificationTimerEventId);
 }
@@ -319,6 +352,7 @@ void dynamical_frame::refresh_canvas() {
 }
 
 void dynamical_frame::canvas_on_paint(wxPaintEvent& evt) {
+#ifdef USE_GLFW
   wxPaintDC dc(canvas);
   // Calls appropriate GL render functions
   appl.paint_dynamical(id);
@@ -328,6 +362,13 @@ void dynamical_frame::canvas_on_paint(wxPaintEvent& evt) {
 
   // Copy from FBO to screen.
   dc.DrawBitmap(appl.get_fbo_bitmap(width, height), 0, 0);
+#else
+  if(canvas->IsShownOnScreen()) {
+    appl.get_gl_context().SetCurrent(*canvas);
+    appl.paint_dynamical(id);
+    canvas->SwapBuffers();
+  }
+#endif
 }
 
 void dynamical_frame::dynamical_frame_on_iconize(wxIconizeEvent& evt) {

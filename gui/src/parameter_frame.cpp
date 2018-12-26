@@ -5,6 +5,9 @@
 #include "gui/app.h"
 
 #include <wx/msgdlg.h>
+#ifndef USE_GLFW
+#include <wx/glcanvas.h>
+#endif
 #include "gui/hopf_bifurcation_dialog.h"
 #include "gui/saddle_node_bifurcation_dialog.h"
 #include "gui/limit_cycle_bifurcation_dialog.h"
@@ -41,11 +44,47 @@ parameter_frame::parameter_frame(app& app, parameter_id id,
     axesScalingViewport(::math::vector2d(0,0),
 			::math::vector2d(0,0),
 			::math::vector2d(0,0)) {
+#ifdef USE_GLFW
+	canvas = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(width, height));
+#else
+	canvas = new wxGLCanvas(this, appl.get_gl_attributes(), wxID_ANY,
+		wxDefaultPosition, wxSize(width, height));
+#endif
+	parameterWindowBox->Add(canvas, 1, wxEXPAND);
+	Fit();
+	canvas->Bind(wxEVT_PAINT, &parameter_frame::canvas_on_paint, this);
+	canvas->Bind(wxEVT_KEY_DOWN, &parameter_frame::canvas_on_key_down, this);
+	canvas->Bind(wxEVT_KEY_UP, &parameter_frame::canvas_on_key_up, this);
+	canvas->Bind(wxEVT_LEFT_DOWN, &parameter_frame::canvas_on_left_down,
+		 this);
+	canvas->Bind(wxEVT_LEFT_UP, &parameter_frame::canvas_on_left_up, this);
+	canvas->Bind(wxEVT_MOTION, &parameter_frame::canvas_on_motion, this);
+	canvas->Bind(wxEVT_MOUSEWHEEL, &parameter_frame::canvas_on_mouse_wheel,
+		 this);
+	canvas->Bind(wxEVT_RIGHT_DOWN, &parameter_frame::canvas_on_right_down,
+		 this);
+	canvas->Bind(wxEVT_RIGHT_UP, &parameter_frame::canvas_on_right_up,
+		 this);
+	canvas->Bind(wxEVT_SIZE, &parameter_frame::canvas_on_size, this);
   Bind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
 
 parameter_frame::~parameter_frame() {
+	canvas->Unbind(wxEVT_PAINT, &parameter_frame::canvas_on_paint, this);
+	canvas->Unbind(wxEVT_KEY_DOWN, &parameter_frame::canvas_on_key_down, this);
+	canvas->Unbind(wxEVT_KEY_UP, &parameter_frame::canvas_on_key_up, this);
+	canvas->Unbind(wxEVT_LEFT_DOWN, &parameter_frame::canvas_on_left_down,
+		 this);
+	canvas->Unbind(wxEVT_LEFT_UP, &parameter_frame::canvas_on_left_up, this);
+	canvas->Unbind(wxEVT_MOTION, &parameter_frame::canvas_on_motion, this);
+	canvas->Unbind(wxEVT_MOUSEWHEEL, &parameter_frame::canvas_on_mouse_wheel,
+		 this);
+	canvas->Unbind(wxEVT_RIGHT_DOWN, &parameter_frame::canvas_on_right_down,
+		 this);
+	canvas->Unbind(wxEVT_RIGHT_UP, &parameter_frame::canvas_on_right_up,
+		 this);
+	canvas->Unbind(wxEVT_SIZE, &parameter_frame::canvas_on_size, this);
 	Unbind(wxEVT_TIMER, &parameter_frame::canvas_on_mouse_wheel_end, this,
        kMagnificationTimerEventId);
 }
@@ -138,11 +177,19 @@ void parameter_frame::canvas_on_right_mouse_click(const ::math::vector2d& pos) {
 }
 
 void parameter_frame::canvas_on_paint(wxPaintEvent&) {
+#ifdef USE_GLFW
 	wxPaintDC dc(canvas);
   appl.paint_parameter(id);
 	int width, height;
 	canvas->GetSize(&width, &height);
 	dc.DrawBitmap(appl.get_fbo_bitmap(width, height), 0, 0);
+#else
+	if(canvas->IsShownOnScreen()) {
+		appl.get_gl_context().SetCurrent(*canvas);
+		appl.paint_parameter(id);
+		canvas->SwapBuffers();
+	}
+#endif
 }
 void parameter_frame::canvas_on_size(wxSizeEvent& evt) {
   wxSize size(evt.GetSize());

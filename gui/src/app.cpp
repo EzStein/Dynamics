@@ -1,7 +1,12 @@
 #include "gui/app.h"
 
 #include "glad/glad.h"
+
+#ifdef USE_GLFW
 #include "GLFW/glfw3.h"
+#else
+#include <wx/glcanvas.h>
+#endif
 
 #include <cassert>
 #include <stdexcept>
@@ -28,10 +33,12 @@
 namespace dynsolver {
 namespace gui {
 namespace {
+#ifdef USE_GLFW
 // Called by glfw upon errors in window/context creation/management
 void glfw_error_callback(int err, const char * msg) {
   std::cerr << "GLFW Error (code = " << std::to_string(err) << "): " << msg << std::endl;
 }
+#endif
 
 #ifdef GL_ERROR_CALLBACK
 // Called by opengl when it has something interesting to report. Requirels gl version 4.3
@@ -66,7 +73,10 @@ void windows_terminal_setup() {
 #endif
 } // Namespace anonymous
 
+
 void app::initialize_opengl() {
+#ifdef USE_GLFW
+  std::cout << "Using glfw" << std::endl;
   // Initialize opengl
   glfwSetErrorCallback(glfw_error_callback);
   if(!glfwInit()) {
@@ -84,17 +94,17 @@ void app::initialize_opengl() {
     assert(false);
   }
   glfwMakeContextCurrent(glWindow);
-  #ifndef GL_MESSAGE_CALLBACK
-  glad_set_post_callback(glad_callback);
-  #endif
+
   // Load function pointers. No gl calls can occur before this method.
   if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
     assert(false);
   }
-  #ifdef GL_MESSAGE_CALLBACK
+#ifdef GL_MESSAGE_CALLBACK
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_msg_callback, nullptr);
-  #endif
+#else
+  glad_set_post_callback(glad_callback);
+#endif
   // Initialize non standard frame buffer for offscreen rendering.
   glGenFramebuffers(1, &fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -112,6 +122,47 @@ void app::initialize_opengl() {
   }
   // Allows tightly packed RGB data when reading from framebuffer.
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
+#else
+  std::cout << "Using wxGLCanvas" << std::endl;
+  // Initializes the attributes which are used to generate an opengl context.
+  glAttributes.PlatformDefaults().RGBA().DoubleBuffer().EndList();
+  bool supported = wxGLCanvas::IsDisplaySupported(glAttributes);
+  assert(supported);
+
+  glContextAttributes.PlatformDefaults()
+      .CoreProfile()
+      .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
+      .EndList();
+
+  wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "OpenGL Setup");
+  wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
+  glContext = new wxGLContext(dummyCanvas, NULL, &glContextAttributes);
+  assert(glContext->IsOK());
+  auto dummyCanvasOnIdle =
+      [&](wxIdleEvent& evt) {
+        static bool initialized = false;
+        //std::cout << "A" << std::endl;
+        if(dummyCanvas->IsShownOnScreen() && !initialized) {
+          bool success = glContext->SetCurrent(*dummyCanvas);
+          assert(success);
+          success = gladLoadGL();
+          assert(success);
+          dummyDialog->EndModal(0); // Idle events may still occur after this
+          initialized = true;
+        } else {
+          evt.RequestMore();
+        }
+      };
+  dummyCanvas->Bind(wxEVT_IDLE, dummyCanvasOnIdle);
+  dummyDialog->ShowModal();
+  dummyDialog->Destroy();
+#ifdef GL_MESSAGE_CALLBACK
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(gl_msg_callback, nullptr);
+#else
+  glad_set_post_callback(glad_callback);
+#endif
+#endif
 }
 
 bool app::OnInit() {
@@ -244,6 +295,7 @@ void app::set_parameter_viewport(parameter_id id, const ::math::window2d& wind) 
   parameterFrames.at(id)->refresh_canvas();
 }
 
+#ifdef USE_GLFW
 wxBitmap app::get_fbo_bitmap(int width, int height) {
   GLubyte* data = new GLubyte[width * height * 3];
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -251,10 +303,20 @@ wxBitmap app::get_fbo_bitmap(int width, int height) {
   delete[] data;
   return bitmap;
 }
+#else
+const wxGLContext& app::get_gl_context() const {
+  return *glContext;
+}
+
+const wxGLAttributes& app::get_gl_attributes() const {
+  return glAttributes;
+}
+#endif
 
 int app::OnExit() {
   delete modelData;
 
+#ifdef USE_GLFW
   // Cleanup opengl
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDeleteRenderbuffers(1, &colorRbo);
@@ -265,6 +327,9 @@ int app::OnExit() {
   // "Invalid or prematurely-freed autorelease pool" error
   //glfwDestroyWindow(glWindow);
   //glfwTerminate();
+#else
+  delete glContext;
+#endif
   return wxApp::OnExit();
 }
 

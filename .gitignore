@@ -3,5 +3,6 @@ compile_commands.json
 *build*
 glad/**/*.c
 glad/**/*.h
+external
 .dir-locals.el
 tmp
