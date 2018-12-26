@@ -60,14 +60,14 @@ bool app::OnInit() {
     assert(false);
   }
   glfwMakeContextCurrent(glWindow);
-#ifndef GL_MESSAGE_CALLBACK
+#ifndef GL_ERROR_CALLBACK
   glad_set_post_callback(glad_callback);
 #endif
 // Load function pointers. No gl calls can occur before this method.
   if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
     assert(false);
   }
-#ifdef GL_MESSAGE_CALLBACK
+#ifdef GL_ERROR_CALLBACK
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_msg_callback, nullptr);
 #endif

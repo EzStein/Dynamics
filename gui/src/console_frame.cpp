@@ -30,11 +30,9 @@ console_frame::console_frame(app& app)
   // Add in widgets and setup events not already done in console_frame_base.
   equationsDataViewCtrl->AppendTextColumn("Expression", wxDATAVIEW_CELL_EDITABLE);
 
-//  parameterNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
+  parameterNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
 
-  wxDataViewColumn* myCustomColumn = new wxDataViewColumn("Param",
-    new wxDataViewTextRenderer(wxDataViewTextRenderer::GetDefaultType(), wxDATAVIEW_CELL_EDITABLE), 1);
-  parameterNamesDataViewCtrl->AppendColumn(myCustomColumn);
+  
   variableNamesDataViewCtrl->AppendTextColumn("Name", wxDATAVIEW_CELL_EDITABLE);
   compiledParametersDataViewCtrl->AppendTextColumn("Value", wxDATAVIEW_CELL_EDITABLE);
 
@@ -857,9 +855,6 @@ void console_frame::saddle_connection_bifurcation_menu_item_on_selection(wxComma
 
 void console_frame::equationsDataViewCtrlOnDataViewListCtrlSelectionChanged(wxDataViewEvent&) {
   std::cout << "EVT Selection Changed" << std::endl;
-  wxDataViewItem item = equationsDataViewCtrl->GetSelection();
-  wxDataViewColumn* column = equationsDataViewCtrl->GetColumn(1);
-  equationsDataViewCtrl->EditItem(item, column);
 }
 void console_frame::equationsDataViewCtrlOnDataViewListCtrlItemActivated(wxDataViewEvent&) {
   std::cout << "EVT Item Activated" << std::endl;

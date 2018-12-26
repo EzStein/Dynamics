@@ -11,6 +11,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <sstream>
+#include <iostream>
 
 #include "wx/frame.h"
 
@@ -99,7 +100,7 @@ void app::initialize_opengl() {
   if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
     assert(false);
   }
-#ifdef GL_MESSAGE_CALLBACK
+#ifdef GL_ERROR_CALLBACK
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_msg_callback, nullptr);
 #else
@@ -133,7 +134,6 @@ void app::initialize_opengl() {
       .CoreProfile()
       .OGLVersion(GL_VERSION_MAJOR, GL_VERSION_MINOR)
       .EndList();
-
   wxDialog* dummyDialog = new wxDialog(nullptr, wxID_ANY, "OpenGL Setup");
   wxGLCanvas* dummyCanvas = new wxGLCanvas(dummyDialog, glAttributes);
   glContext = new wxGLContext(dummyCanvas, NULL, &glContextAttributes);
@@ -156,7 +156,7 @@ void app::initialize_opengl() {
   dummyCanvas->Bind(wxEVT_IDLE, dummyCanvasOnIdle);
   dummyDialog->ShowModal();
   dummyDialog->Destroy();
-#ifdef GL_MESSAGE_CALLBACK
+#ifdef GL_ERROR_CALLBACK
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_msg_callback, nullptr);
 #else
