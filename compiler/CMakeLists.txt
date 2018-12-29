@@ -32,3 +32,6 @@ endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
 endif()
+doxygen_add_docs(compiler_doc
+  "${CMAKE_CURRENT_SOURCE_DIR}/src"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include")

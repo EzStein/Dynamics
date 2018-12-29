@@ -1,4 +1,5 @@
-#include "test/catch.hpp"
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch.hpp"
 
 #include <cctype>
 #include <iostream>
@@ -9,15 +10,7 @@
 #include "regex/malformed_pattern_exception.h"
 #include "regex/regex.h"
 
-namespace dynsolver {
-namespace test {
 namespace regex {
-
-using dynsolver::regex::regex;
-using dynsolver::regex::nfa;
-using dynsolver::regex::dfa;
-using dynsolver::regex::kMaxCharacterValue;
-using dynsolver::regex::malformed_pattern_exception;
 
 enum class regex_type {
   NFA, DFA
@@ -40,7 +33,7 @@ void test_single_character(regex_type type) {
     try {
       expr = get_regex_obj(pattern, type);
       REQUIRE(expr->accepts(pattern));
-    } catch (const dynsolver::regex::malformed_pattern_exception& mpa) {
+    } catch (const malformed_pattern_exception& mpa) {
       bool control(pattern == "(" || pattern == ")"
                    || pattern == "[" || pattern == "]" || pattern == "*"
                    || pattern == "+" || pattern == "?" || pattern == "|"
@@ -437,5 +430,3 @@ TEST_CASE("REGEX DFA: Regression") {
   test_prefix(regex_type::DFA);
 }
 } // namespace regex
-} // namespace test
-} // namespace dynsolver

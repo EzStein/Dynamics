@@ -123,11 +123,20 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw)
 remove_from_all(external/glfw)
 
+# CATCH
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/Catch2
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_subdirectory(external/Catch2)
+
 if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")
   set(EXE_FLAG "WIN32")
 endif()
 
+find_package(Doxygen)
+
+include(CTest)
+enable_testing()
 add_subdirectory(gui)
 add_subdirectory(regex)
 add_subdirectory(parser)
@@ -138,6 +147,7 @@ add_subdirectory(compiler)
 add_subdirectory(util)
 add_subdirectory(app)
 add_subdirectory(debug)
+add_subdirectory(math2)
 
 # Setup packaging
 if(APPLE)

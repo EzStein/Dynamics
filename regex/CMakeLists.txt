@@ -21,3 +21,9 @@ endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
 endif()
+
+add_executable(regex_test "${CMAKE_CURRENT_SOURCE_DIR}/test/regex_test.cpp")
+target_include_directories(regex_test PRIVATE src/include)
+target_link_libraries(regex_test PRIVATE Catch2 regex)
+
+add_test(NAME regex_test COMMAND regex_test)
