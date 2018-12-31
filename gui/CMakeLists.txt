@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 project(gui)
 set(SRC_FILES app.cpp
   isocline_dialog.cpp
@@ -74,4 +74,24 @@ if ( UNIX )
 endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()
+
+if(DOCS_ENABLED)
+  set(DOXYGEN_STRIP_FROM_INC_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  set(DOXYGEN_TAGFILES
+    "${CMAKE_BINARY_DIR}/compiler/compiler.tag=${CMAKE_BINARY_DIR}/compiler/html"
+    "${CMAKE_BINARY_DIR}/parser/parser.tag=${CMAKE_BINARY_DIR}/parser/html"
+    "${CMAKE_BINARY_DIR}/util/util.tag=${CMAKE_BINARY_DIR}/util/html"
+    "${CMAKE_BINARY_DIR}/regex/regex.tag=${CMAKE_BINARY_DIR}/regex/html"
+    "${CMAKE_BINARY_DIR}/gl/gl.tag=${CMAKE_BINARY_DIR}/gl/html"
+    "${CMAKE_BINARY_DIR}/math/math.tag=${CMAKE_BINARY_DIR}/math/html")
+  set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/gui.tag")
+  doxygen_add_docs(gui_doc
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  add_dependencies(gui_doc compiler_doc regex_doc util_doc parser_doc gl_doc
+    math_doc)
+  add_dependencies(doc gui_doc)
 endif()

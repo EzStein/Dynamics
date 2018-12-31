@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 project(mygl)
 set(SRC_FILES buffer.cpp sampler.cpp vertex_array.cpp
   program.cpp shader.cpp texture.cpp font.cpp text_renderer.cpp
@@ -33,4 +33,15 @@ if ( UNIX )
 endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()
+
+if(DOCS_ENABLED)
+  set(DOXYGEN_STRIP_FROM_INC_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/gl.tag")
+  doxygen_add_docs(gl_doc
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  add_dependencies(doc gl_doc)
 endif()

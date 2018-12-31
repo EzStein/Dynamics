@@ -1,3 +1,8 @@
+///
+/// \file field.h
+/// \author Ezra Stein
+/// Interface class for a field structure.
+///
 #ifndef DYNSOLVER_MATH_FIELD_H_
 #define DYNSOLVER_MATH_FIELD_H_
 #include "math/commutative_ring.h"
@@ -5,28 +10,43 @@
 namespace dynsolver {
 namespace math {
 
-// In algebra, a field is a commutative ring in which each
-// element except the identity has a multiplicative inverse.
-// Note that a field does not contain an abelian group over
-// multiplication since inversion is not defined for zero().
-// Thus we do not override the mult_op to return a group.
+/// A \c field is a \link commutative_ring \endlink in which each
+/// element except the \link ring::zero additive identity \endlink
+/// has a multiplicative inverse.
+/// \tparam T The type of elements on which this field operates.
 template<class T> class field : public commutative_ring<T> {
  public:
-  // Returns the multiplicative inverse of T. If for some a,
-  // equal(a, zero()), then the behavior of this function is
-  // undefined. We require that
-  // equal(times(mult_inv(a), a), one())
-  //
-  // This class (and all the algebra classes) must be consistent
-  // with the equal comparator. That is, for any a, and b
-  // if equal(a, b) then equal(mult_inv(a), mult_inv(b)) and
-  // That is, multiplicative inverses are not
-  // representation dependent.
-  virtual T mult_inv(const T&) const = 0;
+  /// Computes the multiplicative inverse of the provided element \p a.
+  /// \param a The element for which this function finds an inverse.
+  /// If \code equal(zero(), a) \endcode the behavior of this
+  /// function is undefined.
+  /// \return The multiplicative inverse of \p a if \p a is not
+  /// equal to the additive identity.
+  /// \invariant For all \p a, the multiplicative inverse is indeed
+  /// a left inverse (and therefor right),
+  /// \code equal(times(mult_inv(a), a), one()) \endcode
+  /// Additionally, the inverse function must be consistent with the
+  /// inherited equality operator.
+  /// That is, for all \p a and \p b, if
+  /// \code equal(a, b)\endcode then
+  /// \code equal(mult_inv(a), mult_inv(b)) \endcode
+  /// In particular, multiplicative inverses are not
+  /// representation dependent.
+  /// \warning If \code equal(zero(), a) \endcode the behavior of this
+  /// function is undefined.
+  virtual T mult_inv(const T& a) const = 0;
 
-  // A convenience method with default implementation.
-  // Returns times(a, mult_inv(b)). Requires that
-  // !equal(b, zero())
+  /// Performs a division of \p a by \p b. That is, this function
+  /// multiplies \p a by the inverse of \p b.
+  /// \param a The element to be divided.
+  /// \param b The divisor which will divide \p a. If 
+  /// \code equal(zero(), b) \endcode the behavior of this
+  /// function is undefined.
+  /// \return The result of \p a divided by \p b.
+  /// \code times(a, mult_inv(b)) \endcode
+  /// \warning If \p b is equal to the additive identity, that is, if
+  /// \code equal(zero(), b) \endcode the behavior of this
+  /// function is undefined.
   T divide(const T& a, const T& b) const;
 };
 

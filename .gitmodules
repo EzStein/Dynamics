@@ -13,3 +13,6 @@
 [submodule "external/Catch2"]
 	path = external/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "external/CMakeModules"]
+	path = external/CMakeModules
+	url = https://github.com/lbaehren/CMakeModules.git

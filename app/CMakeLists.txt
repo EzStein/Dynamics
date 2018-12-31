@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 project(app)
 
 set(SRC_FILES app.cpp)
@@ -55,3 +55,4 @@ if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
 endif()
 set_target_properties(app PROPERTIES OUTPUT_NAME "${EXE_NAME}")
+

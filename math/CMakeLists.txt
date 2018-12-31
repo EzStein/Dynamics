@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 project(math)
 set(SRC_FILES complex.cpp matrix_3x3.cpp poly_matrix.cpp
   quaternion.cpp vector2d.cpp window2d.cpp eigenvalue.cpp matrix_4x4.cpp
@@ -23,4 +23,14 @@ if ( UNIX )
 endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()
+if(DOCS_ENABLED)
+  set(DOXYGEN_STRIP_FROM_INC_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/math.tag")
+  doxygen_add_docs(math_doc
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  add_dependencies(doc math_doc)
 endif()

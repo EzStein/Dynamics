@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 project(asm)
 set(SRC_FILES asm.cpp assembler.cpp)
 set(PUBLIC_HEADER_FILES assembler.h asm.h)
@@ -19,4 +19,18 @@ if ( UNIX )
 endif()
 if ( WIN32 )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()
+
+if(DOCS_ENABLED)
+  set(DOXYGEN_STRIP_FROM_INC_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  set(DOXYGEN_TAGFILES
+    "${CMAKE_BINARY_DIR}/regex/regex.tag=${CMAKE_BINARY_DIR}/regex/html")
+  set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/asm.tag")
+  doxygen_add_docs(asm_doc
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  add_dependencies(asm_doc regex_doc)
+  add_dependencies(doc asm_doc)
 endif()

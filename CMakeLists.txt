@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9.6)
 if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif()
@@ -56,6 +56,13 @@ endif()
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
+
+# Load extra submodules for finding specials packages like GhostScript
+execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/CMakeModules
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+list(APPEND CMAKE_MODULE_PATH
+  "${CMAKE_SOURCE_DIR}/external/CMakeModules")
+
 
 # The list of wx widgets required modules.
 set(WX_WIDGETS_MODULES core base adv propgrid gl)
@@ -127,6 +134,9 @@ remove_from_all(external/glfw)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive external/Catch2
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_subdirectory(external/Catch2)
+# Add catch2 cmake modules
+list(APPEND CMAKE_MODULE_PATH
+  "${CMAKE_SOURCE_DIR}/external/Catch2/contrib")
 
 if(WIN32)
   set(CMAKE_CXX_FLAGS "/EHa")
@@ -134,9 +144,23 @@ if(WIN32)
 endif()
 
 find_package(Doxygen)
+find_package(LATEX COMPONENTS DVIPS)
+find_package(Ghostscript)
+if(GHOSTSCRIPT_FOUND AND LATEX_FOUND AND LATEX_DVIPS_FOUND AND DOXYGEN_FOUND)
+  set(DOCS_ENABLED ON)
+endif()
+if(DOCS_ENABLED)
+  add_custom_target(doc)
+  set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
+  set(DOXYGEN_HIDE_SCOPE_NAMES YES)
+  set(DOXYGEN_EXTRACT_PRIVATE YES)
+endif()
 
 include(CTest)
 enable_testing()
+
+add_custom_target(build_tests)
+
 add_subdirectory(gui)
 add_subdirectory(regex)
 add_subdirectory(parser)

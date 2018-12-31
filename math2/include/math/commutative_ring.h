@@ -1,3 +1,8 @@
+///
+/// \file commutative_ring.h
+/// \author Ezra Stein
+/// Interface class for commutative ring structure.
+///
 #ifndef DYNSOLVER_MATH_COMMUTATIVE_RING_H_
 #define DYNSOLVER_MATH_COMMUTATIVE_RING_H_
 #include "math/ring.h"
@@ -5,23 +10,17 @@
 namespace dynsolver {
 namespace math {
 
-// A commutative ring is a ring in which the multiplication operation
-// is commutative.
+/// A \c commutative_ring is a \c ring in which the multiplication operation
+/// is commutative.
+/// \invariant See \link ring \endlink
+/// \tparam T The type of elements on which the ring operates.
 template<class T> class commutative_ring : public ring<T> {
  public:
-  // We require that the equal operators of the monoid and abelian_group
-  // be the same. That is, for all a and b,
-  // mult_op().equal(a, b) iff add_op().equal(a, b)
-  //
-  // We define equal on the ring to be the same as it is
-  // for both the monoid and the group.
-  
-  // We require that distribution holds for all a, b and c:
-  // equal(mult_op().plus(add_op().plus(a, b), c),
-  // add_op().plus(mult_op().plus(a, c), mult_op().plus(b, c)))
-  //
-  // equal(mult_op().plus(c, add_op().plus(a, b)),
-  // add_op().plus(mult_op().plus(c, a), mult_op().plus(c, b)))
+  /// Retrieves the multiplicative monoid.
+  /// This is a specialization of the ring::mult_op function
+  /// which returns a
+  /// \link commutative_monoid \endlink as a covariant return type.
+  /// \invariant See \link ring \endlink
   virtual commutative_monoid<T> mult_op() const override = 0;
 };
 
